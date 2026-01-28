@@ -8,7 +8,7 @@ import {
   type InsertMemory,
   type UploadedFile,
   type InsertUploadedFile 
-} from "@shared/schema";
+} from "../shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 

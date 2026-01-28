@@ -1,4 +1,4 @@
-import Jimp from "jimp";
+import { Jimp } from "jimp";
 import QrCode from "qrcode-reader";
 
 export interface QrResult {

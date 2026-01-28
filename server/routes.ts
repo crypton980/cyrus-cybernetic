@@ -1,7 +1,7 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertConversationSchema, insertMemorySchema, insertUploadedFileSchema } from "@shared/schema";
+import { insertConversationSchema, insertMemorySchema, insertUploadedFileSchema } from "../shared/schema";
 import multer, { type StorageEngine } from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
