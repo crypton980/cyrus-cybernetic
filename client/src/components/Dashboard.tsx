@@ -30,6 +30,8 @@ export function Dashboard() {
   const [micActive, setMicActive] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [streamingText, setStreamingText] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [researchQuery, setResearchQuery] = useState("");
   const [researchResults, setResearchResults] = useState<string[]>([]);
@@ -39,11 +41,16 @@ export function Dashboard() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const currentTranscriptRef = useRef<string>("");
   const queryClient = useQueryClient();
 
   const speakText = async (text: string) => {
     try {
       setIsSpeaking(true);
+      setIsStreaming(true);
+      setStreamingText("");
+      
       const response = await fetch("/api/cyrus/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -60,22 +67,72 @@ export function Dashboard() {
       }
       
       audioRef.current = new Audio(audioUrl);
+      
+      const words = text.split(/\s+/);
+      const audioDuration = await getAudioDuration(audioUrl);
+      const wordsPerSecond = words.length / audioDuration;
+      const intervalMs = 1000 / wordsPerSecond;
+      
+      let wordIndex = 0;
+      const textInterval = setInterval(() => {
+        if (wordIndex < words.length) {
+          setStreamingText(prev => prev + (prev ? " " : "") + words[wordIndex]);
+          wordIndex++;
+        } else {
+          clearInterval(textInterval);
+        }
+      }, intervalMs);
+      
       audioRef.current.onended = () => {
+        clearInterval(textInterval);
+        setStreamingText(text);
         setIsSpeaking(false);
+        setIsStreaming(false);
         URL.revokeObjectURL(audioUrl);
+        if (micActive) {
+          setTimeout(() => startContinuousListening(), 500);
+        }
       };
       audioRef.current.onerror = () => {
+        clearInterval(textInterval);
         setIsSpeaking(false);
+        setIsStreaming(false);
         URL.revokeObjectURL(audioUrl);
       };
       await audioRef.current.play();
     } catch (error) {
       console.error("Speech error:", error);
       setIsSpeaking(false);
+      setIsStreaming(false);
     }
   };
+  
+  const getAudioDuration = (url: string): Promise<number> => {
+    return new Promise((resolve) => {
+      const audio = new Audio(url);
+      audio.addEventListener('loadedmetadata', () => {
+        resolve(audio.duration || 3);
+      });
+      audio.addEventListener('error', () => {
+        resolve(3);
+      });
+    });
+  };
 
-  const startListening = () => {
+  const resetSilenceTimer = () => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+    }
+    silenceTimerRef.current = setTimeout(() => {
+      if (currentTranscriptRef.current.trim() && recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    }, 4000);
+  };
+
+  const startContinuousListening = () => {
+    if (isSpeaking) return;
+    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Voice input is not supported in your browser. Please use Chrome or Edge.");
@@ -87,52 +144,80 @@ export function Dashboard() {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
 
     recognition.onstart = () => {
       setIsListening(true);
-      setMicActive(true);
+      currentTranscriptRef.current = "";
+      resetSilenceTimer();
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let transcript = "";
+      let isFinal = false;
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          isFinal = true;
+        }
       }
+      currentTranscriptRef.current = transcript;
       setInput(transcript);
+      resetSilenceTimer();
     };
 
     recognition.onend = () => {
       setIsListening(false);
-      if (input.trim()) {
-        handleVoiceSubmit();
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+      const finalTranscript = currentTranscriptRef.current.trim();
+      if (finalTranscript && micActive) {
+        handleVoiceSubmit(finalTranscript);
+      } else if (micActive && !isSpeaking) {
+        setTimeout(() => startContinuousListening(), 300);
       }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Speech recognition error:", event.error);
-      setIsListening(false);
-      setMicActive(false);
+      if (event.error === 'no-speech' && micActive) {
+        setTimeout(() => startContinuousListening(), 300);
+      } else if (event.error !== 'aborted') {
+        setIsListening(false);
+      }
     };
 
     recognitionRef.current = recognition;
     recognition.start();
   };
 
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsListening(false);
-    setMicActive(false);
+  const startListening = () => {
+    setMicActive(true);
+    startContinuousListening();
   };
 
-  const handleVoiceSubmit = async () => {
-    if (!input.trim()) return;
+  const stopListening = () => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    currentTranscriptRef.current = "";
+    setIsListening(false);
+    setMicActive(false);
+    setInput("");
+  };
+
+  const handleVoiceSubmit = async (transcript?: string) => {
+    const message = (transcript || input).trim();
+    if (!message) return;
     
-    const message = input.trim();
     setInput("");
     
     await fetch("/api/conversations", {
@@ -333,7 +418,7 @@ export function Dashboard() {
                   )}
                 </div>
               ))}
-              {sendMessage.isPending && (
+              {sendMessage.isPending && !isStreaming && (
                 <div className="flex gap-3 justify-start">
                   <div className="w-8 h-8 bg-[#0a84ff] rounded-lg flex items-center justify-center">
                     <Cpu className="w-4 h-4 text-white" />
@@ -344,6 +429,20 @@ export function Dashboard() {
                       <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                       <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
+                  </div>
+                </div>
+              )}
+              {isStreaming && streamingText && (
+                <div className="flex gap-3 justify-start">
+                  <div className="w-8 h-8 bg-[#0a84ff] rounded-lg flex items-center justify-center">
+                    <Cpu className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="bg-[#2c2c2e] rounded-2xl rounded-bl-md px-4 py-3 max-w-[75%]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Volume2 className="w-3 h-3 text-[#0a84ff] animate-pulse" />
+                      <span className="text-[10px] text-[#0a84ff]">Speaking...</span>
+                    </div>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-white">{streamingText}</p>
                   </div>
                 </div>
               )}
