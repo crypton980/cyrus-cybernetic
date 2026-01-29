@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server/index.ts",
-    "build": "vite build && tsc -p tsconfig.node.json",
+    "build": "vite build && esbuild server/index.ts --bundle --platform=node --outfile=dist/server/index.js --format=esm --packages=external",
     "start": "NODE_ENV=production node dist/server/index.js",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
@@ -36,6 +36,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.36.4",
     "drizzle-zod": "^0.5.1",
+    "esbuild": "^0.27.2",
     "express": "^4.21.1",
     "express-session": "^1.19.0",
     "file-type": "^21.3.0",
