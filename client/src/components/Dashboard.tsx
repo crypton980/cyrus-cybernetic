@@ -80,55 +80,71 @@ export function Dashboard() {
       audioRef.current = new Audio(audioUrl);
       
       const words = text.split(/\s+/);
-      const audioDuration = await getAudioDuration(audioUrl);
-      const wordsPerSecond = words.length / audioDuration;
-      const intervalMs = 1000 / wordsPerSecond;
+      // Estimate ~2.5 words per second for natural speech - start immediately
+      const estimatedWordsPerSecond = 2.5;
+      let intervalMs = 1000 / estimatedWordsPerSecond;
       
       let wordIndex = 0;
-      const textInterval = setInterval(() => {
+      let textIntervalId: NodeJS.Timeout | null = null;
+      
+      // Start text streaming immediately with estimated timing
+      textIntervalId = setInterval(() => {
         if (wordIndex < words.length) {
           setStreamingText(prev => prev + (prev ? " " : "") + words[wordIndex]);
           wordIndex++;
-        } else {
-          clearInterval(textInterval);
+        } else if (textIntervalId) {
+          clearInterval(textIntervalId);
         }
       }, intervalMs);
       
+      // Adjust timing once we have actual duration (non-blocking)
+      audioRef.current.onloadedmetadata = () => {
+        if (audioRef.current && audioRef.current.duration > 0) {
+          const actualDuration = audioRef.current.duration;
+          const remainingWords = words.length - wordIndex;
+          if (remainingWords > 0) {
+            const remainingTime = actualDuration - (wordIndex / estimatedWordsPerSecond);
+            if (remainingTime > 0 && textIntervalId) {
+              clearInterval(textIntervalId);
+              const adjustedInterval = (remainingTime * 1000) / remainingWords;
+              textIntervalId = setInterval(() => {
+                if (wordIndex < words.length) {
+                  setStreamingText(prev => prev + (prev ? " " : "") + words[wordIndex]);
+                  wordIndex++;
+                } else if (textIntervalId) {
+                  clearInterval(textIntervalId);
+                }
+              }, adjustedInterval);
+            }
+          }
+        }
+      };
+      
       audioRef.current.onended = () => {
-        clearInterval(textInterval);
+        if (textIntervalId) clearInterval(textIntervalId);
         setStreamingText(text);
         setIsSpeaking(false);
         isSpeakingRef.current = false;
         setIsStreaming(false);
         URL.revokeObjectURL(audioUrl);
         if (micActiveRef.current) {
-          setTimeout(() => startContinuousListening(), 500);
+          setTimeout(() => startContinuousListening(), 300);
         }
       };
       audioRef.current.onerror = () => {
-        clearInterval(textInterval);
+        if (textIntervalId) clearInterval(textIntervalId);
         setIsSpeaking(false);
         setIsStreaming(false);
         URL.revokeObjectURL(audioUrl);
       };
+      
+      // Start playing immediately - don't wait for duration calculation
       await audioRef.current.play();
     } catch (error) {
       console.error("Speech error:", error);
       setIsSpeaking(false);
       setIsStreaming(false);
     }
-  };
-  
-  const getAudioDuration = (url: string): Promise<number> => {
-    return new Promise((resolve) => {
-      const audio = new Audio(url);
-      audio.addEventListener('loadedmetadata', () => {
-        resolve(audio.duration || 3);
-      });
-      audio.addEventListener('error', () => {
-        resolve(3);
-      });
-    });
   };
 
   const resetSilenceTimer = () => {
