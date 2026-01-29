@@ -23,7 +23,8 @@ export function registerAudioRoutes(app: Express): void {
   // Get single voice conversation with messages
   app.get("/api/voice/conversations/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const idParam = req.params.id;
+      const id = parseInt(typeof idParam === 'string' ? idParam : String(idParam));
       const conversation = await chatStorage.getConversation(id);
       if (!conversation) {
         return res.status(404).json({ error: "Voice conversation not found" });
@@ -51,7 +52,8 @@ export function registerAudioRoutes(app: Express): void {
   // Delete voice conversation
   app.delete("/api/voice/conversations/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const idParam = req.params.id;
+      const id = parseInt(typeof idParam === 'string' ? idParam : String(idParam));
       await chatStorage.deleteConversation(id);
       res.status(204).send();
     } catch (error) {
@@ -65,7 +67,8 @@ export function registerAudioRoutes(app: Express): void {
   // Uses gpt-4o-mini-transcribe for STT, gpt-audio for voice response
   app.post("/api/voice/conversations/:id/messages", audioBodyParser, async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.id);
+      const idParam = req.params.id;
+      const conversationId = parseInt(typeof idParam === 'string' ? idParam : String(idParam));
       const { audio, voice = "nova" } = req.body; // "nova" = sweet natural female voice for CYRUS
 
       if (!audio) {

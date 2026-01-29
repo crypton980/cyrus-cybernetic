@@ -126,7 +126,7 @@ export class AlpacaClient {
     this.dataUrl = 'https://data.alpaca.markets';
   }
 
-  private getHeaders(): HeadersInit {
+  private getHeaders(): Record<string, string> {
     return {
       'APCA-API-KEY-ID': this.apiKey,
       'APCA-API-SECRET-KEY': this.secretKey,
@@ -142,16 +142,16 @@ export class AlpacaClient {
       ...options,
       headers: {
         ...this.getHeaders(),
-        ...options.headers
+        ...(options.headers as Record<string, string>)
       }
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: response.statusText }));
-      throw new Error(`Alpaca API Error: ${error.message || response.statusText}`);
+      const errorData = await response.json().catch(() => ({ message: response.statusText })) as { message?: string };
+      throw new Error(`Alpaca API Error: ${errorData.message || response.statusText}`);
     }
 
-    return response.json();
+    return response.json() as Promise<T>;
   }
 
   // Account Endpoints
