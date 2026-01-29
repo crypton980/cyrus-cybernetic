@@ -367,7 +367,7 @@ export function Dashboard() {
   return (
     <div className="h-full flex flex-col lg:flex-row overflow-hidden">
       {/* Main Chat Panel */}
-      <div className="flex-1 flex flex-col min-w-0 bg-black">
+      <div className="flex-1 flex flex-col min-w-0 bg-black overflow-hidden">
         {/* Panel Header */}
         <div className="px-5 py-4 border-b border-[rgba(84,84,88,0.65)] flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -387,8 +387,8 @@ export function Dashboard() {
           </button>
         </div>
 
-        {/* Messages Display */}
-        <div className="flex-1 overflow-auto p-5">
+        {/* Messages Display - Independent Scrollable Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 scrollbar-thin scrollbar-thumb-[#3a3a3c] scrollbar-track-transparent hover:scrollbar-thumb-[#48484a]" style={{ scrollBehavior: 'smooth' }}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-8 h-8 text-[#0a84ff] animate-spin" />

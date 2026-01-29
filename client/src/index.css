@@ -78,4 +78,37 @@
   .glass-panel-premium {
     @apply bg-[#12121a]/85 backdrop-blur-xl border border-white/[0.08] shadow-2xl;
   }
+
+  /* Custom Scrollbar Styles */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3c transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #3a3a3c;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #48484a;
+  }
+
+  .scrollbar-thumb-\[\#3a3a3c\]::-webkit-scrollbar-thumb {
+    background: #3a3a3c;
+  }
+
+  .hover\:scrollbar-thumb-\[\#48484a\]:hover::-webkit-scrollbar-thumb {
+    background: #48484a;
+  }
 }
