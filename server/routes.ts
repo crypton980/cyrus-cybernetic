@@ -10,7 +10,7 @@ import { cyrusSoul } from "./ai/cyrus-soul";
 import { quantumCore } from "./ai/quantum-core";
 import { domainSummary, allBranches } from "./ai/branches/index";
 import { registerAudioRoutes } from "./replit_integrations/audio/routes";
-import { textToSpeech, speechToText, ensureCompatibleFormat } from "./replit_integrations/audio/client";
+import { textToSpeech, textToSpeechStream, speechToText, ensureCompatibleFormat } from "./replit_integrations/audio/client";
 import { createAlpacaClient, AlpacaClient } from "./trading/alpaca-client";
 import OpenAI from "openai";
 import { z } from "zod";
@@ -846,6 +846,42 @@ If you detect a command that requires physical device interaction, inform the op
     } catch (error) {
       console.error("Error in CYRUS TTS:", error);
       res.status(500).json({ error: "Failed to generate speech" });
+    }
+  });
+
+  // CYRUS Streaming Text-to-Speech endpoint - faster first-byte response
+  app.post("/api/cyrus/speak/stream", async (req, res) => {
+    try {
+      const { text, voice = "nova" } = req.body;
+      
+      if (!text || typeof text !== "string") {
+        return res.status(400).json({ error: "Text is required" });
+      }
+
+      // Set up SSE for streaming audio chunks (PCM16 format)
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const audioStream = await textToSpeechStream(
+        text,
+        voice as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
+      );
+
+      for await (const chunk of audioStream) {
+        res.write(`data: ${JSON.stringify({ audio: chunk })}\n\n`);
+      }
+
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error) {
+      console.error("Error in CYRUS streaming TTS:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Failed to generate speech" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate speech" });
+      }
     }
   });
 

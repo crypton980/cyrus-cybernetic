@@ -62,84 +62,106 @@ export function Dashboard() {
       setIsStreaming(true);
       setStreamingText("");
       
-      const response = await fetch("/api/cyrus/speak", {
+      const words = text.split(/\s+/);
+      let wordIndex = 0;
+      
+      // Start text streaming immediately
+      const textIntervalId = setInterval(() => {
+        if (wordIndex < words.length) {
+          setStreamingText(prev => prev + (prev ? " " : "") + words[wordIndex]);
+          wordIndex++;
+        } else {
+          clearInterval(textIntervalId);
+        }
+      }, 400); // ~2.5 words/sec
+
+      // Use streaming TTS for faster first-byte response
+      const response = await fetch("/api/cyrus/speak/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, voice: "nova" }),
       });
-      
-      if (!response.ok) throw new Error("Failed to generate speech");
-      
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      if (audioRef.current) {
-        audioRef.current.pause();
+
+      if (!response.ok) {
+        clearInterval(textIntervalId);
+        throw new Error("Failed to generate speech");
       }
+
+      // Set up Web Audio API for streaming PCM16 playback
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const sampleRate = 24000; // OpenAI TTS uses 24kHz
+      const audioChunks: Float32Array[] = [];
       
-      audioRef.current = new Audio(audioUrl);
-      
-      const words = text.split(/\s+/);
-      // Estimate ~2.5 words per second for natural speech - start immediately
-      const estimatedWordsPerSecond = 2.5;
-      let intervalMs = 1000 / estimatedWordsPerSecond;
-      
-      let wordIndex = 0;
-      let textIntervalId: NodeJS.Timeout | null = null;
-      
-      // Start text streaming immediately with estimated timing
-      textIntervalId = setInterval(() => {
-        if (wordIndex < words.length) {
-          setStreamingText(prev => prev + (prev ? " " : "") + words[wordIndex]);
-          wordIndex++;
-        } else if (textIntervalId) {
-          clearInterval(textIntervalId);
-        }
-      }, intervalMs);
-      
-      // Adjust timing once we have actual duration (non-blocking)
-      audioRef.current.onloadedmetadata = () => {
-        if (audioRef.current && audioRef.current.duration > 0) {
-          const actualDuration = audioRef.current.duration;
-          const remainingWords = words.length - wordIndex;
-          if (remainingWords > 0) {
-            const remainingTime = actualDuration - (wordIndex / estimatedWordsPerSecond);
-            if (remainingTime > 0 && textIntervalId) {
-              clearInterval(textIntervalId);
-              const adjustedInterval = (remainingTime * 1000) / remainingWords;
-              textIntervalId = setInterval(() => {
-                if (wordIndex < words.length) {
-                  setStreamingText(prev => prev + (prev ? " " : "") + words[wordIndex]);
-                  wordIndex++;
-                } else if (textIntervalId) {
-                  clearInterval(textIntervalId);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.audio) {
+                  // Convert base64 PCM16 to Float32
+                  const pcm16 = new Int16Array(
+                    Uint8Array.from(atob(data.audio), c => c.charCodeAt(0)).buffer
+                  );
+                  const float32 = new Float32Array(pcm16.length);
+                  for (let i = 0; i < pcm16.length; i++) {
+                    float32[i] = pcm16[i] / 32768.0;
+                  }
+                  audioChunks.push(float32);
                 }
-              }, adjustedInterval);
+              } catch {}
             }
           }
         }
-      };
-      
-      audioRef.current.onended = () => {
-        if (textIntervalId) clearInterval(textIntervalId);
+      }
+
+      // Play concatenated audio
+      if (audioChunks.length > 0) {
+        const totalLength = audioChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+        const audioBuffer = audioContext.createBuffer(1, totalLength, sampleRate);
+        const channelData = audioBuffer.getChannelData(0);
+        let offset = 0;
+        for (const chunk of audioChunks) {
+          channelData.set(chunk, offset);
+          offset += chunk.length;
+        }
+
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        source.onended = () => {
+          clearInterval(textIntervalId);
+          setStreamingText(text);
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+          setIsStreaming(false);
+          audioContext.close();
+          if (micActiveRef.current) {
+            setTimeout(() => startContinuousListening(), 100);
+          }
+        };
+        source.start();
+      } else {
+        clearInterval(textIntervalId);
         setStreamingText(text);
         setIsSpeaking(false);
         isSpeakingRef.current = false;
         setIsStreaming(false);
-        URL.revokeObjectURL(audioUrl);
         if (micActiveRef.current) {
-          setTimeout(() => startContinuousListening(), 300);
+          setTimeout(() => startContinuousListening(), 100);
         }
-      };
-      audioRef.current.onerror = () => {
-        if (textIntervalId) clearInterval(textIntervalId);
-        setIsSpeaking(false);
-        setIsStreaming(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-      
-      // Start playing immediately - don't wait for duration calculation
-      await audioRef.current.play();
+      }
     } catch (error) {
       console.error("Speech error:", error);
       setIsSpeaking(false);
@@ -155,7 +177,7 @@ export function Dashboard() {
       if (currentTranscriptRef.current.trim() && recognitionRef.current) {
         recognitionRef.current.stop();
       }
-    }, 4000);
+    }, 1500); // Reduced from 4s to 1.5s for faster response
   };
 
   const startContinuousListening = () => {
@@ -205,14 +227,14 @@ export function Dashboard() {
       if (finalTranscript && micActiveRef.current) {
         handleVoiceSubmit(finalTranscript);
       } else if (micActiveRef.current && !isSpeakingRef.current) {
-        setTimeout(() => startContinuousListening(), 300);
+        setTimeout(() => startContinuousListening(), 100); // Faster restart
       }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Speech recognition error:", event.error);
       if (event.error === 'no-speech' && micActiveRef.current) {
-        setTimeout(() => startContinuousListening(), 300);
+        setTimeout(() => startContinuousListening(), 100); // Faster restart on no-speech
       } else if (event.error !== 'aborted') {
         setIsListening(false);
       }
