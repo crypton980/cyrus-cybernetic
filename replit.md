@@ -19,7 +19,17 @@ The user prefers the AI to act as a persistent, mission-grade assistant.
 CYRUS features a full-stack architecture. The frontend is built with React and TypeScript, leveraging TanStack Query for data fetching, Wouter for routing, TensorFlow.js for client-side ML, and shadcn/ui for components. The backend uses Express.js, connects to a PostgreSQL database (Neon-backed) via Drizzle ORM, and handles file uploads with Multer.
 
 **UI/UX Decisions:**
-The UI features a professional multi-pane Control Panel with a black gradient background and glass-morphism effects. It includes an instructional panel, a command interface, a research and results viewer, and a file interaction workspace. There are three view modes (Compact tabbed, Split side-by-side, Full all panels) and multi-modal input support (microphone, camera, text). Action buttons are rounded with gradient backgrounds, and the chat interface has a modern design with blue user bubbles and glass-effect messages for CYRUS. A professional sidebar facilitates navigation, and a system status panel provides real-time module status.
+The UI features a premium aerospace-grade design inspired by SpaceX Mission Control, Apple Human Interface Guidelines, and Lockheed Martin avionics systems. Key design elements include:
+
+- **Premium Color System**: Deep space black backgrounds (#0a0a0f to #12121a) with cyan (#00d4ff) and purple (#7c3aed) accent gradients
+- **Glass-Morphism 2.0**: Ultra-refined backdrop blur (20-40px) with subtle white/8% borders creating depth without distraction
+- **Typography**: Inter font family with JetBrains Mono for telemetry data, using strict hierarchy with tracking and weight variations
+- **Status Indicators**: Aerospace-standard color coding (Emerald=operational, Amber=standby, Red=warning) with animated pulse/ping effects
+- **Panel Architecture**: Multi-pane layout with Telemetry Dashboard, Command Interface, Research Portal, and File Workspace
+- **Real-Time Elements**: Live clock, core utilization meters, and system module status grid with animated progress bars
+- **Ambient Lighting**: Subtle gradient blurs in background creating depth perception and visual hierarchy
+- **Premium Animations**: Smooth 150-400ms transitions, hover scaling, and staggered fade-in effects
+- **Responsive Sidebar**: Collapsible navigation with gradient-highlighted active states and chevron indicators
 
 **Technical Implementations & Feature Specifications:**
 - **Core QAI Intelligence:** Quantum-Enhanced Parallel Cognition, 86-Branch Neural Fusion Processing, Real-Time Consciousness Simulation, Metacognitive Self-Awareness, Autonomous Goal Formation, Human-Like Emotional Intelligence.

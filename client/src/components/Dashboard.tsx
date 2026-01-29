@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { LucideIcon } from "lucide-react";
 import {
   Send,
   Bot,
@@ -39,6 +40,10 @@ import {
   Share2,
   Mail,
   MessageCircle,
+  Radio,
+  Hexagon,
+  Satellite,
+  Eye,
 } from "lucide-react";
 
 interface Message {
@@ -52,6 +57,7 @@ interface SystemStatus {
   name: string;
   status: "online" | "standby" | "offline";
   load: number;
+  icon: LucideIcon;
 }
 
 type PanelView = "full" | "split" | "compact";
@@ -65,37 +71,13 @@ export function Dashboard() {
   const [researchQuery, setResearchQuery] = useState("");
   const [researchResults, setResearchResults] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, size: string, type: string}[]>([]);
-  const [instructionExpanded, setInstructionExpanded] = useState(true);
+  const [instructionExpanded, setInstructionExpanded] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-
-  const shareOptions = [
-    { name: "WhatsApp", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.svg", color: "bg-green-500", url: "https://wa.me/?text=" },
-    { name: "Facebook", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg", color: "bg-blue-600", url: "https://www.facebook.com/sharer/sharer.php?u=" },
-    { name: "Twitter", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg", color: "bg-black", url: "https://twitter.com/intent/tweet?text=" },
-    { name: "Instagram", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg", color: "bg-gradient-to-br from-purple-600 to-pink-500", url: "" },
-    { name: "Email", icon: null, color: "bg-gray-600", url: "mailto:?subject=CYRUS Chat&body=" },
-    { name: "Copy Link", icon: null, color: "bg-gray-700", url: "" },
-  ];
-
-  const systemModules: SystemStatus[] = [
-    { name: "Quantum Core", status: "online", load: 87 },
-    { name: "Neural Network", status: "online", load: 92 },
-    { name: "Vision System", status: micActive ? "online" : "standby", load: micActive ? 65 : 0 },
-    { name: "Voice Engine", status: cameraActive ? "online" : "standby", load: cameraActive ? 72 : 0 },
-    { name: "Security", status: "online", load: 45 },
-    { name: "Memory Bank", status: "online", load: 68 },
-  ];
-
-  const instructions = [
-    "Type commands or questions in the input field below",
-    "Use voice input by clicking the microphone button",
-    "Enable camera for visual analysis tasks",
-    "Upload files for analysis using the File Workspace",
-    "Access specialized modules via the sidebar navigation",
-  ];
 
   const { data: messages = [], isLoading } = useQuery<Message[]>({
     queryKey: ["/api/conversations"],
@@ -144,6 +126,24 @@ export function Dashboard() {
     },
   });
 
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, sendMessage.isPending]);
+
+  const systemModules: SystemStatus[] = [
+    { name: "Quantum Core", status: "online", load: 87, icon: Hexagon },
+    { name: "Neural Fusion", status: "online", load: 92, icon: Brain },
+    { name: "Vision Array", status: cameraActive ? "online" : "standby", load: cameraActive ? 65 : 0, icon: Eye },
+    { name: "Audio Engine", status: micActive ? "online" : "standby", load: micActive ? 72 : 0, icon: Volume2 },
+    { name: "Security Grid", status: "online", load: 45, icon: Shield },
+    { name: "Memory Bank", status: "online", load: 68, icon: Cpu },
+  ];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !sendMessage.isPending) {
@@ -180,20 +180,27 @@ export function Dashboard() {
     }
   };
 
-  const handleShare = (option: typeof shareOptions[0]) => {
+  const handleShare = (platform: string) => {
     const chatText = sortedMessages.map(m => 
       `${m.role === 'user' ? 'You' : 'CYRUS'}: ${m.content}`
     ).join('\n\n');
     
-    if (option.name === 'Copy Link') {
+    if (platform === 'copy') {
       navigator.clipboard.writeText(chatText);
       setShareMenuOpen(false);
       return;
     }
     
-    if (option.url) {
-      const encodedText = encodeURIComponent(chatText.slice(0, 500) + (chatText.length > 500 ? '...' : ''));
-      window.open(option.url + encodedText, '_blank');
+    const encodedText = encodeURIComponent(chatText.slice(0, 500));
+    const urls: Record<string, string> = {
+      whatsapp: `https://wa.me/?text=${encodedText}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?quote=${encodedText}`,
+      twitter: `https://twitter.com/intent/tweet?text=${encodedText}`,
+      email: `mailto:?subject=CYRUS Chat&body=${encodedText}`,
+    };
+    
+    if (urls[platform]) {
+      window.open(urls[platform], '_blank');
     }
     setShareMenuOpen(false);
   };
@@ -209,7 +216,7 @@ export function Dashboard() {
       setResearchResults(prev => [
         `Analyzing: "${researchQuery}"`,
         "Processing through 86 cognitive branches...",
-        "Results will appear in the Research Viewer",
+        "Cross-referencing quantum knowledge base...",
         ...prev
       ]);
       setResearchQuery("");
@@ -222,575 +229,380 @@ export function Dashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "online": return "bg-green-500";
-      case "standby": return "bg-yellow-500";
+      case "online": return "bg-emerald-500";
+      case "standby": return "bg-amber-500";
       default: return "bg-red-500";
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusGlow = (status: string) => {
     switch (status) {
-      case "online": return <CheckCircle className="w-3 h-3" />;
-      case "standby": return <Clock className="w-3 h-3" />;
-      default: return <AlertTriangle className="w-3 h-3" />;
+      case "online": return "shadow-emerald-500/50";
+      case "standby": return "shadow-amber-500/50";
+      default: return "shadow-red-500/50";
     }
   };
 
-  const renderChatPanel = () => (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gray-900/30 rounded-xl border border-gray-800/50">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800/50">
-        <div className="flex items-center gap-2">
-          <Bot className="w-5 h-5 text-blue-400" />
-          <h3 className="font-semibold text-sm">Command Interface</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => clearHistory.mutate()}
-            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-            title="Clear history"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-auto p-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          </div>
-        ) : sortedMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <Brain className="w-12 h-12 text-blue-400/50 mb-3" />
-            <p className="text-gray-400 text-sm">Ready for commands</p>
-            <p className="text-gray-600 text-xs mt-1">Created by Obakeng Kaelo</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {sortedMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                {msg.role === "cyrus" && (
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                <div
-                  className={`max-w-[80%] rounded-xl px-4 py-2.5 ${
-                    msg.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-800/60 border border-gray-700/50 text-gray-100"
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
-                  <p className={`text-[10px] mt-1.5 ${msg.role === "user" ? "text-blue-200" : "text-gray-500"}`}>
-                    {new Date(msg.createdAt).toLocaleTimeString()}
-                  </p>
-                </div>
-                {msg.role === "user" && (
-                  <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-gray-300" />
-                  </div>
-                )}
-              </div>
-            ))}
-            {sendMessage.isPending && (
-              <div className="flex gap-2 justify-start">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-                <div className="bg-gray-800/60 border border-gray-700/50 rounded-xl px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                    <span className="text-gray-400 text-xs">Processing...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderResearchPanel = () => (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gray-900/30 rounded-xl border border-gray-800/50">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800/50">
-        <div className="flex items-center gap-2">
-          <Search className="w-5 h-5 text-purple-400" />
-          <h3 className="font-semibold text-sm">Research & Results Viewer</h3>
-        </div>
-        <span className="text-xs text-gray-500">{researchResults.length} results</span>
-      </div>
-      
-      <div className="p-3 border-b border-gray-800/50">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={researchQuery}
-            onChange={(e) => setResearchQuery(e.target.value)}
-            placeholder="Enter research query..."
-            className="flex-1 bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50"
-            onKeyDown={(e) => e.key === 'Enter' && handleResearch()}
-          />
-          <button
-            onClick={handleResearch}
-            className="px-3 py-2 bg-purple-600/80 hover:bg-purple-600 rounded-lg transition-colors"
-          >
-            <Search className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-auto p-3">
-        {researchResults.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <Target className="w-10 h-10 text-purple-400/50 mb-3" />
-            <p className="text-gray-400 text-sm">No research results yet</p>
-            <p className="text-gray-600 text-xs mt-1">Enter a query to begin analysis</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {researchResults.map((result, i) => (
-              <div key={i} className="p-3 bg-gray-800/40 border border-gray-700/30 rounded-lg">
-                <p className="text-sm text-gray-300">{result}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderFilePanel = () => (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gray-900/30 rounded-xl border border-gray-800/50">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800/50">
-        <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-cyan-400" />
-          <h3 className="font-semibold text-sm">File Interaction Workspace</h3>
-        </div>
-        <span className="text-xs text-gray-500">{uploadedFiles.length} files</span>
-      </div>
-      
-      <div className="p-3 border-b border-gray-800/50">
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-          multiple
-          className="hidden"
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-700/50 hover:border-cyan-500/50 rounded-lg text-gray-400 hover:text-cyan-400 transition-colors"
-        >
-          <Upload className="w-5 h-5" />
-          <span className="text-sm">Upload files for analysis</span>
-        </button>
-      </div>
-      
-      <div className="flex-1 overflow-auto p-3">
-        {uploadedFiles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <FileText className="w-10 h-10 text-cyan-400/50 mb-3" />
-            <p className="text-gray-400 text-sm">No files uploaded</p>
-            <p className="text-gray-600 text-xs mt-1">Upload documents, images, or data files</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {uploadedFiles.map((file, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-gray-800/40 border border-gray-700/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-cyan-400" />
-                  <div>
-                    <p className="text-sm text-gray-200">{file.name}</p>
-                    <p className="text-xs text-gray-500">{file.size}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button className="p-1.5 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all">
-                    <Sparkles className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setUploadedFiles(prev => prev.filter((_, idx) => idx !== i))}
-                    className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      <div className="p-3 border-t border-gray-800/50">
-        <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-2 p-2 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 rounded-lg text-cyan-400 text-sm transition-colors">
-            <Sparkles className="w-4 h-4" />
-            Analyze All
-          </button>
-          <button className="flex items-center justify-center gap-2 p-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg text-blue-400 text-sm transition-colors">
-            <Download className="w-4 h-4" />
-            Generate Report
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      <header className="border-b border-gray-800/50 bg-black/40 backdrop-blur-xl">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Bot className="w-7 h-7 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black animate-pulse" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                CYRUS v3.0
-              </h1>
-              <p className="text-xs text-gray-400 flex items-center gap-2">
-                <Zap className="w-3 h-3 text-yellow-500" />
-                OMEGA-TIER Quantum Artificial Intelligence
-              </p>
-            </div>
+    <div className="h-full flex flex-col overflow-hidden p-4 lg:p-6">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 overflow-hidden">
+        <div className="lg:col-span-3 flex flex-col overflow-hidden gap-4 lg:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+            {systemModules.map((module, index) => {
+              const Icon = module.icon;
+              return (
+                <div
+                  key={module.name}
+                  className="p-3 rounded-xl border border-white/[0.06] hover:border-white/[0.1] transition-all group"
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.8) 0%, rgba(12, 12, 18, 0.8) 100%)',
+                    animationDelay: `${index * 100}ms`
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-2 h-2 rounded-full ${getStatusColor(module.status)} shadow-lg ${getStatusGlow(module.status)}`}>
+                      {module.status === 'online' && (
+                        <div className={`absolute inset-0 rounded-full ${getStatusColor(module.status)} animate-ping opacity-75`} />
+                      )}
+                    </div>
+                    <Icon className="w-3.5 h-3.5 text-white/40" />
+                  </div>
+                  <p className="text-[10px] font-medium text-white/50 uppercase tracking-wider truncate">{module.name}</p>
+                  <div className="mt-2 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        module.status === 'online' ? 'bg-gradient-to-r from-cyan-500 to-emerald-500' :
+                        module.status === 'standby' ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
+                        'bg-gradient-to-r from-red-500 to-rose-500'
+                      }`}
+                      style={{ width: `${module.load}%` }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-white/30 mt-1 font-mono">{module.load}% UTIL</p>
+                </div>
+              );
+            })}
           </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-gray-800/40 border border-gray-700/30 rounded-xl">
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <Cpu className="w-3 h-3" />
-                <span>86 Branches</span>
+
+          <div className="flex-1 flex flex-col overflow-hidden rounded-2xl border border-white/[0.06]" style={{ background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.9) 100%)', backdropFilter: 'blur(20px)' }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-xl blur-lg opacity-40" />
+                  <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600">
+                    <MessageCircle className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white/90">Command Interface</h3>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider">Neural Link Active</p>
+                </div>
               </div>
-              <div className="w-px h-4 bg-gray-700" />
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <Brain className="w-3 h-3" />
-                <span>3655 Paths</span>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <button
+                    onClick={() => setShareMenuOpen(!shareMenuOpen)}
+                    className="p-2 text-white/40 hover:text-white hover:bg-white/[0.05] rounded-lg transition-all"
+                    title="Share"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                  {shareMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 py-2 rounded-xl border border-white/[0.08] shadow-2xl z-50" style={{ background: 'rgba(18, 18, 26, 0.98)', backdropFilter: 'blur(20px)' }}>
+                      {['whatsapp', 'facebook', 'twitter', 'email', 'copy'].map((platform) => (
+                        <button
+                          key={platform}
+                          onClick={() => handleShare(platform)}
+                          className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/[0.05] transition-all flex items-center gap-3 capitalize"
+                        >
+                          {platform === 'copy' ? <Copy className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                          {platform === 'copy' ? 'Copy to Clipboard' : platform}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => clearHistory.mutate()}
+                  className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                  title="Clear history"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
             
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-xs text-green-400 font-medium">OPERATIONAL</span>
-            </div>
-
-            <div className="flex items-center gap-1 bg-gray-800/40 border border-gray-700/30 rounded-lg p-1">
-              <button
-                onClick={() => setPanelView("compact")}
-                className={`p-1.5 rounded-md transition-all ${panelView === "compact" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
-                title="Compact view"
-              >
-                <Minimize2 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPanelView("split")}
-                className={`p-1.5 rounded-md transition-all ${panelView === "split" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
-                title="Split view"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPanelView("full")}
-                className={`p-1.5 rounded-md transition-all ${panelView === "full" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
-                title="Full view"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex-1 flex overflow-hidden">
-        <main className="flex-1 flex flex-col min-w-0 p-4 gap-4">
-          <div
-            className={`bg-gray-900/30 rounded-xl border border-gray-800/50 overflow-hidden transition-all ${
-              instructionExpanded ? "p-4" : "p-3"
-            }`}
-          >
-            <div
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => setInstructionExpanded(!instructionExpanded)}
-            >
-              <div className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-yellow-400" />
-                <h3 className="font-semibold text-sm">Instructional Panel</h3>
-                <span className="text-xs text-gray-500">Real-time guidance</span>
-              </div>
-              <button className="p-1 text-gray-500 hover:text-white transition-colors">
-                {instructionExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-            </div>
-            {instructionExpanded && (
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
-                {instructions.map((instruction, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 bg-gray-800/30 border border-gray-700/20 rounded-lg">
-                    <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center text-xs text-blue-400 flex-shrink-0">
-                      {i + 1}
+            <div className="flex-1 overflow-auto p-5">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="relative">
+                    <Loader2 className="w-10 h-10 animate-spin text-cyan-500" />
+                    <div className="absolute inset-0 animate-ping opacity-30">
+                      <Loader2 className="w-10 h-10 text-cyan-500" />
                     </div>
-                    <p className="text-xs text-gray-400">{instruction}</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ) : sortedMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-3xl blur-2xl opacity-20" />
+                    <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-cyan-500/20 to-purple-600/20 border border-white/[0.1] flex items-center justify-center">
+                      <Hexagon className="w-10 h-10 text-cyan-400" strokeWidth={1} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white/90 mb-2">CYRUS Ready</h3>
+                  <p className="text-white/40 text-sm max-w-md">
+                    Quantum Intelligence System initialized. 86 cognitive branches online.
+                  </p>
+                  <p className="text-white/20 text-xs mt-4">
+                    Architect: Obakeng Kaelo
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sortedMessages.map((msg, index) => (
+                    <div
+                      key={msg.id}
+                      className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {msg.role === "cyrus" && (
+                        <div className="relative flex-shrink-0">
+                          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-xl blur-lg opacity-40" />
+                          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+                            <Hexagon className="w-5 h-5 text-white" strokeWidth={1.5} />
+                          </div>
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-5 py-3.5 ${
+                          msg.role === "user"
+                            ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/20"
+                            : "bg-white/[0.03] border border-white/[0.08] text-white/90"
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
+                        <p className={`text-[10px] mt-2 font-mono ${msg.role === "user" ? "text-cyan-200/70" : "text-white/30"}`}>
+                          {new Date(msg.createdAt).toLocaleTimeString('en-US', { hour12: false })}
+                        </p>
+                      </div>
+                      {msg.role === "user" && (
+                        <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center flex-shrink-0">
+                          <User className="w-5 h-5 text-white/60" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {sendMessage.isPending && (
+                    <div className="flex gap-3 justify-start">
+                      <div className="relative flex-shrink-0">
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-xl blur-lg opacity-40 animate-pulse" />
+                        <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+                          <Hexagon className="w-5 h-5 text-white animate-pulse" strokeWidth={1.5} />
+                        </div>
+                      </div>
+                      <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                          <span className="text-white/40 text-xs">Processing quantum inference...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+              )}
+            </div>
 
-          {panelView === "compact" && (
-            <div className="flex gap-2 mb-2">
-              {["chat", "research", "files"].map((panel) => (
+            <form onSubmit={handleSubmit} className="p-4 border-t border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  ref={chatFileInputRef}
+                  onChange={handleChatFileUpload}
+                  className="hidden"
+                  accept="image/*,audio/*,.pdf,.doc,.docx,.txt"
+                />
                 <button
-                  key={panel}
-                  onClick={() => setActivePanel(panel as any)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    activePanel === panel
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-800/40 text-gray-400 hover:text-white"
+                  type="button"
+                  onClick={() => chatFileInputRef.current?.click()}
+                  className="p-3 text-white/40 hover:text-white hover:bg-white/[0.05] rounded-xl transition-all"
+                >
+                  <Paperclip className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMicActive(!micActive)}
+                  className={`p-3 rounded-xl transition-all ${
+                    micActive 
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/30" 
+                      : "text-white/40 hover:text-white hover:bg-white/[0.05]"
                   }`}
                 >
-                  {panel === "chat" ? "Commands" : panel === "research" ? "Research" : "Files"}
+                  {micActive ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                 </button>
-              ))}
-            </div>
-          )}
-
-          <div className={`flex-1 flex gap-4 overflow-hidden ${panelView === "full" ? "flex-col" : ""}`}>
-            {panelView === "compact" ? (
-              activePanel === "chat" ? renderChatPanel() :
-              activePanel === "research" ? renderResearchPanel() :
-              renderFilePanel()
-            ) : panelView === "split" ? (
-              <>
-                <div className="flex-1 flex flex-col overflow-hidden">
-                  {renderChatPanel()}
-                </div>
-                <div className="hidden lg:flex flex-col w-80 gap-4 overflow-hidden">
-                  <div className="flex-1 overflow-hidden">
-                    {renderResearchPanel()}
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    {renderFilePanel()}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                {renderChatPanel()}
-                {renderResearchPanel()}
-                {renderFilePanel()}
-              </>
-            )}
-          </div>
-
-          <footer className="border-t border-gray-800/50 bg-black/40 backdrop-blur-xl rounded-xl p-4">
-            <input
-              type="file"
-              ref={chatFileInputRef}
-              onChange={handleChatFileUpload}
-              className="hidden"
-              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
-            />
-            <form onSubmit={handleSubmit}>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setMicActive(!micActive)}
-                    className={`p-3 rounded-xl transition-all ${
-                      micActive
-                        ? "bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse"
-                        : "bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50"
-                    }`}
-                    title={micActive ? "Stop listening" : "Start listening"}
-                  >
-                    {micActive ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => chatFileInputRef.current?.click()}
-                    className="p-3 rounded-xl bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50 transition-all"
-                    title="Attach file"
-                  >
-                    <Paperclip className="w-5 h-5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCameraActive(!cameraActive)}
-                    className={`p-3 rounded-xl transition-all ${
-                      cameraActive
-                        ? "bg-green-500/20 text-green-400 border border-green-500/50"
-                        : "bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50"
-                    }`}
-                    title={cameraActive ? "Stop camera" : "Start camera"}
-                  >
-                    {cameraActive ? <CameraOff className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
-                  </button>
-                </div>
-
+                <button
+                  type="button"
+                  onClick={() => setCameraActive(!cameraActive)}
+                  className={`p-3 rounded-xl transition-all ${
+                    cameraActive 
+                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30" 
+                      : "text-white/40 hover:text-white hover:bg-white/[0.05]"
+                  }`}
+                >
+                  {cameraActive ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
+                </button>
                 <div className="flex-1 relative">
                   <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Enter command or message..."
-                    className="w-full bg-gray-800/50 border border-gray-700/50 rounded-xl px-5 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    placeholder="Enter command or query..."
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-3.5 text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 transition-all"
                     disabled={sendMessage.isPending}
                   />
                 </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    type="submit"
-                    disabled={!input.trim() || sendMessage.isPending}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed rounded-xl p-3.5 transition-all shadow-lg shadow-blue-500/20 disabled:shadow-none"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                  
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShareMenuOpen(!shareMenuOpen)}
-                      className="p-3 rounded-xl bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50 transition-all"
-                      title="Share chat"
-                    >
-                      <Share2 className="w-5 h-5" />
-                    </button>
-                    
-                    {shareMenuOpen && (
-                      <div className="absolute bottom-full right-0 mb-2 w-48 bg-gray-900 border border-gray-700/50 rounded-xl shadow-xl overflow-hidden z-50">
-                        <div className="p-2 border-b border-gray-800">
-                          <p className="text-xs text-gray-400 font-medium">Share chat via</p>
-                        </div>
-                        <div className="p-2 space-y-1">
-                          {shareOptions.map((option, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => handleShare(option)}
-                              className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-800 rounded-lg transition-colors text-left"
-                            >
-                              <div className={`w-8 h-8 rounded-lg ${option.color} flex items-center justify-center`}>
-                                {option.name === 'Email' ? (
-                                  <Mail className="w-4 h-4 text-white" />
-                                ) : option.name === 'Copy Link' ? (
-                                  <Copy className="w-4 h-4 text-white" />
-                                ) : (
-                                  <MessageCircle className="w-4 h-4 text-white" />
-                                )}
-                              </div>
-                              <span className="text-sm text-gray-300">{option.name}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => clearHistory.mutate()}
-                    className="p-3 rounded-xl bg-gray-800/50 text-gray-400 hover:text-red-400 hover:bg-red-500/10 border border-gray-700/50 transition-all"
-                    title="Clear chat"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center gap-6 mt-3 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <Activity className="w-3 h-3 text-green-400" /> System Active
-                </span>
-                <span className="flex items-center gap-1">
-                  <Volume2 className="w-3 h-3 text-purple-400" /> Nova Voice Ready
-                </span>
-                <span className="flex items-center gap-1">
-                  <Shield className="w-3 h-3 text-blue-400" /> Secure Mode
-                </span>
+                <button
+                  type="submit"
+                  disabled={!input.trim() || sendMessage.isPending}
+                  className="relative group p-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 rounded-xl overflow-hidden" />
+                  <Send className="w-5 h-5 relative" />
+                </button>
               </div>
             </form>
-          </footer>
-        </main>
-
-        <aside className="hidden xl:block w-72 border-l border-gray-800/50 bg-black/20 backdrop-blur-xl overflow-auto">
-          <div className="p-4 border-b border-gray-800/50">
-            <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-400" />
-              System Status
-            </h3>
           </div>
-          
-          <div className="p-4 space-y-3">
-            {systemModules.map((module, i) => (
-              <div
-                key={i}
-                className="bg-gray-800/30 border border-gray-700/30 rounded-lg p-3"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-300">{module.name}</span>
-                  <div className={`flex items-center gap-1 text-xs ${
-                    module.status === "online" ? "text-green-400" :
-                    module.status === "standby" ? "text-yellow-400" : "text-red-400"
-                  }`}>
-                    {getStatusIcon(module.status)}
-                    <span className="capitalize">{module.status}</span>
-                  </div>
-                </div>
-                {module.status === "online" && (
-                  <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        module.load > 80 ? "bg-gradient-to-r from-yellow-500 to-orange-500" :
-                        module.load > 50 ? "bg-gradient-to-r from-blue-500 to-cyan-500" :
-                        "bg-gradient-to-r from-green-500 to-emerald-500"
-                      }`}
-                      style={{ width: `${module.load}%` }}
-                    />
-                  </div>
-                )}
+        </div>
+
+        <div className="space-y-4 lg:space-y-6 overflow-auto">
+          <div className="rounded-2xl border border-white/[0.06] p-5" style={{ background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.9) 100%)', backdropFilter: 'blur(20px)' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/20">
+                <Search className="w-4 h-4 text-violet-400" />
               </div>
-            ))}
-          </div>
-
-          <div className="p-4 border-t border-gray-800/50">
-            <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-green-400" />
-              Quick Actions
-            </h3>
-            <div className="space-y-2">
-              <button className="w-full flex items-center gap-2 px-3 py-2 bg-gray-800/30 hover:bg-blue-500/10 border border-gray-700/30 hover:border-blue-500/30 rounded-lg text-sm text-gray-300 hover:text-blue-400 transition-all">
-                <FileText className="w-4 h-4" />
-                Generate Report
+              <h3 className="text-sm font-semibold text-white/90">Research Portal</h3>
+            </div>
+            
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={researchQuery}
+                onChange={(e) => setResearchQuery(e.target.value)}
+                placeholder="Query knowledge base..."
+                className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-violet-500/50 transition-all"
+                onKeyDown={(e) => e.key === 'Enter' && handleResearch()}
+              />
+              <button
+                onClick={handleResearch}
+                className="p-2.5 bg-gradient-to-r from-violet-500/20 to-purple-500/20 hover:from-violet-500/30 hover:to-purple-500/30 border border-violet-500/30 rounded-lg text-violet-400 transition-all"
+              >
+                <Search className="w-4 h-4" />
               </button>
-              <button className="w-full flex items-center gap-2 px-3 py-2 bg-gray-800/30 hover:bg-purple-500/10 border border-gray-700/30 hover:border-purple-500/30 rounded-lg text-sm text-gray-300 hover:text-purple-400 transition-all">
-                <Activity className="w-4 h-4" />
-                Start Analysis
-              </button>
-              <button className="w-full flex items-center gap-2 px-3 py-2 bg-gray-800/30 hover:bg-red-500/10 border border-gray-700/30 hover:border-red-500/30 rounded-lg text-sm text-gray-300 hover:text-red-400 transition-all">
-                <AlertTriangle className="w-4 h-4" />
-                Emergency Mode
-              </button>
+            </div>
+            
+            <div className="space-y-2 max-h-40 overflow-auto">
+              {researchResults.length === 0 ? (
+                <p className="text-xs text-white/30 text-center py-4">No queries yet</p>
+              ) : (
+                researchResults.map((result, i) => (
+                  <div key={i} className="p-3 bg-white/[0.02] border border-white/[0.04] rounded-lg text-xs text-white/60">
+                    {result}
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          <div className="p-4 border-t border-gray-800/50">
-            <div className="text-center">
-              <p className="text-xs text-gray-400">
-                Created by <span className="font-medium bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Obakeng Kaelo</span>
-              </p>
-              <p className="text-[10px] text-gray-600 mt-1">
-                Quantum Artificial Intelligence
-              </p>
+          <div className="rounded-2xl border border-white/[0.06] p-5" style={{ background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.9) 100%)', backdropFilter: 'blur(20px)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20">
+                  <FileText className="w-4 h-4 text-emerald-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-white/90">File Workspace</h3>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                multiple
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] rounded-lg text-white/50 hover:text-white transition-all"
+              >
+                <Upload className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="space-y-2 max-h-40 overflow-auto">
+              {uploadedFiles.length === 0 ? (
+                <div className="text-center py-6 border-2 border-dashed border-white/[0.06] rounded-xl">
+                  <Upload className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                  <p className="text-xs text-white/30">Drop files here</p>
+                </div>
+              ) : (
+                uploadedFiles.map((file, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-lg">
+                    <FileText className="w-4 h-4 text-emerald-400" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-white/70 truncate">{file.name}</p>
+                      <p className="text-[10px] text-white/30">{file.size}</p>
+                    </div>
+                    <button
+                      onClick={() => setUploadedFiles(prev => prev.filter((_, idx) => idx !== i))}
+                      className="p-1 text-white/30 hover:text-red-400 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-        </aside>
+
+          <div className="rounded-2xl border border-white/[0.06] p-5" style={{ background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.9) 100%)', backdropFilter: 'blur(20px)' }}>
+            <button
+              onClick={() => setInstructionExpanded(!instructionExpanded)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/20">
+                  <BookOpen className="w-4 h-4 text-amber-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-white/90">Quick Guide</h3>
+              </div>
+              {instructionExpanded ? (
+                <ChevronUp className="w-4 h-4 text-white/40" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-white/40" />
+              )}
+            </button>
+            
+            {instructionExpanded && (
+              <div className="mt-4 space-y-2">
+                {[
+                  { text: "Natural language commands", icon: MessageCircle },
+                  { text: "Voice input available", icon: Mic },
+                  { text: "Camera for vision tasks", icon: Camera },
+                  { text: "File upload & analysis", icon: FileText },
+                  { text: "Sidebar for modules", icon: LayoutGrid },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 p-2.5 bg-white/[0.02] rounded-lg">
+                    <item.icon className="w-3.5 h-3.5 text-amber-400/70" />
+                    <span className="text-xs text-white/50">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
