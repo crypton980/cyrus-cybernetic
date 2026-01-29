@@ -19,6 +19,9 @@ import {
   Cpu,
   Volume2,
   Eye,
+  Share2,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface DetectedObject {
@@ -47,6 +50,7 @@ export function Dashboard() {
   const [researchQuery, setResearchQuery] = useState("");
   const [researchResults, setResearchResults] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, size: string}[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -498,6 +502,36 @@ export function Dashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, sendMessage.isPending]);
 
+  const handleCopyMessage = async (content: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const handleShareMessage = async (content: string, role: "user" | "cyrus") => {
+    const shareText = role === "cyrus" ? `CYRUS AI: ${content}` : content;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "CYRUS AI Conversation",
+          text: shareText,
+        });
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          console.error("Share failed:", err);
+        }
+      }
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      alert("Message copied to clipboard for sharing!");
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !sendMessage.isPending) {
@@ -586,22 +620,44 @@ export function Dashboard() {
               {sortedMessages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`group flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.role === "cyrus" && (
                     <div className="w-8 h-8 bg-[#0a84ff] rounded-lg flex items-center justify-center flex-shrink-0">
                       <Cpu className="w-4 h-4 text-white" />
                     </div>
                   )}
-                  <div className={`max-w-[75%] px-4 py-3 ${
-                    msg.role === "user"
-                      ? "bg-[#0a84ff] text-white rounded-2xl rounded-br-md"
-                      : "bg-[#2c2c2e] text-white rounded-2xl rounded-bl-md"
-                  }`}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                    <p className="text-[10px] mt-2 opacity-50">
-                      {new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                  <div className="flex flex-col gap-1">
+                    <div className={`max-w-[75%] px-4 py-3 ${
+                      msg.role === "user"
+                        ? "bg-[#0a84ff] text-white rounded-2xl rounded-br-md"
+                        : "bg-[#2c2c2e] text-white rounded-2xl rounded-bl-md"
+                    }`}>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-[10px] mt-2 opacity-50">
+                        {new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <div className={`flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <button
+                        onClick={() => handleCopyMessage(msg.content, msg.id)}
+                        className="p-1.5 rounded-lg bg-[#2c2c2e] hover:bg-[#3a3a3c] transition-colors"
+                        title="Copy message"
+                      >
+                        {copiedId === msg.id ? (
+                          <Check className="w-3 h-3 text-[#30d158]" />
+                        ) : (
+                          <Copy className="w-3 h-3 text-[rgba(235,235,245,0.6)]" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleShareMessage(msg.content, msg.role)}
+                        className="p-1.5 rounded-lg bg-[#2c2c2e] hover:bg-[#3a3a3c] transition-colors"
+                        title="Share message"
+                      >
+                        <Share2 className="w-3 h-3 text-[rgba(235,235,245,0.6)]" />
+                      </button>
+                    </div>
                   </div>
                   {msg.role === "user" && (
                     <div className="w-8 h-8 bg-[#3a3a3c] rounded-lg flex items-center justify-center flex-shrink-0">
