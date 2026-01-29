@@ -45,7 +45,48 @@ export function Dashboard() {
   const currentTranscriptRef = useRef<string>("");
   const micActiveRef = useRef<boolean>(false);
   const isSpeakingRef = useRef<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const queryClient = useQueryClient();
+
+  // CYRUS Vision - Camera Control
+  const toggleCamera = async () => {
+    if (cameraActive) {
+      // Stop camera
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      setCameraActive(false);
+    } else {
+      // Start camera
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false 
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        setCameraActive(true);
+      } catch (err) {
+        console.error("Camera access denied:", err);
+      }
+    }
+  };
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   useEffect(() => {
     micActiveRef.current = micActive;
@@ -550,8 +591,8 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Right Panel - Display Panels */}
-      <div className="hidden xl:flex w-72 flex-col bg-[#1c1c1e] border-l border-[rgba(84,84,88,0.65)]">
+      {/* Right Panel - Display Panels (Wider) */}
+      <div className="hidden xl:flex w-[420px] flex-col bg-[#1c1c1e] border-l border-[rgba(84,84,88,0.65)]">
         {/* Research Panel */}
         <div className="p-4 border-b border-[rgba(84,84,88,0.65)]">
           <div className="flex items-center justify-between mb-3">
@@ -575,9 +616,9 @@ export function Dashboard() {
           </div>
           
           {/* Console Display */}
-          <div className="bg-black rounded-lg border border-[rgba(84,84,88,0.65)] p-3 h-28 overflow-auto">
+          <div className="bg-black rounded-lg border border-[rgba(84,84,88,0.65)] p-3 h-24 overflow-auto">
             {researchResults.length === 0 ? (
-              <p className="text-xs text-[rgba(235,235,245,0.3)] text-center py-4">No queries</p>
+              <p className="text-xs text-[rgba(235,235,245,0.3)] text-center py-3">No queries</p>
             ) : (
               <div className="space-y-1 font-mono text-xs">
                 {researchResults.map((result, i) => (
@@ -590,8 +631,8 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Files Panel */}
-        <div className="flex-1 p-4 flex flex-col overflow-hidden">
+        {/* Files Panel - Upper Section */}
+        <div className="h-[45%] p-4 flex flex-col overflow-hidden border-b border-[rgba(84,84,88,0.65)]">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold text-[rgba(235,235,245,0.5)] uppercase tracking-wide">File Workspace</h3>
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" multiple />
@@ -632,6 +673,65 @@ export function Dashboard() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* CYRUS Vision Panel - Lower Section (Live Camera Feed) */}
+        <div className="flex-1 p-4 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-semibold text-[rgba(235,235,245,0.5)] uppercase tracking-wide">CYRUS Vision</h3>
+              {cameraActive && (
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                  <span className="text-[10px] text-emerald-400">LIVE</span>
+                </span>
+              )}
+            </div>
+            <button
+              onClick={toggleCamera}
+              className={`p-1.5 rounded-lg transition-colors ${
+                cameraActive 
+                  ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" 
+                  : "text-[rgba(235,235,245,0.4)] hover:bg-[rgba(120,120,128,0.2)]"
+              }`}
+            >
+              {cameraActive ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
+            </button>
+          </div>
+          
+          <div className="flex-1 bg-black rounded-xl border border-[rgba(84,84,88,0.65)] overflow-hidden relative">
+            {cameraActive ? (
+              <>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+                {/* Vision overlay - scan lines effect */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                    <span className="text-[10px] text-cyan-400 font-mono">VISUAL CORTEX ACTIVE</span>
+                  </div>
+                  <div className="absolute bottom-2 right-2 text-[10px] text-cyan-400/60 font-mono">
+                    {new Date().toLocaleTimeString()}
+                  </div>
+                  {/* Subtle scan line effect */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent animate-pulse opacity-30"></div>
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center">
+                <div className="w-12 h-12 rounded-full border-2 border-dashed border-[rgba(84,84,88,0.65)] flex items-center justify-center mb-3">
+                  <CameraOff className="w-6 h-6 text-[rgba(235,235,245,0.3)]" />
+                </div>
+                <p className="text-xs text-[rgba(235,235,245,0.4)] text-center mb-1">Vision Offline</p>
+                <p className="text-[10px] text-[rgba(235,235,245,0.3)]">Click camera to activate</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
