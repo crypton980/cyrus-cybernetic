@@ -2,6 +2,7 @@ import { cyrusSoul, type CognitiveBranch, type ThoughtProcess } from './cyrus-so
 import { quantumCore } from './quantum-core';
 import { allBranches, getBranchById } from './branches/index';
 import OpenAI from 'openai';
+import { droneController } from '../modules/drone-control';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
@@ -259,6 +260,17 @@ export class NeuralFusionEngine {
   private async generateSuperintelligentResponse(thought: ThoughtProcess, request: InferenceRequest): Promise<string> {
     const lower = request.message.toLowerCase();
     
+    // DRONE COMMAND DETECTION - CYRUS as Autonomous Drone Pilot
+    const droneCommand = this.detectDroneCommand(lower);
+    if (droneCommand) {
+      try {
+        return await this.executeDroneCommand(droneCommand, request.message);
+      } catch (error: any) {
+        console.error('[Drone Command Error]', error);
+        return `Aerospace command execution encountered an error: ${error.message || 'Unknown error'}. Please verify drone connection and try again.`;
+      }
+    }
+    
     if (lower.includes('who are you') || lower.includes('what are you')) {
       return this.generateIdentityResponse();
     }
@@ -288,6 +300,310 @@ export class NeuralFusionEngine {
     }
 
     return await this.generateAdaptiveResponse(thought, request);
+  }
+
+  // DRONE COMMAND DETECTION PATTERNS
+  private detectDroneCommand(message: string): { type: string; params?: any } | null {
+    // Connection commands
+    if (/connect.*drone|drone.*connect|link.*drone|pair.*drone|establish.*connection/i.test(message)) {
+      const connectionType = message.includes('mavlink') ? 'mavlink' : 
+                            message.includes('serial') ? 'serial' : 'wifi';
+      return { type: 'connect', params: { connectionType } };
+    }
+    
+    if (/disconnect.*drone|drone.*disconnect|unlink.*drone|sever.*connection/i.test(message)) {
+      return { type: 'disconnect' };
+    }
+    
+    // Arm/Disarm commands
+    if (/\barm\b.*drone|drone.*\barm\b|activate.*motors|motors.*activate|enable.*drone/i.test(message)) {
+      return { type: 'arm' };
+    }
+    
+    if (/disarm.*drone|drone.*disarm|deactivate.*motors|motors.*off|disable.*drone/i.test(message)) {
+      return { type: 'disarm' };
+    }
+    
+    // Flight commands
+    if (/take\s*off|takeoff|launch|lift\s*off|ascend|go\s*up/i.test(message)) {
+      const altMatch = message.match(/(\d+)\s*(m|meters?|feet|ft)?/i);
+      const altitude = altMatch ? parseInt(altMatch[1]) : 10;
+      return { type: 'takeoff', params: { altitude } };
+    }
+    
+    if (/\bland\b|touch\s*down|descend.*ground|bring.*down|set.*down/i.test(message)) {
+      return { type: 'land' };
+    }
+    
+    if (/return.*home|return.*launch|rtl|come.*back|fly.*back|go.*home/i.test(message)) {
+      return { type: 'rtl' };
+    }
+    
+    // Navigation commands
+    if (/fly\s*to|go\s*to|navigate\s*to|move\s*to|head\s*to|proceed\s*to/i.test(message)) {
+      const coordMatch = message.match(/(-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)/);
+      if (coordMatch) {
+        return { type: 'goto', params: { latitude: parseFloat(coordMatch[1]), longitude: parseFloat(coordMatch[2]) } };
+      }
+      return { type: 'goto_pending', params: { message } };
+    }
+    
+    // Mode commands
+    if (/set.*mode|mode.*to|switch.*mode|change.*mode/i.test(message)) {
+      const modes = ['stabilize', 'loiter', 'guided', 'auto', 'rtl', 'land'];
+      for (const mode of modes) {
+        if (message.includes(mode)) {
+          return { type: 'set_mode', params: { mode: mode.toUpperCase() } };
+        }
+      }
+    }
+    
+    if (/hover|hold\s*position|stay|loiter/i.test(message)) {
+      return { type: 'set_mode', params: { mode: 'LOITER' } };
+    }
+    
+    // Emergency commands
+    if (/emergency|abort|stop.*now|halt|kill\s*motors|e-stop|estop/i.test(message)) {
+      return { type: 'emergency_stop' };
+    }
+    
+    // Status/Telemetry commands - require "drone" context to avoid false positives
+    if (/drone.*status|drone.*telemetry|drone.*state|drone.*battery|drone.*altitude|uav.*status|aircraft.*status|drone.*signal|check.*drone/i.test(message)) {
+      return { type: 'status' };
+    }
+    
+    // Mission commands
+    if (/create.*mission|new.*mission|plan.*mission|mission.*plan/i.test(message)) {
+      return { type: 'create_mission', params: { message } };
+    }
+    
+    if (/start.*mission|begin.*mission|execute.*mission|run.*mission|launch.*mission/i.test(message)) {
+      return { type: 'start_mission' };
+    }
+    
+    if (/abort.*mission|cancel.*mission|stop.*mission/i.test(message)) {
+      return { type: 'abort_mission' };
+    }
+    
+    return null;
+  }
+
+  // DRONE COMMAND EXECUTION - CYRUS as the Pilot
+  private async executeDroneCommand(command: { type: string; params?: any }, originalMessage: string): Promise<string> {
+    const state = droneController.getState();
+    
+    switch (command.type) {
+      case 'connect': {
+        if (state.connected) {
+          return `Aerospace systems already connected. Current status: ${state.armed ? 'ARMED' : 'DISARMED'} | Mode: ${state.mode} | Battery: ${state.battery.toFixed(0)}% | Altitude: ${state.altitude.toFixed(1)}m. Standing by for flight commands.`;
+        }
+        const result = await droneController.connect(command.params?.connectionType || 'wifi');
+        if (result.success) {
+          return `Aerospace link established via ${command.params?.connectionType || 'wifi'}. Drone connection confirmed. ${droneController.isSimulationMode() ? 'Operating in SIMULATION mode for safety.' : 'Live connection active.'} Telemetry stream initiated. All systems nominal. Awaiting your commands, pilot.`;
+        }
+        return `Connection attempt failed: ${result.message}. Please verify the drone is powered on and within range.`;
+      }
+      
+      case 'disconnect': {
+        if (!state.connected) {
+          return `No active drone connection to terminate. Aerospace systems are offline.`;
+        }
+        const result = await droneController.disconnect();
+        return `Drone connection terminated. Aerospace systems offline. All telemetry feeds suspended. ${result.message}`;
+      }
+      
+      case 'arm': {
+        if (!state.connected) {
+          return `Cannot arm - no drone connected. Please establish a connection first with "connect drone".`;
+        }
+        if (state.armed) {
+          return `Drone is already armed and ready for flight. Current mode: ${state.mode}. Issue takeoff command when ready.`;
+        }
+        const result = await droneController.executeCommand({ type: 'arm' });
+        if (result.success) {
+          return `Motors armed and spinning. Drone is now HOT and ready for takeoff. Battery at ${state.battery.toFixed(0)}%. GPS lock on ${state.satellites} satellites. Say "takeoff" or specify an altitude like "takeoff to 20 meters".`;
+        }
+        return `Arming failed: ${result.message}`;
+      }
+      
+      case 'disarm': {
+        if (!state.connected) {
+          return `No drone connected. Nothing to disarm.`;
+        }
+        const result = await droneController.executeCommand({ type: 'disarm' });
+        if (result.success) {
+          return `Motors disarmed. Drone is now safe. All rotors stopped. Ready for transport or storage.`;
+        }
+        return `Cannot disarm: ${result.message}`;
+      }
+      
+      case 'takeoff': {
+        if (!state.connected) {
+          return `Cannot take off - no drone connected. Establish connection first.`;
+        }
+        if (!state.armed) {
+          const armResult = await droneController.executeCommand({ type: 'arm' });
+          if (!armResult.success) {
+            return `Pre-flight arming failed: ${armResult.message}. Cannot proceed with takeoff.`;
+          }
+        }
+        const altitude = command.params?.altitude || 10;
+        const result = await droneController.executeCommand({ type: 'takeoff', params: { altitude } });
+        if (result.success) {
+          return `Initiating vertical ascent to ${altitude} meters. Motors at full thrust. Climbing... GPS tracking active. I will maintain hover at target altitude. Current heading: ${state.heading}°.`;
+        }
+        return `Takeoff aborted: ${result.message}`;
+      }
+      
+      case 'land': {
+        if (!state.connected) {
+          return `No drone connected. Nothing to land.`;
+        }
+        const result = await droneController.executeCommand({ type: 'land' });
+        if (result.success) {
+          return `Initiating controlled descent. Current altitude: ${state.altitude.toFixed(1)}m. Descending at safe velocity. Landing zone acquired. Motors will cut upon touchdown.`;
+        }
+        return `Landing command failed: ${result.message}`;
+      }
+      
+      case 'rtl': {
+        if (!state.connected) {
+          return `No drone connected. Cannot initiate return.`;
+        }
+        const result = await droneController.executeCommand({ type: 'rtl' });
+        if (result.success) {
+          return `Return to Launch initiated. Drone is navigating back to home coordinates. Estimated arrival based on current distance and speed. I will land automatically upon arrival.`;
+        }
+        return `RTL command failed: ${result.message}`;
+      }
+      
+      case 'goto': {
+        if (!state.connected) {
+          return `Cannot navigate - no drone connected.`;
+        }
+        const { latitude, longitude } = command.params;
+        const result = await droneController.executeCommand({ type: 'goto', params: { latitude, longitude } });
+        if (result.success) {
+          return `Navigating to coordinates: ${latitude}, ${longitude}. Mode set to GUIDED. Calculating optimal flight path. Current speed: ${state.speed.toFixed(1)} m/s. I will maintain altitude at ${state.altitude.toFixed(1)}m during transit.`;
+        }
+        return `Navigation failed: ${result.message}`;
+      }
+      
+      case 'goto_pending': {
+        return `I am ready to navigate, but I need destination coordinates. Please provide latitude and longitude, for example: "Fly to -24.6282, 25.9231" or describe the location you want me to reach.`;
+      }
+      
+      case 'set_mode': {
+        if (!state.connected) {
+          return `Cannot change mode - no drone connected.`;
+        }
+        const mode = command.params?.mode;
+        const result = await droneController.executeCommand({ type: 'set_mode', params: { mode } });
+        if (result.success) {
+          const modeDescriptions: Record<string, string> = {
+            'STABILIZE': 'Manual control with attitude stabilization. Good for precise maneuvering.',
+            'LOITER': 'GPS-assisted hover. Drone will hold position automatically.',
+            'GUIDED': 'Waypoint navigation mode. I can direct the drone to specific coordinates.',
+            'AUTO': 'Autonomous mission execution. Following pre-planned waypoints.',
+            'RTL': 'Returning to launch point automatically.',
+            'LAND': 'Controlled descent in progress.'
+          };
+          return `Flight mode changed to ${mode}. ${modeDescriptions[mode] || ''} All systems responding normally.`;
+        }
+        return `Mode change failed: ${result.message}`;
+      }
+      
+      case 'emergency_stop': {
+        if (!state.connected) {
+          return `No drone connected. Emergency systems on standby.`;
+        }
+        const result = await droneController.executeCommand({ type: 'emergency_stop' });
+        return `EMERGENCY STOP ACTIVATED. All motors halted immediately. Mode set to STABILIZE. ${result.success ? 'Command executed successfully.' : result.message} Assess the situation before resuming operations.`;
+      }
+      
+      case 'status': {
+        if (!state.connected) {
+          return `Aerospace systems offline. No drone connected. To establish connection, say "connect drone".`;
+        }
+        const flightMins = Math.floor(state.flightTime / 60);
+        const flightSecs = state.flightTime % 60;
+        return `AEROSPACE TELEMETRY REPORT
+
+Connection: ACTIVE ${droneController.isSimulationMode() ? '(Simulation)' : '(Live)'}
+Armed Status: ${state.armed ? 'ARMED - READY FOR FLIGHT' : 'DISARMED - SAFE'}
+Flight Mode: ${state.mode}
+
+Position Data:
+Latitude: ${state.latitude.toFixed(6)}° | Longitude: ${state.longitude.toFixed(6)}°
+Altitude: ${state.altitude.toFixed(1)} meters AGL
+Heading: ${state.heading}° | Speed: ${state.speed.toFixed(1)} m/s
+
+System Health:
+Battery: ${state.battery.toFixed(0)}% ${state.battery < 30 ? '⚠ LOW' : state.battery < 50 ? 'MODERATE' : 'GOOD'}
+GPS Satellites: ${state.satellites} ${state.satellites >= 6 ? 'EXCELLENT' : 'ACQUIRING'}
+Signal Strength: ${state.signalStrength.toFixed(0)}%
+Flight Time: ${flightMins}:${flightSecs.toString().padStart(2, '0')}
+
+All systems operational. Standing by for commands.`;
+      }
+      
+      case 'create_mission': {
+        // Try to parse waypoints from the message
+        const coordPairs = originalMessage.match(/-?\d+\.?\d*\s*,\s*-?\d+\.?\d*/g);
+        if (coordPairs && coordPairs.length >= 2) {
+          const waypoints = coordPairs.map((pair, index) => {
+            const [lat, lon] = pair.split(',').map(s => parseFloat(s.trim()));
+            return {
+              latitude: lat,
+              longitude: lon,
+              altitude: 20, // Default altitude
+              action: index === coordPairs.length - 1 ? 'rtl' as const : 'waypoint' as const
+            };
+          });
+          const missionName = `Mission-${Date.now().toString(36).toUpperCase()}`;
+          const result = await droneController.createMission(missionName, waypoints);
+          if (result.success && result.mission) {
+            return `Mission "${result.mission.name}" created successfully with ${waypoints.length} waypoints. The route has been programmed and is ready for execution. To start the mission, ensure the drone is connected and armed, then say "start mission". Waypoints: ${waypoints.map((w, i) => `WP${i+1}: ${w.latitude.toFixed(4)}, ${w.longitude.toFixed(4)}`).join(' → ')}.`;
+          }
+          return `Mission creation failed: ${result.message}`;
+        }
+        return `Mission planning interface ready. To create a mission, I need waypoint coordinates. Please provide the route as a series of coordinates, for example: "Create mission with waypoints at -24.6282,25.9231 then -24.6290,25.9240 then -24.6275,25.9225". You can also specify altitude and actions at each waypoint.`;
+      }
+      
+      case 'start_mission': {
+        const missions = droneController.getMissions();
+        if (missions.length === 0) {
+          return `No missions available. Create a mission first with waypoints, then I can execute it.`;
+        }
+        const pendingMission = missions.find(m => m.status === 'pending');
+        if (!pendingMission) {
+          return `No pending missions to start. All existing missions are either completed or in progress.`;
+        }
+        if (!state.connected || !state.armed) {
+          return `Cannot start mission - drone must be connected and armed first. Current state: ${state.connected ? 'Connected' : 'Disconnected'}, ${state.armed ? 'Armed' : 'Disarmed'}.`;
+        }
+        const result = await droneController.startMission(pendingMission.id);
+        if (result.success) {
+          return `Mission "${pendingMission.name}" is now active. Executing ${pendingMission.waypoints.length} waypoints autonomously. Mode set to AUTO. I will navigate through each checkpoint and report progress. Say "abort mission" to cancel at any time.`;
+        }
+        return `Mission start failed: ${result.message}`;
+      }
+      
+      case 'abort_mission': {
+        const activeMission = droneController.getActiveMission();
+        if (!activeMission) {
+          return `No active mission to abort. Drone is in manual control.`;
+        }
+        const result = await droneController.abortMission();
+        if (result.success) {
+          return `Mission "${activeMission.name}" has been ABORTED. Drone is now hovering in LOITER mode at current position. Awaiting further instructions.`;
+        }
+        return `Mission abort failed: ${result.message}`;
+      }
+      
+      default:
+        return `Aerospace command not recognized. Available commands: connect drone, arm, takeoff, land, return home, hover, emergency stop, drone status, fly to coordinates.`;
+    }
   }
 
   private generateIdentityResponse(): string {
