@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Zap,
   Activity,
+  Plane,
 } from "lucide-react";
 
 import { Dashboard } from "./components/Dashboard";
@@ -22,6 +23,7 @@ import { NavigationPage } from "./pages/NavigationPage";
 import { CommsPage } from "./pages/CommsPage";
 import { DeviceControlPage } from "./pages/DeviceControlPage";
 import { TradingPage } from "./pages/TradingPage";
+import { DronePage } from "./pages/DronePage";
 
 const navItems = [
   { path: "/", label: "Control Panel", icon: MessageSquare, description: "Main Interface" },
@@ -30,6 +32,7 @@ const navItems = [
   { path: "/nav", label: "Navigation", icon: MapPin, description: "GPS & Routes" },
   { path: "/comms", label: "Communications", icon: Phone, description: "Calls & Messages" },
   { path: "/device", label: "Device Control", icon: Monitor, description: "System Actions" },
+  { path: "/drone", label: "Drone Control", icon: Plane, description: "UAV Operations" },
   { path: "/trading", label: "Trading Intel", icon: TrendingUp, description: "Markets & Analysis" },
 ];
 
@@ -147,6 +150,7 @@ export default function App() {
           <Route path="/nav" component={NavigationPage} />
           <Route path="/comms" component={CommsPage} />
           <Route path="/device" component={DeviceControlPage} />
+          <Route path="/drone" component={DronePage} />
           <Route path="/trading" component={TradingPage} />
         </Switch>
       </div>

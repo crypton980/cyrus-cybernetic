@@ -29,6 +29,7 @@ The UI features a professional multi-pane Control Panel with a black gradient ba
 - **Navigation & Location:** Global map service integration, high-accuracy geolocation, real-time route optimization, and live path visualization.
 - **Communication Stack:** Encrypted voice and video calls, secure text messaging, group conferencing, and real-time transcription.
 - **Device Security:** Lawful Guardian operations, remote device management (locate, lock, wipe), full audit logging, and recovery assistance.
+- **Drone Control Module:** Military-grade UAV control system with MAVLink protocol support, real-time telemetry (battery, altitude, speed, heading, GPS), flight commands (arm, disarm, takeoff, land, RTL), waypoint mission planning, autonomous operations, flight mode control (STABILIZE, LOITER, GUIDED, AUTO, RTL, LAND), and emergency stop functionality. Operates in simulation mode until real hardware is connected.
 - **Emotional Intelligence:** Advanced sentiment analysis, empathetic response generation, and crisis de-escalation.
 - **Real-Time Camera Vision:** Utilizes TensorFlow.js with COCO-SSD for client-side object detection.
 - **Voice Interaction:** Continuous speech recognition and natural female voice synthesis.

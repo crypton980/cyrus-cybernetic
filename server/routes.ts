@@ -28,6 +28,7 @@ import { v4 as uuid } from "uuid";
 import fetch from "node-fetch";
 import { analyzeScan } from "./scan/analyze";
 import { decodeQr } from "./scan/qr";
+import { registerDroneRoutes } from "./drone/routes";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -1793,6 +1794,7 @@ Return ONLY valid JSON.`
   registerAudioRoutes(app);
   registerDeviceRoutes(app);
   registerNavRoutes(app);
+  registerDroneRoutes(app);
 
   // ===============================================
   // QUANTUM TRADING INTELLIGENCE API
