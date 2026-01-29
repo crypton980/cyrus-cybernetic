@@ -40,7 +40,7 @@ export default function App() {
   const [location] = useLocation();
 
   return (
-    <div className="min-h-screen bg-black text-white flex">
+    <div className="h-screen bg-black text-white flex overflow-hidden">
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1c1c1e] border-r border-[rgba(84,84,88,0.65)] transform transition-transform duration-200 lg:relative lg:translate-x-0 ${
