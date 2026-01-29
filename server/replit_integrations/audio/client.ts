@@ -181,55 +181,45 @@ export async function voiceChatStream(
 }
 
 /**
- * Text-to-Speech: Converts text to speech verbatim.
- * Uses gpt-audio model via Replit AI Integrations.
+ * Text-to-Speech: Converts text to speech using OpenAI TTS API.
+ * Uses tts-1-hd model for high-quality voice synthesis.
  */
 export async function textToSpeech(
   text: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova", // "nova" = sweet natural female voice for CYRUS
-  format: "wav" | "mp3" | "flac" | "opus" | "pcm16" = "wav"
+  format: "wav" | "mp3" | "flac" | "opus" | "pcm16" = "mp3"
 ): Promise<Buffer> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-audio",
-    modalities: ["text", "audio"],
-    audio: { voice, format },
-    messages: [
-      { role: "system", content: "You are an assistant that performs text-to-speech." },
-      { role: "user", content: `Repeat the following text verbatim: ${text}` },
-    ],
+  const response = await openai.audio.speech.create({
+    model: "tts-1-hd",
+    voice,
+    input: text,
+    response_format: format === "pcm16" ? "pcm" : format === "wav" ? "wav" : "mp3",
   });
-  const audioData = (response.choices[0]?.message as any)?.audio?.data ?? "";
-  return Buffer.from(audioData, "base64");
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 /**
  * Streaming Text-to-Speech: Converts text to speech with real-time streaming.
- * Uses gpt-audio model via Replit AI Integrations.
- * Note: Streaming only supports pcm16 output format.
+ * Uses OpenAI TTS API with streaming for faster first-byte response.
  */
 export async function textToSpeechStream(
   text: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova" // "nova" = sweet natural female voice for CYRUS
 ): Promise<AsyncIterable<string>> {
-  const stream = await openai.chat.completions.create({
-    model: "gpt-audio",
-    modalities: ["text", "audio"],
-    audio: { voice, format: "pcm16" },
-    messages: [
-      { role: "system", content: "You are an assistant that performs text-to-speech." },
-      { role: "user", content: `Repeat the following text verbatim: ${text}` },
-    ],
-    stream: true,
+  const response = await openai.audio.speech.create({
+    model: "tts-1",
+    voice,
+    input: text,
+    response_format: "mp3",
   });
 
+  const arrayBuffer = await response.arrayBuffer();
+  const base64Audio = Buffer.from(arrayBuffer).toString("base64");
+  
   return (async function* () {
-    for await (const chunk of stream) {
-      const delta = chunk.choices?.[0]?.delta as any;
-      if (!delta) continue;
-      if (delta?.audio?.data) {
-        yield delta.audio.data;
-      }
-    }
+    // Yield the entire audio as a single chunk for simplicity
+    yield base64Audio;
   })();
 }
 

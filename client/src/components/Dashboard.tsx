@@ -231,14 +231,11 @@ export function Dashboard() {
         throw new Error("Failed to generate speech");
       }
 
-      // Set up Web Audio API for streaming PCM16 playback
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const sampleRate = 24000; // OpenAI TTS uses 24kHz
-      const audioChunks: Float32Array[] = [];
-      
+      // Read SSE stream and collect MP3 audio chunks
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let audioBase64 = "";
 
       if (reader) {
         while (true) {
@@ -254,15 +251,7 @@ export function Dashboard() {
               try {
                 const data = JSON.parse(line.slice(6));
                 if (data.audio) {
-                  // Convert base64 PCM16 to Float32
-                  const pcm16 = new Int16Array(
-                    Uint8Array.from(atob(data.audio), c => c.charCodeAt(0)).buffer
-                  );
-                  const float32 = new Float32Array(pcm16.length);
-                  for (let i = 0; i < pcm16.length; i++) {
-                    float32[i] = pcm16[i] / 32768.0;
-                  }
-                  audioChunks.push(float32);
+                  audioBase64 += data.audio;
                 }
               } catch {}
             }
@@ -270,32 +259,28 @@ export function Dashboard() {
         }
       }
 
-      // Play concatenated audio
-      if (audioChunks.length > 0) {
-        const totalLength = audioChunks.reduce((sum, chunk) => sum + chunk.length, 0);
-        const audioBuffer = audioContext.createBuffer(1, totalLength, sampleRate);
-        const channelData = audioBuffer.getChannelData(0);
-        let offset = 0;
-        for (const chunk of audioChunks) {
-          channelData.set(chunk, offset);
-          offset += chunk.length;
-        }
-
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.onended = () => {
+      // Play MP3 audio using HTML5 Audio element
+      if (audioBase64) {
+        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+        audio.onended = () => {
           clearInterval(textIntervalId);
           setStreamingText(text);
           setIsSpeaking(false);
           isSpeakingRef.current = false;
           setIsStreaming(false);
-          audioContext.close();
           if (micActiveRef.current) {
             setTimeout(() => startContinuousListening(), 100);
           }
         };
-        source.start();
+        audio.onerror = () => {
+          console.error("Audio playback error");
+          clearInterval(textIntervalId);
+          setStreamingText(text);
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+          setIsStreaming(false);
+        };
+        await audio.play();
       } else {
         clearInterval(textIntervalId);
         setStreamingText(text);
