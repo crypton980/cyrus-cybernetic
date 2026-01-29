@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
 import {
   Menu,
@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Plane,
   ChevronRight,
+  Cpu,
 } from "lucide-react";
 
 import { Dashboard } from "./components/Dashboard";
@@ -40,32 +41,37 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-black text-white flex">
-      {/* Sidebar - Apple Settings Style */}
+      {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#1c1c1e] transform transition-transform duration-300 ease-out lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1c1c1e] border-r border-[rgba(84,84,88,0.65)] transform transition-transform duration-200 lg:relative lg:translate-x-0 ${
           menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="p-6 pb-4">
+          <div className="p-5 pb-4">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-[28px] font-bold tracking-tight">CYRUS</h1>
-                <p className="text-[15px] text-[rgba(235,235,245,0.6)] mt-0.5">Quantum AI System</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#0a84ff] rounded-xl flex items-center justify-center">
+                  <Cpu className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight">CYRUS</h1>
+                  <p className="text-xs text-[rgba(235,235,245,0.5)]">Quantum AI System</p>
+                </div>
               </div>
               <button
                 onClick={() => setMenuOpen(false)}
-                className="lg:hidden p-2 -mr-2 text-[rgba(235,235,245,0.6)] hover:text-white rounded-full"
+                className="lg:hidden p-2 text-[rgba(235,235,245,0.5)] hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            {/* Status Badge */}
-            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-[rgba(48,209,88,0.15)] rounded-full">
+            {/* Status */}
+            <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-[rgba(48,209,88,0.1)] rounded-lg">
               <div className="w-2 h-2 rounded-full bg-[#30d158]" />
-              <span className="text-[13px] font-medium text-[#30d158]">Operational</span>
+              <span className="text-xs font-semibold text-[#30d158]">OPERATIONAL</span>
             </div>
           </div>
 
@@ -80,55 +86,53 @@ export default function App() {
                     key={item.path}
                     href={item.path}
                     onClick={() => setMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                       isActive
                         ? "bg-[#0a84ff] text-white"
-                        : "text-white hover:bg-[rgba(120,120,128,0.24)]"
+                        : "text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)]"
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.24)]"
+                      isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
                     }`}>
-                      <Icon className="w-[18px] h-[18px]" strokeWidth={1.5} />
+                      <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-medium">{item.label}</p>
-                      <p className={`text-[12px] ${isActive ? "text-white/70" : "text-[rgba(235,235,245,0.4)]"}`}>
+                      <p className="text-sm font-medium">{item.label}</p>
+                      <p className={`text-[10px] ${isActive ? "text-white/60" : "text-[rgba(235,235,245,0.4)]"}`}>
                         {item.sublabel}
                       </p>
                     </div>
-                    {isActive && (
-                      <ChevronRight className="w-4 h-4 text-white/60" />
-                    )}
+                    {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}
                   </Link>
                 );
               })}
             </div>
           </nav>
 
-          {/* Footer - System Stats */}
+          {/* Footer Stats */}
           <div className="p-4 border-t border-[rgba(84,84,88,0.65)]">
-            <div className="bg-[#2c2c2e] rounded-2xl p-4">
+            <div className="bg-[#2c2c2e] rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[13px] text-[rgba(235,235,245,0.6)]">Core Status</span>
-                <span className="text-[11px] text-[#30d158] font-medium">ACTIVE</span>
+                <span className="text-xs text-[rgba(235,235,245,0.5)]">Core Status</span>
+                <span className="text-[10px] font-semibold text-[#30d158]">ACTIVE</span>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center">
-                  <p className="text-[20px] font-semibold">86</p>
-                  <p className="text-[11px] text-[rgba(235,235,245,0.4)]">Branches</p>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-lg font-semibold">86</p>
+                  <p className="text-[10px] text-[rgba(235,235,245,0.4)]">Branches</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[20px] font-semibold">3.6K</p>
-                  <p className="text-[11px] text-[rgba(235,235,245,0.4)]">Paths</p>
+                <div>
+                  <p className="text-lg font-semibold">3.6K</p>
+                  <p className="text-[10px] text-[rgba(235,235,245,0.4)]">Paths</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[20px] font-semibold text-[#30d158]">99%</p>
-                  <p className="text-[11px] text-[rgba(235,235,245,0.4)]">Uptime</p>
+                <div>
+                  <p className="text-lg font-semibold text-[#30d158]">99%</p>
+                  <p className="text-[10px] text-[rgba(235,235,245,0.4)]">Uptime</p>
                 </div>
               </div>
             </div>
-            <p className="text-center text-[11px] text-[rgba(235,235,245,0.3)] mt-3">
+            <p className="text-center text-[10px] text-[rgba(235,235,245,0.3)] mt-3">
               Architect: Obakeng Kaelo
             </p>
           </div>
@@ -138,7 +142,7 @@ export default function App() {
       {/* Overlay */}
       {menuOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/70 z-40 lg:hidden"
           onClick={() => setMenuOpen(false)}
         />
       )}
@@ -146,19 +150,19 @@ export default function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-[#1c1c1e]/95 backdrop-blur-xl border-b border-[rgba(84,84,88,0.65)] px-4 py-3 flex items-center gap-4 sticky top-0 z-30">
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="p-2 -ml-2 text-[rgba(235,235,245,0.6)] hover:text-white"
-          >
-            <Menu className="w-6 h-6" />
+        <header className="lg:hidden bg-[#1c1c1e] border-b border-[rgba(84,84,88,0.65)] px-4 py-3 flex items-center gap-3">
+          <button onClick={() => setMenuOpen(true)} className="p-2 -ml-2">
+            <Menu className="w-5 h-5 text-[rgba(235,235,245,0.6)]" />
           </button>
-          <div className="flex-1">
-            <h1 className="text-[17px] font-semibold">CYRUS</h1>
-          </div>
           <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-[#0a84ff] rounded-lg flex items-center justify-center">
+              <Cpu className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold">CYRUS</span>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-[#30d158]" />
-            <span className="text-[13px] text-[rgba(235,235,245,0.6)]">Online</span>
+            <span className="text-xs text-[rgba(235,235,245,0.5)]">Online</span>
           </div>
         </header>
 
