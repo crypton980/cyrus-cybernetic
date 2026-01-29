@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useFileAnalysis } from "../hooks/useFileAnalysis";
+import { CyrusAssistant } from "../components/CyrusAssistant";
 import {
   FileUp,
   FileText,
@@ -296,6 +297,11 @@ export function FileAnalysisPage() {
           </div>
         </div>
       </div>
+      <CyrusAssistant 
+        module="documents" 
+        context={`User is analyzing documents. ${currentFile ? `Current file: ${currentFile.name}` : "No file uploaded"}`}
+        compact={true}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDeviceControl } from "../hooks/useDeviceControl";
+import { CyrusAssistant } from "../components/CyrusAssistant";
 import {
   Monitor,
   Mouse,
@@ -307,6 +308,11 @@ export function DeviceControlPage() {
           </div>
         </div>
       </div>
+      <CyrusAssistant 
+        module="systems" 
+        context={`User is in device control module. Dry run mode: ${dryRun ? "enabled" : "disabled"}. ${lastResult ? `Last action: ${lastResult.action}` : "No recent actions"}`}
+        compact={true}
+      />
     </div>
   );
 }

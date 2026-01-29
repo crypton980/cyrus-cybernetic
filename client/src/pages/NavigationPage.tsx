@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigation } from "../hooks/useNavigation";
+import { CyrusAssistant } from "../components/CyrusAssistant";
 import {
   MapPin,
   Navigation,
@@ -331,6 +332,11 @@ export function NavigationPage() {
           </div>
         </div>
       </div>
+      <CyrusAssistant 
+        module="navigation" 
+        context={`User is in navigation module. ${currentPosition ? `Current position: ${currentPosition.lat.toFixed(4)}, ${currentPosition.lon.toFixed(4)}` : "No position data"}`}
+        compact={true}
+      />
     </div>
   );
 }

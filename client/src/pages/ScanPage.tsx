@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useScan } from "../hooks/useScan";
+import { CyrusAssistant } from "../components/CyrusAssistant";
 import {
   Camera,
   QrCode,
@@ -79,24 +80,32 @@ export function ScanPage() {
     { code: "tn", name: "Setswana" },
   ];
 
+  const visionContext = lastResult 
+    ? `Last scan result: ${lastResult.type} - ${lastResult.text || 'No text detected'}` 
+    : imagePreview 
+      ? "User has uploaded an image for scanning"
+      : "No image uploaded yet";
+
   return (
     <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Scan & Translate</h1>
-            <p className="text-gray-400">QR codes, OCR, Vision analysis, Translation</p>
-          </div>
-          <button
-            onClick={clearResults}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
-        </header>
+      <div className="max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <header className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">Scan & Translate</h1>
+                <p className="text-gray-400">QR codes, OCR, Vision analysis, Translation</p>
+              </div>
+              <button
+                onClick={clearResults}
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
+              >
+                <RefreshCw className="w-5 h-5" />
+              </button>
+            </header>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
             <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Camera className="w-5 h-5 text-blue-400" />
@@ -306,6 +315,21 @@ export function ScanPage() {
                 </div>
               </div>
             )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
+              <h3 className="font-semibold mb-3 text-blue-400">CYRUS Vision AI</h3>
+              <p className="text-xs text-gray-400 mb-3">
+                Ask CYRUS to help analyze images, interpret scan results, or translate content.
+              </p>
+              <CyrusAssistant 
+                module="vision" 
+                context={visionContext}
+              />
+            </div>
           </div>
         </div>
       </div>

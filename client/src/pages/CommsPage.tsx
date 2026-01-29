@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useComms } from "../hooks/useComms";
+import { CyrusAssistant } from "../components/CyrusAssistant";
 import {
   MessageSquare,
   Bell,
@@ -383,6 +384,11 @@ export function CommsPage() {
           </div>
         </div>
       </div>
+      <CyrusAssistant 
+        module="communications" 
+        context={`User is in communications module. Active tab: ${activeTab}. ${activeCall ? "Call in progress" : "No active call"}`}
+        compact={true}
+      />
     </div>
   );
 }
