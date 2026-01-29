@@ -35,6 +35,10 @@ import {
   Download,
   Copy,
   Sparkles,
+  Paperclip,
+  Share2,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
 
 interface Message {
@@ -62,8 +66,19 @@ export function Dashboard() {
   const [researchResults, setResearchResults] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, size: string, type: string}[]>([]);
   const [instructionExpanded, setInstructionExpanded] = useState(true);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatFileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  const shareOptions = [
+    { name: "WhatsApp", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.svg", color: "bg-green-500", url: "https://wa.me/?text=" },
+    { name: "Facebook", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg", color: "bg-blue-600", url: "https://www.facebook.com/sharer/sharer.php?u=" },
+    { name: "Twitter", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg", color: "bg-black", url: "https://twitter.com/intent/tweet?text=" },
+    { name: "Instagram", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg", color: "bg-gradient-to-br from-purple-600 to-pink-500", url: "" },
+    { name: "Email", icon: null, color: "bg-gray-600", url: "mailto:?subject=CYRUS Chat&body=" },
+    { name: "Copy Link", icon: null, color: "bg-gray-700", url: "" },
+  ];
 
   const systemModules: SystemStatus[] = [
     { name: "Quantum Core", status: "online", load: 87 },
@@ -146,6 +161,41 @@ export function Dashboard() {
       }));
       setUploadedFiles(prev => [...prev, ...newFiles]);
     }
+  };
+
+  const handleChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      setInput(prev => prev + (prev ? ' ' : '') + `[Attached: ${file.name}]`);
+      const newFiles = Array.from(files).map(f => ({
+        name: f.name,
+        size: formatFileSize(f.size),
+        type: f.type || 'unknown'
+      }));
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+    }
+    if (chatFileInputRef.current) {
+      chatFileInputRef.current.value = '';
+    }
+  };
+
+  const handleShare = (option: typeof shareOptions[0]) => {
+    const chatText = sortedMessages.map(m => 
+      `${m.role === 'user' ? 'You' : 'CYRUS'}: ${m.content}`
+    ).join('\n\n');
+    
+    if (option.name === 'Copy Link') {
+      navigator.clipboard.writeText(chatText);
+      setShareMenuOpen(false);
+      return;
+    }
+    
+    if (option.url) {
+      const encodedText = encodeURIComponent(chatText.slice(0, 500) + (chatText.length > 500 ? '...' : ''));
+      window.open(option.url + encodedText, '_blank');
+    }
+    setShareMenuOpen(false);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -539,6 +589,13 @@ export function Dashboard() {
           </div>
 
           <footer className="border-t border-gray-800/50 bg-black/40 backdrop-blur-xl rounded-xl p-4">
+            <input
+              type="file"
+              ref={chatFileInputRef}
+              onChange={handleChatFileUpload}
+              className="hidden"
+              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+            />
             <form onSubmit={handleSubmit}>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
@@ -553,6 +610,14 @@ export function Dashboard() {
                     title={micActive ? "Stop listening" : "Start listening"}
                   >
                     {micActive ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => chatFileInputRef.current?.click()}
+                    className="p-3 rounded-xl bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50 transition-all"
+                    title="Attach file"
+                  >
+                    <Paperclip className="w-5 h-5" />
                   </button>
                   <button
                     type="button"
@@ -579,13 +644,64 @@ export function Dashboard() {
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={!input.trim() || sendMessage.isPending}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed rounded-xl p-3.5 transition-all shadow-lg shadow-blue-500/20 disabled:shadow-none"
-                >
-                  <Send className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || sendMessage.isPending}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed rounded-xl p-3.5 transition-all shadow-lg shadow-blue-500/20 disabled:shadow-none"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                  
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShareMenuOpen(!shareMenuOpen)}
+                      className="p-3 rounded-xl bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50 transition-all"
+                      title="Share chat"
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </button>
+                    
+                    {shareMenuOpen && (
+                      <div className="absolute bottom-full right-0 mb-2 w-48 bg-gray-900 border border-gray-700/50 rounded-xl shadow-xl overflow-hidden z-50">
+                        <div className="p-2 border-b border-gray-800">
+                          <p className="text-xs text-gray-400 font-medium">Share chat via</p>
+                        </div>
+                        <div className="p-2 space-y-1">
+                          {shareOptions.map((option, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => handleShare(option)}
+                              className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-800 rounded-lg transition-colors text-left"
+                            >
+                              <div className={`w-8 h-8 rounded-lg ${option.color} flex items-center justify-center`}>
+                                {option.name === 'Email' ? (
+                                  <Mail className="w-4 h-4 text-white" />
+                                ) : option.name === 'Copy Link' ? (
+                                  <Copy className="w-4 h-4 text-white" />
+                                ) : (
+                                  <MessageCircle className="w-4 h-4 text-white" />
+                                )}
+                              </div>
+                              <span className="text-sm text-gray-300">{option.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={() => clearHistory.mutate()}
+                    className="p-3 rounded-xl bg-gray-800/50 text-gray-400 hover:text-red-400 hover:bg-red-500/10 border border-gray-700/50 transition-all"
+                    title="Clear chat"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center justify-center gap-6 mt-3 text-xs text-gray-500">
