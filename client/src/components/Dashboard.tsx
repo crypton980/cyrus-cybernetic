@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as tf from "@tensorflow/tfjs";
+import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import {
   Send,
   User,
@@ -16,7 +18,14 @@ import {
   Paperclip,
   Cpu,
   Volume2,
+  Eye,
 } from "lucide-react";
+
+interface DetectedObject {
+  class: string;
+  score: number;
+  bbox: [number, number, number, number];
+}
 
 interface Message {
   id: string;
@@ -33,6 +42,8 @@ export function Dashboard() {
   const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [detectedObjects, setDetectedObjects] = useState<DetectedObject[]>([]);
   const [researchQuery, setResearchQuery] = useState("");
   const [researchResults, setResearchResults] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, size: string}[]>([]);
@@ -46,13 +57,77 @@ export function Dashboard() {
   const micActiveRef = useRef<boolean>(false);
   const isSpeakingRef = useRef<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const modelRef = useRef<cocoSsd.ObjectDetection | null>(null);
+  const animationRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
 
-  // CYRUS Vision - Camera Control
+  // Run object detection on each video frame
+  const detectObjects = useCallback(async () => {
+    if (!videoRef.current || !modelRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    
+    if (!ctx || video.readyState !== 4) {
+      animationRef.current = requestAnimationFrame(detectObjects);
+      return;
+    }
+
+    // Match canvas to video dimensions
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Run COCO-SSD detection
+    try {
+      const predictions = await modelRef.current.detect(video);
+      setDetectedObjects(predictions.map(p => ({
+        class: p.class,
+        score: p.score,
+        bbox: p.bbox as [number, number, number, number]
+      })));
+
+      // Draw bounding boxes on canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#00ff88";
+      ctx.lineWidth = 2;
+      ctx.font = "14px Inter, sans-serif";
+      ctx.fillStyle = "#00ff88";
+
+      predictions.forEach(prediction => {
+        const [x, y, width, height] = prediction.bbox;
+        
+        // Draw bounding box
+        ctx.strokeRect(x, y, width, height);
+        
+        // Draw label background
+        const label = `${prediction.class} ${Math.round(prediction.score * 100)}%`;
+        const textWidth = ctx.measureText(label).width;
+        ctx.fillStyle = "rgba(0, 255, 136, 0.8)";
+        ctx.fillRect(x, y - 20, textWidth + 8, 20);
+        
+        // Draw label text
+        ctx.fillStyle = "#000";
+        ctx.fillText(label, x + 4, y - 6);
+      });
+    } catch (err) {
+      console.error("Detection error:", err);
+    }
+
+    // Continue detection loop
+    animationRef.current = requestAnimationFrame(detectObjects);
+  }, []);
+
+  // CYRUS Vision - Camera Control with ML
   const toggleCamera = async () => {
     if (cameraActive) {
-      // Stop camera
+      // Stop camera and detection
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
@@ -60,28 +135,52 @@ export function Dashboard() {
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
+      setDetectedObjects([]);
       setCameraActive(false);
     } else {
-      // Start camera
+      // Start camera with ML
       try {
+        setModelLoading(true);
+        
+        // Load COCO-SSD model if not already loaded
+        if (!modelRef.current) {
+          await tf.ready();
+          modelRef.current = await cocoSsd.load({ base: "lite_mobilenet_v2" });
+        }
+        
+        // Get camera stream
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
+          video: { 
+            facingMode: "user",
+            width: { ideal: 640 }, 
+            height: { ideal: 480 } 
+          },
           audio: false 
         });
+        
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          videoRef.current.onloadeddata = () => {
+            setModelLoading(false);
+            setCameraActive(true);
+            // Start detection loop
+            detectObjects();
+          };
         }
-        setCameraActive(true);
       } catch (err) {
-        console.error("Camera access denied:", err);
+        console.error("Camera/ML error:", err);
+        setModelLoading(false);
       }
     }
   };
 
-  // Cleanup camera on unmount
+  // Cleanup camera and ML on unmount
   useEffect(() => {
     return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -675,12 +774,18 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* CYRUS Vision Panel - Lower Section (Live Camera Feed) */}
+        {/* CYRUS Vision Panel - Lower Section (Live Camera Feed with ML) */}
         <div className="flex-1 p-4 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-semibold text-[rgba(235,235,245,0.5)] uppercase tracking-wide">CYRUS Vision</h3>
-              {cameraActive && (
+              {modelLoading && (
+                <span className="flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />
+                  <span className="text-[10px] text-amber-400">Loading ML...</span>
+                </span>
+              )}
+              {cameraActive && !modelLoading && (
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
                   <span className="text-[10px] text-emerald-400">LIVE</span>
@@ -689,18 +794,22 @@ export function Dashboard() {
             </div>
             <button
               onClick={toggleCamera}
+              disabled={modelLoading}
               className={`p-1.5 rounded-lg transition-colors ${
                 cameraActive 
                   ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" 
-                  : "text-[rgba(235,235,245,0.4)] hover:bg-[rgba(120,120,128,0.2)]"
+                  : modelLoading
+                    ? "text-amber-400 cursor-wait"
+                    : "text-[rgba(235,235,245,0.4)] hover:bg-[rgba(120,120,128,0.2)]"
               }`}
             >
               {cameraActive ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
             </button>
           </div>
           
-          <div className="flex-1 bg-black rounded-xl border border-[rgba(84,84,88,0.65)] overflow-hidden relative">
-            {cameraActive ? (
+          {/* Camera Feed with ML Overlay */}
+          <div className="flex-1 bg-black rounded-xl border border-[rgba(84,84,88,0.65)] overflow-hidden relative min-h-[180px]">
+            {cameraActive || modelLoading ? (
               <>
                 <video
                   ref={videoRef}
@@ -709,17 +818,22 @@ export function Dashboard() {
                   muted
                   className="w-full h-full object-cover"
                 />
-                {/* Vision overlay - scan lines effect */}
+                {/* Canvas overlay for bounding boxes */}
+                <canvas
+                  ref={canvasRef}
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                />
+                {/* Vision overlay */}
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="absolute top-2 left-2 flex items-center gap-1.5">
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-                    <span className="text-[10px] text-cyan-400 font-mono">VISUAL CORTEX ACTIVE</span>
+                    <Eye className="w-3 h-3 text-cyan-400" />
+                    <span className="text-[10px] text-cyan-400 font-mono">
+                      {modelLoading ? "INITIALIZING..." : "VISUAL CORTEX ACTIVE"}
+                    </span>
                   </div>
-                  <div className="absolute bottom-2 right-2 text-[10px] text-cyan-400/60 font-mono">
-                    {new Date().toLocaleTimeString()}
+                  <div className="absolute top-2 right-2 text-[10px] text-emerald-400 font-mono">
+                    {detectedObjects.length > 0 && `${detectedObjects.length} OBJECTS`}
                   </div>
-                  {/* Subtle scan line effect */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent animate-pulse opacity-30"></div>
                 </div>
               </>
             ) : (
@@ -728,10 +842,27 @@ export function Dashboard() {
                   <CameraOff className="w-6 h-6 text-[rgba(235,235,245,0.3)]" />
                 </div>
                 <p className="text-xs text-[rgba(235,235,245,0.4)] text-center mb-1">Vision Offline</p>
-                <p className="text-[10px] text-[rgba(235,235,245,0.3)]">Click camera to activate</p>
+                <p className="text-[10px] text-[rgba(235,235,245,0.3)]">Click camera to activate ML vision</p>
               </div>
             )}
           </div>
+
+          {/* Detected Objects List */}
+          {cameraActive && detectedObjects.length > 0 && (
+            <div className="mt-2 max-h-20 overflow-auto">
+              <div className="flex flex-wrap gap-1">
+                {detectedObjects.map((obj, i) => (
+                  <span 
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] rounded-full font-mono"
+                  >
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                    {obj.class} {Math.round(obj.score * 100)}%
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
