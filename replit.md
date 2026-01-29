@@ -218,9 +218,23 @@ CYRUS possesses master-level conversational abilities across all human interacti
 - `server/vite.ts` - Vite dev server integration
 
 **Frontend:**
-- `client/src/App.tsx` - Main React application
-- `client/src/pages/` - Application pages
-- `client/src/components/` - UI components
+- `client/src/App.tsx` - Main React application with wouter routing
+- `client/src/pages/` - Application pages:
+  - `ScanPage.tsx` - QR/OCR/Vision scanning and translation
+  - `FileAnalysisPage.tsx` - File detection, extraction, analysis, document generation
+  - `NavigationPage.tsx` - GPS tracking, routing, location sharing
+  - `CommsPage.tsx` - Messaging, reminders, news, WebRTC calls
+  - `DeviceControlPage.tsx` - macOS device control via AppleScript/cliclick
+  - `TradingPage.tsx` - Trading dashboard with Alpaca integration
+- `client/src/hooks/` - Page-specific React hooks:
+  - `useTrading.ts` - Trading account, positions, orders management
+  - `useScan.ts` - QR/OCR/Vision scanning with translation
+  - `useFileAnalysis.ts` - File processing pipeline
+  - `useNavigation.ts` - GPS and routing
+  - `useComms.ts` - Communication features
+  - `useDeviceControl.ts` - Device control actions
+- `client/src/components/` - UI components:
+  - `TradingTabs.tsx` - Modular trading dashboard with 4 tabs
 
 ### External Dependencies
 - **PostgreSQL Database:** Primary data persistence, hosted via Neon.
