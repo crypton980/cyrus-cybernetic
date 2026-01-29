@@ -504,7 +504,7 @@ export async function registerRoutes(
         { goal, context, modality },
         {
           allowLiveTrading: process.env.ALLOW_LIVE_TRADING === "true",
-          hasBrokerKeys: !!(process.env.OANDA_API_KEY || process.env.ALPACA_API_KEY),
+          hasBrokerKeys: !!process.env.ALPACA_API_KEY,
           hasVectorStore: !!process.env.VECTOR_STORE_URL || !!process.env.DATABASE_URL,
           device: deviceCommand ? { deviceCommand } : undefined,
         },
