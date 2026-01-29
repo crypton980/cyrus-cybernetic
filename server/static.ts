@@ -3,7 +3,13 @@ import fs from "fs";
 import path from "path";
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+  // In production, we run from dist/server/index.js, so public is at ../public
+  // In development, we run from server/, so public is at ../dist/public
+  const isProduction = process.env.NODE_ENV === "production";
+  const distPath = isProduction
+    ? path.resolve(import.meta.dirname, "..", "public")
+    : path.resolve(import.meta.dirname, "..", "dist", "public");
+  
   if (!fs.existsSync(distPath)) {
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
