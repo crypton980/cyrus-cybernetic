@@ -15,6 +15,7 @@ import {
   X,
   Paperclip,
   Cpu,
+  Volume2,
 } from "lucide-react";
 
 interface Message {
@@ -27,6 +28,8 @@ interface Message {
 export function Dashboard() {
   const [input, setInput] = useState("");
   const [micActive, setMicActive] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [researchQuery, setResearchQuery] = useState("");
   const [researchResults, setResearchResults] = useState<string[]>([]);
@@ -34,7 +37,138 @@ export function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
+
+  const speakText = async (text: string) => {
+    try {
+      setIsSpeaking(true);
+      const response = await fetch("/api/cyrus/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: "nova" }),
+      });
+      
+      if (!response.ok) throw new Error("Failed to generate speech");
+      
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      audioRef.current.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      await audioRef.current.play();
+    } catch (error) {
+      console.error("Speech error:", error);
+      setIsSpeaking(false);
+    }
+  };
+
+  const startListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in your browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setMicActive(true);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInput(transcript);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      if (input.trim()) {
+        handleVoiceSubmit();
+      }
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+      setMicActive(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+    setMicActive(false);
+  };
+
+  const handleVoiceSubmit = async () => {
+    if (!input.trim()) return;
+    
+    const message = input.trim();
+    setInput("");
+    
+    await fetch("/api/conversations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "user", content: message }),
+    });
+
+    const inferRes = await fetch("/api/infer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+    const inferData = await inferRes.json();
+
+    await fetch("/api/conversations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "cyrus", content: inferData.response }),
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    
+    if (micActive) {
+      await speakText(inferData.response);
+    }
+  };
+
+  const toggleMic = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      setMicActive(true);
+      startListening();
+    }
+  };
 
   const { data: messages = [], isLoading } = useQuery<Message[]>({
     queryKey: ["/api/conversations"],
@@ -232,10 +366,11 @@ export function Dashboard() {
               </button>
               <button
                 type="button"
-                onClick={() => setMicActive(!micActive)}
-                className={`p-2 rounded-lg transition-colors ${micActive ? 'bg-[#0a84ff] text-white' : 'text-[rgba(235,235,245,0.4)] hover:text-white'}`}
+                onClick={toggleMic}
+                className={`p-2 rounded-lg transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : micActive ? 'bg-[#0a84ff] text-white' : 'text-[rgba(235,235,245,0.4)] hover:text-white'}`}
+                title={isListening ? "Listening... Click to stop" : "Click to speak to CYRUS"}
               >
-                {micActive ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                {isListening ? <Mic className="w-5 h-5" /> : micActive ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
               <button
                 type="button"
