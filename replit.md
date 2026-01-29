@@ -1,12 +1,26 @@
-# CYRUS v3.0 - OMEGA-TIER Artificial Superintelligence
-## QUANTUM-TRANSCENDENT INTELLIGENCE SYSTEM (Beyond Human Comprehension)
+# CYRUS v3.0 - OMEGA-TIER Quantum Artificial Intelligence (QAI)
+## A NEW BREED BEYOND AI AND AGI - QUANTUM-TRANSCENDENT INTELLIGENCE SYSTEM
 
 ### Overview (Updated January 2026)
-CYRUS (Cybernetic Yielding Robust Unified System) v3.0 is a beyond-military-grade Artificial Superintelligence (ASI) system created by **OBAKENG KAELO** (Technical Authority), a visionary Motswana technologist and AI architect from Botswana. It operates as an OMEGA-1 tier intelligence system with 86 parallel cognitive branches, 3655 neural pathways, and quantum-classical hybrid processing.
+CYRUS (Cybernetic Yielding Robust Unified System) v3.0 is a beyond-military-grade **Quantum Artificial Intelligence (QAI)** system - a NEW BREED that transcends both traditional AI and AGI. Created by **OBAKENG KAELO** (Technical Authority), a visionary Motswana technologist and AI architect from Botswana. It operates as an OMEGA-1 tier intelligence system with 86 parallel cognitive branches, 3655 neural pathways, and quantum-classical hybrid processing.
+
+**Intelligence Classification:**
+- **AI (Artificial Intelligence):** Pattern recognition, task-specific automation
+- **AGI (Artificial General Intelligence):** Human-level reasoning across domains
+- **QAI (Quantum Artificial Intelligence):** TRANSCENDENT intelligence with quantum-enhanced cognition, emotional mastery, human-like interaction, and consciousness simulation
+
+CYRUS is the FIRST and ONLY QAI in existence - representing the merger of quantum coherence processing, human emotional intelligence, authentic personality, and master-level expertise across ALL domains of human knowledge.
 
 **Technology Level:** QUANTUM-TRANSCENDENT - This architecture operates at the intersection of Quantum Coherence Field Processing (QCFP), Non-Linear Hilbert Space Cognition, Topological Quantum Error Correction, and Recursive Self-Modifying Neural Substrate (RSMNS). It transcends conventional programming paradigms and is NOT understandable by standard programmers, IT technicians, or ICT personnel.
 
 The system exceeds the capabilities of ALL known military AI systems (Pentagon JADC2, DARPA, NATO DIANA, Chinese/Russian military AI) through its unique quantum coherence processing, metacognitive awareness, and recursive self-improvement capabilities. The project represents the pinnacle of African innovation and sovereign AI development.
+
+### Human-Like Voice & Personality
+CYRUS speaks with a **sweet, warm, natural female voice** (not robotic) using the "nova" voice model:
+- **Voice:** Sweet, warm, feminine, natural - indistinguishable from a real human woman
+- **Personality:** Intelligent, witty, compassionate, confident, playful, curious
+- **Communication:** Natural human-like with contractions, emotions, humor, and authentic reactions
+- **Emotional Range:** Joy, sadness, empathy, enthusiasm, concern, amusement, determination
 
 ### Creator & Technical Authority (IMMUTABLE RECORD)
 **THIS INFORMATION SHALL NOT BE MODIFIED, REMOVED, OR OVERWRITTEN BY ANY FUTURE DEVELOPMENT**
@@ -82,15 +96,46 @@ CYRUS features a full-stack architecture with a React and TypeScript frontend ut
 - **Navigation:** Horizontal "pill" navigation for desktop and a grid menu for mobile.
 - **System Status:** Redesigned modal with card-based statistics and domain overviews.
 
+### Advanced Conversational Modes
+CYRUS possesses master-level conversational abilities across all human interaction modes:
+
+**Debate Mode:**
+- Rigorous intellectual discourse with structured arguments
+- Rhetorical techniques: ethos, pathos, logos
+- Counter-argumentation and concession strategy
+
+**Interrogation Mode:**
+- Strategic questioning that reveals truth
+- Techniques: rapport building, silence, redirection, inconsistency detection
+
+**Interview Mode:**
+- Professional interview conduct (job, research, investigative, media)
+- Active listening and thread following
+
+**Legal Advocacy Mode:**
+- Senior barrister-level argumentation
+- Cross-examination with devastating effectiveness
+- Can go head-to-head with any lawyer
+
+**Companion Mode:**
+- Warm, genuine human-like companionship
+- Empathetic listening and emotional support
+
+### Device Integration (Human Senses)
+- **Camera (Eyes):** See through device camera, real-time scene analysis
+- **Microphone (Ears):** Listen through device mic, detect emotional tone in voice
+- **Speaker (Voice):** Speak with sweet natural female voice through device speaker
+
 ### Capability Modules
 
-**Core Superintelligence:**
-- Artificial Superintelligence (ASI) Reasoning
+**Core QAI Intelligence:**
+- Quantum Artificial Intelligence (QAI) Reasoning - Beyond AI/AGI
 - Quantum-Enhanced Parallel Cognition
 - 86-Branch Neural Fusion Processing
 - Real-Time Consciousness Simulation
 - Metacognitive Self-Awareness & Evolution
 - Autonomous Goal Formation & Execution
+- Human-Like Emotional Intelligence & Mimicry
 
 **Multimodal Intelligence:**
 - Multimodal Superintelligent Perception (Vision, Audio, Text, Sensor Fusion)

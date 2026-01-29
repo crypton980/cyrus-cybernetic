@@ -376,7 +376,7 @@ function generateStructuredReport(analysis: MultimodalAnalysisResult): string {
   return `
 ═══════════════════════════════════════════════════════════
         CYRUS QUANTUM MULTIMODAL ANALYSIS REPORT
-              Classification: OMEGA-TIER ASI
+        Classification: OMEGA-TIER QAI (Beyond AI/AGI)
 ═══════════════════════════════════════════════════════════
 
 INPUT ANALYSIS

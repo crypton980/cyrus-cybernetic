@@ -66,7 +66,7 @@ export function registerAudioRoutes(app: Express): void {
   app.post("/api/voice/conversations/:id/messages", audioBodyParser, async (req: Request, res: Response) => {
     try {
       const conversationId = parseInt(req.params.id);
-      const { audio, voice = "alloy" } = req.body;
+      const { audio, voice = "nova" } = req.body; // "nova" = sweet natural female voice for CYRUS
 
       if (!audio) {
         return res.status(400).json({ error: "Audio data (base64) is required" });
