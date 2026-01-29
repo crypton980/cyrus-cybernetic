@@ -8,29 +8,18 @@ import {
   Compass,
   MapPin,
   Gauge,
-  Clock,
-  Satellite,
-  Signal,
   Power,
   ArrowUp,
   ArrowDown,
   RotateCcw,
-  AlertTriangle,
+  AlertOctagon,
   Play,
-  Pause,
+  Square,
   Target,
-  Navigation,
   Plus,
   Loader2,
-  CheckCircle,
-  XCircle,
-  Radio,
-  Crosshair,
-  Activity,
-  Zap,
-  Shield,
-  Wind,
-  Thermometer,
+  Navigation,
+  Signal,
 } from 'lucide-react';
 
 export function DronePage() {
@@ -39,7 +28,6 @@ export function DronePage() {
     simulationMode,
     missions,
     activeMission,
-    isLoading,
     connect,
     disconnect,
     arm,
@@ -58,264 +46,146 @@ export function DronePage() {
   const [newMissionName, setNewMissionName] = useState('');
   const [showMissionForm, setShowMissionForm] = useState(false);
 
-  const handleConnect = () => {
-    connect.mutate({ connectionType: 'wifi' });
-  };
-
   const formatFlightTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getBatteryColor = (level: number) => {
-    if (level > 60) return 'text-emerald-400';
-    if (level > 30) return 'text-amber-400';
-    return 'text-red-400';
-  };
-
-  const getBatteryBg = (level: number) => {
-    if (level > 60) return 'from-emerald-500 to-emerald-600';
-    if (level > 30) return 'from-amber-500 to-amber-600';
-    return 'from-red-500 to-red-600';
-  };
-
-  const getModeStyle = (mode: string, isActive: boolean) => {
-    if (!isActive) return 'bg-white/[0.03] text-white/40 hover:bg-white/[0.06] border-white/[0.06]';
-    switch (mode) {
-      case 'AUTO': return 'bg-gradient-to-r from-purple-500/30 to-violet-500/30 text-purple-300 border-purple-500/50';
-      case 'GUIDED': return 'bg-gradient-to-r from-blue-500/30 to-cyan-500/30 text-cyan-300 border-cyan-500/50';
-      case 'RTL': return 'bg-gradient-to-r from-orange-500/30 to-amber-500/30 text-amber-300 border-amber-500/50';
-      case 'LAND': return 'bg-gradient-to-r from-yellow-500/30 to-lime-500/30 text-yellow-300 border-yellow-500/50';
-      case 'LOITER': return 'bg-gradient-to-r from-teal-500/30 to-emerald-500/30 text-teal-300 border-teal-500/50';
-      default: return 'bg-gradient-to-r from-gray-500/30 to-slate-500/30 text-gray-300 border-gray-500/50';
-    }
-  };
-
   return (
-    <div className="h-full flex flex-col overflow-hidden p-4 lg:p-6">
-      <header className="mb-6 flex items-center justify-between">
+    <div className="h-full flex flex-col overflow-hidden bg-black">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-[rgba(84,84,88,0.65)]">
         <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl blur-xl opacity-40" />
-            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 via-red-500 to-rose-600 flex items-center justify-center shadow-2xl">
-              <Plane className="w-7 h-7 text-white" strokeWidth={1.5} />
-            </div>
+          <div className="w-12 h-12 bg-gradient-to-br from-[#0a84ff] to-[#64d2ff] rounded-2xl flex items-center justify-center">
+            <Plane className="w-6 h-6 text-white" />
           </div>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white tracking-tight">Aerospace Command</h1>
+            <h1 className="text-[22px] font-bold">Aerospace Control</h1>
+            <div className="flex items-center gap-3 mt-0.5">
+              <span className="text-[13px] text-[rgba(235,235,245,0.6)]">MAVLink v2.0</span>
               {simulationMode && (
-                <span className="px-2.5 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-[10px] font-bold tracking-wider uppercase border border-amber-500/30">
-                  SIM MODE
+                <span className="px-2 py-0.5 bg-[rgba(255,159,10,0.15)] text-[#ff9f0a] text-[11px] font-semibold rounded-full">
+                  SIMULATION
                 </span>
               )}
             </div>
-            <p className="text-sm text-white/40 flex items-center gap-2 mt-0.5">
-              <Radio className="w-3.5 h-3.5" />
-              MAVLink Protocol v2.0 Interface
-            </p>
           </div>
         </div>
         
         {state?.connected ? (
           <button
             onClick={() => disconnect.mutate()}
-            className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 transition-all duration-300 group"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[rgba(255,69,58,0.15)] text-[#ff453a] text-[15px] font-semibold rounded-xl hover:bg-[rgba(255,69,58,0.25)] transition-colors"
           >
-            <WifiOff className="w-4 h-4 group-hover:animate-pulse" />
-            <span className="font-medium">Disconnect</span>
+            <WifiOff className="w-5 h-5" />
+            Disconnect
           </button>
         ) : (
           <button
-            onClick={handleConnect}
+            onClick={() => connect.mutate({ connectionType: 'wifi' })}
             disabled={connect.isPending}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 hover:from-emerald-500/30 hover:to-cyan-500/30 border border-emerald-500/30 rounded-xl text-emerald-400 transition-all duration-300 disabled:opacity-50 group"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#0a84ff] text-white text-[15px] font-semibold rounded-xl hover:bg-[#409cff] transition-colors disabled:opacity-50"
           >
             {connect.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <Wifi className="w-4 h-4 group-hover:animate-pulse" />
+              <Wifi className="w-5 h-5" />
             )}
-            <span className="font-medium">Establish Link</span>
+            Connect
           </button>
         )}
       </header>
 
-      <div className="flex-1 grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6 overflow-auto">
-        <div className="xl:col-span-3 space-y-4 lg:space-y-6">
-          <div className="rounded-2xl border border-white/[0.06] p-5 lg:p-6" style={{ background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.9) 100%)', backdropFilter: 'blur(20px)' }}>
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20">
-                  <Activity className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white/90 tracking-wide">Telemetry Dashboard</h3>
-                  <p className="text-[10px] text-white/40 uppercase tracking-wider">Real-time sensor data</p>
-                </div>
-              </div>
-              {state?.connected && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Live Feed</span>
-                </div>
-              )}
-            </div>
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Panel - Telemetry & Controls */}
+        <div className="flex-1 flex flex-col overflow-auto">
+          {/* Telemetry Grid */}
+          <div className="p-6">
+            <h2 className="text-[13px] font-semibold text-[rgba(235,235,245,0.6)] uppercase tracking-wide mb-4">Telemetry</h2>
             
             {!state?.connected ? (
-              <div className="flex flex-col items-center justify-center py-16 text-white/30">
-                <div className="relative">
-                  <WifiOff className="w-16 h-16 mb-4 opacity-30" />
-                  <div className="absolute inset-0 animate-ping opacity-20">
-                    <WifiOff className="w-16 h-16" />
-                  </div>
-                </div>
-                <p className="text-lg font-medium text-white/50">No Active Link</p>
-                <p className="text-sm text-white/30 mt-1">Establish connection to receive telemetry</p>
+              <div className="bg-[#1c1c1e] rounded-2xl p-12 flex flex-col items-center justify-center">
+                <WifiOff className="w-12 h-12 text-[rgba(235,235,245,0.3)] mb-4" />
+                <p className="text-[17px] text-[rgba(235,235,245,0.6)]">No Connection</p>
+                <p className="text-[13px] text-[rgba(235,235,245,0.3)] mt-1">Connect to view telemetry data</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <TelemetryCard 
                   icon={Battery} 
                   label="Battery" 
-                  value={`${state.battery.toFixed(0)}%`}
-                  color={getBatteryColor(state.battery)}
-                  bgGradient={getBatteryBg(state.battery)}
-                  showBar
-                  barValue={state.battery}
+                  value={`${state.battery.toFixed(0)}%`} 
+                  color={state.battery > 30 ? '#30d158' : '#ff453a'} 
                 />
-                <TelemetryCard 
-                  icon={ArrowUp} 
-                  label="Altitude" 
-                  value={`${state.altitude.toFixed(1)}m`}
-                  color="text-cyan-400"
-                  bgGradient="from-cyan-500 to-blue-600"
-                  subValue="MSL"
-                />
-                <TelemetryCard 
-                  icon={Gauge} 
-                  label="Airspeed" 
-                  value={`${state.speed.toFixed(1)}`}
-                  color="text-violet-400"
-                  bgGradient="from-violet-500 to-purple-600"
-                  subValue="m/s"
-                />
-                <TelemetryCard 
-                  icon={Compass} 
-                  label="Heading" 
-                  value={`${state.heading}°`}
-                  color="text-orange-400"
-                  bgGradient="from-orange-500 to-red-600"
-                  subValue={getHeadingDirection(state.heading)}
-                />
-                <TelemetryCard 
-                  icon={MapPin} 
-                  label="Position" 
-                  value={`${state.latitude.toFixed(4)}`}
-                  color="text-emerald-400"
-                  bgGradient="from-emerald-500 to-teal-600"
-                  subValue={`${state.longitude.toFixed(4)}`}
-                  isCoord
-                />
-                <TelemetryCard 
-                  icon={Satellite} 
-                  label="GPS Lock" 
-                  value={`${state.satellites}`}
-                  color="text-blue-400"
-                  bgGradient="from-blue-500 to-indigo-600"
-                  subValue="satellites"
-                />
+                <TelemetryCard icon={ArrowUp} label="Altitude" value={`${state.altitude.toFixed(1)} m`} />
+                <TelemetryCard icon={Gauge} label="Speed" value={`${state.speed.toFixed(1)} m/s`} />
+                <TelemetryCard icon={Compass} label="Heading" value={`${state.heading}°`} />
+                <TelemetryCard icon={MapPin} label="Latitude" value={state.latitude.toFixed(6)} mono />
+                <TelemetryCard icon={Navigation} label="Longitude" value={state.longitude.toFixed(6)} mono />
                 <TelemetryCard 
                   icon={Signal} 
-                  label="Signal" 
-                  value={`${state.signalStrength.toFixed(0)}%`}
-                  color="text-green-400"
-                  bgGradient="from-green-500 to-emerald-600"
-                  showBar
-                  barValue={state.signalStrength}
+                  label="Satellites" 
+                  value={`${state.satellites} GPS`} 
+                  color={state.satellites >= 6 ? '#30d158' : '#ff9f0a'} 
                 />
-                <TelemetryCard 
-                  icon={Clock} 
-                  label="Flight Time" 
-                  value={formatFlightTime(state.flightTime)}
-                  color="text-amber-400"
-                  bgGradient="from-amber-500 to-orange-600"
-                  subValue="elapsed"
-                />
+                <TelemetryCard icon={Gauge} label="Flight Time" value={formatFlightTime(state.flightTime)} mono />
               </div>
             )}
           </div>
 
-          <div className="rounded-2xl border border-white/[0.06] p-5 lg:p-6" style={{ background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.9) 100%)', backdropFilter: 'blur(20px)' }}>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/20">
-                <Navigation className="w-5 h-5 text-violet-400" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-white/90 tracking-wide">Flight Control Matrix</h3>
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">Primary command interface</p>
-              </div>
-            </div>
+          {/* Flight Controls */}
+          <div className="p-6 pt-0">
+            <h2 className="text-[13px] font-semibold text-[rgba(235,235,245,0.6)] uppercase tracking-wide mb-4">Flight Control</h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4 mb-5">
-              <FlightButton
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <ControlButton
                 onClick={() => state?.armed ? disarm.mutate() : arm.mutate()}
-                disabled={!state?.connected || arm.isPending || disarm.isPending}
+                disabled={!state?.connected}
                 active={state?.armed}
                 icon={Power}
-                label={state?.armed ? 'ARMED' : 'ARM'}
-                activeColor="from-emerald-500 to-green-600"
-                glowColor="emerald"
+                label={state?.armed ? 'Armed' : 'Arm'}
+                activeColor="#30d158"
               />
-              <FlightButton
+              <ControlButton
                 onClick={() => takeoff.mutate(takeoffAltitude)}
-                disabled={!state?.connected || !state?.armed || takeoff.isPending}
+                disabled={!state?.connected || !state?.armed}
                 icon={ArrowUp}
-                label="TAKEOFF"
-                activeColor="from-cyan-500 to-blue-600"
-                glowColor="cyan"
+                label="Takeoff"
               />
-              <FlightButton
+              <ControlButton
                 onClick={() => land.mutate()}
-                disabled={!state?.connected || land.isPending}
+                disabled={!state?.connected}
                 icon={ArrowDown}
-                label="LAND"
-                activeColor="from-amber-500 to-orange-600"
-                glowColor="amber"
+                label="Land"
               />
-              <FlightButton
+              <ControlButton
                 onClick={() => returnToLaunch.mutate()}
-                disabled={!state?.connected || returnToLaunch.isPending}
+                disabled={!state?.connected}
                 icon={RotateCcw}
                 label="RTL"
-                activeColor="from-orange-500 to-red-600"
-                glowColor="orange"
               />
             </div>
             
-            <div className="flex flex-wrap items-center gap-4 mb-5">
+            <div className="flex items-center gap-6 mb-6">
               <div className="flex items-center gap-3">
-                <label className="text-xs text-white/50 font-medium uppercase tracking-wider">Alt:</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={takeoffAltitude}
-                    onChange={(e) => setTakeoffAltitude(Number(e.target.value))}
-                    className="w-20 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm font-mono focus:border-cyan-500/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                    min={5}
-                    max={100}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/30">m</span>
-                </div>
+                <span className="text-[13px] text-[rgba(235,235,245,0.6)]">Altitude</span>
+                <input
+                  type="number"
+                  value={takeoffAltitude}
+                  onChange={(e) => setTakeoffAltitude(Number(e.target.value))}
+                  className="w-20 bg-[rgba(120,120,128,0.24)] border-none rounded-lg px-3 py-2 text-[15px] text-white text-center focus:ring-2 focus:ring-[#0a84ff] outline-none"
+                  min={5}
+                  max={100}
+                />
+                <span className="text-[13px] text-[rgba(235,235,245,0.4)]">meters</span>
               </div>
               
               {state?.mode && (
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-white/50 font-medium uppercase tracking-wider">Mode:</span>
-                  <span className={`px-4 py-2 rounded-lg text-sm font-bold tracking-wider border ${getModeStyle(state.mode, true)}`}>
-                    {state.mode}
-                  </span>
+                  <span className="text-[13px] text-[rgba(235,235,245,0.6)]">Mode</span>
+                  <span className="px-4 py-2 bg-[#2c2c2e] rounded-lg text-[15px] font-semibold text-white">{state.mode}</span>
                 </div>
               )}
             </div>
@@ -323,44 +193,36 @@ export function DronePage() {
             <button
               onClick={() => emergencyStop.mutate()}
               disabled={!state?.connected}
-              className="w-full relative group overflow-hidden flex items-center justify-center gap-3 p-4 rounded-xl font-bold text-white transition-all disabled:opacity-30"
-              style={{
-                background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
-                boxShadow: state?.connected ? '0 0 40px rgba(220, 38, 38, 0.3)' : 'none'
-              }}
+              className="w-full flex items-center justify-center gap-3 py-4 bg-[#ff453a] text-white text-[17px] font-bold rounded-2xl disabled:opacity-30 hover:bg-[#ff6961] transition-colors"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              <AlertTriangle className="w-5 h-5" />
-              <span className="tracking-widest">EMERGENCY STOP</span>
+              <AlertOctagon className="w-6 h-6" />
+              Emergency Stop
             </button>
           </div>
         </div>
 
-        <div className="space-y-4 lg:space-y-6">
-          <div className="rounded-2xl border border-white/[0.06] p-5" style={{ background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.9) 100%)', backdropFilter: 'blur(20px)' }}>
+        {/* Right Panel - Missions & Modes */}
+        <div className="hidden xl:flex w-80 flex-col bg-[#1c1c1e] border-l border-[rgba(84,84,88,0.65)]">
+          {/* Missions */}
+          <div className="p-4 border-b border-[rgba(84,84,88,0.65)]">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/20">
-                  <Target className="w-4 h-4 text-amber-400" />
-                </div>
-                <h3 className="text-sm font-semibold text-white/90">Missions</h3>
-              </div>
+              <h3 className="text-[13px] font-semibold text-[rgba(235,235,245,0.6)] uppercase tracking-wide">Missions</h3>
               <button
                 onClick={() => setShowMissionForm(!showMissionForm)}
-                className="p-2 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] rounded-lg text-white/50 hover:text-white transition-all"
+                className="p-1.5 text-[#0a84ff] hover:bg-[rgba(10,132,255,0.1)] rounded-lg transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
               </button>
             </div>
             
             {showMissionForm && (
-              <div className="mb-4 p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+              <div className="mb-4">
                 <input
                   type="text"
                   value={newMissionName}
                   onChange={(e) => setNewMissionName(e.target.value)}
-                  placeholder="Mission identifier..."
-                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white mb-3 focus:border-cyan-500/50 focus:outline-none transition-all placeholder:text-white/20"
+                  placeholder="Mission name..."
+                  className="w-full bg-[rgba(120,120,128,0.24)] rounded-xl px-4 py-3 text-[15px] text-white placeholder-[rgba(235,235,245,0.3)] outline-none focus:ring-2 focus:ring-[#0a84ff] mb-2"
                 />
                 <button
                   onClick={() => {
@@ -377,59 +239,52 @@ export function DronePage() {
                       setShowMissionForm(false);
                     }
                   }}
-                  className="w-full py-2.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30 border border-cyan-500/30 rounded-lg text-cyan-400 text-sm font-medium transition-all"
+                  className="w-full py-2.5 bg-[#0a84ff] text-white text-[15px] font-semibold rounded-xl hover:bg-[#409cff] transition-colors"
                 >
-                  Initialize Mission
+                  Create Mission
                 </button>
               </div>
             )}
             
             {missions.length === 0 ? (
-              <div className="text-center py-10 text-white/30">
-                <Target className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm font-medium">No Active Missions</p>
-                <p className="text-xs text-white/20 mt-1">Create a flight plan to begin</p>
+              <div className="text-center py-8">
+                <Target className="w-10 h-10 text-[rgba(235,235,245,0.2)] mx-auto mb-2" />
+                <p className="text-[13px] text-[rgba(235,235,245,0.4)]">No missions created</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {missions.map((mission) => (
-                  <div
-                    key={mission.id}
-                    className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl hover:bg-white/[0.04] transition-all"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-white/90">{mission.name}</span>
-                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-                        mission.status === 'active' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                        mission.status === 'completed' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                        mission.status === 'aborted' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                        'bg-white/[0.05] text-white/40 border border-white/[0.1]'
+                  <div key={mission.id} className="p-4 bg-[#2c2c2e] rounded-xl">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[15px] font-medium text-white">{mission.name}</span>
+                      <span className={`text-[11px] font-semibold uppercase ${
+                        mission.status === 'active' ? 'text-[#30d158]' :
+                        mission.status === 'completed' ? 'text-[#0a84ff]' :
+                        mission.status === 'aborted' ? 'text-[#ff453a]' :
+                        'text-[rgba(235,235,245,0.4)]'
                       }`}>
                         {mission.status}
                       </span>
                     </div>
-                    <p className="text-xs text-white/40 mb-3 flex items-center gap-2">
-                      <Crosshair className="w-3 h-3" />
-                      {mission.waypoints.length} waypoints defined
-                    </p>
+                    <p className="text-[12px] text-[rgba(235,235,245,0.4)] mb-3">{mission.waypoints.length} waypoints</p>
                     
                     {mission.status === 'pending' && (
                       <button
                         onClick={() => startMission.mutate(mission.id)}
                         disabled={!state?.connected || !state?.armed}
-                        className="w-full py-2 bg-gradient-to-r from-emerald-500/20 to-green-500/20 hover:from-emerald-500/30 hover:to-green-500/30 border border-emerald-500/30 rounded-lg text-emerald-400 text-xs font-semibold transition-all disabled:opacity-30 flex items-center justify-center gap-2"
+                        className="w-full py-2 bg-[rgba(48,209,88,0.15)] text-[#30d158] text-[13px] font-semibold rounded-lg hover:bg-[rgba(48,209,88,0.25)] transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
                       >
-                        <Play className="w-3 h-3" />
-                        Execute
+                        <Play className="w-4 h-4" />
+                        Start Mission
                       </button>
                     )}
                     
                     {mission.status === 'active' && (
                       <button
                         onClick={() => abortMission.mutate()}
-                        className="w-full py-2 bg-gradient-to-r from-red-500/20 to-rose-500/20 hover:from-red-500/30 hover:to-rose-500/30 border border-red-500/30 rounded-lg text-red-400 text-xs font-semibold transition-all flex items-center justify-center gap-2"
+                        className="w-full py-2 bg-[rgba(255,69,58,0.15)] text-[#ff453a] text-[13px] font-semibold rounded-lg hover:bg-[rgba(255,69,58,0.25)] transition-colors flex items-center justify-center gap-2"
                       >
-                        <XCircle className="w-3 h-3" />
+                        <Square className="w-4 h-4" />
                         Abort Mission
                       </button>
                     )}
@@ -439,20 +294,20 @@ export function DronePage() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-white/[0.06] p-5" style={{ background: 'linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.9) 100%)', backdropFilter: 'blur(20px)' }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/20">
-                <Compass className="w-4 h-4 text-violet-400" />
-              </div>
-              <h3 className="text-sm font-semibold text-white/90">Flight Modes</h3>
-            </div>
+          {/* Flight Modes */}
+          <div className="flex-1 p-4">
+            <h3 className="text-[13px] font-semibold text-[rgba(235,235,245,0.6)] uppercase tracking-wide mb-4">Flight Mode</h3>
             <div className="grid grid-cols-2 gap-2">
               {['STABILIZE', 'LOITER', 'GUIDED', 'AUTO', 'RTL', 'LAND'].map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setMode.mutate(mode as any)}
                   disabled={!state?.connected}
-                  className={`py-2.5 px-3 rounded-xl text-xs font-bold tracking-wider transition-all border ${getModeStyle(mode, state?.mode === mode)} disabled:opacity-30`}
+                  className={`py-3 text-[13px] font-semibold rounded-xl transition-colors ${
+                    state?.mode === mode
+                      ? 'bg-[#0a84ff] text-white'
+                      : 'bg-[#2c2c2e] text-[rgba(235,235,245,0.6)] hover:bg-[#3a3a3c] hover:text-white'
+                  } disabled:opacity-30`}
                 >
                   {mode}
                 </button>
@@ -465,96 +320,34 @@ export function DronePage() {
   );
 }
 
-function TelemetryCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  color, 
-  bgGradient, 
-  subValue, 
-  showBar, 
-  barValue,
-  isCoord 
-}: { 
-  icon: any; 
-  label: string; 
-  value: string; 
-  color: string; 
-  bgGradient: string;
-  subValue?: string; 
-  showBar?: boolean; 
-  barValue?: number;
-  isCoord?: boolean;
-}) {
+function TelemetryCard({ icon: Icon, label, value, color, mono }: { icon: any; label: string; value: string; color?: string; mono?: boolean }) {
   return (
-    <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl hover:bg-white/[0.04] transition-all group">
-      <div className="flex items-center gap-2 mb-3">
-        <div className={`p-1.5 rounded-lg bg-gradient-to-br ${bgGradient} opacity-80`}>
-          <Icon className="w-3 h-3 text-white" />
-        </div>
-        <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">{label}</span>
+    <div className="bg-[#1c1c1e] rounded-2xl p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className="w-4 h-4 text-[rgba(235,235,245,0.4)]" />
+        <span className="text-[12px] text-[rgba(235,235,245,0.4)] uppercase tracking-wide">{label}</span>
       </div>
-      <div className={`font-mono font-bold ${isCoord ? 'text-lg' : 'text-2xl'} ${color} tracking-tight`}>
+      <p className={`text-[22px] font-semibold ${mono ? 'font-mono' : ''}`} style={{ color: color || '#fff' }}>
         {value}
-      </div>
-      {subValue && (
-        <p className="text-[10px] text-white/30 mt-1 uppercase tracking-wider">{subValue}</p>
-      )}
-      {showBar && barValue !== undefined && (
-        <div className="mt-3 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-          <div 
-            className={`h-full bg-gradient-to-r ${bgGradient} rounded-full transition-all duration-500`}
-            style={{ width: `${barValue}%` }}
-          />
-        </div>
-      )}
+      </p>
     </div>
   );
 }
 
-function FlightButton({
-  onClick,
-  disabled,
-  active,
-  icon: Icon,
-  label,
-  activeColor,
-  glowColor
-}: {
-  onClick: () => void;
-  disabled?: boolean;
-  active?: boolean;
-  icon: any;
-  label: string;
-  activeColor: string;
-  glowColor: string;
-}) {
-  const glowStyles: Record<string, string> = {
-    emerald: '0 0 30px rgba(16, 185, 129, 0.4)',
-    cyan: '0 0 30px rgba(6, 182, 212, 0.4)',
-    amber: '0 0 30px rgba(245, 158, 11, 0.4)',
-    orange: '0 0 30px rgba(249, 115, 22, 0.4)',
-  };
-
+function ControlButton({ onClick, disabled, active, icon: Icon, label, activeColor }: { onClick: () => void; disabled?: boolean; active?: boolean; icon: any; label: string; activeColor?: string }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`relative group flex flex-col items-center gap-3 p-5 rounded-xl border transition-all duration-300 ${
+      className={`flex flex-col items-center gap-2 py-5 rounded-2xl transition-colors ${
         active
-          ? `bg-gradient-to-br ${activeColor} border-white/20 text-white`
-          : 'bg-white/[0.02] border-white/[0.06] text-white/60 hover:bg-white/[0.05] hover:text-white/80'
-      } disabled:opacity-30 disabled:cursor-not-allowed`}
-      style={active ? { boxShadow: glowStyles[glowColor] } : undefined}
+          ? 'text-white'
+          : 'bg-[#1c1c1e] text-white hover:bg-[#2c2c2e]'
+      } disabled:opacity-30`}
+      style={active ? { backgroundColor: activeColor || '#0a84ff' } : {}}
     >
-      <Icon className={`w-6 h-6 transition-transform duration-300 ${!disabled && 'group-hover:scale-110'}`} />
-      <span className="text-xs font-bold tracking-widest">{label}</span>
+      <Icon className="w-6 h-6" />
+      <span className="text-[13px] font-semibold">{label}</span>
     </button>
   );
-}
-
-function getHeadingDirection(heading: number): string {
-  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-  const index = Math.round(heading / 45) % 8;
-  return directions[index];
 }
