@@ -56,3 +56,6 @@ export type Memory = typeof memories.$inferSelect;
 
 export type InsertUploadedFile = z.infer<typeof insertUploadedFileSchema>;
 export type UploadedFile = typeof uploadedFiles.$inferSelect;
+
+export * from "./models/auth";
+export * from "./models/comms";

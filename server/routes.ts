@@ -24,6 +24,7 @@ import { buildReport } from "./ingestion/report";
 import { generateDocument } from "./docgen/generate";
 import { initSignalingServer } from "./comms/signaling";
 import { enqueueMessage, dequeueMessages, addReminder, listReminders } from "./comms/store";
+import { registerCommsRoutes } from "./comms/comms-routes";
 import { v4 as uuid } from "uuid";
 import fetch from "node-fetch";
 import { analyzeScan } from "./scan/analyze";
@@ -189,6 +190,7 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Initialize signaling server for WebRTC/messaging
   initSignalingServer(httpServer);
+  registerCommsRoutes(app);
   // Ensure uploads directory exists
   const fs = await import("fs/promises");
   const uploadsDir = path.join(process.cwd(), "public", "uploads");
