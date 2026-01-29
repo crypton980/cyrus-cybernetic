@@ -43,11 +43,22 @@ export function Dashboard() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentTranscriptRef = useRef<string>("");
+  const micActiveRef = useRef<boolean>(false);
+  const isSpeakingRef = useRef<boolean>(false);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    micActiveRef.current = micActive;
+  }, [micActive]);
+
+  useEffect(() => {
+    isSpeakingRef.current = isSpeaking;
+  }, [isSpeaking]);
 
   const speakText = async (text: string) => {
     try {
       setIsSpeaking(true);
+      isSpeakingRef.current = true;
       setIsStreaming(true);
       setStreamingText("");
       
@@ -87,9 +98,10 @@ export function Dashboard() {
         clearInterval(textInterval);
         setStreamingText(text);
         setIsSpeaking(false);
+        isSpeakingRef.current = false;
         setIsStreaming(false);
         URL.revokeObjectURL(audioUrl);
-        if (micActive) {
+        if (micActiveRef.current) {
           setTimeout(() => startContinuousListening(), 500);
         }
       };
@@ -131,7 +143,7 @@ export function Dashboard() {
   };
 
   const startContinuousListening = () => {
-    if (isSpeaking) return;
+    if (isSpeakingRef.current) return;
     
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -174,16 +186,16 @@ export function Dashboard() {
         clearTimeout(silenceTimerRef.current);
       }
       const finalTranscript = currentTranscriptRef.current.trim();
-      if (finalTranscript && micActive) {
+      if (finalTranscript && micActiveRef.current) {
         handleVoiceSubmit(finalTranscript);
-      } else if (micActive && !isSpeaking) {
+      } else if (micActiveRef.current && !isSpeakingRef.current) {
         setTimeout(() => startContinuousListening(), 300);
       }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Speech recognition error:", event.error);
-      if (event.error === 'no-speech' && micActive) {
+      if (event.error === 'no-speech' && micActiveRef.current) {
         setTimeout(() => startContinuousListening(), 300);
       } else if (event.error !== 'aborted') {
         setIsListening(false);
@@ -196,6 +208,7 @@ export function Dashboard() {
 
   const startListening = () => {
     setMicActive(true);
+    micActiveRef.current = true;
     startContinuousListening();
   };
 
@@ -211,6 +224,7 @@ export function Dashboard() {
     currentTranscriptRef.current = "";
     setIsListening(false);
     setMicActive(false);
+    micActiveRef.current = false;
     setInput("");
   };
 
