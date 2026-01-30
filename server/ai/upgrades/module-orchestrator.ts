@@ -11,7 +11,7 @@ import { nanotechnologySimulation } from "./nanotechnology-simulation";
 import { hyperlinkedReality } from "./hyperlinked-reality";
 import { bioNeuralInterface } from "./bio-neural-interface";
 import { adaptiveHardwareController } from "./adaptive-hardware-controller";
-import { biologyModule, environmentalSensing, medicalDiagnostics, roboticIntegration, teachingModule, securityEncryption } from "../interactive/routes";
+import { biologyModule, environmentalSensing, medicalDiagnostics, roboticIntegration, teachingModule, securityEncryption, bloodSamplingSystem } from "../interactive/routes";
 
 export interface ModuleStatus {
   id: string;
@@ -63,6 +63,7 @@ class ModuleOrchestrator {
     this.modules.set("robotic", { instance: roboticIntegration, category: "interactive", name: "Robotic Integration" });
     this.modules.set("teaching", { instance: teachingModule, category: "interactive", name: "Teaching & Learning" });
     this.modules.set("security", { instance: securityEncryption, category: "interactive", name: "Security & Encryption" });
+    this.modules.set("blood-sampling", { instance: bloodSamplingSystem, category: "interactive", name: "Blood Sampling System" });
 
     this.context.activeModules = Array.from(this.modules.keys());
   }

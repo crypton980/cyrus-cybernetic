@@ -81,6 +81,7 @@ These 6 modules enable real-time human interaction, biological analysis, and phy
 4. **Robotic Integration Module**: ROS-based robotic arm control (surgical, laboratory, service arms), motion commands (move, rotate, grip, release, home), task sequence execution, haptic feedback, sensor fusion, safety systems with emergency stop, blood sampling and surgical procedure sequences.
 5. **Teaching & Adaptive Learning Module**: Interactive lessons across 13 subjects (Biology, Chemistry, Physics, Medicine, AI/ML, etc.), AI-generated lessons, learner profiles with adaptive pacing, exercises with scoring, knowledge graphs, and personalized recommendations.
 6. **Security & Encryption Module**: AES-256-GCM encryption, secure key management with rotation, SHA-256 hashing with integrity verification, role-based access control (admin, operator, viewer, patient, researcher), comprehensive audit logging, secure token generation.
+7. **Blood Sampling System**: Automated blood collection with sterile needle mechanism (21-gauge disposable), vacuum-assisted collection (10mL tubes with -50mmHg pressure), infrared vein detection with confidence scoring, UV-C sterilization system (99.99% pathogen kill rate), servo motor precision control, real-time flow monitoring, sample quality analysis, emergency retract safety systems, and full session logging.
 
 ### External Dependencies
 -   **PostgreSQL Database:** Primary data persistence, hosted via Neon.

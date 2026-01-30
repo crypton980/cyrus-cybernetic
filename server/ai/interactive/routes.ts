@@ -5,6 +5,7 @@ import { medicalDiagnostics } from "./medical-diagnostics";
 import { roboticIntegration } from "./robotic-integration";
 import { teachingModule } from "./teaching-module";
 import { securityEncryption } from "./security-encryption";
+import { bloodSamplingSystem } from "./blood-sampling-system";
 
 export function registerInteractiveRoutes(app: Express): void {
   console.log("[Interactive Systems] Registering API routes");
@@ -488,6 +489,131 @@ export function registerInteractiveRoutes(app: Express): void {
     res.json({ success: true, status: securityEncryption.getStatus() });
   });
 
+  // ============ BLOOD SAMPLING SYSTEM ROUTES ============
+
+  app.get("/api/interactive/blood-sampling/status", (req, res) => {
+    res.json({ success: true, status: bloodSamplingSystem.getSystemStatus() });
+  });
+
+  app.post("/api/interactive/blood-sampling/vein/detect", async (req, res) => {
+    try {
+      const { armPosition } = req.body;
+      const result = await bloodSamplingSystem.detectVein(armPosition || 'left');
+      res.json({ success: true, detection: result });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/interactive/blood-sampling/session/start", async (req, res) => {
+    try {
+      const { patientId, armPosition } = req.body;
+      const session = await bloodSamplingSystem.startSamplingSession(patientId, armPosition || 'left');
+      res.json({ success: true, session });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/interactive/blood-sampling/session/:id/execute", async (req, res) => {
+    try {
+      const sample = await bloodSamplingSystem.executeFullSamplingSequence(req.params.id);
+      res.json({ success: true, sample });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.get("/api/interactive/blood-sampling/session/:id", (req, res) => {
+    const session = bloodSamplingSystem.getSession(req.params.id);
+    if (!session) {
+      return res.status(404).json({ success: false, error: "Session not found" });
+    }
+    res.json({ success: true, session });
+  });
+
+  app.get("/api/interactive/blood-sampling/sessions", (req, res) => {
+    res.json({ success: true, sessions: bloodSamplingSystem.getAllSessions() });
+  });
+
+  app.get("/api/interactive/blood-sampling/sample/:id", (req, res) => {
+    const sample = bloodSamplingSystem.getSample(req.params.id);
+    if (!sample) {
+      return res.status(404).json({ success: false, error: "Sample not found" });
+    }
+    res.json({ success: true, sample });
+  });
+
+  app.get("/api/interactive/blood-sampling/samples", (req, res) => {
+    res.json({ success: true, samples: bloodSamplingSystem.getAllSamples() });
+  });
+
+  app.post("/api/interactive/blood-sampling/sample/:id/quality", async (req, res) => {
+    try {
+      const analysis = await bloodSamplingSystem.analyzeSampleQuality(req.params.id);
+      res.json({ success: true, analysis });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/interactive/blood-sampling/sterilize", async (req, res) => {
+    try {
+      await bloodSamplingSystem.activateSterilization();
+      res.json({ success: true, message: "Sterilization complete" });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/interactive/blood-sampling/servo/control", async (req, res) => {
+    try {
+      const { servoId, position } = req.body;
+      const servo = await bloodSamplingSystem.controlServo(servoId, position);
+      res.json({ success: true, servo });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/interactive/blood-sampling/vacuum/control", async (req, res) => {
+    try {
+      const { action, targetPressure } = req.body;
+      const vacuum = await bloodSamplingSystem.controlVacuumPump(action, targetPressure);
+      res.json({ success: true, vacuum });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/interactive/blood-sampling/emergency-stop", async (req, res) => {
+    await bloodSamplingSystem.emergencyRetract();
+    res.json({ success: true, message: "Emergency stop activated" });
+  });
+
+  app.post("/api/interactive/blood-sampling/emergency-reset", (req, res) => {
+    bloodSamplingSystem.resetEmergencyStop();
+    res.json({ success: true, message: "Emergency stop reset" });
+  });
+
+  app.get("/api/interactive/blood-sampling/needles", (req, res) => {
+    const status = bloodSamplingSystem.getSystemStatus();
+    res.json({ success: true, needles: status.needles });
+  });
+
+  app.get("/api/interactive/blood-sampling/hardware", (req, res) => {
+    const status = bloodSamplingSystem.getSystemStatus();
+    res.json({
+      success: true,
+      hardware: {
+        servoMotors: status.servoMotors,
+        pressureSensors: status.pressureSensors,
+        vacuumSystem: status.vacuumSystem,
+        sterilization: status.sterilization
+      }
+    });
+  });
+
   // ============ COMBINED STATUS ENDPOINT ============
 
   app.get("/api/interactive/status", (req, res) => {
@@ -499,13 +625,14 @@ export function registerInteractiveRoutes(app: Express): void {
         medical: medicalDiagnostics.getStatus(),
         robotic: roboticIntegration.getStatus(),
         teaching: teachingModule.getStatus(),
-        security: securityEncryption.getStatus()
+        security: securityEncryption.getStatus(),
+        bloodSampling: bloodSamplingSystem.getStatus()
       },
       timestamp: Date.now()
     });
   });
 
-  console.log("[Interactive Systems] API routes registered successfully (6 modules, 60+ endpoints)");
+  console.log("[Interactive Systems] API routes registered successfully (7 modules, 75+ endpoints)");
 }
 
 export {
@@ -514,5 +641,6 @@ export {
   medicalDiagnostics,
   roboticIntegration,
   teachingModule,
-  securityEncryption
+  securityEncryption,
+  bloodSamplingSystem
 };

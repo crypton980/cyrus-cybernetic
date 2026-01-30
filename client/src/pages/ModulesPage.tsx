@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircle,
+  Droplets,
 } from "lucide-react";
 
 interface ModuleStatus {
@@ -66,6 +67,7 @@ const moduleIcons: Record<string, any> = {
   "robotic": Settings,
   "teaching": Brain,
   "security": Shield,
+  "blood-sampling": Droplets,
 };
 
 const moduleColors: Record<string, string> = {
@@ -88,6 +90,7 @@ const moduleColors: Record<string, string> = {
   "robotic": "from-zinc-500 to-gray-600",
   "teaching": "from-yellow-500 to-amber-600",
   "security": "from-slate-500 to-zinc-600",
+  "blood-sampling": "from-red-600 to-rose-700",
 };
 
 export function ModulesPage() {
