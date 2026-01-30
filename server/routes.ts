@@ -2157,6 +2157,137 @@ Return ONLY valid JSON.`
     });
   });
 
+  // Get Alpaca account info
+  app.get("/api/trading/account", async (req, res) => {
+    try {
+      if (!alpacaClient) {
+        return res.status(503).json({ error: "Alpaca client not configured" });
+      }
+      const account = await alpacaClient.getAccount();
+      res.json({
+        id: account.id,
+        accountNumber: account.account_number,
+        status: account.status,
+        currency: account.currency,
+        cash: parseFloat(account.cash),
+        portfolioValue: parseFloat(account.portfolio_value),
+        buyingPower: parseFloat(account.buying_power),
+        equity: parseFloat(account.equity),
+        daytradeCount: account.daytrade_count,
+        patternDayTrader: account.pattern_day_trader,
+        tradingBlocked: account.trading_blocked,
+        cryptoStatus: account.crypto_status
+      });
+    } catch (error: any) {
+      console.error("[Trading] Account error:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch account" });
+    }
+  });
+
+  // Get Alpaca positions
+  app.get("/api/trading/positions", async (req, res) => {
+    try {
+      if (!alpacaClient) {
+        return res.json([]); // Return empty if not configured
+      }
+      const positions = await alpacaClient.getPositions();
+      res.json(positions.map(p => ({
+        symbol: p.symbol,
+        qty: parseFloat(p.qty),
+        side: p.side,
+        avgEntryPrice: parseFloat(p.avg_entry_price),
+        marketValue: parseFloat(p.market_value),
+        costBasis: parseFloat(p.cost_basis),
+        unrealizedPl: parseFloat(p.unrealized_pl),
+        unrealizedPlpc: parseFloat(p.unrealized_plpc),
+        currentPrice: parseFloat(p.current_price),
+        changeToday: parseFloat(p.change_today),
+        assetClass: p.asset_class
+      })));
+    } catch (error: any) {
+      console.error("[Trading] Positions error:", error);
+      res.json([]); // Return empty on error
+    }
+  });
+
+  // Get Alpaca orders
+  app.get("/api/trading/orders", async (req, res) => {
+    try {
+      if (!alpacaClient) {
+        return res.json([]);
+      }
+      const orders = await alpacaClient.getOrders({ status: "all", limit: 50 });
+      res.json(orders.map(o => ({
+        id: o.id,
+        symbol: o.symbol,
+        qty: parseFloat(o.qty),
+        filledQty: parseFloat(o.filled_qty),
+        side: o.side,
+        type: o.type,
+        status: o.status,
+        limitPrice: o.limit_price ? parseFloat(o.limit_price) : null,
+        stopPrice: o.stop_price ? parseFloat(o.stop_price) : null,
+        filledAvgPrice: o.filled_avg_price ? parseFloat(o.filled_avg_price) : null,
+        createdAt: o.created_at,
+        filledAt: o.filled_at,
+        assetClass: o.asset_class
+      })));
+    } catch (error: any) {
+      console.error("[Trading] Orders error:", error);
+      res.json([]);
+    }
+  });
+
+  // Get stock/crypto quote
+  app.get("/api/trading/quote/:symbol", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      if (!alpacaClient) {
+        return res.status(503).json({ error: "Alpaca client not configured" });
+      }
+      
+      // Check if it's a crypto symbol (contains /)
+      if (symbol.includes("/") || symbol.endsWith("USD")) {
+        const cryptoSymbol = symbol.includes("/") ? symbol : `${symbol.replace("USD", "")}/USD`;
+        const quotes = await alpacaClient.getCryptoQuotes([cryptoSymbol]);
+        const quote = quotes.quotes[cryptoSymbol];
+        if (quote) {
+          res.json({
+            symbol: cryptoSymbol,
+            askPrice: quote.ap,
+            askSize: quote.as,
+            bidPrice: quote.bp,
+            bidSize: quote.bs,
+            timestamp: quote.t,
+            type: "crypto"
+          });
+        } else {
+          res.status(404).json({ error: "Quote not found" });
+        }
+      } else {
+        // Stock quote
+        const quotes = await alpacaClient.getStockQuotes([symbol]);
+        const quote = quotes.quotes[symbol];
+        if (quote) {
+          res.json({
+            symbol,
+            askPrice: quote.ap,
+            askSize: quote.as,
+            bidPrice: quote.bp,
+            bidSize: quote.bs,
+            timestamp: quote.t,
+            type: "stock"
+          });
+        } else {
+          res.status(404).json({ error: "Quote not found" });
+        }
+      }
+    } catch (error: any) {
+      console.error("[Trading] Quote error:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch quote" });
+    }
+  });
+
   // Start autonomous trading - with Alpaca sync
   app.post("/api/trading/autonomous/start", async (req, res) => {
     try {
