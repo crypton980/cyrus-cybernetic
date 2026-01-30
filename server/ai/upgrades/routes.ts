@@ -6,6 +6,13 @@ import {
   decentralizedIntelligence,
   ethicalGovernance,
   selfEvolution,
+  quantumNeuralNetworks,
+  aiSimulationsEngine,
+  crossDimensionalAI,
+  nanotechnologySimulation,
+  hyperlinkedReality,
+  bioNeuralInterface,
+  adaptiveHardwareController,
   getAdvancedUpgradesStatus
 } from "./index";
 
@@ -455,5 +462,503 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
     }
   });
 
-  console.log('[Advanced Upgrades] API routes registered successfully');
+  app.get("/api/upgrades/quantum/status", async (req, res) => {
+    try {
+      const status = quantumNeuralNetworks.getStatus();
+      const circuits = quantumNeuralNetworks.getCircuits();
+      res.json({
+        success: true,
+        status,
+        circuits: circuits.map(c => ({ id: c.id, name: c.name, qubits: c.qubits.length, gates: c.gates.length }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch quantum status" });
+    }
+  });
+
+  app.post("/api/upgrades/quantum/create-circuit", async (req, res) => {
+    try {
+      const { name, numQubits, gates } = req.body;
+      if (!name || !numQubits) {
+        return res.status(400).json({ error: "Name and numQubits are required" });
+      }
+      const circuit = quantumNeuralNetworks.createCircuit(name, numQubits, gates || []);
+      res.json({ success: true, circuit: { id: circuit.id, name: circuit.name, qubits: circuit.qubits.length } });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to create circuit" });
+    }
+  });
+
+  app.post("/api/upgrades/quantum/execute", async (req, res) => {
+    try {
+      const { circuitId, shots = 1024 } = req.body;
+      if (!circuitId) {
+        return res.status(400).json({ error: "Circuit ID is required" });
+      }
+      const result = await quantumNeuralNetworks.executeCircuit(circuitId, shots);
+      res.json({
+        success: true,
+        probabilities: result.probabilities,
+        coherenceScore: result.coherenceScore,
+        executionTime: result.executionTime,
+        measurementCounts: result.measurements.reduce((acc: Record<number, number>, m) => {
+          acc[m] = (acc[m] || 0) + 1;
+          return acc;
+        }, {})
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Circuit execution failed" });
+    }
+  });
+
+  app.post("/api/upgrades/quantum/infer", async (req, res) => {
+    try {
+      const { query } = req.body;
+      if (!query) {
+        return res.status(400).json({ error: "Query is required" });
+      }
+      const result = await quantumNeuralNetworks.quantumEnhancedInference(query);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: "Quantum inference failed" });
+    }
+  });
+
+  app.get("/api/upgrades/simulations/status", async (req, res) => {
+    try {
+      const status = aiSimulationsEngine.getStatus();
+      const environments = aiSimulationsEngine.getEnvironments();
+      res.json({
+        success: true,
+        status,
+        environments: environments.map(e => ({ id: e.id, name: e.name, type: e.type, bodies: e.bodies.length, agents: e.agents.length }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch simulation status" });
+    }
+  });
+
+  app.post("/api/upgrades/simulations/create", async (req, res) => {
+    try {
+      const { name, type, gravity, timeStep } = req.body;
+      if (!name || !type) {
+        return res.status(400).json({ error: "Name and type are required" });
+      }
+      const env = aiSimulationsEngine.createEnvironment(name, type, { gravity, timeStep });
+      res.json({ success: true, environment: { id: env.id, name: env.name, type: env.type } });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to create environment" });
+    }
+  });
+
+  app.post("/api/upgrades/simulations/step", async (req, res) => {
+    try {
+      const { envId, steps = 1 } = req.body;
+      if (!envId) {
+        return res.status(400).json({ error: "Environment ID is required" });
+      }
+      const result = await aiSimulationsEngine.stepSimulation(envId, steps);
+      res.json({ success: true, stepsTaken: result.stepsTaken, metrics: result.metrics, executionTime: result.executionTime });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Simulation step failed" });
+    }
+  });
+
+  app.post("/api/upgrades/simulations/scenario", async (req, res) => {
+    try {
+      const { scenario } = req.body;
+      if (!scenario) {
+        return res.status(400).json({ error: "Scenario description is required" });
+      }
+      const result = await aiSimulationsEngine.runAIScenario(scenario);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: "AI scenario failed" });
+    }
+  });
+
+  app.get("/api/upgrades/dimensional/status", async (req, res) => {
+    try {
+      const status = crossDimensionalAI.getStatus();
+      const tensors = crossDimensionalAI.getTensors();
+      res.json({
+        success: true,
+        status,
+        tensors: tensors.map(t => ({ id: t.id, shape: t.shape, dtype: t.dtype }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch dimensional status" });
+    }
+  });
+
+  app.post("/api/upgrades/dimensional/create-tensor", async (req, res) => {
+    try {
+      const { shape, distribution = 'uniform' } = req.body;
+      if (!shape || !Array.isArray(shape)) {
+        return res.status(400).json({ error: "Shape array is required" });
+      }
+      const tensor = crossDimensionalAI.createRandomTensor(shape, distribution);
+      res.json({ success: true, tensor: { id: tensor.id, shape: tensor.shape, dtype: tensor.dtype } });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to create tensor" });
+    }
+  });
+
+  app.post("/api/upgrades/dimensional/fft", async (req, res) => {
+    try {
+      const { tensorId } = req.body;
+      if (!tensorId) {
+        return res.status(400).json({ error: "Tensor ID is required" });
+      }
+      const result = crossDimensionalAI.applyFFT(tensorId);
+      res.json({
+        success: true,
+        magnitudes: { id: result.magnitudes.id, shape: result.magnitudes.shape },
+        phases: { id: result.phases.id, shape: result.phases.shape }
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "FFT failed" });
+    }
+  });
+
+  app.post("/api/upgrades/dimensional/analyze", async (req, res) => {
+    try {
+      const { tensorId } = req.body;
+      if (!tensorId) {
+        return res.status(400).json({ error: "Tensor ID is required" });
+      }
+      const analysis = crossDimensionalAI.analyzeHighDimensional(tensorId);
+      res.json({
+        success: true,
+        dimensions: analysis.dimensions,
+        eigenvalues: analysis.eigenvalues.slice(0, 5),
+        explainedVariance: analysis.explainedVariance,
+        intrinsicDimensionality: analysis.intrinsicDimensionality
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Analysis failed" });
+    }
+  });
+
+  app.post("/api/upgrades/dimensional/reason", async (req, res) => {
+    try {
+      const { query, tensorIds = [] } = req.body;
+      if (!query) {
+        return res.status(400).json({ error: "Query is required" });
+      }
+      const result = await crossDimensionalAI.dimensionalReasoning(query, tensorIds);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: "Dimensional reasoning failed" });
+    }
+  });
+
+  app.get("/api/upgrades/nanotech/status", async (req, res) => {
+    try {
+      const status = nanotechnologySimulation.getStatus();
+      const structures = nanotechnologySimulation.getStructures();
+      res.json({
+        success: true,
+        status,
+        structures: structures.map(s => ({ id: s.id, name: s.name, type: s.type, atoms: s.atoms.length, properties: s.properties }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch nanotech status" });
+    }
+  });
+
+  app.post("/api/upgrades/nanotech/create-structure", async (req, res) => {
+    try {
+      const { type, parameters } = req.body;
+      if (!type) {
+        return res.status(400).json({ error: "Structure type is required" });
+      }
+      let structure;
+      switch (type) {
+        case 'fullerene':
+          structure = nanotechnologySimulation.createCarbon60Fullerene();
+          break;
+        case 'graphene':
+          structure = nanotechnologySimulation.createGrapheneSheet(parameters?.width || 5, parameters?.height || 5);
+          break;
+        case 'nanotube':
+          structure = nanotechnologySimulation.createCarbonNanotube(parameters?.circumference || 5, parameters?.length || 10);
+          break;
+        case 'quantum_dot':
+          structure = nanotechnologySimulation.createQuantumDot(parameters?.element || 'Au', parameters?.radius || 3);
+          break;
+        default:
+          return res.status(400).json({ error: "Unknown structure type" });
+      }
+      res.json({ success: true, structure: { id: structure.id, name: structure.name, type: structure.type, atoms: structure.atoms.length } });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to create structure" });
+    }
+  });
+
+  app.post("/api/upgrades/nanotech/simulate", async (req, res) => {
+    try {
+      const { name, structureIds, temperature, steps } = req.body;
+      if (!name || !structureIds || !Array.isArray(structureIds)) {
+        return res.status(400).json({ error: "Name and structureIds array are required" });
+      }
+      const simulation = nanotechnologySimulation.createSimulation(name, structureIds, { temperature });
+      const result = await nanotechnologySimulation.runSimulation(simulation.id, steps || 100);
+      res.json({
+        success: true,
+        simulationId: simulation.id,
+        steps: result.steps,
+        executionTime: result.executionTime,
+        energyHistory: result.energyHistory.slice(-10)
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Simulation failed" });
+    }
+  });
+
+  app.post("/api/upgrades/nanotech/analyze", async (req, res) => {
+    try {
+      const { structureId } = req.body;
+      if (!structureId) {
+        return res.status(400).json({ error: "Structure ID is required" });
+      }
+      const result = await nanotechnologySimulation.analyzeNanostructure(structureId);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Analysis failed" });
+    }
+  });
+
+  app.get("/api/upgrades/ar/status", async (req, res) => {
+    try {
+      const status = hyperlinkedReality.getStatus();
+      const scenes = hyperlinkedReality.getScenes();
+      const config = hyperlinkedReality.getWebXRConfig();
+      res.json({
+        success: true,
+        status,
+        scenes: scenes.map(s => ({ id: s.id, name: s.name, objects: s.objects.length })),
+        webxrConfig: config
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch AR status" });
+    }
+  });
+
+  app.post("/api/upgrades/ar/create-scene", async (req, res) => {
+    try {
+      const { name, lighting, ambientColor } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: "Scene name is required" });
+      }
+      const scene = hyperlinkedReality.createScene(name, { lighting, ambientColor });
+      res.json({ success: true, scene: { id: scene.id, name: scene.name } });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to create scene" });
+    }
+  });
+
+  app.post("/api/upgrades/ar/add-object", async (req, res) => {
+    try {
+      const { sceneId, name, type, position, content, anchor } = req.body;
+      if (!sceneId || !name || !type || !content) {
+        return res.status(400).json({ error: "sceneId, name, type, and content are required" });
+      }
+      const object = hyperlinkedReality.addARObject(sceneId, { name, type, position, content, anchor });
+      res.json({ success: true, object: { id: object.id, name: object.name, type: object.type } });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to add object" });
+    }
+  });
+
+  app.post("/api/upgrades/ar/create-hologram", async (req, res) => {
+    try {
+      const { content, position, size, animation } = req.body;
+      if (!content || !position) {
+        return res.status(400).json({ error: "Content and position are required" });
+      }
+      const display = hyperlinkedReality.createHolographicDisplay({ content, position, size, animation });
+      res.json({ success: true, display: { id: display.id, size: display.size } });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to create hologram" });
+    }
+  });
+
+  app.post("/api/upgrades/ar/analyze-environment", async (req, res) => {
+    try {
+      const { description } = req.body;
+      if (!description) {
+        return res.status(400).json({ error: "Description is required" });
+      }
+      const result = await hyperlinkedReality.analyzeEnvironmentForAR(description);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: "Environment analysis failed" });
+    }
+  });
+
+  app.get("/api/upgrades/ar/generate-code/:sceneId", async (req, res) => {
+    try {
+      const { sceneId } = req.params;
+      const code = hyperlinkedReality.generateARViewCode(sceneId);
+      res.json({ success: true, code });
+    } catch (error: any) {
+      res.status(500).json({ error: "Code generation failed" });
+    }
+  });
+
+  app.get("/api/upgrades/bci/status", async (req, res) => {
+    try {
+      const status = bioNeuralInterface.getStatus();
+      const channels = bioNeuralInterface.getChannels();
+      res.json({
+        success: true,
+        status,
+        channels: channels.map(c => ({ id: c.id, name: c.name, signalQuality: c.signalQuality }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch BCI status" });
+    }
+  });
+
+  app.post("/api/upgrades/bci/connect", async (req, res) => {
+    try {
+      const { deviceType = 'simulation' } = req.body;
+      const result = bioNeuralInterface.connect(deviceType);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: "Connection failed" });
+    }
+  });
+
+  app.post("/api/upgrades/bci/disconnect", async (req, res) => {
+    try {
+      bioNeuralInterface.disconnect();
+      res.json({ success: true, message: "Disconnected" });
+    } catch (error: any) {
+      res.status(500).json({ error: "Disconnection failed" });
+    }
+  });
+
+  app.get("/api/upgrades/bci/cognitive-state", async (req, res) => {
+    try {
+      const state = bioNeuralInterface.getCurrentCognitiveState();
+      const bands = bioNeuralInterface.analyzeFrequencyBands();
+      res.json({ success: true, cognitiveState: state, frequencyBands: bands });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to get cognitive state" });
+    }
+  });
+
+  app.post("/api/upgrades/bci/interpret", async (req, res) => {
+    try {
+      const { query } = req.body;
+      const result = await bioNeuralInterface.interpretNeuralActivity(query);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: "Interpretation failed" });
+    }
+  });
+
+  app.post("/api/upgrades/bci/neurofeedback/start", async (req, res) => {
+    try {
+      const { target, durationMinutes = 5 } = req.body;
+      if (!target) {
+        return res.status(400).json({ error: "Target is required" });
+      }
+      const session = bioNeuralInterface.startNeurofeedbackSession(target, durationMinutes);
+      res.json({ success: true, session: { id: session.id, target: session.target, duration: session.duration } });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to start session" });
+    }
+  });
+
+  app.get("/api/upgrades/hardware/status", async (req, res) => {
+    try {
+      const status = adaptiveHardwareController.getStatus();
+      const devices = adaptiveHardwareController.getDevices();
+      res.json({
+        success: true,
+        status,
+        devices: devices.map(d => ({ id: d.id, name: d.name, type: d.type, status: d.status }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch hardware status" });
+    }
+  });
+
+  app.get("/api/upgrades/hardware/arms", async (req, res) => {
+    try {
+      const arms = adaptiveHardwareController.getRoboticArms();
+      res.json({
+        success: true,
+        arms: arms.map(a => ({ id: a.id, name: a.name, mode: a.mode, position: a.position, endEffector: a.endEffector }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch robotic arms" });
+    }
+  });
+
+  app.get("/api/upgrades/hardware/iot", async (req, res) => {
+    try {
+      const devices = adaptiveHardwareController.getIOTDevices();
+      res.json({ success: true, devices });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch IoT devices" });
+    }
+  });
+
+  app.post("/api/upgrades/hardware/command", async (req, res) => {
+    try {
+      const { deviceId, type, parameters, priority } = req.body;
+      if (!deviceId || !type) {
+        return res.status(400).json({ error: "deviceId and type are required" });
+      }
+      const command = adaptiveHardwareController.sendCommand({ deviceId, type, parameters: parameters || {}, priority });
+      res.json({ success: true, command: { id: command.id, status: command.status } });
+    } catch (error: any) {
+      res.status(500).json({ error: "Command failed" });
+    }
+  });
+
+  app.post("/api/upgrades/hardware/arm/move", async (req, res) => {
+    try {
+      const { armId, target } = req.body;
+      if (!armId || !target) {
+        return res.status(400).json({ error: "armId and target are required" });
+      }
+      const command = adaptiveHardwareController.moveRoboticArm(armId, target);
+      res.json({ success: true, command: { id: command.id, status: command.status } });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Move command failed" });
+    }
+  });
+
+  app.post("/api/upgrades/hardware/arm/grip", async (req, res) => {
+    try {
+      const { armId, action, force } = req.body;
+      if (!armId || !action) {
+        return res.status(400).json({ error: "armId and action are required" });
+      }
+      const command = adaptiveHardwareController.controlGripper(armId, action, force);
+      res.json({ success: true, command: { id: command.id, status: command.status } });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Grip command failed" });
+    }
+  });
+
+  app.post("/api/upgrades/hardware/interpret", async (req, res) => {
+    try {
+      const { command } = req.body;
+      if (!command) {
+        return res.status(400).json({ error: "Command is required" });
+      }
+      const result = await adaptiveHardwareController.interpretHardwareCommand(command);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: "Command interpretation failed" });
+    }
+  });
+
+  console.log('[Advanced Upgrades] API routes registered successfully (13 modules, 50+ endpoints)');
 }
