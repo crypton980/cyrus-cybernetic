@@ -35,6 +35,7 @@ import { registerDroneRoutes } from "./drone/routes";
 import { experienceMemory } from "./ai/experience-memory";
 import { adaptiveLearning } from "./ai/adaptive-learning";
 import { registerAdvancedUpgradeRoutes } from "./ai/upgrades/routes";
+import { moduleOrchestrator } from "./ai/upgrades/module-orchestrator";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -478,13 +479,33 @@ export async function registerRoutes(
         };
       });
       
+      // Build unified context from all 13 modules
+      const orchestratorContext = await moduleOrchestrator.buildUnifiedContext(message, {
+        vision: moduleContext?.vision,
+        location,
+        detectedObjects
+      });
+      
+      // Merge orchestrator context with existing module context
+      const enhancedModuleContext = {
+        ...moduleContext,
+        orchestrator: orchestratorContext,
+        activeModules: orchestratorContext.activeModules,
+        emotion: orchestratorContext.moduleData.emotion,
+        language: orchestratorContext.moduleData.language,
+        ethics: orchestratorContext.moduleData.ethics,
+        quantum: orchestratorContext.moduleData.quantum,
+        cognitive: orchestratorContext.moduleData.cognitive,
+        hardware: orchestratorContext.moduleData.hardware
+      };
+      
       const result = await neuralFusionEngine.processInference({
         message,
         imageData,
         detectedObjects,
         location,
         userId,
-        moduleContext,
+        moduleContext: enhancedModuleContext,
         conversationHistory
       });
       

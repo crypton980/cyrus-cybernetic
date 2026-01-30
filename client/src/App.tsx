@@ -23,9 +23,11 @@ import { CommsPage } from "./pages/CommsPage";
 import { DeviceControlPage } from "./pages/DeviceControlPage";
 import { TradingPage } from "./pages/TradingPage";
 import { DronePage } from "./pages/DronePage";
+import { ModulesPage } from "./pages/ModulesPage";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
+  { path: "/modules", label: "Modules", sublabel: "AI Orchestrator", icon: Cpu },
   { path: "/scan", label: "Vision", sublabel: "Optical Analysis", icon: Scan },
   { path: "/files", label: "Documents", sublabel: "File Processing", icon: FileText },
   { path: "/nav", label: "Navigation", sublabel: "Geospatial", icon: MapPin },
@@ -169,6 +171,7 @@ export default function App() {
         <main className="flex-1 overflow-hidden bg-black">
           <Switch>
             <Route path="/" component={Dashboard} />
+            <Route path="/modules" component={ModulesPage} />
             <Route path="/scan" component={ScanPage} />
             <Route path="/files" component={FileAnalysisPage} />
             <Route path="/nav" component={NavigationPage} />

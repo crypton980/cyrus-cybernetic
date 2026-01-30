@@ -15,6 +15,7 @@ import {
   adaptiveHardwareController,
   getAdvancedUpgradesStatus
 } from "./index";
+import { moduleOrchestrator } from "./module-orchestrator";
 
 export function registerAdvancedUpgradeRoutes(app: Express): void {
   console.log('[Advanced Upgrades] Registering API routes');
@@ -30,6 +31,59 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
     } catch (error: any) {
       console.error("Error fetching upgrades status:", error);
       res.status(500).json({ error: "Failed to fetch upgrades status" });
+    }
+  });
+
+  app.get("/api/orchestrator/modules", async (req, res) => {
+    try {
+      const modules = moduleOrchestrator.getAllModuleStatus();
+      const health = moduleOrchestrator.getSystemHealth();
+      res.json({
+        success: true,
+        modules,
+        health,
+        totalModules: modules.length,
+        coreModules: modules.filter(m => m.category === "core").length,
+        advancedModules: modules.filter(m => m.category === "advanced").length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch module status" });
+    }
+  });
+
+  app.get("/api/orchestrator/health", async (req, res) => {
+    try {
+      const health = moduleOrchestrator.getSystemHealth();
+      res.json({ success: true, ...health });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch system health" });
+    }
+  });
+
+  app.post("/api/orchestrator/context", async (req, res) => {
+    try {
+      const { message, additionalContext } = req.body;
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+      const context = await moduleOrchestrator.buildUnifiedContext(message, additionalContext);
+      res.json({ success: true, context });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to build context" });
+    }
+  });
+
+  app.post("/api/orchestrator/process", async (req, res) => {
+    try {
+      const { input, options } = req.body;
+      if (!input) {
+        return res.status(400).json({ error: "Input is required" });
+      }
+      const result = await moduleOrchestrator.processWithAllModules(input, options);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to process with modules" });
     }
   });
 
