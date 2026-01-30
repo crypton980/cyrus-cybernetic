@@ -34,6 +34,7 @@ import { decodeQr } from "./scan/qr";
 import { registerDroneRoutes } from "./drone/routes";
 import { experienceMemory } from "./ai/experience-memory";
 import { adaptiveLearning } from "./ai/adaptive-learning";
+import { registerAdvancedUpgradeRoutes } from "./ai/upgrades/routes";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -195,6 +196,7 @@ export async function registerRoutes(
   // Initialize signaling server for WebRTC/messaging
   initSignalingServer(httpServer);
   registerCommsRoutes(app);
+  registerAdvancedUpgradeRoutes(app);
   // Ensure uploads directory exists
   const fs = await import("fs/promises");
   const uploadsDir = path.join(process.cwd(), "public", "uploads");

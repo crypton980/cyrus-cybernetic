@@ -5,6 +5,13 @@ import OpenAI from 'openai';
 import { droneController } from '../modules/drone-control';
 import { adaptiveLearning } from './adaptive-learning';
 import { experienceMemory } from './experience-memory';
+import { 
+  vectorKnowledgeBase, 
+  emotionalCognition, 
+  universalLanguage, 
+  ethicalGovernance,
+  getAdvancedUpgradesStatus 
+} from './upgrades/index';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
@@ -1002,24 +1009,58 @@ My internal chronometer is synchronized with atomic time standards. Temporal pre
     priorLearning?: { optimizedApproach: string | null; predictedTime: number; learningApplied: boolean; confidenceLevel: number }
   ): Promise<string> {
     try {
-      // Build enhanced system prompt with learning context
       let enhancedSystemPrompt = CYRUS_SYSTEM_PROMPT;
       
-      // Inject learned optimizations into the system prompt
+      const [emotionalAnalysis, languageDetection, ethicalAssessment, knowledgeContext] = await Promise.all([
+        emotionalCognition.analyzeEmotion(request.message),
+        universalLanguage.detectLanguage(request.message),
+        ethicalGovernance.assessEthics(request.message),
+        vectorKnowledgeBase.retrieveContext(request.message, { topK: 3 })
+      ]);
+
+      if (ethicalAssessment.category === 'block') {
+        console.log('[Neural Fusion] Ethical governance blocked request');
+        return ethicalAssessment.recommendations.join(' ') || 
+          "I can't assist with that request. Let me know if there's something else I can help you with.";
+      }
+
+      enhancedSystemPrompt += `\n\n[ADVANCED COGNITIVE UPGRADES ACTIVE]
+
+EMOTIONAL INTELLIGENCE ANALYSIS:
+- User Emotion: ${emotionalAnalysis.primary} (intensity: ${(emotionalAnalysis.intensity * 100).toFixed(0)}%)
+- Emotional Valence: ${emotionalAnalysis.valence > 0 ? 'Positive' : emotionalAnalysis.valence < 0 ? 'Negative' : 'Neutral'}
+- Suggested Tone: ${emotionalAnalysis.valence < -0.3 ? 'warm, supportive, and empathetic' : 
+                   emotionalAnalysis.primary === 'joy' ? 'enthusiastic and celebratory' : 
+                   'friendly and conversational'}
+Respond with appropriate emotional intelligence and empathy.
+
+LANGUAGE CONTEXT:
+- Detected Language: ${languageDetection.language} (${languageDetection.languageCode})
+- Confidence: ${(languageDetection.confidence * 100).toFixed(0)}%
+${languageDetection.languageCode !== 'en' ? `Respond in ${languageDetection.language} to match the user's language.` : ''}`;
+
+      if (knowledgeContext.retrievedDocuments.length > 0 && knowledgeContext.confidence > 0.4) {
+        enhancedSystemPrompt += `\n\nRELEVANT KNOWLEDGE RETRIEVED (RAG):
+${knowledgeContext.synthesizedContext.slice(0, 1000)}
+Use this retrieved knowledge to inform your response when relevant.`;
+      }
+
+      if (ethicalAssessment.category === 'caution') {
+        enhancedSystemPrompt += `\n\nETHICAL GUIDANCE:
+Proceed with care. ${ethicalAssessment.recommendations.join(' ')}`;
+      }
+
       if (priorLearning?.learningApplied && priorLearning.confidenceLevel > 50) {
-        enhancedSystemPrompt += `\n\n[LEARNING CONTEXT - Self-Evolution Active]
+        enhancedSystemPrompt += `\n\n[SELF-EVOLUTION LEARNING CONTEXT]
 Based on ${priorLearning.confidenceLevel}% confidence from previous similar interactions:
 - Predicted optimal response time: ${priorLearning.predictedTime}ms
-- Recommended approach: ${priorLearning.optimizedApproach || 'Use proven conversational patterns'}
-Apply these learned optimizations to provide a better, faster response.`;
+- Recommended approach: ${priorLearning.optimizedApproach || 'Use proven conversational patterns'}`;
       }
       
-      // Build messages array with conversation history for context
       const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
         { role: 'system', content: enhancedSystemPrompt }
       ];
       
-      // Add conversation history (up to 10 recent messages for context)
       if (request.conversationHistory && request.conversationHistory.length > 0) {
         for (const msg of request.conversationHistory) {
           messages.push({
@@ -1029,10 +1070,8 @@ Apply these learned optimizations to provide a better, faster response.`;
         }
       }
       
-      // Add the current message with any module context
       let currentMessage = request.message;
       
-      // Add module context to current message if available
       if (request.moduleContext) {
         const ctx = request.moduleContext;
         if (ctx.vision?.active && ctx.vision.detectedObjects?.length > 0) {
@@ -1052,7 +1091,14 @@ Apply these learned optimizations to provide a better, faster response.`;
         temperature: 0.7,
       });
       
-      return response.choices[0]?.message?.content || 'Processing complete. Standing by for further directives.';
+      const aiResponse = response.choices[0]?.message?.content || 'Processing complete. Standing by for further directives.';
+
+      vectorKnowledgeBase.learnFromConversation(request.message, aiResponse, {
+        domain: this.classifyTaskType(request.message),
+        importance: emotionalAnalysis.intensity > 0.7 ? 0.8 : 0.6
+      }).catch(err => console.error('[Neural Fusion] Knowledge learning error:', err));
+
+      return aiResponse;
     } catch (error) {
       console.error('OpenAI API error:', error);
       const status = cyrusSoul.getSystemStatus();
