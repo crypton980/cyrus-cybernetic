@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertConversationSchema, insertMemorySchema, insertUploadedFileSchema } from "../shared/schema";
 import multer, { type StorageEngine } from "multer";
+
+type MulterFile = Express.Multer.File;
 import path from "path";
 import { randomUUID } from "crypto";
 import { neuralFusionEngine } from "./ai/neural-fusion";
@@ -178,7 +180,7 @@ const openai = new OpenAI({
 const upload = multer({
   storage: multer.diskStorage({
     destination: path.join(process.cwd(), "public", "uploads"),
-    filename: (req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+    filename: (_req, file, cb) => {
       const uniqueName = `${Date.now()}-${randomUUID()}${path.extname(file.originalname)}`;
       cb(null, uniqueName);
     },
@@ -281,7 +283,7 @@ export async function registerRoutes(
   });
 
   // Upload file
-  app.post("/api/files/upload", upload.single("file"), async (req: Request & { file?: Express.Multer.File }, res) => {
+  app.post("/api/files/upload", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -310,7 +312,7 @@ export async function registerRoutes(
   });
 
   // Analyze file (reliable ingestion pipeline)
-  app.post("/api/files/analyze", upload.single("file"), async (req: Request & { file?: Express.Multer.File }, res) => {
+  app.post("/api/files/analyze", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -426,7 +428,7 @@ export async function registerRoutes(
   });
 
   // Scan + translate + interpret
-  app.post("/api/scan/analyze", upload.single("file"), async (req: Request & { file?: Express.Multer.File }, res) => {
+  app.post("/api/scan/analyze", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -445,7 +447,7 @@ export async function registerRoutes(
   });
 
   // QR-only decode
-  app.post("/api/scan/qr", upload.single("file"), async (req: Request & { file?: Express.Multer.File }, res) => {
+  app.post("/api/scan/qr", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: "No file uploaded" });
       const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
