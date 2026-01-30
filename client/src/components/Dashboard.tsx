@@ -704,27 +704,74 @@ export function Dashboard() {
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
+  // GPS location state
+  const [gpsLocation, setGpsLocation] = useState<{lat: number, lng: number, accuracy: number} | null>(null);
+
+  // Get GPS location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setGpsLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          });
+        },
+        () => {
+          // Use default location if GPS fails
+          setGpsLocation({ lat: -24.5629, lng: 25.8486, accuracy: 60 });
+        }
+      );
+    }
+  }, []);
+
   return (
     <div className="h-full flex flex-col lg:flex-row overflow-hidden">
       {/* Main Chat Panel */}
       <div className="flex-1 flex flex-col min-w-0 bg-black overflow-hidden">
-        {/* Panel Header */}
-        <div className="px-5 py-4 border-b border-[rgba(84,84,88,0.65)] flex items-center justify-between">
+        {/* Panel Header - Matching Previous App Design */}
+        <div className="px-4 py-3 border-b border-[rgba(84,84,88,0.65)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#0a84ff] rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-cyan-600 to-teal-700 flex items-center justify-center">
               <Cpu className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-base font-semibold">Command Interface</h2>
-              <p className="text-xs text-[rgba(235,235,245,0.5)]">Neural Link Active</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold">CYRUS</h2>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full opacity-60"></span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full opacity-40"></span>
+                </div>
+              </div>
+              {gpsLocation && (
+                <p className="text-xs text-[rgba(235,235,245,0.5)] flex items-center gap-1">
+                  <span className="text-cyan-400">◉</span>
+                  {gpsLocation.lat.toFixed(4)}, {gpsLocation.lng.toFixed(4)} · ±{Math.round(gpsLocation.accuracy)}m
+                </p>
+              )}
             </div>
           </div>
-          <button
-            onClick={() => clearHistory.mutate()}
-            className="p-2 text-[rgba(235,235,245,0.4)] hover:text-[#ff453a] rounded-lg hover:bg-[rgba(255,69,58,0.1)] transition-colors"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="p-2 text-[rgba(235,235,245,0.4)] hover:text-white rounded-lg hover:bg-[rgba(120,120,128,0.2)] transition-colors">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+              </svg>
+            </button>
+            <button className="p-2 text-[rgba(235,235,245,0.4)] hover:text-white rounded-lg hover:bg-[rgba(120,120,128,0.2)] transition-colors">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+            <button
+              onClick={() => clearHistory.mutate()}
+              className="p-2 text-[rgba(235,235,245,0.4)] hover:text-[#ff453a] rounded-lg hover:bg-[rgba(255,69,58,0.1)] transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages Display - Independent Scrollable Area */}
@@ -827,6 +874,50 @@ export function Dashboard() {
           )}
         </div>
 
+        {/* Bottom Action Bar */}
+        <div className="px-4 py-2 border-t border-[rgba(84,84,88,0.65)]">
+          <div className="flex justify-center gap-2">
+            <button
+              onClick={toggleCamera}
+              disabled={modelLoading}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${
+                cameraActive ? 'bg-cyan-500/20 text-cyan-400' : modelLoading ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              <Camera className="w-5 h-5" />
+              <span className="text-[10px]">{modelLoading ? 'Loading...' : 'Camera'}</span>
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+            >
+              <Upload className="w-5 h-5" />
+              <span className="text-[10px]">Upload</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <span className="text-[10px]">Security</span>
+            </button>
+            <a
+              href="/comms"
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+              <span className="text-[10px]">Comms</span>
+            </a>
+            <button className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+              </svg>
+              <span className="text-[10px]">Export</span>
+            </button>
+          </div>
+        </div>
+
         {/* Input Bar */}
         <div className="p-4 border-t border-[rgba(84,84,88,0.65)]">
           <form onSubmit={handleSubmit}>
@@ -839,26 +930,11 @@ export function Dashboard() {
               >
                 <Paperclip className="w-5 h-5" />
               </button>
-              <button
-                type="button"
-                onClick={toggleMic}
-                className={`p-2 rounded-lg transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : micActive ? 'bg-[#0a84ff] text-white' : 'text-[rgba(235,235,245,0.4)] hover:text-white'}`}
-                title={isListening ? "Listening... Click to stop" : "Click to speak to CYRUS"}
-              >
-                {isListening ? <Mic className="w-5 h-5" /> : micActive ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-              </button>
-              <button
-                type="button"
-                onClick={() => setCameraActive(!cameraActive)}
-                className={`p-2 rounded-lg transition-colors ${cameraActive ? 'bg-[#0a84ff] text-white' : 'text-[rgba(235,235,245,0.4)] hover:text-white'}`}
-              >
-                {cameraActive ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
-              </button>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Enter command or query..."
+                placeholder="Message CYRUS"
                 className="flex-1 bg-transparent text-sm text-white placeholder-[rgba(235,235,245,0.3)] outline-none py-2"
                 disabled={sendMessage.isPending}
               />
