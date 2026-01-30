@@ -36,7 +36,7 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Professional Writing Engine:** Generates military briefs, legal reports, scientific papers, technical documentation, corporate reports, and executive summaries.
 - **Translation & Deciphering:** Universal translation across 196+ languages, legal/technical jargon simplification, and scientific material conversion.
 - **Navigation & Location:** Global map service integration, high-accuracy geolocation, real-time route optimization.
-- **Communication Stack:** Encrypted voice/video calls, secure text messaging, group conferencing, and real-time transcription.
+- **Communication Stack:** Enterprise-grade HD voice/video calling with 16 global STUN/TURN servers, adaptive bitrate optimization (ultra/high/medium/low presets), advanced audio processing (echo cancellation, noise suppression, auto gain, compression), automatic reconnection with ICE restart, real-time quality monitoring (latency, packet loss, bitrate, resolution), secure text messaging, reminders system, and news feed.
 - **Device Security:** Lawful Guardian operations, remote device management, full audit logging, and recovery assistance.
 - **Drone Control Module:** Military-grade UAV control system with MAVLink protocol support, real-time telemetry, flight commands, waypoint mission planning, and autonomous operations.
 - **Emotional Intelligence:** Advanced sentiment analysis, empathetic response generation, and crisis de-escalation.
