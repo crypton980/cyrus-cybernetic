@@ -72,7 +72,7 @@ Six cutting-edge upgrade modules have been implemented and deeply integrated int
    - Sentiment analysis with valence and intensity scoring
    - Crisis detection and empathetic response generation
    - Emotion state tracking across conversation history
-   - API: `/api/upgrades/emotional/analyze`, `/api/upgrades/emotional/empathy`, `/api/upgrades/emotional/crisis`
+   - API: `/api/upgrades/emotion/analyze`, `/api/upgrades/emotion/context`
 
 3. **Universal Language (196+ Language Translation)**
    - Support for 196+ languages including regional dialects
@@ -88,7 +88,7 @@ Six cutting-edge upgrade modules have been implemented and deeply integrated int
    - Load balancing across worker capacity
    - Task status tracking and result aggregation
    - Network health monitoring
-   - API: `/api/upgrades/intelligence/submit`, `/api/upgrades/intelligence/status`, `/api/upgrades/intelligence/network`
+   - API: `/api/upgrades/distributed/submit`, `/api/upgrades/distributed/status`, `/api/upgrades/distributed/scale`
 
 5. **Ethical Governance (Safety & Moderation)**
    - Real-time content safety assessment
