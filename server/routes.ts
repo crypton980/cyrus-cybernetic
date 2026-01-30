@@ -460,13 +460,26 @@ export async function registerRoutes(
     try {
       const { message, imageData, detectedObjects, location, userId, moduleContext } = req.body;
       
+      // Fetch recent conversation history for context (last 10 messages)
+      const recentConversations = await storage.getConversations(userId, 10);
+      // Reverse to chronological order (oldest first) and normalize roles
+      const conversationHistory = recentConversations.reverse().map(c => {
+        // Normalize role: 'assistant'/'cyrus' -> 'cyrus', everything else -> 'user'
+        const normalizedRole = (c.role === 'cyrus' || c.role === 'assistant') ? 'cyrus' : 'user';
+        return {
+          role: normalizedRole as 'user' | 'cyrus',
+          content: c.content
+        };
+      });
+      
       const result = await neuralFusionEngine.processInference({
         message,
         imageData,
         detectedObjects,
         location,
         userId,
-        moduleContext
+        moduleContext,
+        conversationHistory
       });
       
       res.json({

@@ -206,6 +206,11 @@ export interface ModuleContext {
   activeModules: string[];
 }
 
+export interface ConversationMessage {
+  role: 'user' | 'cyrus';
+  content: string;
+}
+
 export interface InferenceRequest {
   message: string;
   context?: string;
@@ -214,6 +219,7 @@ export interface InferenceRequest {
   location?: { latitude: number; longitude: number } | null;
   userId?: string;
   moduleContext?: ModuleContext;
+  conversationHistory?: ConversationMessage[];
 }
 
 export class NeuralFusionEngine {
@@ -932,12 +938,40 @@ My internal chronometer is synchronized with atomic time standards. Temporal pre
 
   private async generateAdaptiveResponse(thought: ThoughtProcess, request: InferenceRequest): Promise<string> {
     try {
+      // Build messages array with conversation history for context
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+        { role: 'system', content: CYRUS_SYSTEM_PROMPT }
+      ];
+      
+      // Add conversation history (up to 10 recent messages for context)
+      if (request.conversationHistory && request.conversationHistory.length > 0) {
+        for (const msg of request.conversationHistory) {
+          messages.push({
+            role: msg.role === 'cyrus' ? 'assistant' : 'user',
+            content: msg.content
+          });
+        }
+      }
+      
+      // Add the current message with any module context
+      let currentMessage = request.message;
+      
+      // Add module context to current message if available
+      if (request.moduleContext) {
+        const ctx = request.moduleContext;
+        if (ctx.vision?.active && ctx.vision.detectedObjects?.length > 0) {
+          const objectList = ctx.vision.detectedObjects.map((o: any) => 
+            `${o.class} (${Math.round((o.score || 0) * 100)}% confidence)`
+          ).join(", ");
+          currentMessage += `\n\n[CYRUS VISION - I can see: ${objectList}]`;
+        }
+      }
+      
+      messages.push({ role: 'user', content: currentMessage });
+      
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: CYRUS_SYSTEM_PROMPT },
-          { role: 'user', content: request.message }
-        ],
+        messages,
         max_tokens: 2048,
         temperature: 0.7,
       });

@@ -199,7 +199,48 @@ export function Dashboard() {
     isSpeakingRef.current = isSpeaking;
   }, [isSpeaking]);
 
-  const speakText = async (text: string) => {
+  const speakText = async (text: string, retryCount = 0) => {
+    // Guard against overlapping calls - if already speaking, skip
+    if (isSpeakingRef.current && retryCount === 0) {
+      console.log("Already speaking, skipping new speakText call");
+      return;
+    }
+    
+    const maxRetries = 2;
+    let textIntervalId: ReturnType<typeof setInterval> | null = null;
+    
+    const cleanupAndFinish = (showFullText = true) => {
+      if (textIntervalId) clearInterval(textIntervalId);
+      if (showFullText) setStreamingText(text);
+      setIsSpeaking(false);
+      isSpeakingRef.current = false;
+      setIsStreaming(false);
+      if (micActiveRef.current) {
+        setTimeout(() => startContinuousListening(), 100);
+      }
+    };
+
+    const useBrowserSpeech = () => {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1;
+        utterance.volume = 1.0;
+        const voices = speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => 
+          v.name.toLowerCase().includes('female') || 
+          v.name.toLowerCase().includes('samantha') ||
+          v.name.includes('Google UK English Female')
+        );
+        if (femaleVoice) utterance.voice = femaleVoice;
+        utterance.onend = () => cleanupAndFinish(true);
+        utterance.onerror = () => cleanupAndFinish(true);
+        speechSynthesis.speak(utterance);
+        return true;
+      }
+      return false;
+    };
+
     try {
       setIsSpeaking(true);
       isSpeakingRef.current = true;
@@ -209,92 +250,126 @@ export function Dashboard() {
       const words = text.split(/\s+/);
       let wordIndex = 0;
       
-      // Start text streaming immediately
-      const textIntervalId = setInterval(() => {
+      textIntervalId = setInterval(() => {
         if (wordIndex < words.length) {
           setStreamingText(prev => prev + (prev ? " " : "") + words[wordIndex]);
           wordIndex++;
         } else {
-          clearInterval(textIntervalId);
+          if (textIntervalId) clearInterval(textIntervalId);
         }
-      }, 400); // ~2.5 words/sec
+      }, 400);
 
-      // Use streaming TTS for faster first-byte response
-      const response = await fetch("/api/cyrus/speak/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice: "nova" }),
-      });
-
-      if (!response.ok) {
-        clearInterval(textIntervalId);
-        throw new Error("Failed to generate speech");
-      }
-
-      // Read SSE stream and collect MP3 audio chunks
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      // Try streaming TTS first
       let audioBase64 = "";
+      let ttsSuccess = false;
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      try {
+        const response = await fetch("/api/cyrus/speak/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, voice: "nova" }),
+        });
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+        if (response.ok) {
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.audio) {
-                  audioBase64 += data.audio;
+          if (reader) {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() || "";
+
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    if (data.audio) {
+                      audioBase64 += data.audio;
+                    }
+                  } catch {}
                 }
-              } catch {}
+              }
             }
           }
+          if (audioBase64.length > 0) ttsSuccess = true;
+        }
+      } catch (streamError) {
+        console.warn("Streaming TTS failed, trying non-streaming endpoint:", streamError);
+      }
+
+      // Fallback to non-streaming TTS if streaming failed - use Blob URL for large audio
+      let audioBlobUrl: string | null = null;
+      if (!ttsSuccess) {
+        try {
+          const response = await fetch("/api/cyrus/speak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, voice: "nova" }),
+          });
+          
+          if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            // Use Blob URL instead of base64 to avoid stack overflow on large audio
+            const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+            audioBlobUrl = URL.createObjectURL(blob);
+            ttsSuccess = true;
+          }
+        } catch (nonStreamError) {
+          console.warn("Non-streaming TTS also failed:", nonStreamError);
         }
       }
 
-      // Play MP3 audio using HTML5 Audio element
-      if (audioBase64) {
-        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+      // Play audio if we got it
+      if (ttsSuccess && (audioBase64 || audioBlobUrl)) {
+        const audioSrc = audioBlobUrl || `data:audio/mp3;base64,${audioBase64}`;
+        const audio = new Audio(audioSrc);
+        
         audio.onended = () => {
-          clearInterval(textIntervalId);
-          setStreamingText(text);
-          setIsSpeaking(false);
-          isSpeakingRef.current = false;
-          setIsStreaming(false);
-          if (micActiveRef.current) {
-            setTimeout(() => startContinuousListening(), 100);
+          // Clean up Blob URL to prevent memory leak
+          if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
+          cleanupAndFinish(true);
+        };
+        
+        audio.onerror = () => {
+          console.error("Audio playback error, trying browser speech");
+          if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
+          if (!useBrowserSpeech()) {
+            cleanupAndFinish(true);
           }
         };
-        audio.onerror = () => {
-          console.error("Audio playback error");
-          clearInterval(textIntervalId);
-          setStreamingText(text);
-          setIsSpeaking(false);
-          isSpeakingRef.current = false;
-          setIsStreaming(false);
-        };
-        await audio.play();
+        
+        try {
+          await audio.play();
+        } catch (playError) {
+          console.error("Audio play failed:", playError);
+          if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
+          if (!useBrowserSpeech()) {
+            cleanupAndFinish(true);
+          }
+        }
       } else {
-        clearInterval(textIntervalId);
-        setStreamingText(text);
-        setIsSpeaking(false);
-        isSpeakingRef.current = false;
-        setIsStreaming(false);
-        if (micActiveRef.current) {
-          setTimeout(() => startContinuousListening(), 100);
+        // No audio from TTS, try browser speech as last resort
+        console.warn("No audio from TTS, using browser speech synthesis");
+        if (!useBrowserSpeech()) {
+          cleanupAndFinish(true);
         }
       }
     } catch (error) {
       console.error("Speech error:", error);
-      setIsSpeaking(false);
-      setIsStreaming(false);
+      if (retryCount < maxRetries) {
+        console.log(`Retrying TTS (attempt ${retryCount + 2}/${maxRetries + 1})`);
+        if (textIntervalId) clearInterval(textIntervalId);
+        setIsSpeaking(false);
+        setIsStreaming(false);
+        await new Promise(r => setTimeout(r, 500));
+        return speakText(text, retryCount + 1);
+      }
+      cleanupAndFinish(true);
     }
   };
 
