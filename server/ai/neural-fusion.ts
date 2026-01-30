@@ -182,6 +182,30 @@ export interface FusionResult {
   agiReasoning: boolean;
 }
 
+export interface ModuleContext {
+  vision?: {
+    active: boolean;
+    detectedObjects: Array<{ class: string; score: number; bbox?: number[] }>;
+    objectCount: number;
+  };
+  navigation?: {
+    active: boolean;
+    currentLocation?: { lat: number; lng: number };
+    destination?: string;
+  };
+  communications?: {
+    active: boolean;
+    activeCall?: boolean;
+  };
+  drone?: {
+    active: boolean;
+    connected?: boolean;
+    armed?: boolean;
+    mode?: string;
+  };
+  activeModules: string[];
+}
+
 export interface InferenceRequest {
   message: string;
   context?: string;
@@ -189,6 +213,7 @@ export interface InferenceRequest {
   detectedObjects?: any[];
   location?: { latitude: number; longitude: number } | null;
   userId?: string;
+  moduleContext?: ModuleContext;
 }
 
 export class NeuralFusionEngine {
@@ -272,15 +297,62 @@ export class NeuralFusionEngine {
     const startTime = Date.now();
 
     let enrichedMessage = request.message;
+    let moduleContextStr = "";
     
-    if (request.detectedObjects && request.detectedObjects.length > 0) {
+    // Build comprehensive module context
+    if (request.moduleContext) {
+      const ctx = request.moduleContext;
+      const activeModules = ctx.activeModules || [];
+      
+      if (activeModules.length > 0) {
+        moduleContextStr += `\n[ACTIVE MODULES: ${activeModules.join(", ")}]`;
+      }
+      
+      // Vision module context
+      if (ctx.vision?.active && ctx.vision.detectedObjects?.length > 0) {
+        const detailedObjects = ctx.vision.detectedObjects.map((o: any) => {
+          const confidence = Math.round((o.score || 0) * 100);
+          return `${o.class} (${confidence}% confidence)`;
+        }).join(", ");
+        moduleContextStr += `\n[CYRUS VISION ACTIVE - I CAN SEE: ${detailedObjects}]`;
+        moduleContextStr += `\n[Total objects detected: ${ctx.vision.objectCount}]`;
+      } else if (ctx.vision?.active) {
+        moduleContextStr += `\n[CYRUS VISION ACTIVE - Camera is on but no objects currently detected]`;
+      }
+      
+      // Navigation module context
+      if (ctx.navigation?.active) {
+        if (ctx.navigation.currentLocation) {
+          moduleContextStr += `\n[NAVIGATION ACTIVE - Current position: ${ctx.navigation.currentLocation.lat.toFixed(6)}, ${ctx.navigation.currentLocation.lng.toFixed(6)}]`;
+        }
+        if (ctx.navigation.destination) {
+          moduleContextStr += ` Destination: ${ctx.navigation.destination}`;
+        }
+      }
+      
+      // Drone module context
+      if (ctx.drone?.active || ctx.drone?.connected) {
+        moduleContextStr += `\n[DRONE CONTROL ACTIVE - Connected: ${ctx.drone.connected ? "YES" : "NO"}, Armed: ${ctx.drone.armed ? "YES" : "NO"}, Mode: ${ctx.drone.mode || "UNKNOWN"}]`;
+      }
+      
+      // Communications module context
+      if (ctx.communications?.active) {
+        moduleContextStr += `\n[COMMUNICATIONS ACTIVE${ctx.communications.activeCall ? " - Call in progress" : ""}]`;
+      }
+    }
+    
+    // Fallback for legacy detectedObjects (if not in moduleContext)
+    if (!request.moduleContext?.vision?.active && request.detectedObjects && request.detectedObjects.length > 0) {
       const objects = request.detectedObjects.map((o: any) => o.class).join(', ');
-      enrichedMessage += ` [Visual Context: ${objects}]`;
+      moduleContextStr += ` [Visual Context: ${objects}]`;
     }
     
     if (request.location) {
-      enrichedMessage += ` [Location: ${request.location.latitude.toFixed(4)}, ${request.location.longitude.toFixed(4)}]`;
+      moduleContextStr += ` [Location: ${request.location.latitude.toFixed(4)}, ${request.location.longitude.toFixed(4)}]`;
     }
+    
+    // Add module context to the message for AI processing
+    enrichedMessage = request.message + moduleContextStr;
 
     this.activateNeuralPaths(enrichedMessage);
 

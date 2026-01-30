@@ -407,17 +407,51 @@ export function Dashboard() {
       body: JSON.stringify({ role: "user", content: message }),
     });
 
+    // Build module context for CYRUS to understand active modules
+    const moduleContext = {
+      vision: {
+        active: cameraActive,
+        detectedObjects: cameraActive ? detectedObjects : [],
+        objectCount: detectedObjects.length,
+      },
+      activeModules: [
+        cameraActive && "CYRUS_VISION",
+      ].filter(Boolean),
+    };
+
     const inferRes = await fetch("/api/infer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ 
+        message,
+        detectedObjects: cameraActive ? detectedObjects : undefined,
+        moduleContext,
+      }),
     });
     const inferData = await inferRes.json();
+
+    // If vision detected objects, store in memory
+    if (cameraActive && detectedObjects.length > 0) {
+      const objectSummary = detectedObjects.map(o => `${o.class} (${Math.round(o.score * 100)}%)`).join(", ");
+      await fetch("/api/memories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: "vision_analysis",
+          content: `Vision detected: ${objectSummary}`,
+          importance: 7,
+        }),
+      });
+    }
 
     await fetch("/api/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "cyrus", content: inferData.response }),
+      body: JSON.stringify({ 
+        role: "cyrus", 
+        content: inferData.response,
+        detectedObjects: cameraActive ? JSON.stringify(detectedObjects) : null,
+      }),
     });
 
     queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
@@ -453,17 +487,51 @@ export function Dashboard() {
         body: JSON.stringify({ role: "user", content }),
       });
 
+      // Build module context for CYRUS to understand active modules
+      const moduleContext = {
+        vision: {
+          active: cameraActive,
+          detectedObjects: cameraActive ? detectedObjects : [],
+          objectCount: detectedObjects.length,
+        },
+        activeModules: [
+          cameraActive && "CYRUS_VISION",
+        ].filter(Boolean),
+      };
+
       const inferRes = await fetch("/api/infer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content }),
+        body: JSON.stringify({ 
+          message: content,
+          detectedObjects: cameraActive ? detectedObjects : undefined,
+          moduleContext,
+        }),
       });
       const inferData = await inferRes.json();
+
+      // If vision detected objects, store in memory
+      if (cameraActive && detectedObjects.length > 0) {
+        const objectSummary = detectedObjects.map(o => `${o.class} (${Math.round(o.score * 100)}%)`).join(", ");
+        await fetch("/api/memories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category: "vision_analysis",
+            content: `Vision detected: ${objectSummary}`,
+            importance: 7,
+          }),
+        });
+      }
 
       await fetch("/api/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: "cyrus", content: inferData.response }),
+        body: JSON.stringify({ 
+          role: "cyrus", 
+          content: inferData.response,
+          detectedObjects: cameraActive ? JSON.stringify(detectedObjects) : null,
+        }),
       });
 
       return inferData;

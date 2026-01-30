@@ -458,14 +458,15 @@ export async function registerRoutes(
   // Superintelligent AI inference endpoint - Neural Fusion Engine
   app.post("/api/infer", async (req, res) => {
     try {
-      const { message, imageData, detectedObjects, location, userId } = req.body;
+      const { message, imageData, detectedObjects, location, userId, moduleContext } = req.body;
       
       const result = await neuralFusionEngine.processInference({
         message,
         imageData,
         detectedObjects,
         location,
-        userId
+        userId,
+        moduleContext
       });
       
       res.json({
