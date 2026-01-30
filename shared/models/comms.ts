@@ -65,9 +65,34 @@ export const newsItems = pgTable("news_items", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const contacts = pgTable("contacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  contactId: varchar("contact_id").notNull(),
+  contactName: varchar("contact_name").notNull(),
+  contactEmail: varchar("contact_email"),
+  isFavorite: boolean("is_favorite").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const incomingCalls = pgTable("incoming_calls", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  callerId: varchar("caller_id").notNull(),
+  callerName: varchar("caller_name"),
+  recipientId: varchar("recipient_id").notNull(),
+  roomId: varchar("room_id").notNull(),
+  callType: varchar("call_type").notNull(),
+  status: varchar("status").default("ringing"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  answeredAt: timestamp("answered_at"),
+  declinedAt: timestamp("declined_at"),
+});
+
 export type OnlineUser = typeof onlineUsers.$inferSelect;
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type CallHistory = typeof callHistory.$inferSelect;
 export type MeetingRoom = typeof meetingRooms.$inferSelect;
 export type Reminder = typeof reminders.$inferSelect;
 export type NewsItem = typeof newsItems.$inferSelect;
+export type Contact = typeof contacts.$inferSelect;
+export type IncomingCall = typeof incomingCalls.$inferSelect;

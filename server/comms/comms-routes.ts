@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db } from "../db";
-import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems } from "../../shared/schema";
+import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems, contacts, incomingCalls } from "../../shared/schema";
 import { eq, or, and, desc, asc } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
+import { getConnectedUsers } from "./signaling";
 
 const router = Router();
 
@@ -433,6 +434,134 @@ router.get("/api/comms/meetings", async (req: any, res) => {
   }
 });
 
+router.get("/api/comms/online-users", async (req: any, res) => {
+  try {
+    const userId = getUserId(req);
+    const connectedUsers = getConnectedUsers();
+    const filteredUsers = connectedUsers.filter(u => u.id !== userId);
+    res.json(filteredUsers);
+  } catch (error) {
+    console.error("Error fetching online users:", error);
+    res.status(500).json({ error: "Failed to fetch online users" });
+  }
+});
+
+router.get("/api/comms/contacts", async (req: any, res) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.json([]);
+    }
+
+    const userContacts = await db.select().from(contacts)
+      .where(eq(contacts.userId, userId))
+      .orderBy(desc(contacts.isFavorite), asc(contacts.contactName));
+
+    res.json(userContacts);
+  } catch (error) {
+    console.error("Error fetching contacts:", error);
+    res.status(500).json({ error: "Failed to fetch contacts" });
+  }
+});
+
+router.post("/api/comms/contacts", async (req: any, res) => {
+  try {
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { contactId, contactName, contactEmail, isFavorite } = req.body;
+
+    if (!contactId || !contactName) {
+      return res.status(400).json({ error: "contactId and contactName are required" });
+    }
+
+    const [contact] = await db.insert(contacts).values({
+      userId,
+      contactId,
+      contactName,
+      contactEmail,
+      isFavorite: isFavorite || false,
+    }).returning();
+
+    res.json(contact);
+  } catch (error) {
+    console.error("Error adding contact:", error);
+    res.status(500).json({ error: "Failed to add contact" });
+  }
+});
+
+router.delete("/api/comms/contacts/:id", async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    await db.delete(contacts).where(eq(contacts.id, id));
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting contact:", error);
+    res.status(500).json({ error: "Failed to delete contact" });
+  }
+});
+
+router.patch("/api/comms/contacts/:id/favorite", async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { isFavorite } = req.body;
+    
+    await db.update(contacts)
+      .set({ isFavorite })
+      .where(eq(contacts.id, id));
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error updating contact:", error);
+    res.status(500).json({ error: "Failed to update contact" });
+  }
+});
+
+router.get("/api/comms/call-history", async (req: any, res) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.json([]);
+    }
+
+    const history = await db.select().from(callHistory)
+      .where(
+        or(
+          eq(callHistory.callerId, userId),
+          eq(callHistory.recipientId, userId)
+        )
+      )
+      .orderBy(desc(callHistory.startedAt))
+      .limit(50);
+
+    res.json(history);
+  } catch (error) {
+    console.error("Error fetching call history:", error);
+    res.status(500).json({ error: "Failed to fetch call history" });
+  }
+});
+
+router.post("/api/comms/call-history", async (req: any, res) => {
+  try {
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { recipientId, roomId, callType, status, duration } = req.body;
+
+    const [record] = await db.insert(callHistory).values({
+      callerId: userId,
+      recipientId,
+      roomId: roomId || `call_${uuid()}`,
+      callType: callType || "video",
+      status: status || "completed",
+      startedAt: new Date(),
+      endedAt: status === "completed" ? new Date() : null,
+      duration,
+    }).returning();
+
+    res.json(record);
+  } catch (error) {
+    console.error("Error saving call history:", error);
+    res.status(500).json({ error: "Failed to save call history" });
+  }
+});
+
 router.get("/api/comms/status", (req, res) => {
   res.json({
     operational: true,
@@ -443,7 +572,10 @@ router.get("/api/comms/status", (req, res) => {
       voiceCalls: true,
       videoCalls: true,
       meetings: true,
-      webrtc: true
+      webrtc: true,
+      contacts: true,
+      presence: true,
+      directCalling: true
     },
     websocket: '/ws'
   });

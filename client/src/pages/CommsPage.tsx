@@ -29,12 +29,20 @@ import {
   WifiOff,
   Copy,
   Users,
+  UserPlus,
+  PhoneIncoming,
+  PhoneCall,
+  Star,
+  Circle,
+  User,
 } from "lucide-react";
 
 type TabType = "messages" | "reminders" | "news" | "calls";
+type CallSubTab = "online" | "contacts" | "room";
 
 export function CommsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("messages");
+  const [callSubTab, setCallSubTab] = useState<CallSubTab>("online");
   const [newMessage, setNewMessage] = useState({ recipient: "", content: "" });
   const [newReminder, setNewReminder] = useState({
     title: "",
@@ -45,6 +53,7 @@ export function CommsPage() {
   const [callInput, setCallInput] = useState("");
   const [callMode, setCallMode] = useState<"create" | "join">("create");
   const [copied, setCopied] = useState(false);
+  const [displayName, setDisplayName] = useState("");
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -53,6 +62,11 @@ export function CommsPage() {
     messages,
     reminders,
     news,
+    contacts,
+    onlineUsers,
+    incomingCall,
+    myUserId,
+    isConnected,
     activeCall,
     localStream,
     remoteStream,
@@ -62,9 +76,15 @@ export function CommsPage() {
     addReminder,
     completeReminder,
     deleteReminder,
+    addContact,
+    deleteContact,
     startCall,
     joinCall,
     endCall,
+    callUser,
+    acceptIncomingCall,
+    declineIncomingCall,
+    connectPresence,
     toggleMute,
     toggleVideo,
     switchCamera,
@@ -407,6 +427,35 @@ export function CommsPage() {
 
             {!isLoading && activeTab === "calls" && (
               <div className="space-y-4">
+                {incomingCall && (
+                  <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                    <div className="bg-gradient-to-br from-green-900 to-blue-900 rounded-2xl p-8 max-w-sm w-full mx-4 text-center animate-pulse">
+                      <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <PhoneIncoming className="w-10 h-10 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-2">Incoming Call</h3>
+                      <p className="text-gray-300 mb-1">{incomingCall.callerName}</p>
+                      <p className="text-sm text-gray-400 mb-6">
+                        {incomingCall.callType === "video" ? "Video" : "Audio"} Call
+                      </p>
+                      <div className="flex gap-4 justify-center">
+                        <button
+                          onClick={declineIncomingCall}
+                          className="p-4 bg-red-600 hover:bg-red-700 rounded-full transition-colors"
+                        >
+                          <PhoneOff className="w-6 h-6" />
+                        </button>
+                        <button
+                          onClick={acceptIncomingCall}
+                          className="p-4 bg-green-600 hover:bg-green-700 rounded-full transition-colors"
+                        >
+                          <Phone className="w-6 h-6" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {activeCall ? (
                   <div className="space-y-4">
                     <div className="bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-600/50 rounded-xl p-4">
@@ -599,69 +648,258 @@ export function CommsPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-800/50 rounded-xl p-6">
-                      <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                        <Signal className="w-5 h-5 text-blue-400" />
-                        Enterprise HD Calling
-                      </h3>
-                      <p className="text-sm text-gray-400 mb-4">
-                        Crystal-clear audio with echo cancellation, noise suppression, and adaptive bitrate optimization.
-                      </p>
-
-                      <div className="flex gap-2 mb-4">
-                        <button
-                          onClick={() => setCallMode("create")}
-                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            callMode === "create"
-                              ? "bg-blue-600 text-white"
-                              : "bg-gray-800 text-gray-400 hover:text-white"
-                          }`}
-                        >
-                          Create Call
-                        </button>
-                        <button
-                          onClick={() => setCallMode("join")}
-                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            callMode === "join"
-                              ? "bg-blue-600 text-white"
-                              : "bg-gray-800 text-gray-400 hover:text-white"
-                          }`}
-                        >
-                          Join Call
-                        </button>
+                    {!isConnected ? (
+                      <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-800/50 rounded-xl p-6">
+                        <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                          <User className="w-5 h-5 text-purple-400" />
+                          Connect to Start
+                        </h3>
+                        <p className="text-sm text-gray-400 mb-4">
+                          Enter your display name to connect and see online users.
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="Your display name"
+                            className="flex-1 bg-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                          <button
+                            onClick={() => connectPresence(displayName || "User")}
+                            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
+                          >
+                            Connect
+                          </button>
+                        </div>
                       </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Circle className="w-3 h-3 text-green-500 fill-green-500" />
+                            <span className="text-sm text-green-400">Connected</span>
+                            {myUserId && <span className="text-xs text-gray-500">({myUserId.substring(0, 12)}...)</span>}
+                          </div>
+                        </div>
 
-                      <input
-                        type="text"
-                        value={callInput}
-                        onChange={(e) => setCallInput(e.target.value)}
-                        placeholder={
-                          callMode === "create"
-                            ? "Enter participant name (optional)"
-                            : "Enter room code to join"
-                        }
-                        className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-                      />
+                        <div className="flex gap-2 mb-4">
+                          <button
+                            onClick={() => setCallSubTab("online")}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                              callSubTab === "online"
+                                ? "bg-green-600 text-white"
+                                : "bg-gray-800 text-gray-400 hover:text-white"
+                            }`}
+                          >
+                            <Users className="w-4 h-4" />
+                            Online ({onlineUsers.length})
+                          </button>
+                          <button
+                            onClick={() => setCallSubTab("contacts")}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                              callSubTab === "contacts"
+                                ? "bg-blue-600 text-white"
+                                : "bg-gray-800 text-gray-400 hover:text-white"
+                            }`}
+                          >
+                            <Star className="w-4 h-4" />
+                            Contacts ({contacts.length})
+                          </button>
+                          <button
+                            onClick={() => setCallSubTab("room")}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                              callSubTab === "room"
+                                ? "bg-purple-600 text-white"
+                                : "bg-gray-800 text-gray-400 hover:text-white"
+                            }`}
+                          >
+                            <PhoneCall className="w-4 h-4" />
+                            Room
+                          </button>
+                        </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          onClick={() => handleStartCall("audio")}
-                          disabled={callMode === "join" && !callInput.trim()}
-                          className="flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 rounded-xl font-medium disabled:opacity-50 transition-all shadow-lg shadow-green-500/20"
-                        >
-                          <Phone className="w-5 h-5" />
-                          HD Audio
-                        </button>
-                        <button
-                          onClick={() => handleStartCall("video")}
-                          disabled={callMode === "join" && !callInput.trim()}
-                          className="flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-xl font-medium disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20"
-                        >
-                          <Video className="w-5 h-5" />
-                          HD Video
-                        </button>
-                      </div>
-                    </div>
+                        {callSubTab === "online" && (
+                          <div className="space-y-2">
+                            {onlineUsers.length === 0 ? (
+                              <div className="text-center py-8 text-gray-500">
+                                <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                <p>No other users online</p>
+                                <p className="text-xs mt-1">Share the app link to invite others</p>
+                              </div>
+                            ) : (
+                              onlineUsers.map((user) => (
+                                <div
+                                  key={user.id}
+                                  className="bg-gray-800 rounded-lg p-3 flex items-center justify-between"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                      <User className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{user.displayName}</p>
+                                      <div className="flex items-center gap-1 text-xs">
+                                        {user.inCall ? (
+                                          <span className="text-yellow-400">In a call</span>
+                                        ) : (
+                                          <span className="text-green-400">Available</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => callUser(user.id, user.displayName, "audio")}
+                                      disabled={user.inCall}
+                                      className="p-2 bg-green-600 hover:bg-green-700 rounded-full disabled:opacity-50 transition-colors"
+                                      title="Audio Call"
+                                    >
+                                      <Phone className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => callUser(user.id, user.displayName, "video")}
+                                      disabled={user.inCall}
+                                      className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full disabled:opacity-50 transition-colors"
+                                      title="Video Call"
+                                    >
+                                      <Video className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => addContact.mutate({ contactId: user.id, contactName: user.displayName })}
+                                      className="p-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
+                                      title="Add to Contacts"
+                                    >
+                                      <UserPlus className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+
+                        {callSubTab === "contacts" && (
+                          <div className="space-y-2">
+                            {contacts.length === 0 ? (
+                              <div className="text-center py-8 text-gray-500">
+                                <Star className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                <p>No contacts saved</p>
+                                <p className="text-xs mt-1">Add users from the Online tab</p>
+                              </div>
+                            ) : (
+                              contacts.map((contact) => (
+                                <div
+                                  key={contact.id}
+                                  className="bg-gray-800 rounded-lg p-3 flex items-center justify-between"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+                                      <Star className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{contact.contactName}</p>
+                                      {contact.contactEmail && (
+                                        <p className="text-xs text-gray-400">{contact.contactEmail}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => callUser(contact.contactId, contact.contactName, "audio")}
+                                      className="p-2 bg-green-600 hover:bg-green-700 rounded-full transition-colors"
+                                      title="Audio Call"
+                                    >
+                                      <Phone className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => callUser(contact.contactId, contact.contactName, "video")}
+                                      className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
+                                      title="Video Call"
+                                    >
+                                      <Video className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => deleteContact.mutate(contact.id)}
+                                      className="p-2 bg-red-600/50 hover:bg-red-600 rounded-full transition-colors"
+                                      title="Remove Contact"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+
+                        {callSubTab === "room" && (
+                          <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-800/50 rounded-xl p-6">
+                            <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                              <Signal className="w-5 h-5 text-blue-400" />
+                              Room-Based Calling
+                            </h3>
+                            <p className="text-sm text-gray-400 mb-4">
+                              Create or join a call room using a room code.
+                            </p>
+
+                            <div className="flex gap-2 mb-4">
+                              <button
+                                onClick={() => setCallMode("create")}
+                                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  callMode === "create"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-800 text-gray-400 hover:text-white"
+                                }`}
+                              >
+                                Create Room
+                              </button>
+                              <button
+                                onClick={() => setCallMode("join")}
+                                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  callMode === "join"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-800 text-gray-400 hover:text-white"
+                                }`}
+                              >
+                                Join Room
+                              </button>
+                            </div>
+
+                            <input
+                              type="text"
+                              value={callInput}
+                              onChange={(e) => setCallInput(e.target.value)}
+                              placeholder={
+                                callMode === "create"
+                                  ? "Room name (optional)"
+                                  : "Enter room code to join"
+                              }
+                              className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                            />
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                onClick={() => handleStartCall("audio")}
+                                disabled={callMode === "join" && !callInput.trim()}
+                                className="flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 rounded-xl font-medium disabled:opacity-50 transition-all shadow-lg shadow-green-500/20"
+                              >
+                                <Phone className="w-5 h-5" />
+                                HD Audio
+                              </button>
+                              <button
+                                onClick={() => handleStartCall("video")}
+                                disabled={callMode === "join" && !callInput.trim()}
+                                className="flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-xl font-medium disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20"
+                              >
+                                <Video className="w-5 h-5" />
+                                HD Video
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="bg-gray-800/50 rounded-lg p-3 text-center">

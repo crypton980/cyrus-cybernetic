@@ -58,6 +58,31 @@ export interface CallControls {
   volume: number;
 }
 
+export interface OnlineUser {
+  id: string;
+  displayName: string;
+  deviceId: string;
+  inCall: boolean;
+  lastActivity: string;
+}
+
+export interface IncomingCall {
+  callerId: string;
+  callerName: string;
+  roomId: string;
+  callType: "audio" | "video";
+}
+
+export interface Contact {
+  id: string;
+  userId: string;
+  contactId: string;
+  contactName: string;
+  contactEmail?: string;
+  isFavorite: boolean;
+  createdAt: string;
+}
+
 export function useComms() {
   const queryClient = useQueryClient();
   const [activeCall, setActiveCall] = useState<CallSession | null>(null);
@@ -70,6 +95,10 @@ export function useComms() {
     volume: 1,
   });
   const [qualityMetrics, setQualityMetrics] = useState<CallQualityMetrics | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -78,6 +107,7 @@ export function useComms() {
   const connectionManagerRef = useRef<ConnectionManager | null>(null);
   const qualityMonitorIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidate[]>([]);
+  const presenceWsRef = useRef<WebSocket | null>(null);
 
   const messagesQuery = useQuery<Message[]>({
     queryKey: ["/api/comms/messages"],
@@ -582,9 +612,176 @@ export function useComms() {
     return audioProcessorRef.current?.getAudioLevel() || 0;
   }, []);
 
+  const connectPresence = useCallback((displayName: string = "User") => {
+    if (presenceWsRef.current?.readyState === WebSocket.OPEN) return;
+
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const deviceId = `device_${navigator.userAgent.substring(0, 20).replace(/\s/g, '_')}`;
+    
+    const ws = new WebSocket(
+      `${wsProtocol}//${window.location.host}/ws?userId=${userId}&name=${encodeURIComponent(displayName)}&deviceId=${deviceId}`
+    );
+    presenceWsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("[Presence] Connected to presence server");
+      setIsConnected(true);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        
+        switch (msg.type) {
+          case "connected":
+            setMyUserId(msg.userId);
+            break;
+
+          case "presence-update":
+            setOnlineUsers(msg.users.filter((u: OnlineUser) => u.id !== myUserId));
+            break;
+
+          case "incoming-call":
+            console.log("[Presence] Incoming call from:", msg.callerName);
+            setIncomingCall({
+              callerId: msg.callerId,
+              callerName: msg.callerName,
+              roomId: msg.roomId,
+              callType: msg.callType,
+            });
+            break;
+
+          case "call-accepted":
+            console.log("[Presence] Call accepted, connecting...");
+            joinCall(msg.roomId, activeCall?.type || "video");
+            break;
+
+          case "call-declined":
+            console.log("[Presence] Call was declined");
+            setActiveCall(null);
+            break;
+
+          case "call-ended":
+            console.log("[Presence] Call ended by peer");
+            endCall();
+            break;
+
+          case "call-failed":
+            console.log("[Presence] Call failed:", msg.reason);
+            setActiveCall((prev) => prev ? { ...prev, status: "failed" } : null);
+            break;
+        }
+      } catch (err) {
+        console.error("[Presence] Message parse error:", err);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("[Presence] Disconnected from presence server");
+      setIsConnected(false);
+      setTimeout(() => {
+        if (presenceWsRef.current === ws) {
+          connectPresence(displayName);
+        }
+      }, 5000);
+    };
+
+    ws.onerror = (error) => {
+      console.error("[Presence] WebSocket error:", error);
+    };
+  }, [myUserId, activeCall?.type]);
+
+  const callUser = useCallback(async (targetUserId: string, targetName: string, type: "audio" | "video") => {
+    if (!presenceWsRef.current || presenceWsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("[Presence] Not connected to presence server");
+      return;
+    }
+
+    const roomId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    presenceWsRef.current.send(JSON.stringify({
+      type: "call-user",
+      targetUserId,
+      roomId,
+      payload: { callType: type },
+    }));
+
+    setActiveCall({
+      roomId,
+      peerId: targetName,
+      type,
+      status: "connecting",
+      networkType: detectNetworkType(),
+    });
+  }, []);
+
+  const acceptIncomingCall = useCallback(async () => {
+    if (!incomingCall || !presenceWsRef.current) return;
+
+    presenceWsRef.current.send(JSON.stringify({
+      type: "accept-call",
+      roomId: incomingCall.roomId,
+    }));
+
+    await joinCall(incomingCall.roomId, incomingCall.callType);
+    setIncomingCall(null);
+  }, [incomingCall, joinCall]);
+
+  const declineIncomingCall = useCallback(() => {
+    if (!incomingCall || !presenceWsRef.current) return;
+
+    presenceWsRef.current.send(JSON.stringify({
+      type: "decline-call",
+      roomId: incomingCall.roomId,
+      payload: { reason: "declined" },
+    }));
+
+    setIncomingCall(null);
+  }, [incomingCall]);
+
+  const contactsQuery = useQuery<Contact[]>({
+    queryKey: ["/api/comms/contacts"],
+    queryFn: async () => {
+      const res = await fetch("/api/comms/contacts");
+      if (!res.ok) throw new Error("Failed to fetch contacts");
+      return res.json();
+    },
+  });
+
+  const addContact = useMutation({
+    mutationFn: async (contact: { contactId: string; contactName: string; contactEmail?: string }) => {
+      const res = await fetch("/api/comms/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contact),
+      });
+      if (!res.ok) throw new Error("Failed to add contact");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comms/contacts"] });
+    },
+  });
+
+  const deleteContact = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/comms/contacts/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete contact");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comms/contacts"] });
+    },
+  });
+
   useEffect(() => {
     return () => {
       endCall();
+      if (presenceWsRef.current) {
+        presenceWsRef.current.close();
+        presenceWsRef.current = null;
+      }
     };
   }, [endCall]);
 
@@ -592,6 +789,11 @@ export function useComms() {
     messages: messagesQuery.data || [],
     reminders: remindersQuery.data || [],
     news: newsQuery.data || [],
+    contacts: contactsQuery.data || [],
+    onlineUsers,
+    incomingCall,
+    myUserId,
+    isConnected,
     activeCall,
     localStream,
     remoteStream,
@@ -601,9 +803,15 @@ export function useComms() {
     addReminder,
     completeReminder,
     deleteReminder,
+    addContact,
+    deleteContact,
     startCall,
     joinCall,
     endCall,
+    callUser,
+    acceptIncomingCall,
+    declineIncomingCall,
+    connectPresence,
     toggleMute,
     toggleVideo,
     setVolume,
