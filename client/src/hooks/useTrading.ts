@@ -1,6 +1,17 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+export interface TradingStatus {
+  isRunning: boolean;
+  autoTrade: boolean;
+  marketsMonitored: number;
+  openPositions: number;
+  totalBalance: number;
+  unrealizedPnl: number;
+  alpacaConnected: boolean;
+  alpacaEnvironment?: string;
+}
+
 export interface TradingAccount {
   id: string;
   currency: string;
@@ -43,6 +54,17 @@ export interface MarketQuote {
 export function useTrading() {
   const queryClient = useQueryClient();
   const [selectedSymbol, setSelectedSymbol] = useState<string>("AAPL");
+
+  // Trading status with Alpaca connection info
+  const statusQuery = useQuery<TradingStatus>({
+    queryKey: ["/api/trading/status"],
+    queryFn: async () => {
+      const res = await fetch("/api/trading/status");
+      if (!res.ok) throw new Error("Failed to fetch status");
+      return res.json();
+    },
+    refetchInterval: 5000,
+  });
 
   const accountQuery = useQuery<TradingAccount>({
     queryKey: ["/api/trading/account"],
@@ -135,17 +157,72 @@ export function useTrading() {
     },
   });
 
+  // Start autonomous trading
+  const startAutonomous = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/trading/autonomous/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error("Failed to start autonomous trading");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trading/status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trading/decisions"] });
+    },
+  });
+
+  // Stop autonomous trading
+  const stopAutonomous = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/trading/autonomous/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error("Failed to stop autonomous trading");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trading/status"] });
+    },
+  });
+
+  // Execute AI decision
+  const executeDecision = useMutation({
+    mutationFn: async (decisionId: string) => {
+      const res = await fetch("/api/trading/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decisionId }),
+      });
+      if (!res.ok) throw new Error("Failed to execute trade");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trading/positions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trading/decisions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trading/status"] });
+    },
+  });
+
   return {
+    status: statusQuery.data,
     account: accountQuery.data,
     positions: positionsQuery.data || [],
     orders: ordersQuery.data || [],
     quote: quoteQuery.data,
     selectedSymbol,
     setSelectedSymbol,
-    isLoading: accountQuery.isLoading || positionsQuery.isLoading,
+    isLoading: accountQuery.isLoading || positionsQuery.isLoading || statusQuery.isLoading,
+    alpacaConnected: statusQuery.data?.alpacaConnected || false,
+    alpacaEnvironment: statusQuery.data?.alpacaEnvironment || 'paper',
     placeOrder,
     cancelOrder,
     closePosition,
+    startAutonomous,
+    stopAutonomous,
+    executeDecision,
     refreshAll: useCallback(() => {
       queryClient.invalidateQueries({ queryKey: ["/api/trading"] });
     }, [queryClient]),

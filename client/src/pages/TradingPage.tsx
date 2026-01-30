@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTrading } from "../hooks/useTrading";
 import { CyrusAssistant } from "../components/CyrusAssistant";
 import {
@@ -17,6 +17,8 @@ import {
   ArrowLeft,
   RefreshCw,
   X,
+  Link,
+  Link2Off,
 } from "lucide-react";
 
 type TabType = "ai-engine" | "world-events" | "predictions" | "strategies" | "markets" | "portfolio";
@@ -29,18 +31,25 @@ export function TradingPage() {
   const [predictions, setPredictions] = useState(0);
   const [strategies, setStrategies] = useState(0);
   const [decisions, setDecisions] = useState(0);
-  const [isAIRunning, setIsAIRunning] = useState(false);
 
   const {
+    status,
     account,
     positions,
     orders,
     isLoading,
+    alpacaConnected,
+    alpacaEnvironment,
     placeOrder,
     cancelOrder,
     closePosition,
+    startAutonomous,
+    stopAutonomous,
+    executeDecision,
     refreshAll,
   } = useTrading();
+
+  const isAIRunning = status?.isRunning || false;
 
   const [orderForm, setOrderForm] = useState({
     symbol: "AAPL",
@@ -50,20 +59,35 @@ export function TradingPage() {
     limitPrice: "",
   });
 
-  const handleStartAI = () => {
-    setIsAIRunning(true);
-    setAiStatus("ANALYZING");
-    setTimeout(() => {
+  useEffect(() => {
+    if (status?.isRunning) {
       setAiStatus("ACTIVE");
-      setWorldEvents(3);
-      setPredictions(2);
-      setStrategies(1);
-    }, 2000);
+    } else {
+      setAiStatus("STANDBY");
+    }
+  }, [status?.isRunning]);
+
+  const handleStartAI = () => {
+    setAiStatus("ANALYZING");
+    startAutonomous.mutate(undefined, {
+      onSuccess: (data) => {
+        setAiStatus("ACTIVE");
+        setWorldEvents(3);
+        setPredictions(2);
+        setStrategies(1);
+      },
+      onError: () => {
+        setAiStatus("STANDBY");
+      }
+    });
   };
 
   const handleStopAI = () => {
-    setIsAIRunning(false);
-    setAiStatus("STANDBY");
+    stopAutonomous.mutate(undefined, {
+      onSuccess: () => {
+        setAiStatus("STANDBY");
+      }
+    });
   };
 
   const handlePlaceOrder = () => {
@@ -100,9 +124,9 @@ export function TradingPage() {
         {/* Header */}
         <header className="flex items-start justify-between mb-6">
           <div className="flex items-start gap-3">
-            <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors mt-1">
+            <a href="/" className="p-2 hover:bg-gray-800 rounded-lg transition-colors mt-1">
               <ArrowLeft className="w-5 h-5 text-gray-400" />
-            </button>
+            </a>
             <div>
               <h1 className="text-xl font-bold">
                 <span className="text-cyan-400">CYRUS</span>{" "}
@@ -110,18 +134,34 @@ export function TradingPage() {
                 <br />
                 <span className="text-green-400">Trading</span>
               </h1>
-              <p className="text-xs text-gray-400 mt-1">AI-Powered Market Analysis & Execution</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-gray-400">AI-Powered Market Analysis & Execution</p>
+                <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                  alpacaConnected 
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                    : 'bg-gray-700/50 text-gray-400 border border-gray-600'
+                }`}>
+                  {alpacaConnected ? <Link className="w-3 h-3" /> : <Link2Off className="w-3 h-3" />}
+                  {alpacaConnected ? `Alpaca ${alpacaEnvironment}` : 'Simulation Mode'}
+                </div>
+              </div>
             </div>
           </div>
           <button
             onClick={isAIRunning ? handleStopAI : handleStartAI}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+            disabled={startAutonomous.isPending || stopAutonomous.isPending}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${
               isAIRunning
                 ? "bg-red-600 hover:bg-red-700 text-white"
                 : "bg-green-500 hover:bg-green-600 text-white"
             }`}
           >
-            {isAIRunning ? (
+            {startAutonomous.isPending || stopAutonomous.isPending ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Processing...
+              </>
+            ) : isAIRunning ? (
               <>
                 <Square className="w-4 h-4" />
                 Stop AI
