@@ -36,6 +36,7 @@ import { experienceMemory } from "./ai/experience-memory";
 import { adaptiveLearning } from "./ai/adaptive-learning";
 import { registerAdvancedUpgradeRoutes } from "./ai/upgrades/routes";
 import { moduleOrchestrator } from "./ai/upgrades/module-orchestrator";
+import { registerInteractiveRoutes } from "./ai/interactive/routes";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -198,6 +199,7 @@ export async function registerRoutes(
   initSignalingServer(httpServer);
   registerCommsRoutes(app);
   registerAdvancedUpgradeRoutes(app);
+  registerInteractiveRoutes(app);
   // Ensure uploads directory exists
   const fs = await import("fs/promises");
   const uploadsDir = path.join(process.cwd(), "public", "uploads");

@@ -11,11 +11,12 @@ import { nanotechnologySimulation } from "./nanotechnology-simulation";
 import { hyperlinkedReality } from "./hyperlinked-reality";
 import { bioNeuralInterface } from "./bio-neural-interface";
 import { adaptiveHardwareController } from "./adaptive-hardware-controller";
+import { biologyModule, environmentalSensing, medicalDiagnostics, roboticIntegration, teachingModule, securityEncryption } from "../interactive/routes";
 
 export interface ModuleStatus {
   id: string;
   name: string;
-  category: "core" | "advanced";
+  category: "core" | "advanced" | "interactive";
   status: "operational" | "degraded" | "offline";
   metrics: Record<string, number | string>;
   lastUpdate: number;
@@ -28,7 +29,7 @@ export interface OrchestratorContext {
 }
 
 class ModuleOrchestrator {
-  private modules: Map<string, { instance: any; category: "core" | "advanced"; name: string }> = new Map();
+  private modules: Map<string, { instance: any; category: "core" | "advanced" | "interactive"; name: string }> = new Map();
   private context: OrchestratorContext = {
     activeModules: [],
     moduleData: {},
@@ -54,6 +55,14 @@ class ModuleOrchestrator {
     this.modules.set("hyperlinked-reality", { instance: hyperlinkedReality, category: "advanced", name: "Hyperlinked Reality" });
     this.modules.set("bio-neural", { instance: bioNeuralInterface, category: "advanced", name: "Bio-Neural Interface" });
     this.modules.set("adaptive-hardware", { instance: adaptiveHardwareController, category: "advanced", name: "Adaptive Hardware Controller" });
+
+    // Interactive modules
+    this.modules.set("biology", { instance: biologyModule, category: "interactive", name: "Biology Interactive" });
+    this.modules.set("environmental", { instance: environmentalSensing, category: "interactive", name: "Environmental Sensing" });
+    this.modules.set("medical", { instance: medicalDiagnostics, category: "interactive", name: "Medical Diagnostics" });
+    this.modules.set("robotic", { instance: roboticIntegration, category: "interactive", name: "Robotic Integration" });
+    this.modules.set("teaching", { instance: teachingModule, category: "interactive", name: "Teaching & Learning" });
+    this.modules.set("security", { instance: securityEncryption, category: "interactive", name: "Security & Encryption" });
 
     this.context.activeModules = Array.from(this.modules.keys());
   }

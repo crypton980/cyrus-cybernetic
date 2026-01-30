@@ -23,7 +23,7 @@ import {
 interface ModuleStatus {
   id: string;
   name: string;
-  category: "core" | "advanced";
+  category: "core" | "advanced" | "interactive";
   status: "operational" | "degraded" | "offline";
   metrics: Record<string, number | string>;
   lastUpdate: number;
@@ -43,6 +43,7 @@ interface ModulesResponse {
   totalModules: number;
   coreModules: number;
   advancedModules: number;
+  interactiveModules?: number;
 }
 
 const moduleIcons: Record<string, any> = {
@@ -59,6 +60,12 @@ const moduleIcons: Record<string, any> = {
   "hyperlinked-reality": Eye,
   "bio-neural": Activity,
   "adaptive-hardware": Settings,
+  "biology": Microscope,
+  "environmental": Globe,
+  "medical": Activity,
+  "robotic": Settings,
+  "teaching": Brain,
+  "security": Shield,
 };
 
 const moduleColors: Record<string, string> = {
@@ -75,10 +82,16 @@ const moduleColors: Record<string, string> = {
   "hyperlinked-reality": "from-fuchsia-500 to-pink-600",
   "bio-neural": "from-cyan-500 to-blue-600",
   "adaptive-hardware": "from-gray-500 to-slate-600",
+  "biology": "from-green-500 to-emerald-600",
+  "environmental": "from-sky-500 to-blue-600",
+  "medical": "from-red-500 to-rose-600",
+  "robotic": "from-zinc-500 to-gray-600",
+  "teaching": "from-yellow-500 to-amber-600",
+  "security": "from-slate-500 to-zinc-600",
 };
 
 export function ModulesPage() {
-  const [selectedCategory, setSelectedCategory] = useState<"all" | "core" | "advanced">("all");
+  const [selectedCategory, setSelectedCategory] = useState<"all" | "core" | "advanced" | "interactive">("all");
 
   const { data, isLoading, refetch, isFetching } = useQuery<ModulesResponse>({
     queryKey: ["/api/orchestrator/modules"],
@@ -128,7 +141,7 @@ export function ModulesPage() {
               Module Orchestrator
             </h1>
             <p className="text-[rgba(235,235,245,0.5)] mt-1">
-              13 AI modules working in unified harmony
+              {data?.totalModules || 19} AI modules working in unified harmony
             </p>
           </div>
 
@@ -201,8 +214,8 @@ export function ModulesPage() {
           </div>
         )}
 
-        <div className="flex gap-2">
-          {(["all", "core", "advanced"] as const).map((cat) => (
+        <div className="flex gap-2 flex-wrap">
+          {(["all", "core", "advanced", "interactive"] as const).map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
