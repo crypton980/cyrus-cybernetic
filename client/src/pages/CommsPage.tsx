@@ -194,6 +194,35 @@ export function CommsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
+      {incomingCall && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-green-900 to-blue-900 rounded-2xl p-8 max-w-sm w-full mx-4 text-center animate-pulse">
+            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <PhoneIncoming className="w-10 h-10 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Incoming Call</h3>
+            <p className="text-gray-300 mb-1">{incomingCall.callerName}</p>
+            <p className="text-sm text-gray-400 mb-6">
+              {incomingCall.callType === "video" ? "Video" : "Audio"} Call
+            </p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={declineIncomingCall}
+                className="p-4 bg-red-600 hover:bg-red-700 rounded-full transition-colors"
+              >
+                <PhoneOff className="w-6 h-6" />
+              </button>
+              <button
+                onClick={acceptIncomingCall}
+                className="p-4 bg-green-600 hover:bg-green-700 rounded-full transition-colors"
+              >
+                <Phone className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto space-y-6">
         <header>
           <h1 className="text-2xl font-bold">Communications</h1>
@@ -427,35 +456,6 @@ export function CommsPage() {
 
             {!isLoading && activeTab === "calls" && (
               <div className="space-y-4">
-                {incomingCall && (
-                  <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-                    <div className="bg-gradient-to-br from-green-900 to-blue-900 rounded-2xl p-8 max-w-sm w-full mx-4 text-center animate-pulse">
-                      <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <PhoneIncoming className="w-10 h-10 text-white" />
-                      </div>
-                      <h3 className="text-xl font-bold text-white mb-2">Incoming Call</h3>
-                      <p className="text-gray-300 mb-1">{incomingCall.callerName}</p>
-                      <p className="text-sm text-gray-400 mb-6">
-                        {incomingCall.callType === "video" ? "Video" : "Audio"} Call
-                      </p>
-                      <div className="flex gap-4 justify-center">
-                        <button
-                          onClick={declineIncomingCall}
-                          className="p-4 bg-red-600 hover:bg-red-700 rounded-full transition-colors"
-                        >
-                          <PhoneOff className="w-6 h-6" />
-                        </button>
-                        <button
-                          onClick={acceptIncomingCall}
-                          className="p-4 bg-green-600 hover:bg-green-700 rounded-full transition-colors"
-                        >
-                          <Phone className="w-6 h-6" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {activeCall ? (
                   <div className="space-y-4">
                     <div className="bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-600/50 rounded-xl p-4">
