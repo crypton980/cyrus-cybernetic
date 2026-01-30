@@ -47,7 +47,14 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Memory System:** PostgreSQL-persisted conversations and memories, categorized for persistent history.
 - **File Management:** Supports image, video, and document uploads with metadata, using OpenAI Vision for image analysis and OpenAI Whisper for audio transcription.
 - **AI System Dashboard:** Monitors and controls multiple AI subsystems (FusionAI, Interactive, TorchScript, ONNX).
-- **Quantum Trading Intelligence Module:** Provides expert knowledge in Forex, Crypto, Technical Analysis, Indicators, Risk Management, and Fundamental Analysis.
+- **Quantum Trading Intelligence Module:** Provides expert knowledge in Forex, Crypto, Technical Analysis, Indicators, Risk Management, and Fundamental Analysis. Now integrated with Alpaca Markets for live paper/production trading.
+- **Alpaca Trading Integration:** Real-time connection to Alpaca Markets API v2 for stocks and crypto trading. Features include:
+  - Live account sync (portfolio value, buying power, positions)
+  - Real order execution via Alpaca for stocks and crypto
+  - Paper trading mode by default for safe testing
+  - Automatic sync when starting autonomous trading
+  - Fallback to simulation mode for forex pairs
+  - Connection status indicator in Trading UI ("Alpaca paper" or "Simulation Mode")
 - **Unified Agent Execution Core:** A single `agentExecuteCore` function handles all agent executions across 18 device action types.
 - **Autonomous Agent Fusion:** Integrates agent capabilities into the main chat using 11 regex patterns for command detection.
 - **AI Assistant Module:** Enhanced with OpenAI GPT-4o for natural language command parsing.
