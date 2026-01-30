@@ -42,6 +42,7 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Drone Control Module:** Military-grade UAV control system with MAVLink protocol support, real-time telemetry (battery, altitude, speed, heading, GPS), flight commands (arm, disarm, takeoff, land, RTL), waypoint mission planning, autonomous operations, flight mode control (STABILIZE, LOITER, GUIDED, AUTO, RTL, LAND), and emergency stop functionality. Operates in simulation mode until real hardware is connected.
 - **Emotional Intelligence:** Advanced sentiment analysis, empathetic response generation, and crisis de-escalation.
 - **Real-Time Camera Vision:** Utilizes TensorFlow.js with COCO-SSD for client-side object detection.
+- **Module Fusion System:** Command Interface is fused with all modules (Vision, Navigation, Communications, Drone). When Vision is active, CYRUS can see detected objects and describe them. Module context is passed to the AI for situational awareness. Vision analysis is automatically stored in memory.
 - **Voice Interaction:** Continuous speech recognition and natural female voice synthesis.
 - **GPS Location Tracking:** Continuous, high-accuracy geolocation with location-aware AI responses.
 - **Memory System:** PostgreSQL-persisted conversations and memories, categorized for persistent history.
