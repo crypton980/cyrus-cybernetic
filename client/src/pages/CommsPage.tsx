@@ -34,6 +34,8 @@ export function CommsPage() {
     reminders,
     news,
     activeCall,
+    localStream,
+    remoteStream,
     sendMessage,
     addReminder,
     completeReminder,
@@ -329,26 +331,78 @@ export function CommsPage() {
             {!isLoading && activeTab === "calls" && (
               <div className="space-y-4">
                 {activeCall ? (
-                  <div className="bg-green-900/30 border border-green-600 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-green-400">
-                          {activeCall.type === "video" ? "Video" : "Audio"} Call
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          With: {activeCall.peerId}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Status: {activeCall.status}
-                        </p>
+                  <div className="space-y-4">
+                    <div className="bg-green-900/30 border border-green-600 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-green-400">
+                            {activeCall.type === "video" ? "Video" : "Audio"} Call
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            With: {activeCall.peerId}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Status: {activeCall.status}
+                          </p>
+                        </div>
+                        <button
+                          onClick={endCall}
+                          className="p-3 bg-red-600 hover:bg-red-700 rounded-full"
+                        >
+                          <PhoneOff className="w-5 h-5" />
+                        </button>
                       </div>
-                      <button
-                        onClick={endCall}
-                        className="p-3 bg-red-600 hover:bg-red-700 rounded-full"
-                      >
-                        <PhoneOff className="w-5 h-5" />
-                      </button>
                     </div>
+                    
+                    {activeCall.type === "video" && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="relative">
+                          <p className="text-xs text-gray-400 mb-2">Your Camera</p>
+                          <video
+                            autoPlay
+                            muted
+                            playsInline
+                            className="w-full aspect-video bg-gray-800 rounded-lg object-cover"
+                            ref={(el) => {
+                              if (el && localStream) el.srcObject = localStream;
+                            }}
+                          />
+                        </div>
+                        <div className="relative">
+                          <p className="text-xs text-gray-400 mb-2">Remote Video</p>
+                          <video
+                            autoPlay
+                            playsInline
+                            className="w-full aspect-video bg-gray-800 rounded-lg object-cover"
+                            ref={(el) => {
+                              if (el && remoteStream) el.srcObject = remoteStream;
+                            }}
+                          />
+                          {!remoteStream && (
+                            <div className="absolute inset-0 flex items-center justify-center mt-6">
+                              <p className="text-gray-500 text-sm">Waiting for connection...</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {activeCall.type === "audio" && (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="text-center">
+                          <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                            <Phone className="w-10 h-10" />
+                          </div>
+                          <p className="text-gray-400">Audio call in progress</p>
+                          <audio
+                            autoPlay
+                            ref={(el) => {
+                              if (el && remoteStream) el.srcObject = remoteStream;
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -356,7 +410,7 @@ export function CommsPage() {
                       type="text"
                       value={callPeerId}
                       onChange={(e) => setCallPeerId(e.target.value)}
-                      placeholder="Enter peer ID to call"
+                      placeholder="Enter peer ID or room code to call"
                       className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <div className="grid grid-cols-2 gap-3">
@@ -377,6 +431,9 @@ export function CommsPage() {
                         Video Call
                       </button>
                     </div>
+                    <p className="text-xs text-gray-500 text-center">
+                      Share your room code with others to join the call
+                    </p>
                   </div>
                 )}
               </div>

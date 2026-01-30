@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, jsonb, integer } from "drizzle-orm/pg-core";
 
 export const onlineUsers = pgTable("online_users", {
   id: varchar("id").primaryKey(),
@@ -43,7 +43,31 @@ export const meetingRooms = pgTable("meeting_rooms", {
   participants: jsonb("participants").default([]),
 });
 
+export const reminders = pgTable("reminders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  dueAt: timestamp("due_at").notNull(),
+  completed: boolean("completed").default(false),
+  priority: varchar("priority").default("medium"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const newsItems = pgTable("news_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  summary: text("summary"),
+  source: varchar("source"),
+  url: varchar("url"),
+  category: varchar("category").default("general"),
+  publishedAt: timestamp("published_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type OnlineUser = typeof onlineUsers.$inferSelect;
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type CallHistory = typeof callHistory.$inferSelect;
 export type MeetingRoom = typeof meetingRooms.$inferSelect;
+export type Reminder = typeof reminders.$inferSelect;
+export type NewsItem = typeof newsItems.$inferSelect;
