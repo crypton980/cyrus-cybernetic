@@ -59,11 +59,14 @@ export function useTrading() {
   const statusQuery = useQuery<TradingStatus>({
     queryKey: ["/api/trading/status"],
     queryFn: async () => {
-      const res = await fetch("/api/trading/status");
+      const res = await fetch("/api/trading/status", {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (!res.ok) throw new Error("Failed to fetch status");
       return res.json();
     },
     refetchInterval: 5000,
+    staleTime: 0,
   });
 
   const accountQuery = useQuery<TradingAccount>({
