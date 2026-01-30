@@ -30,6 +30,8 @@ import fetch from "node-fetch";
 import { analyzeScan } from "./scan/analyze";
 import { decodeQr } from "./scan/qr";
 import { registerDroneRoutes } from "./drone/routes";
+import { experienceMemory } from "./ai/experience-memory";
+import { adaptiveLearning } from "./ai/adaptive-learning";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -574,6 +576,63 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching consciousness:", error);
       res.status(500).json({ error: "Failed to fetch consciousness state" });
+    }
+  });
+
+  // Get learning stats and self-evolution progress
+  app.get("/api/cyrus/learning", async (req, res) => {
+    try {
+      const learningStats = await experienceMemory.getLearningStats();
+      const evolutionHistory = await experienceMemory.getEvolutionHistory(10);
+      
+      res.json({
+        stats: learningStats,
+        evolution: evolutionHistory,
+        capabilities: {
+          selfImprovement: true,
+          patternRecognition: true,
+          knowledgeIntegration: true,
+          performanceOptimization: true
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching learning stats:", error);
+      res.status(500).json({ error: "Failed to fetch learning statistics" });
+    }
+  });
+
+  // Get evolution history
+  app.get("/api/cyrus/evolution", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const evolutionHistory = await experienceMemory.getEvolutionHistory(limit);
+      
+      res.json({
+        ...evolutionHistory,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching evolution history:", error);
+      res.status(500).json({ error: "Failed to fetch evolution history" });
+    }
+  });
+
+  // Query knowledge graph
+  app.get("/api/cyrus/knowledge", async (req, res) => {
+    try {
+      const concept = req.query.concept as string;
+      const domain = req.query.domain as string | undefined;
+      
+      if (!concept) {
+        return res.status(400).json({ error: "Concept parameter required" });
+      }
+      
+      const knowledge = await experienceMemory.queryKnowledge(concept, domain);
+      res.json(knowledge);
+    } catch (error) {
+      console.error("Error querying knowledge:", error);
+      res.status(500).json({ error: "Failed to query knowledge graph" });
     }
   });
 

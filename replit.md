@@ -55,6 +55,7 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Mission-Grade Operator System Prompt:** Defines CYRUS v3.0 as OMEGA-TIER ASI with 9 operational modes.
 - **Quantum Fail-Safe Architecture:** Military-grade reliability with confidence reporting (VERIFIED, HIGH, MODERATE, LOW, SPECULATIVE) and graceful degradation.
 - **Security Features:** Biometric verification, token-based session management, Zod input validation, and file upload limits.
+- **Self-Evolution Learning System:** Real-time experience learning that tracks every interaction, builds knowledge graphs from conversations, monitors performance metrics (response time, success rates), applies learned optimizations to improve responses, and logs evolution events. Database tables: `experience_learning`, `knowledge_graph`, `performance_metrics`, `evolution_log`. API endpoints: `/api/cyrus/learning`, `/api/cyrus/evolution`, `/api/cyrus/knowledge`.
 
 ### External Dependencies
 - **PostgreSQL Database:** Primary data persistence, hosted via Neon.

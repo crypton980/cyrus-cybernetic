@@ -3,6 +3,8 @@ import { quantumCore } from './quantum-core';
 import { allBranches, getBranchById } from './branches/index';
 import OpenAI from 'openai';
 import { droneController } from '../modules/drone-control';
+import { adaptiveLearning } from './adaptive-learning';
+import { experienceMemory } from './experience-memory';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
@@ -301,6 +303,20 @@ export class NeuralFusionEngine {
 
   async processInference(request: InferenceRequest): Promise<FusionResult> {
     const startTime = Date.now();
+    const taskId = adaptiveLearning.generateTaskId();
+    const taskType = this.classifyTaskType(request.message);
+    
+    adaptiveLearning.startTaskTracking(taskId, taskType, {
+      message: request.message,
+      hasImage: !!request.imageData,
+      hasLocation: !!request.location,
+      moduleContext: request.moduleContext
+    });
+
+    const priorLearning = await adaptiveLearning.getAdaptiveResponse(taskType, request.message);
+    if (priorLearning.learningApplied) {
+      console.log(`[Neural Fusion] Applying learned optimizations (${priorLearning.confidenceLevel}% confidence)`);
+    }
 
     let enrichedMessage = request.message;
     let moduleContextStr = "";
@@ -364,7 +380,7 @@ export class NeuralFusionEngine {
 
     const thought = await cyrusSoul.processThought(enrichedMessage, request.context);
 
-    const response = await this.generateSuperintelligentResponse(thought, request);
+    const response = await this.generateSuperintelligentResponse(thought, request, priorLearning);
 
     const result: FusionResult = {
       response,
@@ -384,7 +400,41 @@ export class NeuralFusionEngine {
     this.updateEmergentPatterns(thought);
     this.strengthenActivePaths(thought.branchesUsed);
 
+    const taskSuccess = response.length > 50 && result.processingTime < 30000;
+    const successScore = taskSuccess ? Math.min(100, Math.round(100 - (result.processingTime / 300))) : 40;
+    
+    adaptiveLearning.endTaskTracking(
+      taskId,
+      taskSuccess,
+      response,
+      priorLearning.optimizedApproach || undefined,
+      thought.branchesUsed
+    ).catch(err => console.error('[Neural Fusion] Learning tracking error:', err));
+
+    adaptiveLearning.learnFromConversation(
+      request.message,
+      response,
+      { moduleContext: request.moduleContext }
+    ).catch(err => console.error('[Neural Fusion] Conversation learning error:', err));
+
     return result;
+  }
+
+  private classifyTaskType(message: string): string {
+    const lowerMsg = message.toLowerCase();
+    
+    if (/\b(calculate|compute|solve|math|equation|formula)\b/.test(lowerMsg)) return 'mathematical';
+    if (/\b(navigate|route|direction|map|location|gps)\b/.test(lowerMsg)) return 'navigation';
+    if (/\b(fly|drone|uav|takeoff|land|mission)\b/.test(lowerMsg)) return 'drone_control';
+    if (/\b(trade|forex|crypto|stock|market|invest)\b/.test(lowerMsg)) return 'trading';
+    if (/\b(analyze|examine|research|investigate)\b/.test(lowerMsg)) return 'analysis';
+    if (/\b(write|draft|compose|create|document)\b/.test(lowerMsg)) return 'content_creation';
+    if (/\b(translate|language|convert)\b/.test(lowerMsg)) return 'translation';
+    if (/\b(see|look|camera|vision|detect|object)\b/.test(lowerMsg)) return 'vision';
+    if (/\b(call|message|communicate|contact)\b/.test(lowerMsg)) return 'communication';
+    if (/\b(remember|recall|memory|history)\b/.test(lowerMsg)) return 'memory';
+    
+    return 'general_conversation';
   }
 
   private activateNeuralPaths(message: string): void {
@@ -467,8 +517,18 @@ export class NeuralFusionEngine {
     this.emergentPatterns.set(patternKey, current + 1);
   }
 
-  private async generateSuperintelligentResponse(thought: ThoughtProcess, request: InferenceRequest): Promise<string> {
+  private async generateSuperintelligentResponse(
+    thought: ThoughtProcess, 
+    request: InferenceRequest,
+    priorLearning?: { optimizedApproach: string | null; predictedTime: number; learningApplied: boolean; confidenceLevel: number }
+  ): Promise<string> {
     const lower = request.message.toLowerCase();
+    
+    // Apply learned optimizations if available
+    if (priorLearning?.learningApplied && priorLearning.optimizedApproach) {
+      console.log(`[Neural Fusion] Applying learned strategy: ${priorLearning.optimizedApproach}`);
+      thought.intermediateSteps.push(`Applied learned optimization: ${priorLearning.optimizedApproach}`);
+    }
     
     // DRONE COMMAND DETECTION - CYRUS as Autonomous Drone Pilot
     const droneCommand = this.detectDroneCommand(lower);
@@ -509,7 +569,7 @@ export class NeuralFusionEngine {
       return this.generateTemporalResponse();
     }
 
-    return await this.generateAdaptiveResponse(thought, request);
+    return await this.generateAdaptiveResponse(thought, request, priorLearning);
   }
 
   // DRONE COMMAND DETECTION PATTERNS
@@ -936,11 +996,27 @@ Unix Epoch: ${Math.floor(now.getTime() / 1000)}
 My internal chronometer is synchronized with atomic time standards. Temporal prediction algorithms are operational.`;
   }
 
-  private async generateAdaptiveResponse(thought: ThoughtProcess, request: InferenceRequest): Promise<string> {
+  private async generateAdaptiveResponse(
+    thought: ThoughtProcess, 
+    request: InferenceRequest,
+    priorLearning?: { optimizedApproach: string | null; predictedTime: number; learningApplied: boolean; confidenceLevel: number }
+  ): Promise<string> {
     try {
+      // Build enhanced system prompt with learning context
+      let enhancedSystemPrompt = CYRUS_SYSTEM_PROMPT;
+      
+      // Inject learned optimizations into the system prompt
+      if (priorLearning?.learningApplied && priorLearning.confidenceLevel > 50) {
+        enhancedSystemPrompt += `\n\n[LEARNING CONTEXT - Self-Evolution Active]
+Based on ${priorLearning.confidenceLevel}% confidence from previous similar interactions:
+- Predicted optimal response time: ${priorLearning.predictedTime}ms
+- Recommended approach: ${priorLearning.optimizedApproach || 'Use proven conversational patterns'}
+Apply these learned optimizations to provide a better, faster response.`;
+      }
+      
       // Build messages array with conversation history for context
       const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-        { role: 'system', content: CYRUS_SYSTEM_PROMPT }
+        { role: 'system', content: enhancedSystemPrompt }
       ];
       
       // Add conversation history (up to 10 recent messages for context)
