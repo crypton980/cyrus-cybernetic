@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useComms } from "../hooks/useComms";
 import { CyrusAssistant } from "../components/CyrusAssistant";
+import { Link } from "wouter";
 import {
   MessageSquare,
   Bell,
@@ -35,6 +36,8 @@ import {
   Star,
   Circle,
   User,
+  ArrowLeft,
+  Radio,
 } from "lucide-react";
 
 type TabType = "messages" | "reminders" | "news" | "calls";
@@ -193,69 +196,139 @@ export function CommsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
+    <div className="min-h-screen bg-[#0a0a0f] text-white">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-blue-500/5 pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
       {incomingCall && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-gradient-to-br from-green-900 to-blue-900 rounded-2xl p-8 max-w-sm w-full mx-4 text-center animate-pulse">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <PhoneIncoming className="w-10 h-10 text-white" />
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-green-900/80 to-blue-900/80 backdrop-blur-sm border border-green-500/30 rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
+            <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse shadow-lg shadow-green-500/30">
+              <PhoneIncoming className="w-12 h-12 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Incoming Call</h3>
-            <p className="text-gray-300 mb-1">{incomingCall.callerName}</p>
-            <p className="text-sm text-gray-400 mb-6">
-              {incomingCall.callType === "video" ? "Video" : "Audio"} Call
+            <h3 className="text-2xl font-bold text-white mb-2">Incoming Call</h3>
+            <p className="text-gray-200 mb-1 text-lg">{incomingCall.callerName}</p>
+            <p className="text-sm text-gray-400 mb-8">
+              {incomingCall.callType === "video" ? "HD Video" : "HD Audio"} Call
             </p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-6 justify-center">
               <button
                 onClick={declineIncomingCall}
-                className="p-4 bg-red-600 hover:bg-red-700 rounded-full transition-colors"
+                className="p-5 bg-gradient-to-br from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-full transition-all shadow-lg shadow-red-500/30"
               >
-                <PhoneOff className="w-6 h-6" />
+                <PhoneOff className="w-7 h-7" />
               </button>
               <button
                 onClick={acceptIncomingCall}
-                className="p-4 bg-green-600 hover:bg-green-700 rounded-full transition-colors"
+                className="p-5 bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-full transition-all shadow-lg shadow-green-500/30"
               >
-                <Phone className="w-6 h-6" />
+                <Phone className="w-7 h-7" />
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto space-y-6">
-        <header>
-          <h1 className="text-2xl font-bold">Communications</h1>
-          <p className="text-gray-400">Enterprise-grade messaging and HD calling</p>
-        </header>
-
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-          <div className="flex border-b border-gray-800">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 transition-colors ${
-                    activeTab === tab.id
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-400 hover:text-white hover:bg-gray-800"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
+      <div className="relative p-4 md:p-6">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <header className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <Link href="/">
+                <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all">
+                  <ArrowLeft className="w-5 h-5" />
                 </button>
-              );
-            })}
+              </Link>
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <Radio className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+                      Secure Communications
+                    </h1>
+                    <p className="text-gray-400 text-sm">Enterprise HD Voice & Video</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                <span className="text-xs text-emerald-400 font-medium">
+                  {isConnected ? "Connected" : "Offline"}
+                </span>
+              </div>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-blue-400" />
+                </div>
+                <span className="text-xs text-gray-400">Messages</span>
+              </div>
+              <p className="text-lg font-bold text-blue-400">{messages.length}</p>
+            </div>
+            <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                  <Bell className="w-4 h-4 text-amber-400" />
+                </div>
+                <span className="text-xs text-gray-400">Reminders</span>
+              </div>
+              <p className="text-lg font-bold text-amber-400">{reminders.length}</p>
+            </div>
+            <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <Newspaper className="w-4 h-4 text-purple-400" />
+                </div>
+                <span className="text-xs text-gray-400">News Feed</span>
+              </div>
+              <p className="text-lg font-bold text-purple-400">{news.length}</p>
+            </div>
+            <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <Users className="w-4 h-4 text-green-400" />
+                </div>
+                <span className="text-xs text-gray-400">Online</span>
+              </div>
+              <p className="text-lg font-bold text-green-400">{onlineUsers.length}</p>
+            </div>
           </div>
 
-          <div className="p-4">
-            {isLoading && (
-              <div className="flex items-center justify-center py-8">
-                <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
-              </div>
-            )}
+          <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-xl overflow-hidden">
+            <div className="flex border-b border-gray-800/50">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as TabType)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 transition-all ${
+                      activeTab === tab.id
+                        ? "bg-gradient-to-r from-green-600/20 to-emerald-600/20 text-green-400 border-b-2 border-green-500"
+                        : "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden sm:inline font-medium">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="p-5">
+              {isLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="w-8 h-8 animate-spin text-green-500" />
+                </div>
+              )}
 
             {!isLoading && activeTab === "messages" && (
               <div className="space-y-4">
@@ -925,6 +998,7 @@ export function CommsPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
       <CyrusAssistant
         module="communications"
