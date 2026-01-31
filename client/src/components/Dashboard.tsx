@@ -51,6 +51,10 @@ export function Dashboard() {
   const [researchResults, setResearchResults] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, size: string}[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    const saved = localStorage.getItem("cyrus-voice-enabled");
+    return saved !== null ? saved === "true" : true;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -60,6 +64,7 @@ export function Dashboard() {
   const currentTranscriptRef = useRef<string>("");
   const micActiveRef = useRef<boolean>(false);
   const isSpeakingRef = useRef<boolean>(false);
+  const voiceEnabledRef = useRef<boolean>(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -198,6 +203,15 @@ export function Dashboard() {
   useEffect(() => {
     isSpeakingRef.current = isSpeaking;
   }, [isSpeaking]);
+
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+    localStorage.setItem("cyrus-voice-enabled", String(voiceEnabled));
+  }, [voiceEnabled]);
+
+  const toggleVoice = () => {
+    setVoiceEnabled(prev => !prev);
+  };
 
   const speakText = async (text: string, retryCount = 0) => {
     // Guard against overlapping calls - if already speaking, skip
@@ -531,8 +545,8 @@ export function Dashboard() {
 
     queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     
-    if (micActive) {
-      await speakText(inferData.response);
+    if (voiceEnabledRef.current) {
+      speakText(inferData.response);
     }
   };
 
@@ -886,6 +900,26 @@ export function Dashboard() {
             >
               <Camera className="w-5 h-5" />
               <span className="text-[10px]">{modelLoading ? 'Loading...' : 'Camera'}</span>
+            </button>
+            <button
+              onClick={toggleVoice}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${
+                voiceEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              {voiceEnabled ? (
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              )}
+              <span className="text-[10px]">{voiceEnabled ? 'Voice On' : 'Voice Off'}</span>
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
