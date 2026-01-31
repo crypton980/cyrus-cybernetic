@@ -625,9 +625,12 @@ export function Dashboard() {
 
       return inferData;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       setInput("");
+      if (voiceEnabledRef.current && data?.response) {
+        speakText(data.response);
+      }
     },
   });
 
