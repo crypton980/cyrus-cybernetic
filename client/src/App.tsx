@@ -128,8 +128,8 @@ export default function App() {
           <div className="p-5 pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#0a84ff] rounded-xl flex items-center justify-center">
-                  <Cpu className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl overflow-hidden border border-cyan-500/30 shadow-lg shadow-cyan-500/20">
+                  <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold tracking-tight">CYRUS</h1>

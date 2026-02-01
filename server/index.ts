@@ -7,8 +7,10 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
 
-// Serve uploaded files
+// Serve static assets from public folder
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')));
+app.use('/videos', express.static(path.join(process.cwd(), 'public', 'videos')));
 const httpServer = createServer(app);
 
 declare module "http" {
