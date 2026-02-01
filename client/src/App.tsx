@@ -13,6 +13,11 @@ import {
   Plane,
   ChevronRight,
   Cpu,
+  Activity,
+  Zap,
+  Shield,
+  Microscope,
+  Droplets,
 } from "lucide-react";
 
 import { Dashboard } from "./components/Dashboard";
@@ -35,6 +40,14 @@ const navItems = [
   { path: "/device", label: "Systems", sublabel: "Hardware Control", icon: Monitor },
   { path: "/drone", label: "Aerospace", sublabel: "UAV Operations", icon: Plane },
   { path: "/trading", label: "Markets", sublabel: "Financial Intel", icon: TrendingUp },
+];
+
+const moduleItems = [
+  { id: "medical", label: "Medical", sublabel: "Diagnostics", icon: Activity },
+  { id: "quantum", label: "Quantum", sublabel: "Neural Net", icon: Zap },
+  { id: "security-enc", label: "Security", sublabel: "Encryption", icon: Shield },
+  { id: "biology-lab", label: "Biology", sublabel: "Lab Analysis", icon: Microscope },
+  { id: "blood-sys", label: "Blood", sublabel: "Sampling", icon: Droplets },
 ];
 
 export default function App() {
@@ -78,37 +91,67 @@ export default function App() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 overflow-y-auto">
-            <div className="space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    onClick={() => setMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                      isActive
-                        ? "bg-[#0a84ff] text-white"
-                        : "text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)]"
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
-                    }`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{item.label}</p>
-                      <p className={`text-[10px] ${isActive ? "text-white/60" : "text-[rgba(235,235,245,0.4)]"}`}>
-                        {item.sublabel}
-                      </p>
-                    </div>
-                    {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}
-                  </Link>
-                );
-              })}
+          <nav className="flex-1 px-3 overflow-y-auto space-y-6 py-4">
+            <div>
+              <p className="px-3 text-[10px] font-bold text-[rgba(235,235,245,0.3)] uppercase tracking-widest mb-2">Main</p>
+              <div className="space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location === item.path;
+                  return (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                        isActive
+                          ? "bg-[#0a84ff] text-white"
+                          : "text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)]"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
+                      }`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{item.label}</p>
+                        <p className={`text-[10px] ${isActive ? "text-white/60" : "text-[rgba(235,235,245,0.4)]"}`}>
+                          {item.sublabel}
+                        </p>
+                      </div>
+                      {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="px-3 text-[10px] font-bold text-[rgba(235,235,245,0.3)] uppercase tracking-widest mb-2">Advanced Modules</p>
+              <div className="space-y-1">
+                {moduleItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.id}
+                      href="/modules"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)] transition-all group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[rgba(120,120,128,0.2)] flex items-center justify-center group-hover:bg-[#0a84ff]/20 transition-colors">
+                        <Icon className="w-4 h-4 group-hover:text-[#0a84ff]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{item.label}</p>
+                        <p className="text-[10px] text-[rgba(235,235,245,0.4)]">
+                          {item.sublabel}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </nav>
 
