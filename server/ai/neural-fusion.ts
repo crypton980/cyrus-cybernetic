@@ -229,6 +229,7 @@ export interface InferenceRequest {
   userId?: string;
   moduleContext?: ModuleContext;
   conversationHistory?: ConversationMessage[];
+  quantumPromptEnhancement?: string;
 }
 
 export class NeuralFusionEngine {
@@ -1055,6 +1056,10 @@ Proceed with care. ${ethicalAssessment.recommendations.join(' ')}`;
 Based on ${priorLearning.confidenceLevel}% confidence from previous similar interactions:
 - Predicted optimal response time: ${priorLearning.predictedTime}ms
 - Recommended approach: ${priorLearning.optimizedApproach || 'Use proven conversational patterns'}`;
+      }
+      
+      if (request.quantumPromptEnhancement) {
+        enhancedSystemPrompt += request.quantumPromptEnhancement;
       }
       
       const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [

@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server/index.ts",
+    "dev": "python server/quantum_ai/quantum_bridge.py & tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --bundle --platform=node --outfile=dist/server/index.js --format=esm --packages=external",
-    "start": "NODE_ENV=production node dist/server/index.js",
+    "start": "python server/quantum_ai/quantum_bridge.py & NODE_ENV=production node dist/server/index.js",
+    "quantum-bridge": "python server/quantum_ai/quantum_bridge.py",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"

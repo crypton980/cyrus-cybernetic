@@ -37,6 +37,7 @@ import { adaptiveLearning } from "./ai/adaptive-learning";
 import { registerAdvancedUpgradeRoutes } from "./ai/upgrades/routes";
 import { moduleOrchestrator } from "./ai/upgrades/module-orchestrator";
 import { registerInteractiveRoutes } from "./ai/interactive/routes";
+import { quantumBridge } from "./ai/quantum-bridge-client";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -619,7 +620,7 @@ Format your response in a clear, structured manner.`
     }
   });
 
-  // Superintelligent AI inference endpoint - Neural Fusion Engine
+  // Superintelligent AI inference endpoint - Neural Fusion Engine with Quantum Enhancement
   app.post("/api/infer", async (req, res) => {
     try {
       const { message, imageData, detectedObjects, location, userId, moduleContext } = req.body;
@@ -636,6 +637,13 @@ Format your response in a clear, structured manner.`
         };
       });
       
+      // Quantum Intelligence Enhancement - Enhance response quality with advanced algorithms
+      const quantumEnhancement = await quantumBridge.enhanceResponse(message, {
+        detectedObjects,
+        location,
+        conversationCount: conversationHistory.length
+      });
+      
       // Build unified context from all 13 modules
       const orchestratorContext = await moduleOrchestrator.buildUnifiedContext(message, {
         vision: moduleContext?.vision,
@@ -643,7 +651,7 @@ Format your response in a clear, structured manner.`
         detectedObjects
       });
       
-      // Merge orchestrator context with existing module context
+      // Merge orchestrator context with existing module context and quantum enhancement
       const enhancedModuleContext = {
         ...moduleContext,
         orchestrator: orchestratorContext,
@@ -653,8 +661,22 @@ Format your response in a clear, structured manner.`
         ethics: orchestratorContext.moduleData.ethics,
         quantum: orchestratorContext.moduleData.quantum,
         cognitive: orchestratorContext.moduleData.cognitive,
-        hardware: orchestratorContext.moduleData.hardware
+        hardware: orchestratorContext.moduleData.hardware,
+        quantumIntelligence: quantumEnhancement ? {
+          active: true,
+          queryType: quantumEnhancement.query_classification,
+          recommendedStyle: quantumEnhancement.enhancements.writing_style?.recommended_response_style,
+          styleGuidelines: quantumEnhancement.enhancements.writing_style?.style_guidelines,
+          responseStructure: quantumEnhancement.enhancements.response_structure,
+          analyticalFramework: quantumEnhancement.enhancements.analytical_framework,
+          confidenceMetrics: quantumEnhancement.enhancements.confidence_metrics
+        } : null
       };
+      
+      // Build quantum enhancement prompt if available
+      const quantumPromptEnhancement = quantumEnhancement 
+        ? quantumBridge.buildSystemPromptEnhancement(quantumEnhancement)
+        : '';
       
       const result = await neuralFusionEngine.processInference({
         message,
@@ -663,7 +685,8 @@ Format your response in a clear, structured manner.`
         location,
         userId,
         moduleContext: enhancedModuleContext,
-        conversationHistory
+        conversationHistory,
+        quantumPromptEnhancement
       });
       
       res.json({
@@ -671,7 +694,8 @@ Format your response in a clear, structured manner.`
         confidence: result.confidence,
         processingTime: result.processingTime,
         branchesEngaged: result.branchesEngaged,
-        quantumEnhanced: result.quantumEnhanced,
+        quantumEnhanced: result.quantumEnhanced || !!quantumEnhancement,
+        quantumIntelligenceActive: !!quantumEnhancement,
         neuralPathsActivated: result.neuralPathsActivated,
         agiReasoning: result.agiReasoning,
         timestamp: new Date().toISOString(),
