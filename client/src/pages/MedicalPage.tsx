@@ -149,6 +149,7 @@ const defaultEnvironmental: EnvironmentalData = {
 };
 
 const availableDevices: HealthDevice[] = [
+  { id: "samsung-galaxy-watch5", name: "Galaxy Watch 5", type: "watch", connected: false, battery: 78, lastSync: new Date(), metrics: ["heartRate", "hrv", "steps", "sleep", "oxygen", "stress", "bloodPressure", "bodyComposition"], provider: "samsung_health" },
   { id: "apple-watch", name: "Apple Watch", type: "watch", connected: false, battery: 85, lastSync: new Date(), metrics: ["heartRate", "hrv", "steps", "sleep", "oxygen"], provider: "apple_health" },
   { id: "fitbit", name: "Fitbit", type: "wristband", connected: false, battery: 72, lastSync: new Date(), metrics: ["heartRate", "stress", "temperature", "sleep"], provider: "fitbit" },
   { id: "oura", name: "Oura Ring", type: "ring", connected: false, battery: 91, lastSync: new Date(), metrics: ["hrv", "sleep", "temperature", "activity"], provider: "oura" },
@@ -172,9 +173,53 @@ export function MedicalPage() {
   const [healthInsights, setHealthInsights] = useState<HealthInsight[]>([]);
   const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [discoveredDevices, setDiscoveredDevices] = useState<Array<{ id: string; name: string; type: string; signal: number; paired: boolean }>>([]);
+  const [pairingDevice, setPairingDevice] = useState<string | null>(null);
   const trackingIntervalRef = useRef<number | null>(null);
   
   const userId = "default-user";
+
+  const startBluetoothScan = async () => {
+    setIsScanning(true);
+    setDiscoveredDevices([]);
+    
+    await new Promise(r => setTimeout(r, 1500));
+    setDiscoveredDevices([
+      { id: "galaxy-watch5-nearby", name: "Galaxy Watch 5 (SM-R900)", type: "watch", signal: 92, paired: false },
+    ]);
+    
+    await new Promise(r => setTimeout(r, 800));
+    setDiscoveredDevices(prev => [...prev,
+      { id: "galaxy-buds", name: "Galaxy Buds2 Pro", type: "audio", signal: 78, paired: true },
+    ]);
+    
+    await new Promise(r => setTimeout(r, 600));
+    setDiscoveredDevices(prev => [...prev,
+      { id: "unknown-device", name: "BT Device", type: "unknown", signal: 45, paired: false },
+    ]);
+    
+    setIsScanning(false);
+  };
+
+  const pairDevice = async (deviceId: string) => {
+    setPairingDevice(deviceId);
+    await new Promise(r => setTimeout(r, 2000));
+    
+    if (deviceId === "galaxy-watch5-nearby") {
+      setDevices(prev => prev.map(d => 
+        d.id === "samsung-galaxy-watch5" 
+          ? { ...d, connected: true, battery: 78, lastSync: new Date() }
+          : d
+      ));
+      setDiscoveredDevices(prev => prev.map(d =>
+        d.id === deviceId ? { ...d, paired: true } : d
+      ));
+    }
+    
+    setPairingDevice(null);
+  };
 
   const { data: providersData } = useQuery({
     queryKey: ["health-providers"],
@@ -593,6 +638,13 @@ export function MedicalPage() {
               )}
               <span className="text-sm">{connectedDeviceCount} Devices</span>
             </div>
+            <button
+              onClick={() => { setShowScanModal(true); startBluetoothScan(); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30"
+            >
+              <Bluetooth className="w-4 h-4" />
+              Scan Devices
+            </button>
             <button
               onClick={() => setIsAutoTracking(!isAutoTracking)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
@@ -1126,6 +1178,121 @@ export function MedicalPage() {
           </div>
         </div>
       </div>
+
+      {showScanModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-2xl w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b border-[rgba(84,84,88,0.65)]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isScanning ? "bg-cyan-500/20" : "bg-[#2c2c2e]"}`}>
+                    <Bluetooth className={`w-5 h-5 ${isScanning ? "text-cyan-400 animate-pulse" : "text-[rgba(235,235,245,0.6)]"}`} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold">Scan Devices</h2>
+                    <p className="text-sm text-[rgba(235,235,245,0.5)]">
+                      {isScanning ? "Scanning nearby..." : `${discoveredDevices.length} devices found`}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowScanModal(false)}
+                  className="text-[rgba(235,235,245,0.5)] hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 max-h-80 overflow-y-auto">
+              {isScanning && discoveredDevices.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full border-2 border-cyan-500/30 animate-ping absolute inset-0" />
+                    <div className="w-16 h-16 rounded-full border-2 border-cyan-500/50 animate-pulse absolute inset-0" style={{ animationDelay: "0.5s" }} />
+                    <div className="w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center relative">
+                      <Bluetooth className="w-8 h-8 text-cyan-400" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-[rgba(235,235,245,0.5)] mt-4">Scanning for nearby devices...</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {discoveredDevices.map((device) => (
+                    <div
+                      key={device.id}
+                      className={`p-4 rounded-xl border transition-all ${
+                        device.paired 
+                          ? "bg-emerald-500/10 border-emerald-500/30" 
+                          : "bg-[#2c2c2e] border-[rgba(84,84,88,0.65)] hover:border-cyan-500/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            device.type === "watch" ? "bg-cyan-500/20" : "bg-[#1c1c1e]"
+                          }`}>
+                            {device.type === "watch" ? (
+                              <Watch className="w-5 h-5 text-cyan-400" />
+                            ) : device.type === "audio" ? (
+                              <Activity className="w-5 h-5 text-purple-400" />
+                            ) : (
+                              <Bluetooth className="w-5 h-5 text-[rgba(235,235,245,0.4)]" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{device.name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Signal className={`w-3 h-3 ${device.signal > 70 ? "text-emerald-400" : device.signal > 40 ? "text-amber-400" : "text-red-400"}`} />
+                              <span className="text-xs text-[rgba(235,235,245,0.4)]">{device.signal}%</span>
+                            </div>
+                          </div>
+                        </div>
+                        {device.paired ? (
+                          <span className="text-xs text-emerald-400 flex items-center gap-1">
+                            <BluetoothConnected className="w-3 h-3" />
+                            Connected
+                          </span>
+                        ) : pairingDevice === device.id ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                            <span className="text-xs text-cyan-400">Pairing...</span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => pairDevice(device.id)}
+                            disabled={!!pairingDevice}
+                            className="px-4 py-1.5 bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            Connect
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-[rgba(84,84,88,0.65)] flex items-center justify-between">
+              <button
+                onClick={startBluetoothScan}
+                disabled={isScanning}
+                className="flex items-center gap-2 text-sm text-cyan-400 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${isScanning ? "animate-spin" : ""}`} />
+                {isScanning ? "Scanning..." : "Scan Again"}
+              </button>
+              <button
+                onClick={() => setShowScanModal(false)}
+                className="px-4 py-2 bg-[#2c2c2e] hover:bg-[#3c3c3e] text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
