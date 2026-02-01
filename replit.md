@@ -96,9 +96,19 @@ The Quantum AI Core is a Python-based advanced intelligence system that enhances
 
 **Voice Output System**
 - Voice output is enabled by default and persists across sessions.
-- Uses OpenAI TTS "nova" voice with streaming support.
+- Uses OpenAI TTS-1-HD "nova" voice with streaming support for high-quality output.
 - Voice toggle button in action bar with visual indicator when active.
 - Works for both typed and voice-input messages.
+- **Advanced Audio Processing**: Web Audio API-based processing with compression (2.5 ratio), EQ filtering (lowpass/highpass), warmth boost (150Hz peaking filter), and smooth fade transitions.
+- **Text Preprocessing**: Server-side preprocessing removes markdown symbols, normalizes whitespace, and handles edge cases gracefully with fallback text.
+
+**Wake Word Detection System**
+- Continuous speech recognition listening for "CYRUS" (and variations: "Cyrus", "sirius", "Sirus", "cyrus please", "hey cyrus").
+- Automatic activation on wake word detection with command capture.
+- Silence timeout (2 seconds) triggers command processing.
+- Robust lifecycle management with refs for proper state tracking.
+- Auto-restart on recognition errors (no-speech, network) with backoff delays.
+- Toggle button in action bar for enabling/disabling wake word listening.
 
 ### External Dependencies
 -   **PostgreSQL Database:** Primary data persistence, hosted via Neon.
