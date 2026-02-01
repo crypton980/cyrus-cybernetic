@@ -24,6 +24,35 @@ interface AnalyticalSection {
 class QuantumResponseFormatter {
   
   /**
+   * Sanitize markdown symbols from response
+   * Converts markdown to clean, professional text
+   */
+  private sanitizeMarkdown(text: string): string {
+    return text
+      // Remove markdown headers (###, ##, #)
+      .replace(/^#{1,6}\s+/gm, '')
+      // Remove bold markdown (**text** or __text__)
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      // Remove italic markdown (*text* or _text_) - careful with underscores in words
+      .replace(/(?<!\w)\*([^*]+)\*(?!\w)/g, '$1')
+      .replace(/(?<!\w)_([^_]+)_(?!\w)/g, '$1')
+      // Remove horizontal rules (---, ___, ***)
+      .replace(/^[-_*]{3,}\s*$/gm, '')
+      // Remove markdown bullet points at start of lines, convert to numbered
+      .replace(/^[\s]*[-*+]\s+/gm, '• ')
+      // Remove code blocks but preserve content
+      .replace(/```[\w]*\n?([\s\S]*?)```/g, '$1')
+      // Remove inline code backticks
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove markdown links, keep text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Clean up extra whitespace
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  /**
    * Format response based on quantum analysis
    */
   async formatResponse(
@@ -31,27 +60,30 @@ class QuantumResponseFormatter {
     enhancement: EnhancementResult | null,
     queryType?: string
   ): Promise<FormattedResponse> {
+    // Always sanitize markdown first
+    const cleanedResponse = this.sanitizeMarkdown(rawResponse);
+    
     if (!enhancement) {
-      return { content: rawResponse, format: 'standard' };
+      return { content: cleanedResponse, format: 'standard' };
     }
 
     const classification = enhancement.query_classification || queryType || 'analytical';
     
     switch (classification.toLowerCase()) {
       case 'analytical':
-        return this.formatAnalytical(rawResponse, enhancement);
+        return this.formatAnalytical(cleanedResponse, enhancement);
       case 'data':
-        return this.formatData(rawResponse, enhancement);
+        return this.formatData(cleanedResponse, enhancement);
       case 'research':
-        return this.formatResearch(rawResponse, enhancement);
+        return this.formatResearch(cleanedResponse, enhancement);
       case 'technical':
-        return this.formatTechnical(rawResponse, enhancement);
+        return this.formatTechnical(cleanedResponse, enhancement);
       case 'mathematical':
-        return this.formatMathematical(rawResponse, enhancement);
+        return this.formatMathematical(cleanedResponse, enhancement);
       case 'creative':
-        return this.formatCreative(rawResponse, enhancement);
+        return this.formatCreative(cleanedResponse, enhancement);
       default:
-        return { content: rawResponse, format: 'standard' };
+        return { content: cleanedResponse, format: 'standard' };
     }
   }
 

@@ -865,7 +865,7 @@ Format your response in a clear, structured manner.`
       if (quantumEnhancement) {
         try {
           // If we have quantum enhancement, we always want the formatted version
-          const formatted = await quantumFormatter.formatResponse(
+          const formatted = await quantumResponseFormatter.formatResponse(
             result.response,
             quantumEnhancement,
             quantumEnhancement.query_classification
