@@ -905,8 +905,8 @@ export function Dashboard() {
                   className={`group flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.role === "cyrus" && (
-                    <div className="w-8 h-8 bg-[#0a84ff] rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Cpu className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
+                      <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex flex-col gap-1">
@@ -950,8 +950,8 @@ export function Dashboard() {
               ))}
               {sendMessage.isPending && !isStreaming && (
                 <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 bg-[#0a84ff] rounded-lg flex items-center justify-center">
-                    <Cpu className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-lg overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
+                    <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
                   </div>
                   <div className="bg-[#2c2c2e] rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex gap-1">
@@ -964,8 +964,8 @@ export function Dashboard() {
               )}
               {isStreaming && streamingText && (
                 <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 bg-[#0a84ff] rounded-lg flex items-center justify-center">
-                    <Cpu className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-lg overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
+                    <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
                   </div>
                   <div className="bg-[#2c2c2e] rounded-2xl rounded-bl-md px-4 py-3 max-w-[75%]">
                     <div className="flex items-center gap-2 mb-1">
