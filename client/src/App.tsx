@@ -259,7 +259,7 @@ export default function App() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all"
               >
                 <LogIn className="w-5 h-5" />
-                Log In with Replit
+                Log In
               </button>
             )}
             
