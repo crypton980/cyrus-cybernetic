@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
 import {
   Menu,
@@ -20,6 +20,7 @@ import {
   Droplets,
 } from "lucide-react";
 
+import { AccessGate } from "./components/AccessGate";
 import { Dashboard } from "./components/Dashboard";
 import { ScanPage } from "./pages/ScanPage";
 import { FileAnalysisPage } from "./pages/FileAnalysisPage";
@@ -57,7 +58,19 @@ const moduleItems = [
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [location] = useLocation();
+
+  useEffect(() => {
+    const authenticated = localStorage.getItem("cyrus_authenticated");
+    if (authenticated === "true") {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  if (!isAuthenticated) {
+    return <AccessGate onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="h-screen bg-black text-white flex overflow-hidden">
