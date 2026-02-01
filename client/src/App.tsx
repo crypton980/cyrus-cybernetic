@@ -29,6 +29,11 @@ import { DeviceControlPage } from "./pages/DeviceControlPage";
 import { TradingPage } from "./pages/TradingPage";
 import { DronePage } from "./pages/DronePage";
 import { ModulesPage } from "./pages/ModulesPage";
+import { MedicalPage } from "./pages/MedicalPage";
+import { QuantumPage } from "./pages/QuantumPage";
+import { SecurityPage } from "./pages/SecurityPage";
+import { BiologyPage } from "./pages/BiologyPage";
+import { BloodSamplingPage } from "./pages/BloodSamplingPage";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
@@ -43,11 +48,11 @@ const navItems = [
 ];
 
 const moduleItems = [
-  { id: "medical", label: "Medical", sublabel: "Diagnostics", icon: Activity },
-  { id: "quantum", label: "Quantum", sublabel: "Neural Net", icon: Zap },
-  { id: "security-enc", label: "Security", sublabel: "Encryption", icon: Shield },
-  { id: "biology-lab", label: "Biology", sublabel: "Lab Analysis", icon: Microscope },
-  { id: "blood-sys", label: "Blood", sublabel: "Sampling", icon: Droplets },
+  { path: "/medical", label: "Medical", sublabel: "Diagnostics", icon: Activity },
+  { path: "/quantum", label: "Quantum", sublabel: "Neural Net", icon: Zap },
+  { path: "/security", label: "Security", sublabel: "Encryption", icon: Shield },
+  { path: "/biology", label: "Biology", sublabel: "Lab Analysis", icon: Microscope },
+  { path: "/blood", label: "Blood", sublabel: "Sampling", icon: Droplets },
 ];
 
 export default function App() {
@@ -132,22 +137,30 @@ export default function App() {
               <div className="space-y-1">
                 {moduleItems.map((item) => {
                   const Icon = item.icon;
+                  const isActive = location === item.path;
                   return (
                     <Link
-                      key={item.id}
-                      href="/modules"
+                      key={item.path}
+                      href={item.path}
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)] transition-all group"
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                        isActive
+                          ? "bg-[#0a84ff] text-white"
+                          : "text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)]"
+                      }`}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-[rgba(120,120,128,0.2)] flex items-center justify-center group-hover:bg-[#0a84ff]/20 transition-colors">
-                        <Icon className="w-4 h-4 group-hover:text-[#0a84ff]" />
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
+                      }`}>
+                        <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{item.label}</p>
-                        <p className="text-[10px] text-[rgba(235,235,245,0.4)]">
+                        <p className={`text-[10px] ${isActive ? "text-white/60" : "text-[rgba(235,235,245,0.4)]"}`}>
                           {item.sublabel}
                         </p>
                       </div>
+                      {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}
                     </Link>
                   );
                 })}
@@ -222,6 +235,11 @@ export default function App() {
             <Route path="/device" component={DeviceControlPage} />
             <Route path="/drone" component={DronePage} />
             <Route path="/trading" component={TradingPage} />
+            <Route path="/medical" component={MedicalPage} />
+            <Route path="/quantum" component={QuantumPage} />
+            <Route path="/security" component={SecurityPage} />
+            <Route path="/biology" component={BiologyPage} />
+            <Route path="/blood" component={BloodSamplingPage} />
           </Switch>
         </main>
       </div>
