@@ -38,6 +38,7 @@ import { registerAdvancedUpgradeRoutes } from "./ai/upgrades/routes";
 import { moduleOrchestrator } from "./ai/upgrades/module-orchestrator";
 import { registerInteractiveRoutes } from "./ai/interactive/routes";
 import { quantumBridge } from "./ai/quantum-bridge-client";
+import { quantumFormatter } from "./ai/quantum-response-formatter";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -689,13 +690,32 @@ Format your response in a clear, structured manner.`
         quantumPromptEnhancement
       });
       
+      // Apply quantum formatting to transform response presentation
+      let formattedResponse = result.response;
+      let responseFormat = 'standard';
+      
+      if (quantumEnhancement && quantumEnhancement.query_classification !== 'conversational') {
+        try {
+          const formatted = await quantumFormatter.formatResponse(
+            result.response,
+            quantumEnhancement,
+            quantumEnhancement.query_classification
+          );
+          formattedResponse = formatted.content;
+          responseFormat = formatted.format;
+        } catch (formatError) {
+          console.error('[Quantum Formatter] Error:', formatError);
+        }
+      }
+      
       res.json({
-        response: result.response,
+        response: formattedResponse,
         confidence: result.confidence,
         processingTime: result.processingTime,
         branchesEngaged: result.branchesEngaged,
         quantumEnhanced: result.quantumEnhanced || !!quantumEnhancement,
         quantumIntelligenceActive: !!quantumEnhancement,
+        quantumResponseFormat: responseFormat,
         neuralPathsActivated: result.neuralPathsActivated,
         agiReasoning: result.agiReasoning,
         timestamp: new Date().toISOString(),
