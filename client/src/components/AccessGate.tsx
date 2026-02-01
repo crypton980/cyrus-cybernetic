@@ -29,11 +29,11 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    if (accessCode === "CYRUS2026" || accessCode === "admin" || accessCode.length >= 4) {
+    if (accessCode === "71580019") {
       localStorage.setItem("cyrus_authenticated", "true");
       onAuthenticated();
     } else {
-      setError("Invalid access code");
+      setError("ACCESS DENIED - Invalid authorization code");
       setIsInitializing(false);
     }
   };
