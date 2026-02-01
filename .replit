@@ -1,7 +1,7 @@
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "python-3.11"]
 [nix]
 channel = "stable-25_05"
-packages = ["unzip", "ffmpeg"]
+packages = ["cairo", "ffmpeg", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "libxcrypt", "pkg-config", "qhull", "tcl", "tk", "unzip", "xsimd"]
 
 [agent]
 expertMode = true
