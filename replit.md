@@ -90,9 +90,27 @@ These 6 modules enable real-time human interaction, biological analysis, and phy
 6. **Security & Encryption Module**: AES-256-GCM encryption, secure key management with rotation, SHA-256 hashing with integrity verification, role-based access control (admin, operator, viewer, patient, researcher), comprehensive audit logging, secure token generation.
 7. **Blood Sampling System**: Automated blood collection with sterile needle mechanism (21-gauge disposable), vacuum-assisted collection (10mL tubes with -50mmHg pressure), infrared vein detection with confidence scoring, UV-C sterilization system (99.99% pathogen kill rate), servo motor precision control, real-time flow monitoring, sample quality analysis, emergency retract safety systems, and full session logging.
 
+**Quantum AI Core (v3.0 Intelligence Enhancement)**
+The Quantum AI Core is a Python-based advanced intelligence system that enhances CYRUS's response quality through:
+- **8 Data Science Algorithm Modules**: High-dimensional analysis, SVD, random walks, ML, streaming algorithms, clustering, graph analysis, and topic modeling.
+- **Writing Style Analysis**: Analyzes and adapts responses to professional, business, or casual styles based on query context.
+- **Query Classification**: Automatically classifies queries (analytical, research, data, mathematical, creative, technical, conversational) for optimal processing.
+- **Response Structure Optimization**: Recommends optimal response structure, sections, and formatting based on query type.
+- **Mathematical Formatting**: Generates LaTeX/Unicode mathematical equations for scientific responses.
+- **Confidence Metrics**: Calculates query clarity, specificity, and response confidence levels.
+- **Python Bridge Service**: HTTP server (port 5001) providing /enhance, /adapt-style, and /analyze-style endpoints.
+- **Integration**: Automatically enhances system prompts with style guidelines, analytical frameworks, and response structures.
+
+**Voice Output System**
+- Voice output is enabled by default and persists across sessions via localStorage
+- Uses OpenAI TTS "nova" voice (natural female) with streaming support
+- Voice toggle button in action bar with emerald theme when active
+- Works for both typed and voice-input messages
+
 ### External Dependencies
 -   **PostgreSQL Database:** Primary data persistence, hosted via Neon.
--   **OpenAI API:** GPT-4o for AI-powered responses, natural language understanding, and image analysis; Whisper for audio transcription.
+-   **OpenAI API:** GPT-4o for AI-powered responses, natural language understanding, and image analysis; Whisper for audio transcription; TTS for voice synthesis.
 -   **TensorFlow.js:** For client-side object detection (COCO-SSD model).
 -   **OANDA Broker Integration:** REST API v20 client for live forex trading.
 -   **Alpaca Markets Integration:** REST API v2 client for stocks and crypto trading.
+-   **Python Scientific Stack:** numpy, scipy, scikit-learn, networkx, matplotlib, pandas, mmh3 for Quantum AI Core algorithms.
