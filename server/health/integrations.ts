@@ -3,7 +3,7 @@ import { healthDeviceConnections, healthVitals, healthActivity, healthSleep, hea
 import { eq, and, desc } from "drizzle-orm";
 import crypto from "crypto";
 
-export type HealthProvider = "fitbit" | "oura" | "whoop" | "dexcom" | "withings" | "apple_health" | "google_fit";
+export type HealthProvider = "fitbit" | "oura" | "whoop" | "dexcom" | "withings" | "apple_health" | "google_fit" | "samsung_health";
 
 const STATE_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 const pendingStates = new Map<string, { userId: string; provider: string; expiresAt: number }>();
@@ -151,6 +151,24 @@ const PROVIDER_CONFIGS: Record<HealthProvider, ProviderConfig> = {
     dataEndpoints: {
       dataSources: "/fitness/v1/users/me/dataSources",
       sessions: "/fitness/v1/users/me/sessions",
+    },
+  },
+  samsung_health: {
+    name: "Samsung Health (Galaxy Watch)",
+    authUrl: "https://api.samsunghealth.com/oauth/authorize",
+    tokenUrl: "https://api.samsunghealth.com/oauth/token",
+    scopes: ["health.heart_rate.read", "health.sleep.read", "health.activity.read", "health.body.read", "health.oxygen_saturation.read", "health.stress.read", "health.blood_pressure.read"],
+    clientIdEnv: "SAMSUNG_HEALTH_CLIENT_ID",
+    clientSecretEnv: "SAMSUNG_HEALTH_CLIENT_SECRET",
+    dataEndpoints: {
+      heartRate: "/v1/users/me/heart-rate",
+      sleep: "/v1/users/me/sleep",
+      activity: "/v1/users/me/activity",
+      steps: "/v1/users/me/steps",
+      stress: "/v1/users/me/stress",
+      bloodOxygen: "/v1/users/me/spo2",
+      bloodPressure: "/v1/users/me/blood-pressure",
+      bodyComposition: "/v1/users/me/body-composition",
     },
   },
 };
@@ -432,6 +450,7 @@ export class HealthIntegrationsService {
       case "dexcom": return "https://api.dexcom.com";
       case "withings": return "https://wbsapi.withings.net";
       case "google_fit": return "https://www.googleapis.com";
+      case "samsung_health": return "https://api.samsunghealth.com";
       default: return "";
     }
   }
@@ -583,6 +602,91 @@ export class HealthIntegrationsService {
             recordedAt: now,
           });
         }
+      }
+    }
+
+    if (provider === "samsung_health") {
+      if (data.heartRate?.data?.[0]) {
+        const hr = data.heartRate.data[0];
+        await db.insert(healthVitals).values({
+          userId,
+          provider,
+          heartRate: hr.heart_rate || hr.bpm || null,
+          heartRateVariability: hr.hrv || null,
+          recordedAt: now,
+        });
+      }
+
+      if (data.bloodOxygen?.data?.[0]) {
+        const spo2 = data.bloodOxygen.data[0];
+        await db.insert(healthVitals).values({
+          userId,
+          provider,
+          oxygenSaturation: spo2.spo2 || spo2.oxygen_saturation || null,
+          recordedAt: now,
+        });
+      }
+
+      if (data.stress?.data?.[0]) {
+        const stress = data.stress.data[0];
+        await db.insert(healthVitals).values({
+          userId,
+          provider,
+          stressLevel: stress.stress_level || stress.score || null,
+          recordedAt: now,
+        });
+      }
+
+      if (data.bloodPressure?.data?.[0]) {
+        const bp = data.bloodPressure.data[0];
+        await db.insert(healthVitals).values({
+          userId,
+          provider,
+          bloodPressureSystolic: bp.systolic || null,
+          bloodPressureDiastolic: bp.diastolic || null,
+          recordedAt: now,
+        });
+      }
+
+      if (data.activity?.data?.[0] || data.steps?.data?.[0]) {
+        const activity = data.activity?.data?.[0] || {};
+        const steps = data.steps?.data?.[0] || {};
+        await db.insert(healthActivity).values({
+          userId,
+          provider,
+          steps: steps.count || activity.steps || null,
+          activeMinutes: activity.active_minutes || null,
+          caloriesBurned: activity.calories || null,
+          distance: activity.distance || null,
+          recordedAt: now,
+        });
+      }
+
+      if (data.sleep?.data?.[0]) {
+        const sleep = data.sleep.data[0];
+        await db.insert(healthSleep).values({
+          userId,
+          provider,
+          totalSleepMinutes: sleep.total_sleep_minutes || Math.round((sleep.duration || 0) / 60000),
+          deepSleepMinutes: sleep.deep_sleep_minutes || null,
+          remSleepMinutes: sleep.rem_sleep_minutes || null,
+          lightSleepMinutes: sleep.light_sleep_minutes || null,
+          sleepScore: sleep.sleep_score || null,
+          sleepEfficiency: sleep.efficiency || null,
+          recordedAt: now,
+        });
+      }
+
+      if (data.bodyComposition?.data?.[0]) {
+        const body = data.bodyComposition.data[0];
+        await db.insert(healthBodyMetrics).values({
+          userId,
+          provider,
+          weight: body.weight ? Math.round(body.weight * 10) : null,
+          bodyFat: body.body_fat_percentage ? Math.round(body.body_fat_percentage * 10) : null,
+          muscleMass: body.muscle_mass ? Math.round(body.muscle_mass * 10) : null,
+          recordedAt: now,
+        });
       }
     }
   }
