@@ -18,6 +18,9 @@ import {
   Shield,
   Microscope,
   Droplets,
+  LogIn,
+  LogOut,
+  User,
 } from "lucide-react";
 
 import { AccessGate } from "./components/AccessGate";
@@ -62,6 +65,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
+  const [replitUser, setReplitUser] = useState<{ id: string; username: string; profileImage?: string } | null>(null);
   const [location] = useLocation();
 
   useEffect(() => {
@@ -74,6 +78,23 @@ export default function App() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    fetch("/api/auth/user")
+      .then(res => res.ok ? res.json() : null)
+      .then(user => {
+        if (user) setReplitUser(user);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleLogin = () => {
+    window.location.href = "/api/login";
+  };
+
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
 
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
@@ -203,29 +224,66 @@ export default function App() {
             </div>
           </nav>
 
-          {/* Footer Stats */}
-          <div className="p-4 border-t border-[rgba(84,84,88,0.65)]">
-            <div className="bg-[#2c2c2e] rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3">
+          {/* User Account & Footer */}
+          <div className="p-4 border-t border-[rgba(84,84,88,0.65)] space-y-3">
+            {replitUser ? (
+              <div className="bg-[#2c2c2e] rounded-xl p-3">
+                <div className="flex items-center gap-3">
+                  {replitUser.profileImage ? (
+                    <img 
+                      src={replitUser.profileImage} 
+                      alt={replitUser.username}
+                      className="w-10 h-10 rounded-full border-2 border-cyan-500/50"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{replitUser.username}</p>
+                    <p className="text-[10px] text-[#30d158]">Authenticated</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all"
+              >
+                <LogIn className="w-5 h-5" />
+                Log In with Replit
+              </button>
+            )}
+            
+            <div className="bg-[#2c2c2e] rounded-xl p-3">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-[rgba(235,235,245,0.5)]">Core Status</span>
                 <span className="text-[10px] font-semibold text-[#30d158]">ACTIVE</span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-lg font-semibold">86</p>
+                  <p className="text-sm font-semibold">86</p>
                   <p className="text-[10px] text-[rgba(235,235,245,0.4)]">Branches</p>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold">3.6K</p>
+                  <p className="text-sm font-semibold">3.6K</p>
                   <p className="text-[10px] text-[rgba(235,235,245,0.4)]">Paths</p>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-[#30d158]">99%</p>
+                  <p className="text-sm font-semibold text-[#30d158]">99%</p>
                   <p className="text-[10px] text-[rgba(235,235,245,0.4)]">Uptime</p>
                 </div>
               </div>
             </div>
-            <p className="text-center text-[10px] text-[rgba(235,235,245,0.3)] mt-3">
+            <p className="text-center text-[10px] text-[rgba(235,235,245,0.3)]">
               Architect: Obakeng Kaelo
             </p>
           </div>
