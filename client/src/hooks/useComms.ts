@@ -403,6 +403,132 @@ export function useComms() {
     [startQualityMonitoring]
   );
 
+  const initiateCallConnection = useCallback(
+    async (roomId: string, type: "audio" | "video") => {
+      const networkType = detectNetworkType();
+
+      try {
+        const videoConstraints = type === "video" ? getOptimalVideoConstraints() : false;
+        const audioConstraints = getAudioConstraints();
+
+        let stream = await navigator.mediaDevices.getUserMedia({
+          video: videoConstraints,
+          audio: audioConstraints,
+        });
+
+        audioProcessorRef.current = new AudioProcessor();
+        stream = await audioProcessorRef.current.processStream(stream);
+
+        setLocalStream(stream);
+
+        const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const ws = new WebSocket(
+          `${wsProtocol}//${window.location.host}/ws?room=${roomId}`
+        );
+        wsRef.current = ws;
+
+        const pc = new RTCPeerConnection(createPeerConnectionConfig());
+        peerConnectionRef.current = pc;
+
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+        if (type === "video") {
+          await applyBandwidthConstraints(pc, "high");
+        }
+
+        bitrateControllerRef.current = new AdaptiveBitrateController(pc);
+
+        pc.ontrack = (event) => {
+          console.log("[WebRTC] Remote track received:", event.track.kind);
+          setRemoteStream(event.streams[0]);
+          setActiveCall((prev) =>
+            prev ? { ...prev, status: "connected" } : null
+          );
+        };
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate && ws.readyState === WebSocket.OPEN) {
+            ws.send(
+              JSON.stringify({
+                type: "ice-candidate",
+                roomId,
+                payload: event.candidate,
+              })
+            );
+          }
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
+          if (pc.iceConnectionState === "connected") {
+            setActiveCall((prev) =>
+              prev ? { ...prev, status: "connected" } : null
+            );
+            bitrateControllerRef.current?.start();
+            startQualityMonitoring();
+          } else if (pc.iceConnectionState === "disconnected") {
+            setActiveCall((prev) =>
+              prev ? { ...prev, status: "reconnecting" } : null
+            );
+          } else if (pc.iceConnectionState === "failed") {
+            setActiveCall((prev) =>
+              prev ? { ...prev, status: "failed" } : null
+            );
+          }
+        };
+
+        ws.onopen = async () => {
+          console.log("[WebRTC] Connected as initiator, creating offer...");
+          ws.send(JSON.stringify({ type: "join", roomId }));
+          
+          const offer = await pc.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: type === "video",
+          });
+          await pc.setLocalDescription(offer);
+          ws.send(JSON.stringify({ type: "offer", roomId, payload: offer }));
+        };
+
+        ws.onmessage = async (event) => {
+          const msg = JSON.parse(event.data);
+          console.log("[WebRTC] Initiator received:", msg.type);
+
+          if (msg.type === "answer") {
+            await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+            for (const candidate of pendingCandidatesRef.current) {
+              await pc.addIceCandidate(candidate);
+            }
+            pendingCandidatesRef.current = [];
+          } else if (msg.type === "ice-candidate") {
+            if (pc.remoteDescription) {
+              await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+            } else {
+              pendingCandidatesRef.current.push(new RTCIceCandidate(msg.payload));
+            }
+          } else if (msg.type === "peer-joined") {
+            console.log("[WebRTC] Peer joined the call");
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error("[WebRTC] WebSocket error:", error);
+        };
+
+        setActiveCall((prev) => prev ? {
+          ...prev,
+          roomId,
+          status: "connecting",
+          networkType,
+          qualityPreset: type === "video" ? "high" : "audioOnly",
+        } : null);
+      } catch (err) {
+        console.error("[WebRTC] Failed to initiate call connection:", err);
+        throw err;
+      }
+    },
+    [startQualityMonitoring]
+  );
+
   const joinCall = useCallback(
     async (roomId: string, type: "audio" | "video") => {
       const networkType = detectNetworkType();
@@ -653,8 +779,8 @@ export function useComms() {
             break;
 
           case "call-accepted":
-            console.log("[Presence] Call accepted, connecting...");
-            joinCall(msg.roomId, activeCall?.type || "video");
+            console.log("[Presence] Call accepted, connecting as initiator...");
+            initiateCallConnection(msg.roomId, activeCall?.type || "video");
             break;
 
           case "call-declined":
