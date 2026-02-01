@@ -34,6 +34,12 @@ export function QuantumPage() {
   const [newCircuitQubits, setNewCircuitQubits] = useState(4);
   const [simulationResult, setSimulationResult] = useState<any>(null);
 
+  const defaultGatePatterns: Record<string, string[]> = {
+    "bell-state": ["H", "CNOT"],
+    "ghz-state": ["H", "CNOT", "CNOT"],
+    "quantum-fourier-2": ["H", "T", "S", "CNOT"],
+  };
+
   const { data: quantumState, isLoading, refetch } = useQuery<QuantumState>({
     queryKey: ["/api/upgrades/quantum/status"],
     queryFn: async () => {
@@ -50,7 +56,21 @@ export function QuantumPage() {
           processingPower: 99.9,
         };
       }
-      return res.json();
+      const data = await res.json();
+      const circuits = (data.circuits || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        qubits: c.qubits,
+        gates: defaultGatePatterns[c.name] || Array.from({ length: c.gates || 2 }, (_, i) => ["H", "X", "CNOT", "T", "S", "Z", "Y"][i % 7]),
+        coherence: c.coherence ?? 0.95,
+        accuracy: c.accuracy ?? 0.99,
+      }));
+      return {
+        circuits,
+        totalQubits: circuits.reduce((sum: number, c: QuantumCircuit) => sum + c.qubits, 0),
+        coherenceLevel: data.status?.coherenceThreshold ?? 0.95,
+        processingPower: (data.status?.simulationAccuracy ?? 0.999) * 100,
+      };
     },
   });
 
