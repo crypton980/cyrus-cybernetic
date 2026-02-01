@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Activity,
@@ -12,8 +12,31 @@ import {
   Loader2,
   FileText,
   User,
-  Calendar,
   Stethoscope,
+  Watch,
+  Bluetooth,
+  BluetoothConnected,
+  Wifi,
+  WifiOff,
+  TrendingUp,
+  TrendingDown,
+  Sun,
+  Moon,
+  CloudRain,
+  Footprints,
+  Bed,
+  Dumbbell,
+  Utensils,
+  Pill,
+  MapPin,
+  Gauge,
+  Zap,
+  RefreshCw,
+  Play,
+  Pause,
+  Settings,
+  ChevronRight,
+  Signal,
 } from "lucide-react";
 
 interface VitalSigns {
@@ -24,6 +47,51 @@ interface VitalSigns {
   respiratoryRate: number;
   oxygenSaturation: number;
   bloodGlucose: number;
+  hrv: number;
+  stress: number;
+}
+
+interface HealthDevice {
+  id: string;
+  name: string;
+  type: "watch" | "wristband" | "ring" | "patch" | "scale" | "glucometer";
+  connected: boolean;
+  battery: number;
+  lastSync: Date;
+  metrics: string[];
+}
+
+interface BehavioralData {
+  steps: number;
+  activeMinutes: number;
+  sleepHours: number;
+  sleepQuality: number;
+  caloriesBurned: number;
+  hydration: number;
+  caffeine: number;
+  alcohol: number;
+  mood: "excellent" | "good" | "neutral" | "poor" | "bad";
+  stressLevel: number;
+}
+
+interface EnvironmentalData {
+  temperature: number;
+  humidity: number;
+  airQuality: number;
+  uvIndex: number;
+  noise: number;
+  altitude: number;
+  barometric: number;
+}
+
+interface HealthInsight {
+  category: string;
+  title: string;
+  description: string;
+  severity: "info" | "warning" | "alert" | "success";
+  metric: string;
+  trend: "up" | "down" | "stable";
+  recommendation: string;
 }
 
 interface DiagnosisResult {
@@ -37,54 +105,290 @@ const defaultVitals: VitalSigns = {
   heartRate: 72,
   bloodPressureSystolic: 120,
   bloodPressureDiastolic: 80,
-  temperature: 37.0,
+  temperature: 36.8,
   respiratoryRate: 16,
   oxygenSaturation: 98,
   bloodGlucose: 95,
+  hrv: 45,
+  stress: 35,
 };
+
+const defaultBehavioral: BehavioralData = {
+  steps: 8542,
+  activeMinutes: 45,
+  sleepHours: 7.2,
+  sleepQuality: 82,
+  caloriesBurned: 2150,
+  hydration: 65,
+  caffeine: 2,
+  alcohol: 0,
+  mood: "good",
+  stressLevel: 35,
+};
+
+const defaultEnvironmental: EnvironmentalData = {
+  temperature: 23,
+  humidity: 45,
+  airQuality: 42,
+  uvIndex: 3,
+  noise: 35,
+  altitude: 1200,
+  barometric: 1013,
+};
+
+const availableDevices: HealthDevice[] = [
+  { id: "apple-watch", name: "Apple Watch Series 9", type: "watch", connected: false, battery: 85, lastSync: new Date(), metrics: ["heartRate", "hrv", "steps", "sleep", "oxygen"] },
+  { id: "fitbit-sense", name: "Fitbit Sense 2", type: "wristband", connected: false, battery: 72, lastSync: new Date(), metrics: ["heartRate", "stress", "temperature", "sleep"] },
+  { id: "oura-ring", name: "Oura Ring Gen 3", type: "ring", connected: false, battery: 91, lastSync: new Date(), metrics: ["hrv", "sleep", "temperature", "activity"] },
+  { id: "whoop-band", name: "WHOOP 4.0", type: "wristband", connected: false, battery: 65, lastSync: new Date(), metrics: ["strain", "recovery", "sleep", "hrv"] },
+  { id: "dexcom-g7", name: "Dexcom G7 CGM", type: "patch", connected: false, battery: 45, lastSync: new Date(), metrics: ["glucose"] },
+  { id: "withings-scale", name: "Withings Body+", type: "scale", connected: false, battery: 100, lastSync: new Date(), metrics: ["weight", "bmi", "bodyFat", "muscle"] },
+];
 
 export function MedicalPage() {
   const [symptoms, setSymptoms] = useState("");
   const [vitals, setVitals] = useState<VitalSigns>(defaultVitals);
+  const [behavioral, setBehavioral] = useState<BehavioralData>(defaultBehavioral);
+  const [environmental, setEnvironmental] = useState<EnvironmentalData>(defaultEnvironmental);
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null);
   const [patientAge, setPatientAge] = useState(30);
   const [patientGender, setPatientGender] = useState("male");
+  const [devices, setDevices] = useState<HealthDevice[]>(availableDevices);
+  const [isAutoTracking, setIsAutoTracking] = useState(false);
+  const [activeTab, setActiveTab] = useState<"vitals" | "behavioral" | "environmental" | "insights">("vitals");
+  const [healthInsights, setHealthInsights] = useState<HealthInsight[]>([]);
+  const trackingIntervalRef = useRef<number | null>(null);
+
+  const generateHealthInsights = useCallback(() => {
+    const insights: HealthInsight[] = [];
+    
+    if (vitals.heartRate > 100) {
+      insights.push({
+        category: "Cardiovascular",
+        title: "Elevated Heart Rate",
+        description: `Your resting heart rate of ${vitals.heartRate} BPM is above the normal range.`,
+        severity: "warning",
+        metric: `${vitals.heartRate} BPM`,
+        trend: "up",
+        recommendation: "Consider deep breathing exercises and monitor stress levels.",
+      });
+    } else if (vitals.heartRate >= 60 && vitals.heartRate <= 75) {
+      insights.push({
+        category: "Cardiovascular",
+        title: "Healthy Heart Rate",
+        description: "Your resting heart rate is within the optimal athletic range.",
+        severity: "success",
+        metric: `${vitals.heartRate} BPM`,
+        trend: "stable",
+        recommendation: "Keep up your current exercise routine.",
+      });
+    }
+
+    if (behavioral.sleepHours < 7) {
+      insights.push({
+        category: "Sleep",
+        title: "Insufficient Sleep",
+        description: `You slept ${behavioral.sleepHours} hours, below the recommended 7-9 hours.`,
+        severity: "warning",
+        metric: `${behavioral.sleepHours}h`,
+        trend: "down",
+        recommendation: "Try to maintain a consistent sleep schedule and limit screen time before bed.",
+      });
+    }
+
+    if (behavioral.steps < 5000) {
+      insights.push({
+        category: "Activity",
+        title: "Low Activity Level",
+        description: `You've taken ${behavioral.steps.toLocaleString()} steps today.`,
+        severity: "warning",
+        metric: `${behavioral.steps.toLocaleString()}`,
+        trend: "down",
+        recommendation: "Aim for at least 10,000 steps daily for optimal health.",
+      });
+    } else if (behavioral.steps >= 10000) {
+      insights.push({
+        category: "Activity",
+        title: "Excellent Activity",
+        description: "You've exceeded your daily step goal!",
+        severity: "success",
+        metric: `${behavioral.steps.toLocaleString()}`,
+        trend: "up",
+        recommendation: "Great job staying active!",
+      });
+    }
+
+    if (vitals.stress > 60) {
+      insights.push({
+        category: "Mental Health",
+        title: "High Stress Detected",
+        description: "Your stress biomarkers indicate elevated stress levels.",
+        severity: "alert",
+        metric: `${vitals.stress}%`,
+        trend: "up",
+        recommendation: "Practice mindfulness or take a short break.",
+      });
+    }
+
+    if (environmental.airQuality > 100) {
+      insights.push({
+        category: "Environment",
+        title: "Poor Air Quality",
+        description: "Current AQI levels may affect respiratory health.",
+        severity: "alert",
+        metric: `AQI ${environmental.airQuality}`,
+        trend: "up",
+        recommendation: "Consider staying indoors or wearing a mask.",
+      });
+    }
+
+    if (behavioral.hydration < 50) {
+      insights.push({
+        category: "Hydration",
+        title: "Low Hydration",
+        description: "Your fluid intake is below recommended levels.",
+        severity: "warning",
+        metric: `${behavioral.hydration}%`,
+        trend: "down",
+        recommendation: "Drink more water throughout the day.",
+      });
+    }
+
+    if (vitals.hrv > 50) {
+      insights.push({
+        category: "Recovery",
+        title: "Good Recovery Status",
+        description: "Your HRV indicates excellent recovery and readiness.",
+        severity: "success",
+        metric: `${vitals.hrv}ms`,
+        trend: "up",
+        recommendation: "You're well-recovered for high-intensity activities.",
+      });
+    }
+
+    setHealthInsights(insights);
+  }, [vitals, behavioral, environmental]);
+
+  const simulateVitalChanges = useCallback(() => {
+    setVitals(prev => ({
+      ...prev,
+      heartRate: Math.max(55, Math.min(120, prev.heartRate + (Math.random() - 0.5) * 4)),
+      oxygenSaturation: Math.max(94, Math.min(100, prev.oxygenSaturation + (Math.random() - 0.5) * 0.5)),
+      temperature: Math.max(36.0, Math.min(37.5, prev.temperature + (Math.random() - 0.5) * 0.1)),
+      respiratoryRate: Math.max(12, Math.min(22, prev.respiratoryRate + (Math.random() - 0.5) * 1)),
+      hrv: Math.max(20, Math.min(80, prev.hrv + (Math.random() - 0.5) * 5)),
+      stress: Math.max(10, Math.min(90, prev.stress + (Math.random() - 0.5) * 8)),
+    }));
+
+    setBehavioral(prev => ({
+      ...prev,
+      steps: prev.steps + Math.floor(Math.random() * 50),
+      activeMinutes: Math.min(180, prev.activeMinutes + Math.random() * 0.5),
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (isAutoTracking) {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+      }
+      trackingIntervalRef.current = window.setInterval(() => {
+        simulateVitalChanges();
+        generateHealthInsights();
+      }, 3000);
+    } else {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+        trackingIntervalRef.current = null;
+      }
+    }
+    
+    return () => {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+        trackingIntervalRef.current = null;
+      }
+    };
+  }, [isAutoTracking, simulateVitalChanges, generateHealthInsights]);
+
+  useEffect(() => {
+    generateHealthInsights();
+  }, [generateHealthInsights]);
+
+  const connectDevice = (deviceId: string) => {
+    setDevices(prev => prev.map(d => 
+      d.id === deviceId 
+        ? { ...d, connected: !d.connected, lastSync: new Date() }
+        : d
+    ));
+  };
+
+  const connectedDevices = devices.filter(d => d.connected);
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
+      const enrichedData = {
+        symptoms: symptoms.split(",").map(s => s.trim()).filter(Boolean),
+        vitals,
+        behavioral,
+        environmental,
+        patientInfo: { age: patientAge, gender: patientGender },
+        connectedDevices: connectedDevices.map(d => d.name),
+        trackingEnabled: isAutoTracking,
+      };
+
       const res = await fetch("/api/interactive/medical/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          symptoms: symptoms.split(",").map(s => s.trim()).filter(Boolean),
-          vitals,
-          patientInfo: { age: patientAge, gender: patientGender },
-        }),
+        body: JSON.stringify(enrichedData),
       });
+
       if (!res.ok) {
         const symptomList = symptoms.split(",").map(s => s.trim()).filter(Boolean);
         const hasHighTemp = vitals.temperature > 37.5;
         const hasLowO2 = vitals.oxygenSaturation < 95;
         const hasAbnormalBP = vitals.bloodPressureSystolic > 140 || vitals.bloodPressureDiastolic > 90;
+        const poorSleep = behavioral.sleepHours < 6;
+        const highStress = vitals.stress > 60;
+        const lowActivity = behavioral.steps < 3000;
+        const poorAirQuality = environmental.airQuality > 100;
         
         let urgency: "low" | "medium" | "high" | "critical" = "low";
         if (hasLowO2) urgency = "critical";
         else if (hasHighTemp && hasAbnormalBP) urgency = "high";
-        else if (hasHighTemp || hasAbnormalBP) urgency = "medium";
+        else if (hasHighTemp || hasAbnormalBP || (highStress && poorSleep)) urgency = "medium";
         
+        const conditions = [];
+        if (symptomList.includes("headache") || highStress) {
+          conditions.push({ name: poorSleep ? "Stress-Induced Tension Headache" : "Tension Headache", probability: 0.78, severity: "medium" });
+        }
+        if (hasHighTemp) {
+          conditions.push({ name: "Possible Viral Infection", probability: 0.72, severity: urgency === "critical" ? "high" : "medium" });
+        }
+        if (poorSleep && highStress) {
+          conditions.push({ name: "Burnout Syndrome", probability: 0.65, severity: "medium" });
+        }
+        if (lowActivity && behavioral.hydration < 50) {
+          conditions.push({ name: "Mild Dehydration", probability: 0.58, severity: "low" });
+        }
+        if (conditions.length === 0) {
+          conditions.push({ name: "General Wellness Check", probability: 0.85, severity: "low" });
+        }
+
+        const recommendations = [
+          "Continue monitoring vitals through connected devices",
+          poorSleep ? "Prioritize 7-9 hours of quality sleep tonight" : "Maintain current sleep patterns",
+          highStress ? "Practice 10 minutes of guided meditation" : "Keep stress management routine",
+          lowActivity ? "Take a 30-minute walk today" : "Great activity levels - keep it up",
+          behavioral.hydration < 60 ? "Increase water intake to 8 glasses daily" : "Hydration levels adequate",
+          poorAirQuality ? "Limit outdoor activities until air quality improves" : "Environmental conditions favorable",
+        ];
+
         return {
-          conditions: [
-            { name: symptomList.includes("headache") ? "Tension Headache" : "General Malaise", probability: 0.72, severity: urgency === "low" ? "low" : "medium" },
-            { name: hasHighTemp ? "Viral Infection" : "Stress-Related Symptoms", probability: 0.58, severity: "low" },
-          ],
-          recommendations: [
-            "Rest and stay hydrated",
-            hasHighTemp ? "Monitor temperature every 4 hours" : "Continue normal activities with caution",
-            hasLowO2 ? "Seek immediate medical attention for low oxygen levels" : "Schedule a routine check-up if symptoms persist",
-            "Avoid strenuous activities until symptoms improve",
-          ],
+          conditions,
+          recommendations,
           urgency,
-          summary: `Analysis based on ${symptomList.length} reported symptoms and vital signs. ${hasHighTemp ? "Elevated temperature detected. " : ""}${hasLowO2 ? "Critical: Low oxygen saturation requires immediate attention. " : ""}${hasAbnormalBP ? "Blood pressure outside normal range. " : ""}Consult a healthcare professional for a comprehensive evaluation.`,
+          summary: `◈ Quantified Self Analysis Complete ◈\n\nBased on ${connectedDevices.length} connected health sensors and continuous biometric tracking:\n\n• Cardiovascular: HR ${vitals.heartRate} BPM, HRV ${vitals.hrv}ms\n• Recovery Score: ${Math.round(100 - vitals.stress)}%\n• Sleep Quality: ${behavioral.sleepQuality}%\n• Activity: ${behavioral.steps.toLocaleString()} steps\n\n${hasHighTemp ? "⚠ Elevated temperature detected. " : ""}${hasLowO2 ? "🚨 Critical: Low O₂ saturation. " : ""}${highStress ? "⚡ High stress markers present. " : ""}${poorSleep ? "💤 Sleep deficit noted. " : ""}\n\nRecommend continued 24/7 monitoring via wearable sensors for trend analysis.`,
         };
       }
       return res.json();
@@ -103,44 +407,443 @@ export function MedicalPage() {
     }
   };
 
-  const getVitalStatus = (type: string, value: number) => {
-    const ranges: Record<string, { low: number; high: number }> = {
-      heartRate: { low: 60, high: 100 },
-      bloodPressureSystolic: { low: 90, high: 140 },
-      bloodPressureDiastolic: { low: 60, high: 90 },
-      temperature: { low: 36.1, high: 37.2 },
-      respiratoryRate: { low: 12, high: 20 },
-      oxygenSaturation: { low: 95, high: 100 },
-      bloodGlucose: { low: 70, high: 140 },
-    };
-    const range = ranges[type];
-    if (!range) return "normal";
-    if (value < range.low) return "low";
-    if (value > range.high) return "high";
-    return "normal";
+  const getInsightColor = (severity: string) => {
+    switch (severity) {
+      case "alert": return "border-red-500/50 bg-red-500/10";
+      case "warning": return "border-amber-500/50 bg-amber-500/10";
+      case "success": return "border-emerald-500/50 bg-emerald-500/10";
+      default: return "border-blue-500/50 bg-blue-500/10";
+    }
+  };
+
+  const getDeviceIcon = (type: string) => {
+    switch (type) {
+      case "watch": return Watch;
+      case "wristband": return Activity;
+      case "ring": return Zap;
+      case "patch": return Gauge;
+      case "scale": return Dumbbell;
+      default: return Bluetooth;
+    }
   };
 
   return (
     <div className="h-full overflow-y-auto bg-black p-4 md:p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center">
-            <Stethoscope className="w-6 h-6 text-white" />
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center">
+              <Stethoscope className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Medical Diagnostics</h1>
+              <p className="text-[rgba(235,235,245,0.5)]">Quantified Self Health Analytics & Sensor Integration</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Medical Diagnostics</h1>
-            <p className="text-[rgba(235,235,245,0.5)]">AI-Powered Health Analysis System</p>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1c1c1e] rounded-lg border border-[rgba(84,84,88,0.65)]">
+              {connectedDevices.length > 0 ? (
+                <BluetoothConnected className="w-4 h-4 text-cyan-400" />
+              ) : (
+                <Bluetooth className="w-4 h-4 text-[rgba(235,235,245,0.4)]" />
+              )}
+              <span className="text-sm">{connectedDevices.length} Devices</span>
+            </div>
+            <button
+              onClick={() => setIsAutoTracking(!isAutoTracking)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                isAutoTracking 
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
+                  : "bg-[#2c2c2e] text-[rgba(235,235,245,0.6)] border border-[rgba(84,84,88,0.65)]"
+              }`}
+            >
+              {isAutoTracking ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              {isAutoTracking ? "Live Tracking" : "Start Tracking"}
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Bluetooth className="w-5 h-5 text-cyan-400" />
+              Health Sensor Hub
+            </h2>
+            <button className="text-xs text-cyan-400 flex items-center gap-1">
+              <RefreshCw className="w-3 h-3" />
+              Scan for Devices
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {devices.map(device => {
+              const DeviceIcon = getDeviceIcon(device.type);
+              return (
+                <button
+                  key={device.id}
+                  onClick={() => connectDevice(device.id)}
+                  className={`p-3 rounded-lg border transition-all ${
+                    device.connected 
+                      ? "bg-cyan-500/10 border-cyan-500/40" 
+                      : "bg-[#2c2c2e] border-[rgba(84,84,88,0.65)] hover:border-cyan-500/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <DeviceIcon className={`w-5 h-5 ${device.connected ? "text-cyan-400" : "text-[rgba(235,235,245,0.4)]"}`} />
+                    {device.connected && <Signal className="w-3 h-3 text-emerald-400" />}
+                  </div>
+                  <p className="text-xs font-medium truncate">{device.name}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] text-[rgba(235,235,245,0.4)]">{device.battery}%</span>
+                    <span className={`text-[10px] ${device.connected ? "text-emerald-400" : "text-[rgba(235,235,245,0.4)]"}`}>
+                      {device.connected ? "Connected" : "Tap to pair"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex gap-2 border-b border-[rgba(84,84,88,0.65)]">
+          {[
+            { key: "vitals", label: "Vital Signs", icon: Heart },
+            { key: "behavioral", label: "Behavioral", icon: Footprints },
+            { key: "environmental", label: "Environmental", icon: Sun },
+            { key: "insights", label: "AI Insights", icon: Brain },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-[1px] ${
+                activeTab === tab.key 
+                  ? "text-cyan-400 border-cyan-400" 
+                  : "text-[rgba(235,235,245,0.5)] border-transparent hover:text-white"
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            {activeTab === "vitals" && (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { key: "heartRate", label: "Heart Rate", value: Math.round(vitals.heartRate), unit: "BPM", icon: Heart, color: "text-red-400", range: { low: 60, high: 100 } },
+                    { key: "oxygenSaturation", label: "SpO₂", value: vitals.oxygenSaturation.toFixed(1), unit: "%", icon: Droplets, color: "text-blue-400", range: { low: 95, high: 100 } },
+                    { key: "temperature", label: "Temp", value: vitals.temperature.toFixed(1), unit: "°C", icon: Thermometer, color: "text-orange-400", range: { low: 36.1, high: 37.2 } },
+                    { key: "hrv", label: "HRV", value: Math.round(vitals.hrv), unit: "ms", icon: Activity, color: "text-violet-400", range: { low: 20, high: 70 } },
+                  ].map(vital => {
+                    const numValue = parseFloat(vital.value.toString());
+                    const status = numValue < vital.range.low ? "low" : numValue > vital.range.high ? "high" : "normal";
+                    return (
+                      <div key={vital.key} className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <vital.icon className={`w-5 h-5 ${vital.color}`} />
+                          {isAutoTracking && (
+                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                          )}
+                        </div>
+                        <p className="text-2xl font-bold">{vital.value}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-[rgba(235,235,245,0.5)]">{vital.label}</p>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${
+                            status === "normal" ? "bg-emerald-500/20 text-emerald-400" :
+                            status === "high" ? "bg-amber-500/20 text-amber-400" :
+                            "bg-blue-500/20 text-blue-400"
+                          }`}>
+                            {status}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-5">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-emerald-400" />
+                    Complete Vital Signs
+                    {isAutoTracking && <span className="text-xs text-emerald-400 ml-2">(Auto-updating)</span>}
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="bg-[#2c2c2e] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Heart className="w-4 h-4 text-red-400" />
+                        <span className="text-xs text-[rgba(235,235,245,0.5)]">Heart Rate</span>
+                      </div>
+                      <p className="text-2xl font-bold">{Math.round(vitals.heartRate)}</p>
+                      <span className="text-xs text-[rgba(235,235,245,0.4)]">BPM</span>
+                    </div>
+
+                    <div className="bg-[#2c2c2e] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Activity className="w-4 h-4 text-blue-400" />
+                        <span className="text-xs text-[rgba(235,235,245,0.5)]">Blood Pressure</span>
+                      </div>
+                      <p className="text-2xl font-bold">{vitals.bloodPressureSystolic}/{vitals.bloodPressureDiastolic}</p>
+                      <span className="text-xs text-[rgba(235,235,245,0.4)]">mmHg</span>
+                    </div>
+
+                    <div className="bg-[#2c2c2e] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Thermometer className="w-4 h-4 text-orange-400" />
+                        <span className="text-xs text-[rgba(235,235,245,0.5)]">Temperature</span>
+                      </div>
+                      <p className="text-2xl font-bold">{vitals.temperature.toFixed(1)}</p>
+                      <span className="text-xs text-[rgba(235,235,245,0.4)]">°C</span>
+                    </div>
+
+                    <div className="bg-[#2c2c2e] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Wind className="w-4 h-4 text-cyan-400" />
+                        <span className="text-xs text-[rgba(235,235,245,0.5)]">Respiratory</span>
+                      </div>
+                      <p className="text-2xl font-bold">{Math.round(vitals.respiratoryRate)}</p>
+                      <span className="text-xs text-[rgba(235,235,245,0.4)]">breaths/min</span>
+                    </div>
+
+                    <div className="bg-[#2c2c2e] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Droplets className="w-4 h-4 text-blue-400" />
+                        <span className="text-xs text-[rgba(235,235,245,0.5)]">O₂ Saturation</span>
+                      </div>
+                      <p className="text-2xl font-bold">{vitals.oxygenSaturation.toFixed(1)}</p>
+                      <span className="text-xs text-[rgba(235,235,245,0.4)]">%</span>
+                    </div>
+
+                    <div className="bg-[#2c2c2e] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Droplets className="w-4 h-4 text-purple-400" />
+                        <span className="text-xs text-[rgba(235,235,245,0.5)]">Blood Glucose</span>
+                      </div>
+                      <p className="text-2xl font-bold">{vitals.bloodGlucose}</p>
+                      <span className="text-xs text-[rgba(235,235,245,0.4)]">mg/dL</span>
+                    </div>
+
+                    <div className="bg-[#2c2c2e] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Activity className="w-4 h-4 text-violet-400" />
+                        <span className="text-xs text-[rgba(235,235,245,0.5)]">HRV</span>
+                      </div>
+                      <p className="text-2xl font-bold">{Math.round(vitals.hrv)}</p>
+                      <span className="text-xs text-[rgba(235,235,245,0.4)]">ms</span>
+                    </div>
+
+                    <div className="bg-[#2c2c2e] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs text-[rgba(235,235,245,0.5)]">Stress Level</span>
+                      </div>
+                      <p className="text-2xl font-bold">{Math.round(vitals.stress)}</p>
+                      <span className="text-xs text-[rgba(235,235,245,0.4)]">%</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === "behavioral" && (
+              <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-5">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Footprints className="w-5 h-5 text-cyan-400" />
+                  Behavioral & Lifestyle Tracking
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Footprints className="w-5 h-5 text-emerald-400" />
+                      <span className="text-sm">Daily Steps</span>
+                    </div>
+                    <p className="text-3xl font-bold text-emerald-400">{behavioral.steps.toLocaleString()}</p>
+                    <div className="mt-2 h-2 bg-[#1c1c1e] rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, (behavioral.steps / 10000) * 100)}%` }} />
+                    </div>
+                    <p className="text-xs text-[rgba(235,235,245,0.4)] mt-1">Goal: 10,000</p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Dumbbell className="w-5 h-5 text-orange-400" />
+                      <span className="text-sm">Active Minutes</span>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-400">{Math.round(behavioral.activeMinutes)}</p>
+                    <div className="mt-2 h-2 bg-[#1c1c1e] rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500" style={{ width: `${Math.min(100, (behavioral.activeMinutes / 60) * 100)}%` }} />
+                    </div>
+                    <p className="text-xs text-[rgba(235,235,245,0.4)] mt-1">Goal: 60 min</p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Bed className="w-5 h-5 text-violet-400" />
+                      <span className="text-sm">Sleep</span>
+                    </div>
+                    <p className="text-3xl font-bold text-violet-400">{behavioral.sleepHours.toFixed(1)}h</p>
+                    <div className="mt-2 h-2 bg-[#1c1c1e] rounded-full overflow-hidden">
+                      <div className="h-full bg-violet-500" style={{ width: `${Math.min(100, (behavioral.sleepHours / 8) * 100)}%` }} />
+                    </div>
+                    <p className="text-xs text-[rgba(235,235,245,0.4)] mt-1">Quality: {behavioral.sleepQuality}%</p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Droplets className="w-5 h-5 text-blue-400" />
+                      <span className="text-sm">Hydration</span>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-400">{behavioral.hydration}%</p>
+                    <div className="mt-2 h-2 bg-[#1c1c1e] rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500" style={{ width: `${behavioral.hydration}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Utensils className="w-5 h-5 text-amber-400" />
+                      <span className="text-sm">Calories Burned</span>
+                    </div>
+                    <p className="text-3xl font-bold text-amber-400">{behavioral.caloriesBurned.toLocaleString()}</p>
+                    <p className="text-xs text-[rgba(235,235,245,0.4)] mt-2">kcal today</p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Brain className="w-5 h-5 text-pink-400" />
+                      <span className="text-sm">Mood</span>
+                    </div>
+                    <p className="text-2xl font-bold text-pink-400 capitalize">{behavioral.mood}</p>
+                    <p className="text-xs text-[rgba(235,235,245,0.4)] mt-2">Stress: {behavioral.stressLevel}%</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "environmental" && (
+              <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-5">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Sun className="w-5 h-5 text-amber-400" />
+                  Environmental Conditions
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Thermometer className="w-5 h-5 text-orange-400" />
+                      <span className="text-sm">Ambient Temp</span>
+                    </div>
+                    <p className="text-3xl font-bold">{environmental.temperature}°C</p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Droplets className="w-5 h-5 text-blue-400" />
+                      <span className="text-sm">Humidity</span>
+                    </div>
+                    <p className="text-3xl font-bold">{environmental.humidity}%</p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Wind className="w-5 h-5 text-gray-400" />
+                      <span className="text-sm">Air Quality (AQI)</span>
+                    </div>
+                    <p className={`text-3xl font-bold ${environmental.airQuality < 50 ? "text-emerald-400" : environmental.airQuality < 100 ? "text-amber-400" : "text-red-400"}`}>
+                      {environmental.airQuality}
+                    </p>
+                    <p className="text-xs text-[rgba(235,235,245,0.4)]">
+                      {environmental.airQuality < 50 ? "Good" : environmental.airQuality < 100 ? "Moderate" : "Unhealthy"}
+                    </p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sun className="w-5 h-5 text-yellow-400" />
+                      <span className="text-sm">UV Index</span>
+                    </div>
+                    <p className="text-3xl font-bold">{environmental.uvIndex}</p>
+                    <p className="text-xs text-[rgba(235,235,245,0.4)]">
+                      {environmental.uvIndex < 3 ? "Low" : environmental.uvIndex < 6 ? "Moderate" : "High"}
+                    </p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-5 h-5 text-emerald-400" />
+                      <span className="text-sm">Altitude</span>
+                    </div>
+                    <p className="text-3xl font-bold">{environmental.altitude}m</p>
+                  </div>
+
+                  <div className="bg-[#2c2c2e] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Gauge className="w-5 h-5 text-violet-400" />
+                      <span className="text-sm">Barometric</span>
+                    </div>
+                    <p className="text-3xl font-bold">{environmental.barometric}</p>
+                    <p className="text-xs text-[rgba(235,235,245,0.4)]">hPa</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "insights" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-violet-400" />
+                    AI Health Insights
+                  </h2>
+                  <button 
+                    onClick={generateHealthInsights}
+                    className="text-xs text-cyan-400 flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Refresh Analysis
+                  </button>
+                </div>
+                
+                {healthInsights.length > 0 ? (
+                  <div className="grid gap-3">
+                    {healthInsights.map((insight, i) => (
+                      <div key={i} className={`border rounded-xl p-4 ${getInsightColor(insight.severity)}`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <span className="text-xs text-[rgba(235,235,245,0.5)] uppercase tracking-wider">{insight.category}</span>
+                            <h3 className="font-semibold">{insight.title}</h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold">{insight.metric}</span>
+                            {insight.trend === "up" && <TrendingUp className="w-4 h-4 text-red-400" />}
+                            {insight.trend === "down" && <TrendingDown className="w-4 h-4 text-blue-400" />}
+                          </div>
+                        </div>
+                        <p className="text-sm text-[rgba(235,235,245,0.7)] mb-2">{insight.description}</p>
+                        <div className="flex items-center gap-2 text-xs">
+                          <ChevronRight className="w-3 h-3 text-cyan-400" />
+                          <span className="text-cyan-400">{insight.recommendation}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-8 text-center">
+                    <Brain className="w-12 h-12 text-violet-400 mx-auto mb-4" />
+                    <p className="text-[rgba(235,235,245,0.5)]">Connect devices and start tracking to receive personalized health insights.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-6">
             <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-5">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-400" />
-                Patient Information
+                Patient Profile
               </h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-xs text-[rgba(235,235,245,0.5)] mb-1">Age</label>
                   <input
@@ -167,116 +870,14 @@ export function MedicalPage() {
 
             <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-5">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-emerald-400" />
-                Vital Signs Monitor
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#2c2c2e] rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Heart className="w-4 h-4 text-red-400" />
-                    <span className="text-xs text-[rgba(235,235,245,0.5)]">Heart Rate</span>
-                  </div>
-                  <input
-                    type="number"
-                    value={vitals.heartRate}
-                    onChange={(e) => setVitals({ ...vitals, heartRate: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded px-2 py-1 text-lg font-semibold"
-                  />
-                  <span className="text-xs text-[rgba(235,235,245,0.4)]">BPM</span>
-                </div>
-
-                <div className="bg-[#2c2c2e] rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Activity className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs text-[rgba(235,235,245,0.5)]">Blood Pressure</span>
-                  </div>
-                  <div className="flex gap-1 items-center">
-                    <input
-                      type="number"
-                      value={vitals.bloodPressureSystolic}
-                      onChange={(e) => setVitals({ ...vitals, bloodPressureSystolic: parseInt(e.target.value) || 0 })}
-                      className="w-16 bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded px-2 py-1 text-lg font-semibold"
-                    />
-                    <span>/</span>
-                    <input
-                      type="number"
-                      value={vitals.bloodPressureDiastolic}
-                      onChange={(e) => setVitals({ ...vitals, bloodPressureDiastolic: parseInt(e.target.value) || 0 })}
-                      className="w-16 bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded px-2 py-1 text-lg font-semibold"
-                    />
-                  </div>
-                  <span className="text-xs text-[rgba(235,235,245,0.4)]">mmHg</span>
-                </div>
-
-                <div className="bg-[#2c2c2e] rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Thermometer className="w-4 h-4 text-orange-400" />
-                    <span className="text-xs text-[rgba(235,235,245,0.5)]">Temperature</span>
-                  </div>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={vitals.temperature}
-                    onChange={(e) => setVitals({ ...vitals, temperature: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded px-2 py-1 text-lg font-semibold"
-                  />
-                  <span className="text-xs text-[rgba(235,235,245,0.4)]">°C</span>
-                </div>
-
-                <div className="bg-[#2c2c2e] rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Wind className="w-4 h-4 text-cyan-400" />
-                    <span className="text-xs text-[rgba(235,235,245,0.5)]">Respiratory</span>
-                  </div>
-                  <input
-                    type="number"
-                    value={vitals.respiratoryRate}
-                    onChange={(e) => setVitals({ ...vitals, respiratoryRate: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded px-2 py-1 text-lg font-semibold"
-                  />
-                  <span className="text-xs text-[rgba(235,235,245,0.4)]">breaths/min</span>
-                </div>
-
-                <div className="bg-[#2c2c2e] rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Droplets className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs text-[rgba(235,235,245,0.5)]">O₂ Saturation</span>
-                  </div>
-                  <input
-                    type="number"
-                    value={vitals.oxygenSaturation}
-                    onChange={(e) => setVitals({ ...vitals, oxygenSaturation: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded px-2 py-1 text-lg font-semibold"
-                  />
-                  <span className="text-xs text-[rgba(235,235,245,0.4)]">%</span>
-                </div>
-
-                <div className="bg-[#2c2c2e] rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Droplets className="w-4 h-4 text-purple-400" />
-                    <span className="text-xs text-[rgba(235,235,245,0.5)]">Blood Glucose</span>
-                  </div>
-                  <input
-                    type="number"
-                    value={vitals.bloodGlucose}
-                    onChange={(e) => setVitals({ ...vitals, bloodGlucose: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded px-2 py-1 text-lg font-semibold"
-                  />
-                  <span className="text-xs text-[rgba(235,235,245,0.4)]">mg/dL</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-5">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-amber-400" />
-                Symptoms Input
+                Symptoms
               </h2>
               <textarea
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
-                placeholder="Enter symptoms separated by commas (e.g., headache, fever, fatigue)"
-                className="w-full bg-[#2c2c2e] border border-[rgba(84,84,88,0.65)] rounded-lg px-4 py-3 text-white placeholder-[rgba(235,235,245,0.3)] min-h-[100px]"
+                placeholder="Enter symptoms (optional with sensor data)"
+                className="w-full bg-[#2c2c2e] border border-[rgba(84,84,88,0.65)] rounded-lg px-4 py-3 text-white placeholder-[rgba(235,235,245,0.3)] min-h-[80px] text-sm"
               />
               <button
                 onClick={() => analyzeMutation.mutate()}
@@ -296,10 +897,8 @@ export function MedicalPage() {
                 )}
               </button>
             </div>
-          </div>
 
-          <div className="space-y-6">
-            {diagnosis ? (
+            {diagnosis && (
               <>
                 <div className={`border rounded-xl p-5 ${getUrgencyColor(diagnosis.urgency)}`}>
                   <div className="flex items-center gap-3 mb-3">
@@ -310,20 +909,20 @@ export function MedicalPage() {
                     )}
                     <div>
                       <h2 className="text-lg font-semibold capitalize">{diagnosis.urgency} Priority</h2>
-                      <p className="text-sm opacity-80">Analysis Complete</p>
+                      <p className="text-sm opacity-80">Quantified Analysis</p>
                     </div>
                   </div>
-                  <p className="text-sm">{diagnosis.summary}</p>
+                  <p className="text-sm whitespace-pre-line">{diagnosis.summary}</p>
                 </div>
 
                 <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-5">
-                  <h2 className="text-lg font-semibold mb-4">Possible Conditions</h2>
+                  <h2 className="text-lg font-semibold mb-4">Conditions</h2>
                   <div className="space-y-3">
                     {diagnosis.conditions.map((condition, i) => (
-                      <div key={i} className="bg-[#2c2c2e] rounded-lg p-4">
+                      <div key={i} className="bg-[#2c2c2e] rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium">{condition.name}</span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
+                          <span className="font-medium text-sm">{condition.name}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
                             condition.severity === "high" ? "bg-red-500/20 text-red-400" :
                             condition.severity === "medium" ? "bg-amber-500/20 text-amber-400" :
                             "bg-emerald-500/20 text-emerald-400"
@@ -332,7 +931,7 @@ export function MedicalPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-[#1c1c1e] rounded-full overflow-hidden">
+                          <div className="flex-1 h-1.5 bg-[#1c1c1e] rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
                               style={{ width: `${condition.probability * 100}%` }}
@@ -359,16 +958,6 @@ export function MedicalPage() {
                   </ul>
                 </div>
               </>
-            ) : (
-              <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-500/20 to-rose-600/20 rounded-xl flex items-center justify-center mb-4">
-                  <Stethoscope className="w-8 h-8 text-red-400" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Ready for Analysis</h3>
-                <p className="text-[rgba(235,235,245,0.5)] max-w-sm">
-                  Enter patient vitals and symptoms, then run the AI diagnosis to receive comprehensive health insights.
-                </p>
-              </div>
             )}
           </div>
         </div>
