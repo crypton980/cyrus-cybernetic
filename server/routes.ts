@@ -694,8 +694,9 @@ Format your response in a clear, structured manner.`
       let formattedResponse = result.response;
       let responseFormat = 'standard';
       
-      if (quantumEnhancement && quantumEnhancement.query_classification !== 'conversational') {
+      if (quantumEnhancement) {
         try {
+          // If we have quantum enhancement, we always want the formatted version
           const formatted = await quantumFormatter.formatResponse(
             result.response,
             quantumEnhancement,

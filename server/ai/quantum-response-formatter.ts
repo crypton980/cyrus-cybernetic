@@ -56,81 +56,45 @@ class QuantumResponseFormatter {
   }
 
   /**
+   * Format the natural response to ensure it follows personality guidelines
+   */
+  private formatNaturalResponse(content: string): string {
+    // Remove any leftover quantum markers if they leaked into natural part
+    return content.replace(/◈ QUANTUM ANALYSIS (START|END) ◈/g, '')
+                 .replace(/\d+\. (Engineering\/Science Processing Pathway|Technical Results & Metrics|Core Interpretation).*/g, '')
+                 .trim();
+  }
+
+  /**
    * Format analytical responses with structured sections and metrics
    */
   private formatAnalytical(response: string, enhancement: EnhancementResult): FormattedResponse {
-    const sections: AnalyticalSection[] = [];
-    const lines = response.split('\n').filter(l => l.trim());
+    // Extract sections
+    const quantumSectionMatch = response.match(/◈ QUANTUM ANALYSIS START ◈([\s\S]*?)◈ QUANTUM ANALYSIS END ◈/);
+    const naturalResponse = response.replace(/◈ QUANTUM ANALYSIS START ◈[\s\S]*?◈ QUANTUM ANALYSIS END ◈/, '').trim();
     
-    // Parse response into logical sections
-    let currentSection: AnalyticalSection = { title: 'Overview', content: '' };
-    const sectionKeywords = ['analysis', 'findings', 'conclusion', 'recommendation', 'summary', 'overview', 'data', 'result'];
-    
-    for (const line of lines) {
-      const lowerLine = line.toLowerCase();
-      const isNewSection = sectionKeywords.some(kw => 
-        lowerLine.startsWith(kw) || lowerLine.includes(':') && sectionKeywords.some(k => lowerLine.includes(k))
-      );
-      
-      if (isNewSection && currentSection.content.length > 0) {
-        sections.push(currentSection);
-        const titleMatch = line.match(/^([^:]+)/);
-        currentSection = { 
-          title: titleMatch ? titleMatch[1].trim() : 'Section', 
-          content: line.includes(':') ? line.split(':').slice(1).join(':').trim() : ''
-        };
-      } else {
-        currentSection.content += (currentSection.content ? '\n' : '') + line;
-      }
-    }
-    
-    if (currentSection.content.length > 0) {
-      sections.push(currentSection);
-    }
-
-    // Build formatted output with quantum-enhanced structure
-    const framework = enhancement.enhancements.analytical_framework;
     let formattedContent = '';
     
-    // Add quantum analysis header
+    if (quantumSectionMatch) {
+      formattedContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+      formattedContent += '◈ QUANTUM ANALYTICAL INTELLIGENCE REPORT ◈\n';
+      formattedContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+      
+      const quantumContent = quantumSectionMatch[1].trim()
+        .replace(/^\d+\.\s+/gm, '▸ ') // Convert numbered steps to bullet points
+        .replace(/^(Engineering\/Science Processing Pathway|Technical Results & Metrics|Core Interpretation)/gm, (match) => `[ ${match.toUpperCase()} ]`);
+      
+      formattedContent += quantumContent + '\n\n';
+    }
+
     formattedContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-    formattedContent += '◈ QUANTUM ANALYTICAL INTELLIGENCE REPORT ◈\n';
+    formattedContent += '◈ CORE INTELLIGENCE RESPONSE ◈\n';
     formattedContent += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
-    
-    if (framework) {
-      formattedContent += `▸ Analysis Framework: ${framework.approach}\n`;
-      formattedContent += `▸ Processing Steps: ${framework.steps.length}\n\n`;
-    }
-
-    // Format each section with visual structure
-    sections.forEach((section, idx) => {
-      formattedContent += `┌─── ${section.title.toUpperCase()} ───────────────────\n`;
-      formattedContent += `│\n`;
-      
-      // Word wrap content for clean presentation
-      const wrappedContent = this.wrapText(section.content, 60);
-      wrappedContent.forEach(line => {
-        formattedContent += `│  ${line}\n`;
-      });
-      
-      formattedContent += `│\n`;
-      formattedContent += `└────────────────────────────────────────\n\n`;
-    });
-
-    // Add confidence metrics
-    if (enhancement.enhancements.confidence_metrics) {
-      const conf = enhancement.enhancements.confidence_metrics;
-      formattedContent += '┌─── CONFIDENCE METRICS ─────────────────\n';
-      formattedContent += `│  Query Clarity:     ${this.formatPercent(conf.query_clarity)}\n`;
-      formattedContent += `│  Specificity:       ${this.formatPercent(conf.query_specificity)}\n`;
-      formattedContent += `│  Response Confidence: ${this.formatPercent(conf.response_confidence)}\n`;
-      formattedContent += '└────────────────────────────────────────\n';
-    }
+    formattedContent += this.formatNaturalResponse(naturalResponse);
 
     return {
       content: formattedContent,
-      format: 'analytical',
-      sections: sections.map(s => s.title)
+      format: 'analytical'
     };
   }
 

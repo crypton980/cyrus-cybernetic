@@ -517,15 +517,14 @@ class QuantumAICore:
             base_interpretation += "• Systematic algorithm selection based on data characteristics\n"
             base_interpretation += "• Optimized computational pathways\n"
             base_interpretation += "• Performance metrics and complexity analysis\n"
-            base_interpretation += "\nResults validated through established engineering practices."
+            base_interpretation += "\nExecution finalized within mission-grade reliability parameters."
         
-        else:  # standard
-            base_interpretation = "Analysis completed using advanced data science algorithms. "
+        else:
+            base_interpretation = f"Quantum Analysis completed using {len(modules)} modules. "
             if modules:
                 base_interpretation += f"Engaged {len(modules)} processing modules: {', '.join(modules)}. "
-            base_interpretation += "Results reflect the mathematical and computational foundations "
-            base_interpretation += "of high-dimensional data analysis, machine learning, and statistical inference."
-        
+            base_interpretation += "Results reflect the mathematical and computational foundations of high-dimensional data analysis, machine learning, and statistical inference."
+            
         # Adapt to writing style
         interpretation = self.writing_style_analyzer.adapt_text_to_style(
             base_interpretation, writing_style
@@ -549,7 +548,7 @@ class QuantumAICore:
             'style_scores': style_analysis['style_scores']
         }
     
-    def _calculate_confidence(self, results: Dict) -> Dict:
+    def _calculate_confidence(self, results: Dict) -> Dict[str, float]:
         """Calculate confidence metrics."""
         confidence = {
             'overall_confidence': 0.85,  # Would be calculated from actual metrics
@@ -561,7 +560,7 @@ class QuantumAICore:
     
     def _generate_mathematical_formulation(self, results: Dict, strategy: Dict,
                                          include_equations: bool,
-                                         equation_format: str) -> Dict:
+                                         equation_format: str) -> Optional[Dict[str, Any]]:
         """Generate comprehensive mathematical formulation section."""
         if not include_equations:
             return None

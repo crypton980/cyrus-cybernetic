@@ -212,6 +212,15 @@ class QuantumBridgeClient {
       }
     }
     
+    // Add instruction for structured output
+    parts.push(`\nCRITICAL: You MUST use the following structure for your response. Do not include any other text outside these sections except your final natural response:
+1. ◈ QUANTUM ANALYSIS START ◈
+2. Engineering/Science Processing Pathway: (List specific algorithms used from your core: High-Dimensional, SVD, Random Walk, ML, etc.)
+3. Technical Results & Metrics: (Include mathematical formulations and data points)
+4. Core Interpretation: (Technical summary of the findings)
+5. ◈ QUANTUM ANALYSIS END ◈
+6. Natural conversational response following your personality guidelines (sweet, feminine, Botswana heritage).`);
+
     return parts.join('\n');
   }
 
