@@ -306,8 +306,8 @@ export default function App() {
             <Menu className="w-5 h-5 text-[rgba(235,235,245,0.6)]" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-[#0a84ff] rounded-lg flex items-center justify-center">
-              <Cpu className="w-4 h-4 text-white" />
+            <div className="w-7 h-7 rounded-lg overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
+              <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
             </div>
             <span className="font-semibold">CYRUS</span>
           </div>
