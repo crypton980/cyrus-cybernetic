@@ -12,7 +12,8 @@ import { cyrusSoul } from "./ai/cyrus-soul";
 import { quantumCore } from "./ai/quantum-core";
 import { domainSummary, allBranches } from "./ai/branches/index";
 import { registerAudioRoutes } from "./replit_integrations/audio/routes";
-import { textToSpeech, textToSpeechStream, speechToText, ensureCompatibleFormat } from "./replit_integrations/audio/client";
+import { speechToText, ensureCompatibleFormat } from "./replit_integrations/audio/client";
+import { textToSpeechElevenLabs, textToSpeechStreamElevenLabs, ELEVENLABS_VOICES, type ElevenLabsVoice } from "./elevenlabs/client";
 import { createAlpacaClient, AlpacaClient } from "./trading/alpaca-client";
 import OpenAI from "openai";
 import { z } from "zod";
@@ -1292,58 +1293,54 @@ If you detect a command that requires physical device interaction, inform the op
     }
   });
 
-  // CYRUS High-Quality Text-to-Speech endpoint
+  // CYRUS High-Quality Text-to-Speech endpoint (ElevenLabs - Natural Female Voice)
   app.post("/api/cyrus/speak", async (req, res) => {
     try {
-      const { text, voice = "nova" } = req.body;
+      const { text, voice = "rachel" } = req.body;
       
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text is required" });
       }
 
-      // Use OpenAI's high-quality TTS with "nova" voice (natural female)
-      const audioBuffer = await textToSpeech(
-        text,
-        voice as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer",
-        "mp3"
-      );
+      // Use ElevenLabs for ultra-realistic female voice synthesis
+      const elevenLabsVoice = (voice in ELEVENLABS_VOICES ? voice : "rachel") as ElevenLabsVoice;
+      const audioBuffer = await textToSpeechElevenLabs(text, elevenLabsVoice);
 
       res.setHeader("Content-Type", "audio/mpeg");
       res.setHeader("Content-Length", audioBuffer.length);
       res.send(audioBuffer);
     } catch (error) {
-      console.error("Error in CYRUS TTS:", error);
+      console.error("Error in CYRUS TTS (ElevenLabs):", error);
       res.status(500).json({ error: "Failed to generate speech" });
     }
   });
 
-  // CYRUS Streaming Text-to-Speech endpoint - faster first-byte response
+  // CYRUS Streaming Text-to-Speech endpoint (ElevenLabs - faster first-byte response)
   app.post("/api/cyrus/speak/stream", async (req, res) => {
     try {
-      const { text, voice = "nova" } = req.body;
+      const { text, voice = "rachel" } = req.body;
       
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text is required" });
       }
 
-      // Set up SSE for streaming audio chunks (PCM16 format)
+      // Set up SSE for streaming audio chunks
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
-      const audioStream = await textToSpeechStream(
-        text,
-        voice as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
-      );
+      const elevenLabsVoice = (voice in ELEVENLABS_VOICES ? voice : "rachel") as ElevenLabsVoice;
+      const audioStream = textToSpeechStreamElevenLabs(text, elevenLabsVoice);
 
       for await (const chunk of audioStream) {
-        res.write(`data: ${JSON.stringify({ audio: chunk })}\n\n`);
+        const base64Chunk = chunk.toString("base64");
+        res.write(`data: ${JSON.stringify({ audio: base64Chunk })}\n\n`);
       }
 
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
       res.end();
     } catch (error) {
-      console.error("Error in CYRUS streaming TTS:", error);
+      console.error("Error in CYRUS streaming TTS (ElevenLabs):", error);
       if (res.headersSent) {
         res.write(`data: ${JSON.stringify({ error: "Failed to generate speech" })}\n\n`);
         res.end();

@@ -96,7 +96,8 @@ The Quantum AI Core is a Python-based advanced intelligence system that enhances
 
 **Voice Output System**
 - Voice output is enabled by default and persists across sessions.
-- Uses OpenAI TTS-1-HD "nova" voice with streaming support for high-quality output.
+- **ElevenLabs Integration**: Uses ElevenLabs "Rachel" voice (eleven_multilingual_v2 model) for ultra-realistic, natural-sounding female voice synthesis.
+- Available voices: rachel, domi, bella, elli, charlotte, emily, sarah (all high-quality female voices).
 - Voice toggle button in action bar with visual indicator when active.
 - Works for both typed and voice-input messages.
 - **Advanced Audio Processing**: Web Audio API-based processing with compression (2.5 ratio), EQ filtering (lowpass/highpass), warmth boost (150Hz peaking filter), and smooth fade transitions.
