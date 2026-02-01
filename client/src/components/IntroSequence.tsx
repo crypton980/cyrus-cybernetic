@@ -70,7 +70,6 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
         src="/videos/intro.mp4"
         onError={() => setPhase("dissolve")}
         playsInline
-        muted
         autoPlay
       />
 
