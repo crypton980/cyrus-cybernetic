@@ -43,11 +43,26 @@ export class VectorKnowledgeBase {
 
   constructor() {
     console.log('[Vector Knowledge Base] Initializing semantic memory system');
-    this.initializeFromDatabase();
+    // Delay initialization to prevent blocking server startup
+    // and skip if embeddings are not supported
+    setTimeout(() => {
+      this.initializeFromDatabase().catch(err => {
+        console.warn('[Vector Knowledge Base] Initialization skipped - embeddings not available');
+        this.indexReady = true; // Mark as ready anyway so other features work
+      });
+    }, 5000);
   }
 
   private async initializeFromDatabase(): Promise<void> {
     try {
+      // Skip embedding initialization if Replit OpenAI integration doesn't support embeddings
+      const supportsEmbeddings = !process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+      if (!supportsEmbeddings) {
+        console.log('[Vector Knowledge Base] Skipping embedding init - using Replit AI integration');
+        this.indexReady = true;
+        return;
+      }
+      
       const knowledge = await db.select().from(knowledgeGraph).limit(1000);
       
       for (const item of knowledge) {
