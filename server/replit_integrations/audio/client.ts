@@ -181,19 +181,55 @@ export async function voiceChatStream(
 }
 
 /**
+ * Preprocess text for smoother TTS output
+ * Removes problematic characters and normalizes spacing
+ */
+function preprocessTextForSpeech(text: string): string {
+  return text
+    .replace(/[#*_~`]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, ', ')
+    .replace(/[""]/g, '"')
+    .replace(/['']/g, "'")
+    .replace(/\.{3,}/g, '...')
+    .replace(/—/g, ' - ')
+    .replace(/[│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬]/g, '')
+    .replace(/[◈━╭╮╯╰▸▶◀◁►▷▹▻●○◐◑◒◓◔◕◖◗★☆✓✔✕✖✗✘]/g, '')
+    .replace(/\([^)]*\)/g, (match) => {
+      if (match.length > 50) return '';
+      return match;
+    })
+    .trim();
+}
+
+/**
  * Text-to-Speech: Converts text to speech using OpenAI TTS API.
  * Uses tts-1-hd model for high-quality voice synthesis.
+ * Includes text preprocessing for smoother audio output.
  */
 export async function textToSpeech(
   text: string,
-  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova", // "nova" = sweet natural female voice for CYRUS
-  format: "wav" | "mp3" | "flac" | "opus" | "pcm16" = "mp3"
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova",
+  format: "wav" | "mp3" | "flac" | "opus" | "pcm16" = "mp3",
+  speed: number = 1.0
 ): Promise<Buffer> {
+  let processedText = preprocessTextForSpeech(text);
+  
+  if (!processedText || processedText.length === 0) {
+    processedText = text.replace(/[^\w\s.,!?'-]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  
+  if (!processedText || processedText.length === 0) {
+    processedText = "I processed your request.";
+  }
+
   const response = await openai.audio.speech.create({
     model: "tts-1-hd",
     voice,
-    input: text,
+    input: processedText,
     response_format: format === "pcm16" ? "pcm" : format === "wav" ? "wav" : "mp3",
+    speed: Math.max(0.25, Math.min(4.0, speed)),
   });
   const arrayBuffer = await response.arrayBuffer();
   return Buffer.from(arrayBuffer);
@@ -201,24 +237,35 @@ export async function textToSpeech(
 
 /**
  * Streaming Text-to-Speech: Converts text to speech with real-time streaming.
- * Uses OpenAI TTS API with streaming for faster first-byte response.
+ * Uses OpenAI TTS API with high-quality voice and text preprocessing.
  */
 export async function textToSpeechStream(
   text: string,
-  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova" // "nova" = sweet natural female voice for CYRUS
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova",
+  speed: number = 1.0
 ): Promise<AsyncIterable<string>> {
+  let processedText = preprocessTextForSpeech(text);
+  
+  if (!processedText || processedText.length === 0) {
+    processedText = text.replace(/[^\w\s.,!?'-]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  
+  if (!processedText || processedText.length === 0) {
+    processedText = "I processed your request.";
+  }
+
   const response = await openai.audio.speech.create({
-    model: "tts-1",
+    model: "tts-1-hd",
     voice,
-    input: text,
+    input: processedText,
     response_format: "mp3",
+    speed: Math.max(0.25, Math.min(4.0, speed)),
   });
 
   const arrayBuffer = await response.arrayBuffer();
   const base64Audio = Buffer.from(arrayBuffer).toString("base64");
   
   return (async function* () {
-    // Yield the entire audio as a single chunk for simplicity
     yield base64Audio;
   })();
 }

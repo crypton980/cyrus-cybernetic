@@ -18,11 +18,15 @@ import {
   Paperclip,
   Cpu,
   Volume2,
+  VolumeX,
   Eye,
   Share2,
   Copy,
   Check,
+  Radio,
 } from "lucide-react";
+import { useWakeWord } from "@/hooks/useWakeWord";
+import { useAudioProcessing } from "@/hooks/useAudioProcessing";
 
 interface DetectedObject {
   class: string;
@@ -51,6 +55,10 @@ export function Dashboard() {
   const [researchResults, setResearchResults] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, size: string}[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [wakeWordEnabled, setWakeWordEnabled] = useState(() => {
+    const saved = localStorage.getItem("cyrus-wakeword-enabled");
+    return saved !== null ? saved === "true" : false;
+  });
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
     const saved = localStorage.getItem("cyrus-voice-enabled");
     return saved !== null ? saved === "true" : true;
@@ -60,6 +68,7 @@ export function Dashboard() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentTranscriptRef = useRef<string>("");
   const micActiveRef = useRef<boolean>(false);
@@ -71,6 +80,15 @@ export function Dashboard() {
   const modelRef = useRef<cocoSsd.ObjectDetection | null>(null);
   const animationRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
+  
+  const { playEnhancedAudio, cleanup: cleanupAudio } = useAudioProcessing();
+  const wakeWordCommandRef = useRef<string | null>(null);
+  
+  useEffect(() => {
+    return () => {
+      cleanupAudio();
+    };
+  }, [cleanupAudio]);
 
   // Run object detection on each video frame
   const detectObjects = useCallback(async () => {
@@ -338,32 +356,72 @@ export function Dashboard() {
         }
       }
 
-      // Play audio if we got it
+      // Play audio if we got it with enhanced audio processing for smooth voice
       if (ttsSuccess && (audioBase64 || audioBlobUrl)) {
-        const audioSrc = audioBlobUrl || `data:audio/mp3;base64,${audioBase64}`;
-        const audio = new Audio(audioSrc);
-        
-        audio.onended = () => {
-          // Clean up Blob URL to prevent memory leak
-          if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
-          cleanupAndFinish(true);
-        };
-        
-        audio.onerror = () => {
-          console.error("Audio playback error, trying browser speech");
-          if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
-          if (!useBrowserSpeech()) {
-            cleanupAndFinish(true);
-          }
-        };
+        let audioBlob: Blob | null = null;
+        let fallbackUrl: string | null = null;
         
         try {
-          await audio.play();
-        } catch (playError) {
-          console.error("Audio play failed:", playError);
-          if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
-          if (!useBrowserSpeech()) {
+          if (audioBlobUrl) {
+            const response = await fetch(audioBlobUrl);
+            audioBlob = await response.blob();
+            fallbackUrl = URL.createObjectURL(audioBlob);
+            URL.revokeObjectURL(audioBlobUrl);
+          } else {
+            const binaryString = atob(audioBase64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            audioBlob = new Blob([bytes], { type: 'audio/mp3' });
+            fallbackUrl = URL.createObjectURL(audioBlob);
+          }
+
+          await playEnhancedAudio(
+            audioBlob,
+            {
+              normalize: true,
+              removeNoise: true,
+              smoothTransitions: true,
+              addWarmth: true,
+              compressionRatio: 2.5,
+            },
+            () => {
+              if (fallbackUrl) URL.revokeObjectURL(fallbackUrl);
+              cleanupAndFinish(true);
+            }
+          );
+        } catch (enhancedError) {
+          console.warn("Enhanced audio failed, falling back to standard playback:", enhancedError);
+          
+          if (!fallbackUrl && audioBlob) {
+            fallbackUrl = URL.createObjectURL(audioBlob);
+          }
+          
+          const audioSrc = fallbackUrl || `data:audio/mp3;base64,${audioBase64}`;
+          const audio = new Audio(audioSrc);
+          
+          audio.onended = () => {
+            if (fallbackUrl) URL.revokeObjectURL(fallbackUrl);
             cleanupAndFinish(true);
+          };
+          
+          audio.onerror = () => {
+            console.error("Audio playback error, trying browser speech");
+            if (fallbackUrl) URL.revokeObjectURL(fallbackUrl);
+            if (!useBrowserSpeech()) {
+              cleanupAndFinish(true);
+            }
+          };
+          
+          try {
+            await audio.play();
+          } catch (playError) {
+            console.error("Audio play failed:", playError);
+            if (fallbackUrl) URL.revokeObjectURL(fallbackUrl);
+            if (!useBrowserSpeech()) {
+              cleanupAndFinish(true);
+            }
           }
         }
       } else {
@@ -642,6 +700,38 @@ export function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
   });
+
+  const handleWakeWordCommand = useCallback((command: string) => {
+    console.log("[WakeWord] Processing command:", command);
+    sendMessage.mutate(command);
+  }, [sendMessage]);
+
+  const {
+    isListening: wakeWordListening,
+    isActivated: wakeWordActivated,
+    startListening: startWakeWord,
+    stopListening: stopWakeWord,
+  } = useWakeWord({
+    wakeWords: ["cyrus", "hey cyrus", "ok cyrus", "okay cyrus", "hi cyrus", "cyras", "sirus", "syrus"],
+    silenceTimeout: 2500,
+    autoRestart: true,
+    onWakeWordDetected: () => {
+      console.log("[CYRUS] Wake word detected! Listening for command...");
+    },
+    onCommand: handleWakeWordCommand,
+    onError: (error) => {
+      console.error("[CYRUS] Wake word error:", error);
+    },
+  });
+
+  useEffect(() => {
+    localStorage.setItem("cyrus-wakeword-enabled", String(wakeWordEnabled));
+    if (wakeWordEnabled) {
+      startWakeWord();
+    } else {
+      stopWakeWord();
+    }
+  }, [wakeWordEnabled, startWakeWord, stopWakeWord]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -923,6 +1013,17 @@ export function Dashboard() {
                 </svg>
               )}
               <span className="text-[10px]">{voiceEnabled ? 'Voice On' : 'Voice Off'}</span>
+            </button>
+            <button
+              onClick={() => setWakeWordEnabled(prev => !prev)}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors relative ${
+                wakeWordEnabled ? 'bg-cyan-500/20 text-cyan-400' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+              }`}
+              title={wakeWordEnabled ? 'Say "CYRUS" to activate' : 'Enable wake word detection'}
+            >
+              <Radio className={`w-5 h-5 ${wakeWordListening && wakeWordEnabled ? 'animate-pulse' : ''}`} />
+              {wakeWordActivated && <span className="absolute top-0 right-0 w-2 h-2 bg-green-400 rounded-full animate-ping" />}
+              <span className="text-[10px]">{wakeWordEnabled ? '"CYRUS"' : 'Wake Word'}</span>
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
