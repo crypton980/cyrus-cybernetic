@@ -440,7 +440,16 @@ export class CyrusSoul {
       `Analysis synthesized across all cognitive domains. AGI reasoning engaged. Confidence level: ${(confidence * 100).toFixed(1)}%.`
     ];
     
-    return responses[Math.floor(Math.random() * responses.length)];
+    // Add instruction for structured output
+    const structuredInstruction = `\n\nCRITICAL: You MUST use the following structure for your response. Do not include any other text outside these sections except your final natural response:
+1. ◈ QUANTUM ANALYSIS START ◈
+2. Engineering/Science Processing Pathway: (List specific algorithms used from your core: High-Dimensional, SVD, Random Walk, ML, etc.)
+3. Technical Results & Metrics: (Include mathematical formulations and data points)
+4. Core Interpretation: (Technical summary of the findings)
+5. ◈ QUANTUM ANALYSIS END ◈
+6. Natural conversational response following your personality guidelines (sweet, feminine, Botswana heritage).`;
+
+    return responses[Math.floor(Math.random() * responses.length)] + structuredInstruction;
   }
 
   private evolve(thought: ThoughtProcess): void {

@@ -35,7 +35,7 @@ class QuantumResponseFormatter {
       return { content: rawResponse, format: 'standard' };
     }
 
-    const classification = enhancement.query_classification || queryType || 'conversational';
+    const classification = enhancement.query_classification || queryType || 'analytical';
     
     switch (classification.toLowerCase()) {
       case 'analytical':
@@ -344,5 +344,5 @@ class QuantumResponseFormatter {
   }
 }
 
-export const quantumFormatter = new QuantumResponseFormatter();
+export const quantumResponseFormatter = new QuantumResponseFormatter();
 export type { FormattedResponse };

@@ -38,7 +38,7 @@ import { registerAdvancedUpgradeRoutes } from "./ai/upgrades/routes";
 import { moduleOrchestrator } from "./ai/upgrades/module-orchestrator";
 import { registerInteractiveRoutes } from "./ai/interactive/routes";
 import { quantumBridge } from "./ai/quantum-bridge-client";
-import { quantumFormatter } from "./ai/quantum-response-formatter";
+import { quantumResponseFormatter } from "./ai/quantum-response-formatter";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -210,6 +210,50 @@ export async function registerRoutes(
   } catch (err) {
     console.error("Failed to create uploads directory:", err);
   }
+
+  // Main inference endpoint
+  app.post("/api/inference", async (req, res) => {
+    try {
+      const { message } = req.body;
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Use CyrusSoul for reasoning and prompt generation
+      const thought = await cyrusSoul.processThought(message);
+      const systemPrompt = cyrusSoul.getSystemPrompt();
+      
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      });
+
+      const aiResponse = response.choices[0].message.content || "";
+      
+      // Get enhancement from bridge if available
+      const enhancement = await quantumBridge.enhanceResponse(message);
+      
+      // Format the response
+      const formattedResponse = await quantumResponseFormatter.formatResponse(aiResponse, enhancement);
+      
+      console.log(`[Inference] Response format: ${formattedResponse.format}`);
+      
+      res.json({ 
+        message: formattedResponse.content,
+        enhancement,
+        format: formattedResponse.format,
+        thought: thought.id
+      });
+    } catch (error) {
+      console.error("Inference failed:", error);
+      res.status(500).json({ error: "Inference failed", details: formatError(error) });
+    }
+  });
 
   // Get conversations
   app.get("/api/conversations", async (req, res) => {

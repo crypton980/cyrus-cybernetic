@@ -224,6 +224,10 @@ class QuantumBridgeClient {
     return parts.join('\n');
   }
 
+  // Note: The main inference call happens in server/routes.ts or similar, 
+  // utilizing the prompt from buildSystemPromptEnhancement.
+
+
   getStatus(): { available: boolean; lastCheck: number } {
     return {
       available: this.isAvailable,
