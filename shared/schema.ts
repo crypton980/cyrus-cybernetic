@@ -83,6 +83,85 @@ export const evolutionLog = pgTable("evolution_log", {
   evolvedAt: timestamp("evolved_at").defaultNow().notNull(),
 });
 
+export const healthDeviceConnections = pgTable("health_device_connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  provider: text("provider").notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  tokenExpiry: timestamp("token_expiry"),
+  scopes: jsonb("scopes"),
+  deviceId: text("device_id"),
+  deviceName: text("device_name"),
+  lastSync: timestamp("last_sync"),
+  isActive: integer("is_active").default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const healthVitals = pgTable("health_vitals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  provider: text("provider").notNull(),
+  heartRate: integer("heart_rate"),
+  heartRateVariability: integer("heart_rate_variability"),
+  bloodPressureSystolic: integer("blood_pressure_systolic"),
+  bloodPressureDiastolic: integer("blood_pressure_diastolic"),
+  oxygenSaturation: integer("oxygen_saturation"),
+  respiratoryRate: integer("respiratory_rate"),
+  bodyTemperature: integer("body_temperature"),
+  bloodGlucose: integer("blood_glucose"),
+  stressLevel: integer("stress_level"),
+  recordedAt: timestamp("recorded_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const healthActivity = pgTable("health_activity", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  provider: text("provider").notNull(),
+  steps: integer("steps"),
+  activeMinutes: integer("active_minutes"),
+  caloriesBurned: integer("calories_burned"),
+  distance: integer("distance"),
+  floors: integer("floors"),
+  workoutType: text("workout_type"),
+  workoutDuration: integer("workout_duration"),
+  recordedAt: timestamp("recorded_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const healthSleep = pgTable("health_sleep", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  provider: text("provider").notNull(),
+  totalSleepMinutes: integer("total_sleep_minutes"),
+  deepSleepMinutes: integer("deep_sleep_minutes"),
+  remSleepMinutes: integer("rem_sleep_minutes"),
+  lightSleepMinutes: integer("light_sleep_minutes"),
+  awakeDuration: integer("awake_duration"),
+  sleepEfficiency: integer("sleep_efficiency"),
+  sleepScore: integer("sleep_score"),
+  bedtimeStart: timestamp("bedtime_start"),
+  bedtimeEnd: timestamp("bedtime_end"),
+  recordedAt: timestamp("recorded_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const healthBodyMetrics = pgTable("health_body_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  provider: text("provider").notNull(),
+  weight: integer("weight"),
+  bodyFat: integer("body_fat"),
+  muscleMass: integer("muscle_mass"),
+  boneMass: integer("bone_mass"),
+  bmi: integer("bmi"),
+  hydration: integer("hydration"),
+  recordedAt: timestamp("recorded_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertConversationSchema = createInsertSchema(conversations).omit({
   id: true,
   createdAt: true,
@@ -128,6 +207,32 @@ export const insertEvolutionLogSchema = createInsertSchema(evolutionLog).omit({
   evolvedAt: true,
 });
 
+export const insertHealthDeviceConnectionSchema = createInsertSchema(healthDeviceConnections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertHealthVitalsSchema = createInsertSchema(healthVitals).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertHealthActivitySchema = createInsertSchema(healthActivity).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertHealthSleepSchema = createInsertSchema(healthSleep).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertHealthBodyMetricsSchema = createInsertSchema(healthBodyMetrics).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertExperienceLearning = z.infer<typeof insertExperienceLearningSchema>;
 export type ExperienceLearning = typeof experienceLearning.$inferSelect;
 
@@ -139,6 +244,21 @@ export type PerformanceMetrics = typeof performanceMetrics.$inferSelect;
 
 export type InsertEvolutionLog = z.infer<typeof insertEvolutionLogSchema>;
 export type EvolutionLog = typeof evolutionLog.$inferSelect;
+
+export type InsertHealthDeviceConnection = z.infer<typeof insertHealthDeviceConnectionSchema>;
+export type HealthDeviceConnection = typeof healthDeviceConnections.$inferSelect;
+
+export type InsertHealthVitals = z.infer<typeof insertHealthVitalsSchema>;
+export type HealthVitals = typeof healthVitals.$inferSelect;
+
+export type InsertHealthActivity = z.infer<typeof insertHealthActivitySchema>;
+export type HealthActivity = typeof healthActivity.$inferSelect;
+
+export type InsertHealthSleep = z.infer<typeof insertHealthSleepSchema>;
+export type HealthSleep = typeof healthSleep.$inferSelect;
+
+export type InsertHealthBodyMetrics = z.infer<typeof insertHealthBodyMetricsSchema>;
+export type HealthBodyMetrics = typeof healthBodyMetrics.$inferSelect;
 
 export * from "./models/auth";
 export * from "./models/comms";

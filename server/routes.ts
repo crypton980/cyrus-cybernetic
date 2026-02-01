@@ -39,6 +39,7 @@ import { moduleOrchestrator } from "./ai/upgrades/module-orchestrator";
 import { registerInteractiveRoutes } from "./ai/interactive/routes";
 import { quantumBridge } from "./ai/quantum-bridge-client";
 import { quantumResponseFormatter } from "./ai/quantum-response-formatter";
+import { healthIntegrations, validateState, type HealthProvider } from "./health/integrations";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -202,6 +203,129 @@ export async function registerRoutes(
   registerCommsRoutes(app);
   registerAdvancedUpgradeRoutes(app);
   registerInteractiveRoutes(app);
+
+  // Health Device Integration Routes
+  app.get("/api/health/providers", async (req, res) => {
+    try {
+      const providers = healthIntegrations.getAvailableProviders();
+      res.json({ providers });
+    } catch (error) {
+      res.status(500).json({ error: formatError(error) });
+    }
+  });
+
+  app.get("/api/health/connections/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const connections = await healthIntegrations.getActiveConnections(userId);
+      res.json({ connections });
+    } catch (error) {
+      res.status(500).json({ error: formatError(error) });
+    }
+  });
+
+  app.get("/api/health/oauth/authorize/:provider", async (req, res) => {
+    try {
+      const { provider } = req.params;
+      const { userId } = req.query;
+      if (!userId) {
+        return res.status(400).json({ error: "userId is required" });
+      }
+      const authUrl = healthIntegrations.getOAuthUrl(provider as HealthProvider, userId as string);
+      if (!authUrl) {
+        return res.status(400).json({ 
+          error: `OAuth not configured for ${provider}`,
+          message: `Please add ${provider.toUpperCase()}_CLIENT_ID and ${provider.toUpperCase()}_CLIENT_SECRET to your secrets`
+        });
+      }
+      res.json({ authUrl });
+    } catch (error) {
+      res.status(500).json({ error: formatError(error) });
+    }
+  });
+
+  app.get("/api/health/oauth/callback/:provider", async (req, res) => {
+    try {
+      const { provider } = req.params;
+      const { code, state } = req.query;
+      if (!code || !state) {
+        return res.status(400).send("Missing authorization code or state");
+      }
+      const stateData = validateState(state as string);
+      if (!stateData) {
+        return res.status(400).send("Invalid or expired state parameter - possible CSRF attack");
+      }
+      if (stateData.provider !== provider) {
+        return res.status(400).send("Provider mismatch in state validation");
+      }
+      const { userId } = stateData;
+      const tokens = await healthIntegrations.exchangeCodeForTokens(provider as HealthProvider, code as string);
+      if (!tokens) {
+        return res.status(400).send("Failed to exchange authorization code");
+      }
+      await healthIntegrations.saveConnection(userId, provider as HealthProvider, tokens.accessToken, tokens.refreshToken, tokens.expiresIn);
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Connected!</title></head>
+        <body style="background:#000;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+          <div style="text-align:center;">
+            <h1 style="color:#0ff;">✓ ${provider} Connected Successfully!</h1>
+            <p>You can close this window and return to CYRUS.</p>
+            <script>setTimeout(()=>window.close(),3000);</script>
+          </div>
+        </body>
+        </html>
+      `);
+    } catch (error) {
+      res.status(500).send(`Connection failed: ${formatError(error)}`);
+    }
+  });
+
+  app.post("/api/health/disconnect/:provider", async (req, res) => {
+    try {
+      const { provider } = req.params;
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ error: "userId is required" });
+      }
+      await healthIntegrations.disconnectProvider(userId, provider as HealthProvider);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: formatError(error) });
+    }
+  });
+
+  app.post("/api/health/sync/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const results = await healthIntegrations.syncAllProviders(userId);
+      res.json({ results });
+    } catch (error) {
+      res.status(500).json({ error: formatError(error) });
+    }
+  });
+
+  app.get("/api/health/vitals/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const data = await healthIntegrations.getLatestVitals(userId);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: formatError(error) });
+    }
+  });
+
+  app.get("/api/health/data/:provider/:userId", async (req, res) => {
+    try {
+      const { provider, userId } = req.params;
+      const data = await healthIntegrations.fetchProviderData(userId, provider as HealthProvider);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: formatError(error) });
+    }
+  });
+
   // Ensure uploads directory exists
   const fs = await import("fs/promises");
   const uploadsDir = path.join(process.cwd(), "public", "uploads");

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Activity,
   Heart,
@@ -37,6 +37,9 @@ import {
   Settings,
   ChevronRight,
   Signal,
+  ExternalLink,
+  Link2,
+  Unlink,
 } from "lucide-react";
 
 interface VitalSigns {
@@ -59,6 +62,15 @@ interface HealthDevice {
   battery: number;
   lastSync: Date;
   metrics: string[];
+  provider?: string;
+  oauthConfigured?: boolean;
+}
+
+interface ApiConnection {
+  id: string;
+  provider: string;
+  lastSync: Date | null;
+  isActive: number;
 }
 
 interface BehavioralData {
@@ -137,12 +149,13 @@ const defaultEnvironmental: EnvironmentalData = {
 };
 
 const availableDevices: HealthDevice[] = [
-  { id: "apple-watch", name: "Apple Watch Series 9", type: "watch", connected: false, battery: 85, lastSync: new Date(), metrics: ["heartRate", "hrv", "steps", "sleep", "oxygen"] },
-  { id: "fitbit-sense", name: "Fitbit Sense 2", type: "wristband", connected: false, battery: 72, lastSync: new Date(), metrics: ["heartRate", "stress", "temperature", "sleep"] },
-  { id: "oura-ring", name: "Oura Ring Gen 3", type: "ring", connected: false, battery: 91, lastSync: new Date(), metrics: ["hrv", "sleep", "temperature", "activity"] },
-  { id: "whoop-band", name: "WHOOP 4.0", type: "wristband", connected: false, battery: 65, lastSync: new Date(), metrics: ["strain", "recovery", "sleep", "hrv"] },
-  { id: "dexcom-g7", name: "Dexcom G7 CGM", type: "patch", connected: false, battery: 45, lastSync: new Date(), metrics: ["glucose"] },
-  { id: "withings-scale", name: "Withings Body+", type: "scale", connected: false, battery: 100, lastSync: new Date(), metrics: ["weight", "bmi", "bodyFat", "muscle"] },
+  { id: "apple-watch", name: "Apple Watch", type: "watch", connected: false, battery: 85, lastSync: new Date(), metrics: ["heartRate", "hrv", "steps", "sleep", "oxygen"], provider: "apple_health" },
+  { id: "fitbit", name: "Fitbit", type: "wristband", connected: false, battery: 72, lastSync: new Date(), metrics: ["heartRate", "stress", "temperature", "sleep"], provider: "fitbit" },
+  { id: "oura", name: "Oura Ring", type: "ring", connected: false, battery: 91, lastSync: new Date(), metrics: ["hrv", "sleep", "temperature", "activity"], provider: "oura" },
+  { id: "whoop", name: "WHOOP", type: "wristband", connected: false, battery: 65, lastSync: new Date(), metrics: ["strain", "recovery", "sleep", "hrv"], provider: "whoop" },
+  { id: "dexcom", name: "Dexcom CGM", type: "patch", connected: false, battery: 45, lastSync: new Date(), metrics: ["glucose"], provider: "dexcom" },
+  { id: "withings", name: "Withings", type: "scale", connected: false, battery: 100, lastSync: new Date(), metrics: ["weight", "bmi", "bodyFat", "muscle"], provider: "withings" },
+  { id: "google-fit", name: "Google Fit", type: "watch", connected: false, battery: 100, lastSync: new Date(), metrics: ["activity", "heartRate", "sleep"], provider: "google_fit" },
 ];
 
 export function MedicalPage() {
@@ -157,7 +170,148 @@ export function MedicalPage() {
   const [isAutoTracking, setIsAutoTracking] = useState(false);
   const [activeTab, setActiveTab] = useState<"vitals" | "behavioral" | "environmental" | "insights">("vitals");
   const [healthInsights, setHealthInsights] = useState<HealthInsight[]>([]);
+  const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const trackingIntervalRef = useRef<number | null>(null);
+  
+  const userId = "default-user";
+
+  const { data: providersData } = useQuery({
+    queryKey: ["health-providers"],
+    queryFn: async () => {
+      const res = await fetch("/api/health/providers");
+      if (!res.ok) throw new Error("Failed to fetch providers");
+      return res.json();
+    },
+  });
+
+  const { data: connectionsData, refetch: refetchConnections } = useQuery({
+    queryKey: ["health-connections", userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/health/connections/${userId}`);
+      if (!res.ok) throw new Error("Failed to fetch connections");
+      return res.json();
+    },
+  });
+
+  const { data: vitalsData, refetch: refetchVitals } = useQuery({
+    queryKey: ["health-vitals", userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/health/vitals/${userId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (connectionsData?.connections && providersData?.providers) {
+      const connectedProviders = new Set(
+        connectionsData.connections
+          .filter((c: ApiConnection) => c.isActive)
+          .map((c: ApiConnection) => c.provider)
+      );
+      
+      const configuredProviders = new Set(
+        providersData.providers
+          .filter((p: { configured: boolean }) => p.configured)
+          .map((p: { provider: string }) => p.provider)
+      );
+
+      setDevices(prev => prev.map(device => ({
+        ...device,
+        connected: device.provider ? connectedProviders.has(device.provider) : false,
+        oauthConfigured: device.provider ? configuredProviders.has(device.provider) : false,
+        lastSync: connectionsData.connections.find(
+          (c: ApiConnection) => c.provider === device.provider
+        )?.lastSync || device.lastSync,
+      })));
+    }
+  }, [connectionsData, providersData]);
+
+  useEffect(() => {
+    if (vitalsData?.vitals) {
+      setVitals(prev => ({
+        ...prev,
+        heartRate: vitalsData.vitals.heartRate || prev.heartRate,
+        hrv: vitalsData.vitals.heartRateVariability || prev.hrv,
+        oxygenSaturation: vitalsData.vitals.oxygenSaturation || prev.oxygenSaturation,
+        bloodPressureSystolic: vitalsData.vitals.bloodPressureSystolic || prev.bloodPressureSystolic,
+        bloodPressureDiastolic: vitalsData.vitals.bloodPressureDiastolic || prev.bloodPressureDiastolic,
+        temperature: vitalsData.vitals.bodyTemperature ? vitalsData.vitals.bodyTemperature / 10 : prev.temperature,
+        bloodGlucose: vitalsData.vitals.bloodGlucose || prev.bloodGlucose,
+        stress: vitalsData.vitals.stressLevel || prev.stress,
+      }));
+    }
+    if (vitalsData?.activity) {
+      setBehavioral(prev => ({
+        ...prev,
+        steps: vitalsData.activity.steps || prev.steps,
+        activeMinutes: vitalsData.activity.activeMinutes || prev.activeMinutes,
+        caloriesBurned: vitalsData.activity.caloriesBurned || prev.caloriesBurned,
+      }));
+    }
+    if (vitalsData?.sleep) {
+      setBehavioral(prev => ({
+        ...prev,
+        sleepHours: vitalsData.sleep.totalSleepMinutes ? vitalsData.sleep.totalSleepMinutes / 60 : prev.sleepHours,
+        sleepQuality: vitalsData.sleep.sleepScore || vitalsData.sleep.sleepEfficiency || prev.sleepQuality,
+      }));
+    }
+  }, [vitalsData]);
+
+  const connectDevice = async (device: HealthDevice) => {
+    if (!device.provider) return;
+
+    if (device.connected) {
+      try {
+        await fetch(`/api/health/disconnect/${device.provider}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+        refetchConnections();
+      } catch (error) {
+        console.error("Failed to disconnect:", error);
+      }
+      return;
+    }
+
+    setConnectingProvider(device.provider);
+    try {
+      const res = await fetch(`/api/health/oauth/authorize/${device.provider}?userId=${userId}`);
+      const data = await res.json();
+      
+      if (data.authUrl) {
+        const popup = window.open(data.authUrl, "_blank", "width=600,height=700");
+        const checkPopup = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(checkPopup);
+            setConnectingProvider(null);
+            refetchConnections();
+          }
+        }, 1000);
+      } else if (data.error) {
+        alert(`${data.error}\n\n${data.message || ""}`);
+      }
+    } catch (error) {
+      console.error("OAuth error:", error);
+    }
+    setConnectingProvider(null);
+  };
+
+  const syncAllDevices = async () => {
+    setIsSyncing(true);
+    try {
+      await fetch(`/api/health/sync/${userId}`, { method: "POST" });
+      await refetchVitals();
+      await refetchConnections();
+    } catch (error) {
+      console.error("Sync failed:", error);
+    }
+    setIsSyncing(false);
+  };
+
+  const connectedDeviceCount = devices.filter(d => d.connected).length;
 
   const generateHealthInsights = useCallback(() => {
     const insights: HealthInsight[] = [];
@@ -315,16 +469,6 @@ export function MedicalPage() {
     generateHealthInsights();
   }, [generateHealthInsights]);
 
-  const connectDevice = (deviceId: string) => {
-    setDevices(prev => prev.map(d => 
-      d.id === deviceId 
-        ? { ...d, connected: !d.connected, lastSync: new Date() }
-        : d
-    ));
-  };
-
-  const connectedDevices = devices.filter(d => d.connected);
-
   const analyzeMutation = useMutation({
     mutationFn: async () => {
       const enrichedData = {
@@ -333,7 +477,7 @@ export function MedicalPage() {
         behavioral,
         environmental,
         patientInfo: { age: patientAge, gender: patientGender },
-        connectedDevices: connectedDevices.map(d => d.name),
+        connectedDevices: devices.filter(d => d.connected).map(d => d.name),
         trackingEnabled: isAutoTracking,
       };
 
@@ -388,7 +532,7 @@ export function MedicalPage() {
           conditions,
           recommendations,
           urgency,
-          summary: `◈ Quantified Self Analysis Complete ◈\n\nBased on ${connectedDevices.length} connected health sensors and continuous biometric tracking:\n\n• Cardiovascular: HR ${vitals.heartRate} BPM, HRV ${vitals.hrv}ms\n• Recovery Score: ${Math.round(100 - vitals.stress)}%\n• Sleep Quality: ${behavioral.sleepQuality}%\n• Activity: ${behavioral.steps.toLocaleString()} steps\n\n${hasHighTemp ? "⚠ Elevated temperature detected. " : ""}${hasLowO2 ? "🚨 Critical: Low O₂ saturation. " : ""}${highStress ? "⚡ High stress markers present. " : ""}${poorSleep ? "💤 Sleep deficit noted. " : ""}\n\nRecommend continued 24/7 monitoring via wearable sensors for trend analysis.`,
+          summary: `◈ Quantified Self Analysis Complete ◈\n\nBased on ${devices.filter(d => d.connected).length} connected health sensors and continuous biometric tracking:\n\n• Cardiovascular: HR ${vitals.heartRate} BPM, HRV ${vitals.hrv}ms\n• Recovery Score: ${Math.round(100 - vitals.stress)}%\n• Sleep Quality: ${behavioral.sleepQuality}%\n• Activity: ${behavioral.steps.toLocaleString()} steps\n\n${hasHighTemp ? "⚠ Elevated temperature detected. " : ""}${hasLowO2 ? "🚨 Critical: Low O₂ saturation. " : ""}${highStress ? "⚡ High stress markers present. " : ""}${poorSleep ? "💤 Sleep deficit noted. " : ""}\n\nRecommend continued 24/7 monitoring via wearable sensors for trend analysis.`,
         };
       }
       return res.json();
@@ -442,12 +586,12 @@ export function MedicalPage() {
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1c1c1e] rounded-lg border border-[rgba(84,84,88,0.65)]">
-              {connectedDevices.length > 0 ? (
+              {connectedDeviceCount > 0 ? (
                 <BluetoothConnected className="w-4 h-4 text-cyan-400" />
               ) : (
                 <Bluetooth className="w-4 h-4 text-[rgba(235,235,245,0.4)]" />
               )}
-              <span className="text-sm">{connectedDevices.length} Devices</span>
+              <span className="text-sm">{connectedDeviceCount} Devices</span>
             </div>
             <button
               onClick={() => setIsAutoTracking(!isAutoTracking)}
@@ -469,33 +613,53 @@ export function MedicalPage() {
               <Bluetooth className="w-5 h-5 text-cyan-400" />
               Health Sensor Hub
             </h2>
-            <button className="text-xs text-cyan-400 flex items-center gap-1">
-              <RefreshCw className="w-3 h-3" />
-              Scan for Devices
+            <button 
+              onClick={syncAllDevices}
+              disabled={isSyncing || connectedDeviceCount === 0}
+              className="text-xs text-cyan-400 flex items-center gap-1 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
+              {isSyncing ? "Syncing..." : "Sync All Devices"}
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
             {devices.map(device => {
               const DeviceIcon = getDeviceIcon(device.type);
+              const isConnecting = connectingProvider === device.provider;
               return (
                 <button
                   key={device.id}
-                  onClick={() => connectDevice(device.id)}
-                  className={`p-3 rounded-lg border transition-all ${
+                  onClick={() => connectDevice(device)}
+                  disabled={isConnecting}
+                  className={`p-3 rounded-lg border transition-all relative ${
                     device.connected 
                       ? "bg-cyan-500/10 border-cyan-500/40" 
-                      : "bg-[#2c2c2e] border-[rgba(84,84,88,0.65)] hover:border-cyan-500/30"
+                      : device.oauthConfigured 
+                        ? "bg-[#2c2c2e] border-[rgba(84,84,88,0.65)] hover:border-cyan-500/30"
+                        : "bg-[#1a1a1a] border-[rgba(84,84,88,0.35)] opacity-60"
                   }`}
                 >
+                  {isConnecting && (
+                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                      <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                    </div>
+                  )}
                   <div className="flex items-center justify-between mb-2">
                     <DeviceIcon className={`w-5 h-5 ${device.connected ? "text-cyan-400" : "text-[rgba(235,235,245,0.4)]"}`} />
-                    {device.connected && <Signal className="w-3 h-3 text-emerald-400" />}
+                    {device.connected ? (
+                      <Signal className="w-3 h-3 text-emerald-400" />
+                    ) : device.oauthConfigured ? (
+                      <Link2 className="w-3 h-3 text-[rgba(235,235,245,0.3)]" />
+                    ) : null}
                   </div>
                   <p className="text-xs font-medium truncate">{device.name}</p>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] text-[rgba(235,235,245,0.4)]">{device.battery}%</span>
-                    <span className={`text-[10px] ${device.connected ? "text-emerald-400" : "text-[rgba(235,235,245,0.4)]"}`}>
-                      {device.connected ? "Connected" : "Tap to pair"}
+                    {device.connected && <span className="text-[10px] text-[rgba(235,235,245,0.4)]">{device.battery}%</span>}
+                    <span className={`text-[10px] ${
+                      device.connected ? "text-emerald-400" : 
+                      device.oauthConfigured ? "text-cyan-400" : "text-[rgba(235,235,245,0.3)]"
+                    }`}>
+                      {device.connected ? "Connected" : device.oauthConfigured ? "Connect" : "Setup Required"}
                     </span>
                   </div>
                 </button>
