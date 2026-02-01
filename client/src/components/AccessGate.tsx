@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Shield, Lock, Wifi } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface AccessGateProps {
   onAuthenticated: () => void;
@@ -69,22 +69,47 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
 
         <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
           <div className="relative mb-8">
-            <div className="w-32 h-32 relative">
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-cyan-500/30 shadow-2xl shadow-cyan-500/20 overflow-hidden">
+            <div className="w-36 h-36 relative">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-cyan-500/40 shadow-2xl shadow-cyan-500/30 overflow-hidden backdrop-blur-sm">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
-                    <Shield className="w-16 h-16 text-cyan-400" strokeWidth={1} />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-6 h-6 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400/50" />
-                    </div>
+                    <svg viewBox="0 0 100 100" className="w-24 h-24">
+                      <defs>
+                        <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#0ea5e9" />
+                          <stop offset="50%" stopColor="#06b6d4" />
+                          <stop offset="100%" stopColor="#0ea5e9" />
+                        </linearGradient>
+                        <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#d97706" />
+                          <stop offset="50%" stopColor="#f59e0b" />
+                          <stop offset="100%" stopColor="#d97706" />
+                        </linearGradient>
+                        <filter id="glow">
+                          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                          <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                          </feMerge>
+                        </filter>
+                      </defs>
+                      <path d="M5 50 Q5 45 15 42 L25 40 Q35 38 40 35 L45 50 L40 65 Q35 62 25 60 L15 58 Q5 55 5 50" fill="url(#wingGrad)" opacity="0.9"/>
+                      <path d="M95 50 Q95 45 85 42 L75 40 Q65 38 60 35 L55 50 L60 65 Q65 62 75 60 L85 58 Q95 55 95 50" fill="url(#wingGrad)" opacity="0.9"/>
+                      <path d="M50 15 L70 25 L70 55 Q70 70 50 85 Q30 70 30 55 L30 25 Z" fill="url(#shieldGrad)" filter="url(#glow)" opacity="0.95"/>
+                      <path d="M50 20 L65 28 L65 53 Q65 65 50 78 Q35 65 35 53 L35 28 Z" fill="#0f172a" opacity="0.7"/>
+                      <circle cx="50" cy="48" r="10" fill="#22d3ee" filter="url(#glow)" className="animate-pulse"/>
+                      <circle cx="50" cy="48" r="6" fill="#67e8f9"/>
+                      <circle cx="50" cy="48" r="3" fill="#ffffff"/>
+                    </svg>
                   </div>
                 </div>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                  <div className="w-12 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
-                </div>
               </div>
-              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 border-l-2 border-t-2 border-amber-500/60 rounded-tl-lg" />
-              <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 border-r-2 border-t-2 border-amber-500/60 rounded-tr-lg" />
+              <div className="absolute -left-6 top-1/2 -translate-y-1/2">
+                <div className="w-10 h-12 border-l-2 border-t-2 border-b-2 border-amber-500/70 rounded-l-lg" />
+              </div>
+              <div className="absolute -right-6 top-1/2 -translate-y-1/2">
+                <div className="w-10 h-12 border-r-2 border-t-2 border-b-2 border-amber-500/70 rounded-r-lg" />
+              </div>
             </div>
           </div>
 

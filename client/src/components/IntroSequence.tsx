@@ -68,6 +68,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
           phase === "dissolve" || phase === "complete" ? "opacity-0" : "opacity-100"
         }`}
         src="/videos/intro.mp4"
+        onError={() => setPhase("dissolve")}
         playsInline
         muted
         autoPlay
