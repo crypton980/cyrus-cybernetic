@@ -845,8 +845,8 @@ export function Dashboard() {
         {/* Panel Header - Matching Previous App Design */}
         <div className="px-4 py-3 border-b border-[rgba(84,84,88,0.65)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-cyan-600 to-teal-700 flex items-center justify-center">
-              <Cpu className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
+              <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -894,8 +894,8 @@ export function Dashboard() {
             </div>
           ) : sortedMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-16 h-16 bg-[#0a84ff] rounded-2xl flex items-center justify-center mb-5">
-                <Cpu className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-2xl overflow-hidden border border-cyan-500/30 shadow-lg shadow-cyan-500/20 mb-5">
+                <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Welcome to CYRUS</h3>
               <p className="text-sm text-[rgba(235,235,245,0.5)] max-w-sm">

@@ -123,9 +123,9 @@ export function CyrusAssistant({ module, context, onAnalysis, compact = false }:
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="fixed bottom-4 right-4 w-12 h-12 bg-[#0a84ff] rounded-full flex items-center justify-center shadow-lg hover:bg-[#409cff] transition-colors z-50"
+        className="fixed bottom-4 right-4 w-12 h-12 rounded-full overflow-hidden border border-cyan-500/30 shadow-lg shadow-cyan-500/20 hover:scale-105 transition-transform z-50"
       >
-        <Cpu className="w-6 h-6 text-white" />
+        <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
       </button>
     );
   }
@@ -134,8 +134,8 @@ export function CyrusAssistant({ module, context, onAnalysis, compact = false }:
     <div className={`bg-[#1c1c1e] rounded-xl border border-[rgba(84,84,88,0.65)] overflow-hidden ${compact ? "fixed bottom-4 right-4 w-80 shadow-2xl z-50" : ""}`}>
       <div className="px-3 py-2 bg-[#2c2c2e] border-b border-[rgba(84,84,88,0.65)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-[#0a84ff] rounded-lg flex items-center justify-center">
-            <Cpu className="w-3.5 h-3.5 text-white" />
+          <div className="w-6 h-6 rounded-lg overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
+            <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
           </div>
           <span className="text-xs font-semibold">CYRUS Assistant</span>
           {isSpeaking && (
@@ -153,7 +153,9 @@ export function CyrusAssistant({ module, context, onAnalysis, compact = false }:
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center text-center">
             <div>
-              <Cpu className="w-8 h-8 text-[#0a84ff] mx-auto mb-2 opacity-50" />
+              <div className="w-10 h-10 mx-auto mb-2 rounded-lg overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20 opacity-70">
+                <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
+              </div>
               <p className="text-xs text-[rgba(235,235,245,0.4)]">
                 Ask CYRUS for help with {module}
               </p>
