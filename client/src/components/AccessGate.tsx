@@ -69,21 +69,18 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
 
         <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
           <div className="relative mb-8">
-            <div className="w-36 h-36 relative">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-cyan-500/40 shadow-2xl shadow-cyan-500/30 overflow-hidden backdrop-blur-sm">
-                <div className="absolute inset-0 flex items-center justify-center p-3">
-                  <img 
-                    src="/images/cyrus-logo.png" 
-                    alt="CYRUS" 
-                    className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]"
-                  />
-                </div>
+            <div className="w-52 h-52 relative">
+              <img 
+                src="/images/cyrus-logo.png" 
+                alt="CYRUS" 
+                className="w-full h-full object-cover drop-shadow-[0_0_30px_rgba(34,211,238,0.7)] scale-125"
+                style={{ clipPath: 'circle(42% at center)' }}
+              />
+              <div className="absolute -left-8 top-1/2 -translate-y-1/2">
+                <div className="w-12 h-14 border-l-2 border-t-2 border-b-2 border-cyan-500/70 rounded-l-lg" />
               </div>
-              <div className="absolute -left-6 top-1/2 -translate-y-1/2">
-                <div className="w-10 h-12 border-l-2 border-t-2 border-b-2 border-cyan-500/70 rounded-l-lg" />
-              </div>
-              <div className="absolute -right-6 top-1/2 -translate-y-1/2">
-                <div className="w-10 h-12 border-r-2 border-t-2 border-b-2 border-cyan-500/70 rounded-r-lg" />
+              <div className="absolute -right-8 top-1/2 -translate-y-1/2">
+                <div className="w-12 h-14 border-r-2 border-t-2 border-b-2 border-cyan-500/70 rounded-r-lg" />
               </div>
             </div>
           </div>
