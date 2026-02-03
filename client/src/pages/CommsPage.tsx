@@ -110,6 +110,12 @@ export function CommsPage() {
     }
   }, [remoteStream]);
 
+  useEffect(() => {
+    const savedName = localStorage.getItem("cyrus-display-name") || "CYRUS User";
+    setDisplayName(savedName);
+    connectPresence(savedName);
+  }, []);
+
   const handleSendMessage = () => {
     if (!newMessage.recipient.trim() || !newMessage.content.trim()) return;
     sendMessage.mutate({
@@ -739,10 +745,14 @@ export function CommsPage() {
                             className="flex-1 bg-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                           />
                           <button
-                            onClick={() => connectPresence(displayName || "User")}
+                            onClick={() => {
+                              const name = displayName || "User";
+                              localStorage.setItem("cyrus-display-name", name);
+                              connectPresence(name);
+                            }}
                             className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
                           >
-                            Connect
+                            {isConnected ? "Reconnect" : "Connect"}
                           </button>
                         </div>
                       </div>
