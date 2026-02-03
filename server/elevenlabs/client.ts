@@ -23,9 +23,9 @@ interface VoiceSettings {
 }
 
 const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
-  stability: 0.5,
-  similarity_boost: 0.75,
-  style: 0.5,
+  stability: 0.4,
+  similarity_boost: 0.8,
+  style: 0.65,
   use_speaker_boost: true,
 };
 
@@ -127,13 +127,34 @@ function preprocessTextForSpeech(text: string): string {
     .replace(/[""]/g, '"')
     .replace(/['']/g, "'")
     .replace(/\.{3,}/g, "...")
-    .replace(/—/g, " - ")
+    .replace(/—/g, ", ")
+    .replace(/ - /g, ", ")
     .replace(/[│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬]/g, "")
     .replace(/[◈━╭╮╯╰▸▶◀◁►▷▹▻●○◐◑◒◓◔◕◖◗★☆✓✔✕✖✗✘]/g, "")
     .replace(/\([^)]*\)/g, (match) => {
       if (match.length > 50) return "";
       return match;
     })
+    .replace(/:\s*/g, ": ")
+    .replace(/;\s*/g, "; ")
+    .replace(/\.\s+/g, ". ")
+    .replace(/,\s+/g, ", ")
+    .replace(/!\s+/g, "! ")
+    .replace(/\?\s+/g, "? ")
+    .replace(/\bi\.e\./gi, "that is")
+    .replace(/\be\.g\./gi, "for example")
+    .replace(/\betc\./gi, "and so on")
+    .replace(/\bvs\./gi, "versus")
+    .replace(/\bDr\./gi, "Doctor")
+    .replace(/\bMr\./gi, "Mister")
+    .replace(/\bMrs\./gi, "Missus")
+    .replace(/\bMs\./gi, "Miss")
+    .replace(/(\d+)\.(\d+)/g, "$1 point $2")
+    .replace(/(\d+)%/g, "$1 percent")
+    .replace(/&/g, " and ")
+    .replace(/\+/g, " plus ")
+    .replace(/=/g, " equals ")
+    .replace(/@/g, " at ")
     .trim();
 
   if (!processed || processed.length === 0) {
@@ -143,6 +164,8 @@ function preprocessTextForSpeech(text: string): string {
   if (!processed || processed.length === 0) {
     processed = "I processed your request.";
   }
+
+  processed = processed.replace(/\s{2,}/g, " ");
 
   return processed;
 }
