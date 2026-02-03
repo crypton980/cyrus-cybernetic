@@ -110,6 +110,8 @@ export function initSignalingServer(httpServer: Server) {
       inCall: false,
     });
 
+    console.log(`[Presence] User connected: ${decodeURIComponent(displayName)} (${userId}) - Total users: ${connectedUsers.size}`);
+
     if (roomId) {
       joinRoom(roomId, ws);
     }
@@ -118,6 +120,7 @@ export function initSignalingServer(httpServer: Server) {
       type: "connected",
       userId,
       clientId,
+      totalOnline: connectedUsers.size,
     }));
 
     broadcastPresence();
@@ -331,6 +334,7 @@ export function initSignalingServer(httpServer: Server) {
         }
       }
 
+      console.log(`[Presence] User disconnected: ${user?.displayName || userId} - Remaining users: ${connectedUsers.size - 1}`);
       connectedUsers.delete(userId);
       
       for (const [roomId, set] of roomMap.entries()) {

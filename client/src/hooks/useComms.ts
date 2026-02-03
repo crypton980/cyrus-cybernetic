@@ -761,16 +761,21 @@ export function useComms() {
         
         switch (msg.type) {
           case "connected":
-            console.log("[Presence] My user ID:", msg.userId);
+            console.log("[Presence] My user ID:", msg.userId, "| Total online:", msg.totalOnline);
             (ws as any)._myUserId = msg.userId;
             setMyUserId(msg.userId);
             break;
 
           case "presence-update":
-            console.log("[Presence] Online users update:", msg.users?.length || 0, "users");
+            const allUsers = msg.users?.length || 0;
             // Filter out our own user using the userId from the WebSocket connection
             const currentUserId = (ws as any)._myUserId || userId;
-            setOnlineUsers(msg.users.filter((u: OnlineUser) => u.id !== currentUserId));
+            const otherUsers = msg.users.filter((u: OnlineUser) => u.id !== currentUserId);
+            console.log(`[Presence] Total online: ${allUsers} | Other users visible: ${otherUsers.length}`);
+            if (allUsers > 0) {
+              console.log("[Presence] All users:", msg.users.map((u: OnlineUser) => `${u.displayName} (${u.id})`).join(", "));
+            }
+            setOnlineUsers(otherUsers);
             break;
 
           case "incoming-call":
