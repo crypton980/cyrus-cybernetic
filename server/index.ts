@@ -5,6 +5,7 @@ import { createServer } from "http";
 import path from "path";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import humanoidRoutes from "./humanoid/routes";
+import visionRoutes from "./humanoid/vision-analysis";
 
 const app = express();
 
@@ -72,7 +73,9 @@ app.use((req, res, next) => {
   registerAuthRoutes(app);
   
   app.use("/api/humanoid", humanoidRoutes);
+  app.use("/api/vision", visionRoutes);
   console.log("[Humanoid] Professional Presenter & Conversation Engine registered");
+  console.log("[Vision] Always-on people analysis system registered");
   
   await registerRoutes(httpServer, app);
 

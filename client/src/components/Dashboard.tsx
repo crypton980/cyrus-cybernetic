@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useAudioProcessing } from "@/hooks/useAudioProcessing";
+import { AlwaysOnVision } from "./AlwaysOnVision";
 
 interface DetectedObject {
   class: string;
@@ -556,14 +557,19 @@ export function Dashboard() {
       body: JSON.stringify({ role: "user", content: message }),
     });
 
-    // Build module context for CYRUS to understand active modules
+    // Build module context for CYRUS to understand active modules including always-on vision
     const moduleContext = {
       vision: {
-        active: cameraActive,
+        active: true,
         detectedObjects: cameraActive ? detectedObjects : [],
         objectCount: detectedObjects.length,
+        alwaysOnVision: {
+          peopleCount: visionData.peopleCount,
+          persons: visionData.persons,
+        },
       },
       activeModules: [
+        "ALWAYS_ON_VISION",
         cameraActive && "CYRUS_VISION",
       ].filter(Boolean),
     };
@@ -636,14 +642,19 @@ export function Dashboard() {
         body: JSON.stringify({ role: "user", content }),
       });
 
-      // Build module context for CYRUS to understand active modules
+      // Build module context for CYRUS to understand active modules including always-on vision
       const moduleContext = {
         vision: {
-          active: cameraActive,
+          active: true,
           detectedObjects: cameraActive ? detectedObjects : [],
           objectCount: detectedObjects.length,
+          alwaysOnVision: {
+            peopleCount: visionData.peopleCount,
+            persons: visionData.persons,
+          },
         },
         activeModules: [
+          "ALWAYS_ON_VISION",
           cameraActive && "CYRUS_VISION",
         ].filter(Boolean),
       };
@@ -838,8 +849,18 @@ export function Dashboard() {
     }
   }, []);
 
+  const [visionData, setVisionData] = useState<{
+    peopleCount: number;
+    persons: { gender: string; ageRange: string; description: string; isRecognized: boolean; name?: string }[];
+  }>({ peopleCount: 0, persons: [] });
+
+  const handleVisionUpdate = useCallback((data: any) => {
+    setVisionData({ peopleCount: data.peopleCount, persons: data.persons });
+  }, []);
+
   return (
     <div className="h-full flex flex-col lg:flex-row overflow-hidden">
+      <AlwaysOnVision onVisionUpdate={handleVisionUpdate} />
       {/* Main Chat Panel */}
       <div className="flex-1 flex flex-col min-w-0 bg-black overflow-hidden">
         {/* Panel Header - Matching Previous App Design */}
