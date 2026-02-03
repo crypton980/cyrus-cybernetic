@@ -8,7 +8,7 @@ import { getConnectedUsers } from "./signaling";
 const router = Router();
 
 function getUserId(req: any): string | null {
-  return req.user?.claims?.sub || req.headers['x-user-id'] || null;
+  return req.user?.claims?.sub || req.headers['x-device-id'] || req.headers['x-user-id'] || null;
 }
 
 router.get("/api/comms/users", async (req: any, res) => {
@@ -466,7 +466,10 @@ router.get("/api/comms/contacts", async (req: any, res) => {
 
 router.post("/api/comms/contacts", async (req: any, res) => {
   try {
-    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(400).json({ error: "Device ID required" });
+    }
     const { contactId, contactName, contactEmail, isFavorite } = req.body;
 
     if (!contactId || !contactName) {

@@ -13,6 +13,23 @@ import {
   CallQualityMetrics,
 } from "../lib/webrtc-config";
 
+function getDeviceId(): string {
+  const key = "cyrus-device-id";
+  let deviceId = localStorage.getItem(key);
+  if (!deviceId) {
+    deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem(key, deviceId);
+  }
+  return deviceId;
+}
+
+function commsHeaders(): HeadersInit {
+  return {
+    "Content-Type": "application/json",
+    "X-Device-Id": getDeviceId(),
+  };
+}
+
 export interface Message {
   id: string;
   senderId: string;
@@ -879,7 +896,9 @@ export function useComms() {
   const contactsQuery = useQuery<Contact[]>({
     queryKey: ["/api/comms/contacts"],
     queryFn: async () => {
-      const res = await fetch("/api/comms/contacts");
+      const res = await fetch("/api/comms/contacts", {
+        headers: { "X-Device-Id": getDeviceId() },
+      });
       if (!res.ok) throw new Error("Failed to fetch contacts");
       return res.json();
     },
@@ -889,7 +908,7 @@ export function useComms() {
     mutationFn: async (contact: { contactId: string; contactName: string; contactEmail?: string }) => {
       const res = await fetch("/api/comms/contacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: commsHeaders(),
         body: JSON.stringify(contact),
       });
       if (!res.ok) throw new Error("Failed to add contact");
@@ -902,7 +921,10 @@ export function useComms() {
 
   const deleteContact = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/comms/contacts/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/comms/contacts/${id}`, { 
+        method: "DELETE",
+        headers: { "X-Device-Id": getDeviceId() },
+      });
       if (!res.ok) throw new Error("Failed to delete contact");
       return res.json();
     },
