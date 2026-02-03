@@ -23,9 +23,9 @@ interface VoiceSettings {
 }
 
 const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
-  stability: 0.4,
-  similarity_boost: 0.8,
-  style: 0.65,
+  stability: 0.65,
+  similarity_boost: 0.85,
+  style: 0.45,
   use_speaker_boost: true,
 };
 
