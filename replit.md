@@ -72,6 +72,18 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 **Quantum AI Core (Python-based Intelligence Enhancement):**
 Enhances response quality through 8 data science algorithms, writing style analysis, query classification, response structure optimization, mathematical formatting, and confidence metrics, integrated via a Python Bridge Service.
 
+**Python CYRUS Humanoid Intelligence Core (`cyrus_core/`):**
+A complete, standalone Python implementation of the CYRUS intelligence system with:
+- **Behavioral Mode System (`modes.py`):** State machine with CASUAL, PROFESSIONAL, PRESENTATION, QA, and STANDBY modes, including transition history, mode locking, and automatic mode switching.
+- **Memory Management (`memory.py`):** Three-tier memory system with conversation history, working memory, and long-term storage; includes topic/entity indexing, importance scoring, and context summarization.
+- **Intent Classification (`intent.py`):** Pattern-based and keyword-based intent detection with 18 intent categories, confidence scoring, question type detection, urgency analysis, and emotional tone detection.
+- **Speech Engine (`speech.py`):** Humanization engine for natural language output with thinking pauses, confidence markers, transitions, and mode-appropriate delivery styles.
+- **Response Engine (`response.py`):** Master response generation with presentation engine, Q&A engine, professional templates, and safe fallback strategies.
+- **CYRUS Core (`core.py`):** Central orchestrator coordinating all subsystems for coherent human-like interaction with system commands and callback support.
+- **Interactive Runner (`run.py`):** CLI interface for direct interaction with CYRUS.
+
+Run with: `python cyrus_core/run.py` or import: `from cyrus_core import CYRUS`
+
 **Voice Output System:**
 Enabled by default, using ElevenLabs "Rachel" voice for ultra-realistic synthesis with advanced audio processing and text preprocessing.
 
