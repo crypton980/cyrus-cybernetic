@@ -308,6 +308,96 @@ export function CommsPage() {
             </div>
           </div>
 
+          {/* Always-Visible Online Users Panel */}
+          <div className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 backdrop-blur-sm border border-green-500/30 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500/30 rounded-xl flex items-center justify-center">
+                  <Users className="w-5 h-5 text-green-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-green-400">Online Users</h3>
+                  <p className="text-xs text-gray-400">
+                    {isConnected ? (
+                      <span className="flex items-center gap-1">
+                        <Circle className="w-2 h-2 fill-green-500 text-green-500" />
+                        Connected as {displayName || "CYRUS User"}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <Circle className="w-2 h-2 fill-yellow-500 text-yellow-500" />
+                        Connecting...
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="text-sm text-green-400 font-semibold">
+                {onlineUsers.length} user{onlineUsers.length !== 1 ? 's' : ''} online
+              </div>
+            </div>
+            
+            {onlineUsers.length === 0 ? (
+              <div className="bg-gray-900/50 rounded-lg p-4 text-center">
+                <Users className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+                <p className="text-gray-400 text-sm">No other users online</p>
+                <p className="text-gray-500 text-xs mt-1">Share this app with others to connect</p>
+              </div>
+            ) : (
+              <div className="grid gap-2 max-h-40 overflow-y-auto">
+                {onlineUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    className="bg-gray-900/60 rounded-lg p-3 flex items-center justify-between hover:bg-gray-800/80 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-gray-900 ${user.inCall ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-white">{user.displayName}</p>
+                        <p className="text-xs text-gray-400">
+                          {user.inCall ? 'In a call' : 'Available'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => callUser(user.id, user.displayName, "audio")}
+                        disabled={user.inCall}
+                        className="p-2.5 bg-green-600 hover:bg-green-500 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-green-500/20"
+                        title="Start Audio Call"
+                      >
+                        <Phone className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={() => callUser(user.id, user.displayName, "video")}
+                        disabled={user.inCall}
+                        className="p-2.5 bg-blue-600 hover:bg-blue-500 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
+                        title="Start Video Call"
+                      >
+                        <Video className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setNewMessage({ ...newMessage, recipient: user.displayName });
+                          setActiveTab("messages");
+                        }}
+                        className="p-2.5 bg-purple-600 hover:bg-purple-500 rounded-full transition-all shadow-lg shadow-purple-500/20"
+                        title="Send Message"
+                      >
+                        <MessageSquare className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-xl overflow-hidden">
             <div className="flex border-b border-gray-800/50">
               {tabs.map((tab) => {
