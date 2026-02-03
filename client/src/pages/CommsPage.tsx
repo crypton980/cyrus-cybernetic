@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useComms } from "../hooks/useComms";
+import { usePresence } from "../contexts/PresenceContext";
 import { CyrusHumanoid } from "../components/CyrusHumanoid";
 import { Link } from "wouter";
 import {
@@ -66,10 +67,9 @@ export function CommsPage() {
     reminders,
     news,
     contacts,
-    onlineUsers,
-    incomingCall,
-    myUserId,
-    isConnected,
+    incomingCall: localIncomingCall,
+    myUserId: localMyUserId,
+    isConnected: localIsConnected,
     activeCall,
     localStream,
     remoteStream,
@@ -84,16 +84,31 @@ export function CommsPage() {
     startCall,
     joinCall,
     endCall,
-    callUser,
+    callUser: localCallUser,
     acceptIncomingCall,
     declineIncomingCall,
-    connectPresence,
     toggleMute,
     toggleVideo,
     switchCamera,
     getAudioLevel,
     isLoading,
   } = useComms();
+  
+  // Use global presence for online users (connected at App level)
+  const { 
+    onlineUsers, 
+    isConnected, 
+    myUserId, 
+    incomingCall: globalIncomingCall,
+    callUser: globalCallUser,
+    connectPresence,
+  } = usePresence();
+  
+  // Merge incoming call from both sources
+  const incomingCall = globalIncomingCall || localIncomingCall;
+  
+  // Use local callUser for WebRTC functionality
+  const callUser = localCallUser;
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {
@@ -113,7 +128,7 @@ export function CommsPage() {
   useEffect(() => {
     const savedName = localStorage.getItem("cyrus-display-name") || "CYRUS User";
     setDisplayName(savedName);
-    connectPresence(savedName);
+    // Global presence is already connected from App level - no need to connect again
   }, []);
 
   const handleSendMessage = () => {

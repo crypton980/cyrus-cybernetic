@@ -21,9 +21,11 @@ import {
   LogIn,
   LogOut,
   User,
+  Users,
 } from "lucide-react";
 
 import { AccessGate } from "./components/AccessGate";
+import { PresenceProvider, usePresence } from "./contexts/PresenceContext";
 import { IntroSequence } from "./components/IntroSequence";
 import { Dashboard } from "./components/Dashboard";
 import { ScanPage } from "./pages/ScanPage";
@@ -105,9 +107,6 @@ export default function App() {
     setIntroComplete(false);
   };
 
-  const localUsername = localStorage.getItem("cyrus-display-name") || "OPERATOR";
-  const userRole = localStorage.getItem("cyrus-user-role") || "user";
-
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
     setShowIntro(true);
@@ -119,13 +118,62 @@ export default function App() {
     setIntroComplete(true);
   };
 
+  const localUsername = localStorage.getItem("cyrus-display-name") || "OPERATOR";
+  const userRole = localStorage.getItem("cyrus-user-role") || "user";
+  
   if (!isAuthenticated) {
     return <AccessGate onAuthenticated={handleAuthenticated} />;
   }
 
-  if (showIntro || (!introComplete && isAuthenticated)) {
+  if (showIntro) {
     return <IntroSequence onComplete={handleIntroComplete} />;
   }
+
+  if (!introComplete) {
+    return <IntroSequence onComplete={handleIntroComplete} />;
+  }
+
+  return (
+    <PresenceProvider>
+      <AppContent
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+        location={location}
+        localUsername={localUsername}
+        userRole={userRole}
+        handleLocalLogout={handleLocalLogout}
+      />
+    </PresenceProvider>
+  );
+}
+
+function AppContent({
+  menuOpen,
+  setMenuOpen,
+  location,
+  localUsername,
+  userRole,
+  handleLocalLogout,
+}: {
+  menuOpen: boolean;
+  setMenuOpen: (open: boolean) => void;
+  location: string;
+  localUsername: string;
+  userRole: string;
+  handleLocalLogout: () => void;
+}) {
+  const { isConnected, onlineUsers, connectPresence, disconnectPresence } = usePresence();
+
+  useEffect(() => {
+    const savedName = localStorage.getItem("cyrus-display-name");
+    if (savedName) {
+      connectPresence(savedName);
+    }
+    
+    return () => {
+      disconnectPresence();
+    };
+  }, [connectPresence, disconnectPresence]);
 
   return (
     <div className="h-screen bg-black text-white flex overflow-hidden">
@@ -261,6 +309,38 @@ export default function App() {
                 <LogOut className="w-4 h-4" />
                 LOG OUT
               </button>
+            </div>
+
+            {/* Online Users Indicator */}
+            <div className="bg-gradient-to-r from-purple-500/10 to-cyan-500/10 rounded-xl p-3 border border-purple-500/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-purple-400" />
+                  <span className="text-xs font-medium text-white">Online Users</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 animate-pulse" : "bg-gray-500"}`} />
+                  <span className={`text-sm font-bold ${isConnected ? "text-green-400" : "text-gray-400"}`}>
+                    {onlineUsers.length}
+                  </span>
+                </div>
+              </div>
+              {onlineUsers.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {onlineUsers.slice(0, 3).map((user) => (
+                    <div key={user.id} className="flex items-center gap-2 text-xs text-gray-300">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                      <span className="truncate">{user.displayName}</span>
+                    </div>
+                  ))}
+                  {onlineUsers.length > 3 && (
+                    <p className="text-[10px] text-gray-500">+{onlineUsers.length - 3} more</p>
+                  )}
+                </div>
+              )}
+              {!isConnected && (
+                <p className="mt-1 text-[10px] text-yellow-400">Connecting...</p>
+              )}
             </div>
             
             <div className="bg-[#2c2c2e] rounded-xl p-3">
