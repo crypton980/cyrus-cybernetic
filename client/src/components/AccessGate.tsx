@@ -49,12 +49,10 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1920&q=80')`,
-          filter: "brightness(0.3) saturate(1.2)",
+          backgroundImage: `url('/images/login-background.png?v=${Date.now()}')`,
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(0,255,255,0.05)_0%,_transparent_70%)]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/50" />
 
       <div className="relative z-10 flex-1 flex flex-col px-6 py-4">
         <div className="flex justify-between items-center">
