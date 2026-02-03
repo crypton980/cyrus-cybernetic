@@ -96,6 +96,18 @@ export default function App() {
     window.location.href = "/api/logout";
   };
 
+  const handleLocalLogout = () => {
+    localStorage.removeItem("cyrus_authenticated");
+    localStorage.removeItem("cyrus-display-name");
+    localStorage.removeItem("cyrus-user-role");
+    sessionStorage.removeItem("cyrus_intro_watched");
+    setIsAuthenticated(false);
+    setIntroComplete(false);
+  };
+
+  const localUsername = localStorage.getItem("cyrus-display-name") || "OPERATOR";
+  const userRole = localStorage.getItem("cyrus-user-role") || "user";
+
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
     setShowIntro(true);
@@ -226,42 +238,30 @@ export default function App() {
 
           {/* User Account & Footer */}
           <div className="p-4 border-t border-[rgba(84,84,88,0.65)] space-y-3">
-            {replitUser ? (
-              <div className="bg-[#2c2c2e] rounded-xl p-3">
-                <div className="flex items-center gap-3">
-                  {replitUser.profileImage ? (
-                    <img 
-                      src={replitUser.profileImage} 
-                      alt={replitUser.username}
-                      className="w-10 h-10 rounded-full border-2 border-cyan-500/50"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
-                      <User className="w-5 h-5 text-white" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{replitUser.username}</p>
-                    <p className="text-[10px] text-[#30d158]">Authenticated</p>
-                  </div>
+            <div className="bg-gradient-to-br from-[#2c2c2e] to-[#1c1c1e] rounded-xl p-3 border border-cyan-500/20">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  userRole === "admin" 
+                    ? "bg-gradient-to-br from-orange-500 to-red-600 ring-2 ring-orange-500/50" 
+                    : "bg-gradient-to-br from-cyan-500 to-purple-600"
+                }`}>
+                  <User className="w-5 h-5 text-white" />
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Log Out
-                </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold truncate text-white">{localUsername}</p>
+                  <p className={`text-[10px] font-semibold ${userRole === "admin" ? "text-orange-400" : "text-[#30d158]"}`}>
+                    {userRole === "admin" ? "ADMIN" : "OPERATOR"}
+                  </p>
+                </div>
               </div>
-            ) : (
               <button
-                onClick={handleLogin}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all"
+                onClick={handleLocalLogout}
+                className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-sm font-semibold transition-all"
               >
-                <LogIn className="w-5 h-5" />
-                Log In
+                <LogOut className="w-4 h-4" />
+                LOG OUT
               </button>
-            )}
+            </div>
             
             <div className="bg-[#2c2c2e] rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
