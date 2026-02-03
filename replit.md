@@ -111,6 +111,34 @@ The Quantum AI Core is a Python-based advanced intelligence system that enhances
 - Auto-restart on recognition errors (no-speech, network) with backoff delays.
 - Toggle button in action bar for enabling/disabling wake word listening.
 
+**Humanoid Interaction System (v3.0 Enhancement)**
+These modules enable CYRUS to operate with humanoid-level interaction capabilities:
+
+- **Professional Presenter Mode**: Full presentation delivery system with:
+  - AI-generated slide presentations from content
+  - Professional opening statements and smooth transitions
+  - Autonomous slide narration with natural pacing
+  - Audience Q&A handling with contextual answers
+  - Professional closing and farewell delivery
+  - Real-time presentation status tracking
+  - API endpoints: /api/humanoid/presenter/*
+
+- **Humanoid Conversation Engine**: Advanced natural dialogue system with:
+  - Active listening with verbal acknowledgments
+  - Sentiment analysis and emotional mirroring
+  - Natural turn-taking and conversation flow
+  - Professional greetings and farewells
+  - Topic transition handling
+  - Interruption management (questions, clarifications, topic changes)
+  - Conversation state tracking and engagement metrics
+  - API endpoints: /api/humanoid/conversation/*
+
+- **Voice Settings (Professional Presenter)**:
+  - Stability: 0.65 for consistent, confident delivery
+  - Similarity Boost: 0.85 for clear, polished tone
+  - Style: 0.45 for controlled, professional expression
+  - Text preprocessing for natural speech flow
+
 ### External Dependencies
 -   **PostgreSQL Database:** Primary data persistence, hosted via Neon.
 -   **OpenAI API:** GPT-4o for AI-powered responses, natural language understanding, and image analysis; Whisper for audio transcription; TTS for voice synthesis.

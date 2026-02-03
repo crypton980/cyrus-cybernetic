@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import humanoidRoutes from "./humanoid/routes";
 
 const app = express();
 
@@ -69,6 +70,10 @@ app.use((req, res, next) => {
 (async () => {
   await setupAuth(app);
   registerAuthRoutes(app);
+  
+  app.use("/api/humanoid", humanoidRoutes);
+  console.log("[Humanoid] Professional Presenter & Conversation Engine registered");
+  
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
