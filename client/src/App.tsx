@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
 import {
   Menu,
@@ -163,17 +163,27 @@ function AppContent({
   handleLocalLogout: () => void;
 }) {
   const { isConnected, onlineUsers, connectPresence, disconnectPresence } = usePresence();
+  const hasConnectedRef = useRef(false);
 
   useEffect(() => {
-    const savedName = localStorage.getItem("cyrus-display-name");
-    if (savedName) {
-      connectPresence(savedName);
+    const savedName = localStorage.getItem("cyrus-display-name") || localUsername;
+    if (savedName && savedName !== "OPERATOR" && !hasConnectedRef.current) {
+      hasConnectedRef.current = true;
+      localStorage.setItem("cyrus-display-name", savedName);
+      setTimeout(() => connectPresence(savedName), 500);
     }
     
     return () => {
+      hasConnectedRef.current = false;
       disconnectPresence();
     };
-  }, [connectPresence, disconnectPresence]);
+  }, []);
+
+  const handleReconnect = () => {
+    hasConnectedRef.current = false;
+    const name = localStorage.getItem("cyrus-display-name") || localUsername;
+    if (name) connectPresence(name);
+  };
 
   return (
     <div className="h-screen bg-black text-white flex overflow-hidden">
@@ -339,7 +349,12 @@ function AppContent({
                 </div>
               )}
               {!isConnected && (
-                <p className="mt-1 text-[10px] text-yellow-400">Connecting...</p>
+                <button 
+                  onClick={handleReconnect}
+                  className="mt-1 text-[10px] text-yellow-400 hover:text-yellow-300 underline"
+                >
+                  Click to reconnect
+                </button>
               )}
             </div>
             

@@ -111,6 +111,7 @@ export function initSignalingServer(httpServer: Server) {
     });
 
     console.log(`[Presence] User connected: ${decodeURIComponent(displayName)} (${userId}) - Total users: ${connectedUsers.size}`);
+    console.log(`[Presence] All connected users: ${Array.from(connectedUsers.values()).map(u => u.displayName).join(", ")}`);
 
     if (roomId) {
       joinRoom(roomId, ws);
