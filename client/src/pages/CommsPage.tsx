@@ -107,13 +107,17 @@ export function CommsPage() {
   // Merge incoming call from both sources
   const incomingCall = globalIncomingCall || localIncomingCall;
   
-  // Use local callUser for WebRTC functionality with debugging
+  // Use global callUser from PresenceContext for proper WebSocket connection
   const callUser = async (userId: string, userName: string, type: "audio" | "video") => {
     console.log(`[CommsPage] Calling user: ${userName} (${userId}) - Type: ${type}`);
     console.log(`[CommsPage] IsConnected: ${isConnected}, MyUserId: ${myUserId}`);
+    if (!isConnected) {
+      console.error(`[CommsPage] Not connected to presence server!`);
+      return;
+    }
     try {
-      await localCallUser(userId, userName, type);
-      console.log(`[CommsPage] Call initiated successfully`);
+      globalCallUser(userId, userName, type);
+      console.log(`[CommsPage] Call initiated via global presence`);
     } catch (err) {
       console.error(`[CommsPage] Call failed:`, err);
     }
