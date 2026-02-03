@@ -16,7 +16,7 @@ export interface IStorage {
   // Conversations
   getConversations(userId?: string, limit?: number): Promise<Conversation[]>;
   createConversation(conversation: InsertConversation): Promise<Conversation>;
-  clearConversations(): Promise<void>;
+  clearConversations(userId?: string): Promise<void>;
   
   // Memories
   getMemories(userId?: string): Promise<Memory[]>;
@@ -50,8 +50,12 @@ export class DatabaseStorage implements IStorage {
     return conversation;
   }
 
-  async clearConversations(): Promise<void> {
-    await db.delete(conversations);
+  async clearConversations(userId?: string): Promise<void> {
+    if (userId) {
+      await db.delete(conversations).where(eq(conversations.userId, userId));
+    } else {
+      await db.delete(conversations);
+    }
   }
 
   async getMemories(userId?: string): Promise<Memory[]> {

@@ -550,10 +550,12 @@ export function Dashboard() {
     
     setInput("");
     
+    const voiceUserId = localStorage.getItem("cyrus-display-name") || "anonymous";
+    
     await fetch("/api/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "user", content: message }),
+      body: JSON.stringify({ role: "user", content: message, userId: voiceUserId }),
     });
 
     // Build module context for CYRUS to understand active modules
@@ -589,6 +591,7 @@ export function Dashboard() {
           category: "vision_analysis",
           content: `Vision detected: ${objectSummary}`,
           importance: 7,
+          userId: voiceUserId,
         }),
       });
     }
@@ -599,11 +602,12 @@ export function Dashboard() {
       body: JSON.stringify({ 
         role: "cyrus", 
         content: inferData.response,
+        userId: voiceUserId,
         detectedObjects: cameraActive ? JSON.stringify(detectedObjects) : null,
       }),
     });
 
-    queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/conversations", voiceUserId] });
     
     if (voiceEnabledRef.current) {
       speakText(inferData.response);
@@ -619,10 +623,12 @@ export function Dashboard() {
     }
   };
 
+  const currentUserId = localStorage.getItem("cyrus-display-name") || "anonymous";
+  
   const { data: messages = [], isLoading } = useQuery<Message[]>({
-    queryKey: ["/api/conversations"],
+    queryKey: ["/api/conversations", currentUserId],
     queryFn: async () => {
-      const res = await fetch("/api/conversations?limit=50");
+      const res = await fetch(`/api/conversations?limit=50&userId=${encodeURIComponent(currentUserId)}`);
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
@@ -633,7 +639,7 @@ export function Dashboard() {
       await fetch("/api/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: "user", content }),
+        body: JSON.stringify({ role: "user", content, userId: currentUserId }),
       });
 
       // Build module context for CYRUS to understand active modules
@@ -679,6 +685,7 @@ export function Dashboard() {
         body: JSON.stringify({ 
           role: "cyrus", 
           content: inferData.response,
+          userId: currentUserId,
           detectedObjects: cameraActive ? JSON.stringify(detectedObjects) : null,
         }),
       });
@@ -686,7 +693,7 @@ export function Dashboard() {
       return inferData;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations", currentUserId] });
       setInput("");
       if (voiceEnabledRef.current && data?.response) {
         speakText(data.response);
@@ -696,10 +703,10 @@ export function Dashboard() {
 
   const clearHistory = useMutation({
     mutationFn: async () => {
-      await fetch("/api/conversations", { method: "DELETE" });
+      await fetch(`/api/conversations?userId=${encodeURIComponent(currentUserId)}`, { method: "DELETE" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations", currentUserId] });
     },
   });
 

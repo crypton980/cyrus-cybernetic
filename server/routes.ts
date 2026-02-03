@@ -408,10 +408,11 @@ export async function registerRoutes(
     }
   });
 
-  // Delete all conversations (clear chat history)
+  // Delete all conversations (clear chat history) - filtered by userId
   app.delete("/api/conversations", async (req, res) => {
     try {
-      await storage.clearConversations();
+      const userId = req.query.userId as string | undefined;
+      await storage.clearConversations(userId);
       res.json({ success: true, message: "Chat history cleared" });
     } catch (error) {
       console.error("Error clearing conversations:", error);
