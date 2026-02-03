@@ -107,8 +107,17 @@ export function CommsPage() {
   // Merge incoming call from both sources
   const incomingCall = globalIncomingCall || localIncomingCall;
   
-  // Use local callUser for WebRTC functionality
-  const callUser = localCallUser;
+  // Use local callUser for WebRTC functionality with debugging
+  const callUser = async (userId: string, userName: string, type: "audio" | "video") => {
+    console.log(`[CommsPage] Calling user: ${userName} (${userId}) - Type: ${type}`);
+    console.log(`[CommsPage] IsConnected: ${isConnected}, MyUserId: ${myUserId}`);
+    try {
+      await localCallUser(userId, userName, type);
+      console.log(`[CommsPage] Call initiated successfully`);
+    } catch (err) {
+      console.error(`[CommsPage] Call failed:`, err);
+    }
+  };
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {
