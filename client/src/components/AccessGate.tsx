@@ -39,11 +39,21 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    if (accessCode === "71580019") {
+    const isAdmin = username.trim() === "DELTA UNIFORM 00";
+    const validAdminCode = accessCode === "71580019";
+    const validUserCode = accessCode === "170392";
+    
+    if ((isAdmin && validAdminCode) || (!isAdmin && validUserCode)) {
       localStorage.setItem("cyrus_authenticated", "true");
       localStorage.setItem("cyrus-display-name", username.trim());
-      localStorage.setItem("cyrus-user-role", username.trim() === "DELTA UNIFORM 00" ? "admin" : "user");
+      localStorage.setItem("cyrus-user-role", isAdmin ? "admin" : "user");
       onAuthenticated();
+    } else if (isAdmin && !validAdminCode) {
+      setError("ACCESS DENIED - Invalid ADMIN authorization code");
+      setIsInitializing(false);
+    } else if (!isAdmin && !validUserCode) {
+      setError("ACCESS DENIED - Invalid OPERATOR authorization code");
+      setIsInitializing(false);
     } else {
       setError("ACCESS DENIED - Invalid authorization code");
       setIsInitializing(false);
