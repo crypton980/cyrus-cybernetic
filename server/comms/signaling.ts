@@ -144,8 +144,11 @@ export function initSignalingServer(httpServer: Server) {
             break;
 
           case "call-user":
+            console.log(`[Signaling] Call request from ${user?.displayName} to ${msg.targetUserId}`);
+            console.log(`[Signaling] Connected users: ${Array.from(connectedUsers.keys()).join(", ")}`);
             const targetUser = connectedUsers.get(msg.targetUserId!);
             if (targetUser && targetUser.ws.readyState === WebSocket.OPEN) {
+              console.log(`[Signaling] Target user found: ${targetUser.displayName}`);
               const callRoomId = msg.roomId || `call_${uuid()}`;
               
               pendingCalls.set(callRoomId, {
@@ -177,6 +180,7 @@ export function initSignalingServer(httpServer: Server) {
               }
               broadcastPresence();
             } else {
+              console.log(`[Signaling] Target user ${msg.targetUserId} NOT found or offline`);
               ws.send(JSON.stringify({
                 type: "call-failed",
                 reason: "user-offline",
