@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDrone } from '../hooks/useDrone';
-import { CyrusAssistant } from '../components/CyrusAssistant';
+import { CyrusHumanoid } from '../components/CyrusHumanoid';
 import {
   Plane,
   Wifi,
@@ -576,7 +576,7 @@ export function DronePage() {
         )}
       </div>
 
-      <CyrusAssistant 
+      <CyrusHumanoid 
         module="aerospace" 
         context={`User is in aerospace/drone control module. ${state?.connected ? `Drone connected. Mode: ${state.mode}. Armed: ${state.armed}. Battery: ${state.battery}%` : "Drone not connected"}. ${simulationMode ? "Running in simulation mode." : ""}`}
         compact={true}

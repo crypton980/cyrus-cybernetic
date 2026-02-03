@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useFileAnalysis } from "../hooks/useFileAnalysis";
-import { CyrusAssistant } from "../components/CyrusAssistant";
+import { CyrusHumanoid } from "../components/CyrusHumanoid";
 import {
   FileUp,
   FileText,
@@ -379,7 +379,7 @@ export function FileAnalysisPage() {
                   <p className="text-xs text-gray-400 mb-4">
                     Ask CYRUS to help analyze documents, summarize content, or generate reports.
                   </p>
-                  <CyrusAssistant 
+                  <CyrusHumanoid 
                     module="documents" 
                     context={`User is analyzing documents. ${currentFile ? `Current file: ${currentFile.name}` : "No file uploaded"}`}
                   />

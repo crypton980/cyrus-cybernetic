@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Cpu, Send, Mic, MicOff, Volume2, X, Minimize2, Maximize2, Loader2 } from "lucide-react";
 
-interface CyrusAssistantProps {
+interface CyrusHumanoidProps {
   module: "vision" | "documents" | "navigation" | "communications" | "systems" | "aerospace" | "trading";
   context?: string;
   onAnalysis?: (response: string) => void;
@@ -10,16 +10,16 @@ interface CyrusAssistantProps {
 }
 
 const modulePrompts: Record<string, string> = {
-  vision: "You are assisting with visual analysis. Help identify objects, analyze images, describe scenes, and provide insights about what is being seen.",
-  documents: "You are assisting with document analysis. Help analyze files, extract information, summarize content, identify risks, and generate professional documents.",
-  navigation: "You are assisting with navigation and geolocation. Help with route planning, location analysis, travel estimates, and geographic information.",
-  communications: "You are assisting with secure communications. Help with call management, message composition, and communication protocols.",
-  systems: "You are assisting with hardware and device control. Help manage devices, monitor systems, troubleshoot issues, and execute security operations.",
-  aerospace: "You are assisting with UAV/drone operations. Help with flight planning, mission parameters, telemetry analysis, and autonomous operations.",
-  trading: "You are assisting with financial markets analysis. Help with technical analysis, trading strategies, risk assessment, and market intelligence.",
+  vision: "You are CYRUS, a humanoid intelligence engaged in visual analysis. Identify objects, analyze images, describe scenes, and provide insights about what you perceive.",
+  documents: "You are CYRUS, a humanoid intelligence engaged in document analysis. Analyze files, extract information, summarize content, identify risks, and generate professional documents.",
+  navigation: "You are CYRUS, a humanoid intelligence engaged in navigation and geolocation. Assist with route planning, location analysis, travel estimates, and geographic intelligence.",
+  communications: "You are CYRUS, a humanoid intelligence engaged in secure communications. Manage calls, compose messages, and execute communication protocols.",
+  systems: "You are CYRUS, a humanoid intelligence engaged in hardware and device control. Manage devices, monitor systems, troubleshoot issues, and execute security operations.",
+  aerospace: "You are CYRUS, a humanoid intelligence engaged in UAV/drone operations. Execute flight planning, mission parameters, telemetry analysis, and autonomous operations.",
+  trading: "You are CYRUS, a humanoid intelligence engaged in financial markets analysis. Provide technical analysis, trading strategies, risk assessment, and market intelligence.",
 };
 
-export function CyrusAssistant({ module, context, onAnalysis, compact = false }: CyrusAssistantProps) {
+export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: CyrusHumanoidProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<{ role: "user" | "cyrus"; content: string }[]>([]);
   const [isListening, setIsListening] = useState(false);
@@ -137,7 +137,7 @@ export function CyrusAssistant({ module, context, onAnalysis, compact = false }:
           <div className="w-6 h-6 rounded-lg overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
             <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
           </div>
-          <span className="text-xs font-semibold">CYRUS Assistant</span>
+          <span className="text-xs font-semibold">CYRUS HUMANOID</span>
           {isSpeaking && (
             <Volume2 className="w-3 h-3 text-[#0a84ff] animate-pulse" />
           )}
@@ -157,7 +157,7 @@ export function CyrusAssistant({ module, context, onAnalysis, compact = false }:
                 <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
               </div>
               <p className="text-xs text-[rgba(235,235,245,0.4)]">
-                Ask CYRUS for help with {module}
+                Engage CYRUS for {module} operations
               </p>
             </div>
           </div>
@@ -197,7 +197,7 @@ export function CyrusAssistant({ module, context, onAnalysis, compact = false }:
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder="Ask CYRUS..."
+            placeholder="Speak to CYRUS..."
             className="flex-1 bg-transparent text-xs text-white placeholder-[rgba(235,235,245,0.3)] outline-none"
             disabled={sendMessage.isPending}
           />

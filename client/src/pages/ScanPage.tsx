@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useScan } from "../hooks/useScan";
-import { CyrusAssistant } from "../components/CyrusAssistant";
+import { CyrusHumanoid } from "../components/CyrusHumanoid";
 import {
   Camera,
   QrCode,
@@ -424,7 +424,7 @@ export function ScanPage() {
                 <p className="text-xs text-gray-400 mb-4">
                   Ask CYRUS to help analyze images, interpret scan results, or translate content.
                 </p>
-                <CyrusAssistant 
+                <CyrusHumanoid 
                   module="vision" 
                   context={visionContext}
                 />

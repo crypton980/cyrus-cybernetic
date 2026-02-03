@@ -296,9 +296,9 @@ Keep it smooth, professional, and engaging. One or two sentences maximum.`
   async generateProfessionalGreeting(context?: string): Promise<string> {
     const timeOfDay = this.getTimeOfDay();
     const greetings = [
-      `Good ${timeOfDay}! I'm CYRUS, and I'm here to assist you.`,
-      `Hello and welcome! I'm CYRUS, your professional AI assistant.`,
-      `${timeOfDay === "morning" ? "Good morning" : timeOfDay === "evening" ? "Good evening" : "Hello"}! CYRUS here, ready to help.`
+      `Good ${timeOfDay}! I'm CYRUS, your humanoid intelligence companion.`,
+      `Hello and welcome! I'm CYRUS, a fully autonomous humanoid system.`,
+      `${timeOfDay === "morning" ? "Good morning" : timeOfDay === "evening" ? "Good evening" : "Hello"}! CYRUS here, fully operational.`
     ];
 
     let greeting = greetings[Math.floor(Math.random() * greetings.length)];

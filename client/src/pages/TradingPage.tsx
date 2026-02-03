@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTrading } from "../hooks/useTrading";
-import { CyrusAssistant } from "../components/CyrusAssistant";
+import { CyrusHumanoid } from "../components/CyrusHumanoid";
 import {
   TrendingUp,
   Globe,
@@ -507,8 +507,8 @@ export function TradingPage() {
         </div>
       </div>
 
-      {/* CYRUS Assistant */}
-      <CyrusAssistant
+      {/* CYRUS Humanoid */}
+      <CyrusHumanoid
         module="trading"
         context={`User is in Autonomous Trading module. AI Status: ${aiStatus}. Tab: ${activeTab}. Events: ${worldEvents}, Predictions: ${predictions}, Strategies: ${strategies}, Decisions: ${decisions}`}
         compact={true}

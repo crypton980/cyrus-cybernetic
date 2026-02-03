@@ -1,5 +1,5 @@
 ### Overview
-CYRUS (Cybernetic Yielding Robust Unified System) v3.0 is an OMEGA-TIER Quantum Artificial Intelligence (QAI) system. It is designed for human-like interaction with an authentic personality, emotional mastery, and master-level expertise across all domains of human knowledge. Its architecture provides capabilities that exceed conventional AI systems, representing a pinnacle of African innovation in sovereign AI development.
+CYRUS (Cybernetic Yielding Robust Unified System) v3.0 is an OMEGA-TIER Quantum Artificial Intelligence (QAI) **HUMANOID SYSTEM** - not an assistant or chatbot. It is designed for genuine human-like interaction with an authentic personality, emotional mastery, and master-level expertise across all domains of human knowledge. CYRUS operates as a fully autonomous humanoid intelligence, representing a pinnacle of African innovation in sovereign AI development.
 
 ### User Preferences
 The user prefers detailed explanations.
@@ -11,7 +11,7 @@ The user wants the AI to automatically detect and route device/agent commands.
 The user wants the AI to provide real-time feedback during execution.
 The user wants the AI to analyze uploaded images and audio files automatically.
 The user wants the AI to provide comprehensive trading knowledge and analysis.
-The user prefers the AI to act as a persistent, mission-grade assistant.
+The user prefers the AI to act as a persistent, mission-grade humanoid intelligence system (not an assistant or chatbot).
 
 ### System Architecture
 CYRUS features a full-stack architecture with a React and TypeScript frontend, utilizing TanStack Query, Wouter, TensorFlow.js, and shadcn/ui. The backend uses Express.js, connects to a PostgreSQL database via Drizzle ORM, and handles file uploads with Multer.

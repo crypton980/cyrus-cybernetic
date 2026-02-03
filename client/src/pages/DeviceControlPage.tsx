@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDeviceControl } from "../hooks/useDeviceControl";
-import { CyrusAssistant } from "../components/CyrusAssistant";
+import { CyrusHumanoid } from "../components/CyrusHumanoid";
 import {
   Monitor,
   Mouse,
@@ -405,7 +405,7 @@ export function DeviceControlPage() {
           </div>
         </div>
       </div>
-      <CyrusAssistant 
+      <CyrusHumanoid 
         module="systems" 
         context={`User is in device control module. Dry run mode: ${dryRun ? "enabled" : "disabled"}. ${lastResult ? `Last result: ${lastResult.success ? "success" : "failed"}` : "No recent actions"}`}
         compact={true}

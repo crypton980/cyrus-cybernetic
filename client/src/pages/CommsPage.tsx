@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useComms } from "../hooks/useComms";
-import { CyrusAssistant } from "../components/CyrusAssistant";
+import { CyrusHumanoid } from "../components/CyrusHumanoid";
 import { Link } from "wouter";
 import {
   MessageSquare,
@@ -1000,7 +1000,7 @@ export function CommsPage() {
         </div>
       </div>
       </div>
-      <CyrusAssistant
+      <CyrusHumanoid
         module="communications"
         context={`User is in communications module. Active tab: ${activeTab}. ${
           activeCall

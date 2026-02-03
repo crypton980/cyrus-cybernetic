@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
 import { useNavigation } from "../hooks/useNavigation";
-import { CyrusAssistant } from "../components/CyrusAssistant";
+import { CyrusHumanoid } from "../components/CyrusHumanoid";
 import {
   MapPin,
   Navigation,
@@ -519,7 +519,7 @@ export function NavigationPage() {
         </div>
       </div>
 
-      <CyrusAssistant
+      <CyrusHumanoid
         module="navigation"
         context={`User is in navigation module. ${currentPosition ? `Current position: ${currentPosition.lat.toFixed(6)}, ${currentPosition.lon.toFixed(6)}. Location: ${locationName}` : "No position data"}. GPS tracking: ${isWatching ? "active" : "inactive"}.`}
         compact={true}
