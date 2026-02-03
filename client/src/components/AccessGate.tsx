@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, User } from "lucide-react";
 
 interface AccessGateProps {
   onAuthenticated: () => void;
 }
 
 export function AccessGate({ onAuthenticated }: AccessGateProps) {
+  const [username, setUsername] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -16,9 +17,18 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
     const now = new Date();
     const formatted = now.toISOString().split("T")[0];
     setCurrentDate(formatted);
+    
+    const savedUsername = localStorage.getItem("cyrus-display-name");
+    if (savedUsername) {
+      setUsername(savedUsername);
+    }
   }, []);
 
   const handleInitialize = async () => {
+    if (!username.trim()) {
+      setError("Username required");
+      return;
+    }
     if (!accessCode.trim()) {
       setError("Access code required");
       return;
@@ -31,6 +41,8 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
 
     if (accessCode === "71580019") {
       localStorage.setItem("cyrus_authenticated", "true");
+      localStorage.setItem("cyrus-display-name", username.trim());
+      localStorage.setItem("cyrus-user-role", username.trim() === "DELTA UNIFORM 00" ? "admin" : "user");
       onAuthenticated();
     } else {
       setError("ACCESS DENIED - Invalid authorization code");
@@ -102,6 +114,23 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
           </p>
 
           <div className="w-full max-w-xs space-y-4 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-orange-500/20 rounded-lg blur-sm" />
+              <div className="relative bg-slate-900/80 border border-orange-500/30 rounded-lg overflow-hidden">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500/50">
+                  <User className="w-5 h-5" />
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toUpperCase())}
+                  onKeyDown={handleKeyDown}
+                  placeholder="ENTER USERNAME"
+                  className="w-full bg-transparent px-10 py-4 text-center text-orange-400 placeholder-orange-600/50 text-sm tracking-widest font-mono focus:outline-none uppercase"
+                />
+              </div>
+            </div>
+            
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-lg blur-sm" />
               <div className="relative bg-slate-900/80 border border-cyan-500/30 rounded-lg overflow-hidden">
