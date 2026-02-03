@@ -93,7 +93,15 @@ export class VectorKnowledgeBase {
     }
   }
 
+  private get supportsEmbeddings(): boolean {
+    return !process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  }
+
   async getEmbedding(text: string): Promise<number[]> {
+    if (!this.supportsEmbeddings) {
+      return this.generateSimpleEmbedding(text);
+    }
+
     const cacheKey = crypto.createHash('md5').update(text).digest('hex');
     
     if (this.embeddingCache.has(cacheKey)) {
@@ -116,9 +124,23 @@ export class VectorKnowledgeBase {
 
       return embedding;
     } catch (error) {
-      console.error('[Vector Knowledge Base] Embedding error:', error);
-      return new Array(this.embeddingDimension).fill(0);
+      return this.generateSimpleEmbedding(text);
     }
+  }
+
+  private generateSimpleEmbedding(text: string): number[] {
+    const embedding = new Array(this.embeddingDimension).fill(0);
+    const words = text.toLowerCase().split(/\s+/);
+    for (let i = 0; i < words.length && i < this.embeddingDimension; i++) {
+      const word = words[i];
+      let hash = 0;
+      for (let j = 0; j < word.length; j++) {
+        hash = ((hash << 5) - hash) + word.charCodeAt(j);
+        hash |= 0;
+      }
+      embedding[i % this.embeddingDimension] = (hash % 1000) / 1000;
+    }
+    return embedding;
   }
 
   private cosineSimilarity(a: number[], b: number[]): number {
