@@ -83,21 +83,21 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             </div>
           </div>
 
-          <h1 className="text-6xl font-bold tracking-wider mb-3">
-            <span className="bg-gradient-to-r from-white via-cyan-200 to-white bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+          <h1 className="text-7xl font-bold tracking-wider mb-4">
+            <span className="bg-gradient-to-r from-orange-400 via-orange-300 to-orange-400 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(251,146,60,0.6)]">
               CYRUS
             </span>
-            <span className="text-white/70 text-xl align-top ml-1">™</span>
+            <span className="text-orange-400/80 text-2xl align-top ml-1">™</span>
           </h1>
 
-          <p className="text-white text-sm tracking-[0.3em] font-medium mb-1 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <p className="text-white text-base tracking-[0.3em] font-semibold mb-2 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             COMMAND YOUR RESPONSIVE
           </p>
-          <p className="text-white text-sm tracking-[0.3em] font-medium mb-4 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <p className="text-white text-base tracking-[0.3em] font-semibold mb-4 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             UNIFIED SYSTEM
           </p>
 
-          <p className="text-cyan-300 text-xs tracking-[0.2em] mb-8 font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <p className="text-orange-400 text-sm tracking-[0.2em] mb-8 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             MILITARY GRADE AI
           </p>
 
@@ -150,29 +150,29 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
           </div>
 
           <div className="text-center space-y-3">
-            <p className="text-white/80 text-xs tracking-[0.15em] font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            <p className="text-orange-300 text-sm tracking-[0.15em] font-mono font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               TOP SECRET // SI // ORCON // NOFORN
             </p>
 
-            <div className="flex items-center justify-center gap-6">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-[#30d158] shadow-[0_0_6px_#30d158]" />
-                <span className="text-xs text-white/90 tracking-wider font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">SECURE</span>
+            <div className="flex items-center justify-center gap-8">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#30d158] shadow-[0_0_8px_#30d158]" />
+                <span className="text-sm text-white tracking-wider font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">SECURE</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_#f59e0b]" />
-                <span className="text-xs text-white/90 tracking-wider font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">ENCRYPTED</span>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]" />
+                <span className="text-sm text-white tracking-wider font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">ENCRYPTED</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_#ef4444]" />
-                <span className="text-xs text-white/90 tracking-wider font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">MILITARY</span>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
+                <span className="text-sm text-white tracking-wider font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">MILITARY</span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="text-center pb-4">
-          <p className="text-white/70 text-xs tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <p className="text-white text-sm tracking-wider font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             Designed by Obakeng Kaelo - Botswana
           </p>
         </div>
