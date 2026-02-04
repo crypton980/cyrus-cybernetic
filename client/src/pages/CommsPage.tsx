@@ -108,11 +108,13 @@ export function CommsPage() {
   const incomingCall = globalIncomingCall || localIncomingCall;
   
   // Use global callUser from PresenceContext for proper WebSocket connection
-  const callUser = async (userId: string, userName: string, type: "audio" | "video") => {
-    console.log(`[CommsPage] Calling user: ${userName} (${userId}) - Type: ${type}`);
+  const callUser = (userId: string, userName: string, type: "audio" | "video") => {
+    console.log(`[CommsPage] BUTTON CLICKED - Calling user: ${userName} (${userId}) - Type: ${type}`);
     console.log(`[CommsPage] IsConnected: ${isConnected}, MyUserId: ${myUserId}`);
+    alert(`Calling ${userName} (${type})...`);
     if (!isConnected) {
       console.error(`[CommsPage] Not connected to presence server!`);
+      alert("Not connected to presence server!");
       return;
     }
     try {
