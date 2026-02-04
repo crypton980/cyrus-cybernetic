@@ -160,21 +160,39 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const callUser = useCallback((targetUserId: string, targetName: string, type: "audio" | "video") => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error("[GlobalPresence] Not connected to presence server");
+    console.log(`[GlobalPresence] callUser invoked: target=${targetName} (${targetUserId}), type=${type}`);
+    
+    if (!wsRef.current) {
+      console.error("[GlobalPresence] WebSocket ref is null - not connected");
+      alert("Not connected to server. Please refresh the page.");
+      return;
+    }
+    
+    if (wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error(`[GlobalPresence] WebSocket not open, state=${wsRef.current.readyState}`);
+      alert("Connection not ready. Please wait and try again.");
       return;
     }
 
     const roomId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    wsRef.current.send(JSON.stringify({
+    
+    const message = {
       type: "call-user",
       targetUserId,
       roomId,
       payload: { callType: type },
-    }));
+    };
+    
+    console.log("[GlobalPresence] Sending call message:", JSON.stringify(message));
 
-    console.log(`[GlobalPresence] Calling ${targetName} (${type})`);
+    try {
+      wsRef.current.send(JSON.stringify(message));
+      console.log(`[GlobalPresence] Call sent to ${targetName} - Room: ${roomId}`);
+      alert(`Calling ${targetName}... Please wait for them to answer.`);
+    } catch (err) {
+      console.error("[GlobalPresence] Failed to send call:", err);
+      alert("Failed to initiate call. Please try again.");
+    }
   }, []);
 
   const acceptCall = useCallback(() => {

@@ -111,18 +111,7 @@ export function CommsPage() {
   const callUser = (userId: string, userName: string, type: "audio" | "video") => {
     console.log(`[CommsPage] BUTTON CLICKED - Calling user: ${userName} (${userId}) - Type: ${type}`);
     console.log(`[CommsPage] IsConnected: ${isConnected}, MyUserId: ${myUserId}`);
-    alert(`Calling ${userName} (${type})...`);
-    if (!isConnected) {
-      console.error(`[CommsPage] Not connected to presence server!`);
-      alert("Not connected to presence server!");
-      return;
-    }
-    try {
-      globalCallUser(userId, userName, type);
-      console.log(`[CommsPage] Call initiated via global presence`);
-    } catch (err) {
-      console.error(`[CommsPage] Call failed:`, err);
-    }
+    globalCallUser(userId, userName, type);
   };
 
   useEffect(() => {
@@ -396,30 +385,45 @@ export function CommsPage() {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => callUser(user.id, user.displayName, "audio")}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log("[CallButton] Audio call clicked for:", user.displayName);
+                          callUser(user.id, user.displayName, "audio");
+                        }}
                         disabled={user.inCall}
-                        className="p-2.5 bg-green-600 hover:bg-green-500 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-green-500/20"
+                        className="p-2.5 bg-green-600 hover:bg-green-500 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-green-500/20 cursor-pointer z-10"
                         title="Start Audio Call"
                       >
-                        <Phone className="w-4 h-4 text-white" />
+                        <Phone className="w-4 h-4 text-white pointer-events-none" />
                       </button>
                       <button
-                        onClick={() => callUser(user.id, user.displayName, "video")}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log("[CallButton] Video call clicked for:", user.displayName);
+                          callUser(user.id, user.displayName, "video");
+                        }}
                         disabled={user.inCall}
-                        className="p-2.5 bg-blue-600 hover:bg-blue-500 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
+                        className="p-2.5 bg-blue-600 hover:bg-blue-500 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20 cursor-pointer z-10"
                         title="Start Video Call"
                       >
-                        <Video className="w-4 h-4 text-white" />
+                        <Video className="w-4 h-4 text-white pointer-events-none" />
                       </button>
                       <button
-                        onClick={() => {
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setNewMessage({ ...newMessage, recipient: user.displayName });
                           setActiveTab("messages");
                         }}
-                        className="p-2.5 bg-purple-600 hover:bg-purple-500 rounded-full transition-all shadow-lg shadow-purple-500/20"
+                        className="p-2.5 bg-purple-600 hover:bg-purple-500 rounded-full transition-all shadow-lg shadow-purple-500/20 cursor-pointer z-10"
                         title="Send Message"
                       >
-                        <MessageSquare className="w-4 h-4 text-white" />
+                        <MessageSquare className="w-4 h-4 text-white pointer-events-none" />
                       </button>
                     </div>
                   </div>
@@ -953,24 +957,37 @@ export function CommsPage() {
                                   </div>
                                   <div className="flex gap-2">
                                     <button
-                                      onClick={() => callUser(user.id, user.displayName, "audio")}
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log("[CallButton] Audio call clicked for:", user.displayName);
+                                        callUser(user.id, user.displayName, "audio");
+                                      }}
                                       disabled={user.inCall}
-                                      className="p-2 bg-green-600 hover:bg-green-700 rounded-full disabled:opacity-50 transition-colors"
+                                      className="p-2 bg-green-600 hover:bg-green-700 rounded-full disabled:opacity-50 transition-colors cursor-pointer z-10"
                                       title="Audio Call"
                                     >
-                                      <Phone className="w-4 h-4" />
+                                      <Phone className="w-4 h-4 pointer-events-none" />
                                     </button>
                                     <button
-                                      onClick={() => callUser(user.id, user.displayName, "video")}
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log("[CallButton] Video call clicked for:", user.displayName);
+                                        callUser(user.id, user.displayName, "video");
+                                      }}
                                       disabled={user.inCall}
-                                      className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full disabled:opacity-50 transition-colors"
+                                      className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full disabled:opacity-50 transition-colors cursor-pointer z-10"
                                       title="Video Call"
                                     >
-                                      <Video className="w-4 h-4" />
+                                      <Video className="w-4 h-4 pointer-events-none" />
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => addContact.mutate({ contactId: user.id, contactName: user.displayName })}
-                                      className="p-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
+                                      className="p-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors cursor-pointer z-10"
                                       title="Add to Contacts"
                                     >
                                       <UserPlus className="w-4 h-4" />
@@ -1009,25 +1026,38 @@ export function CommsPage() {
                                   </div>
                                   <div className="flex gap-2">
                                     <button
-                                      onClick={() => callUser(contact.contactId, contact.contactName, "audio")}
-                                      className="p-2 bg-green-600 hover:bg-green-700 rounded-full transition-colors"
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log("[CallButton] Audio call clicked for contact:", contact.contactName);
+                                        callUser(contact.contactId, contact.contactName, "audio");
+                                      }}
+                                      className="p-2 bg-green-600 hover:bg-green-700 rounded-full transition-colors cursor-pointer z-10"
                                       title="Audio Call"
                                     >
-                                      <Phone className="w-4 h-4" />
+                                      <Phone className="w-4 h-4 pointer-events-none" />
                                     </button>
                                     <button
-                                      onClick={() => callUser(contact.contactId, contact.contactName, "video")}
-                                      className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log("[CallButton] Video call clicked for contact:", contact.contactName);
+                                        callUser(contact.contactId, contact.contactName, "video");
+                                      }}
+                                      className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors cursor-pointer z-10"
                                       title="Video Call"
                                     >
-                                      <Video className="w-4 h-4" />
+                                      <Video className="w-4 h-4 pointer-events-none" />
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => deleteContact.mutate(contact.id)}
-                                      className="p-2 bg-red-600/50 hover:bg-red-600 rounded-full transition-colors"
+                                      className="p-2 bg-red-600/50 hover:bg-red-600 rounded-full transition-colors cursor-pointer z-10"
                                       title="Remove Contact"
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      <Trash2 className="w-4 h-4 pointer-events-none" />
                                     </button>
                                   </div>
                                 </div>
