@@ -252,40 +252,98 @@ export function CommsPage() {
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {incomingCall && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gradient-to-br from-green-900/80 to-blue-900/80 backdrop-blur-sm border border-green-500/30 rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
-            <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse shadow-lg shadow-green-500/30">
-              <PhoneIncoming className="w-12 h-12 text-white" />
+        <div 
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            backgroundColor: 'rgba(0,0,0,0.95)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            zIndex: 99999,
+            pointerEvents: 'auto'
+          }}
+        >
+          <div 
+            style={{ 
+              background: 'linear-gradient(135deg, #1a472a 0%, #1a365d 100%)', 
+              borderRadius: '16px', 
+              padding: '32px', 
+              maxWidth: '350px', 
+              width: '90%', 
+              textAlign: 'center',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
+              pointerEvents: 'auto'
+            }}
+          >
+            <div style={{ 
+              width: '96px', 
+              height: '96px', 
+              background: 'linear-gradient(135deg, #22c55e 0%, #3b82f6 100%)', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto 16px' 
+            }}>
+              <PhoneIncoming style={{ width: '48px', height: '48px', color: 'white' }} />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Incoming Call</h3>
-            <p className="text-gray-200 mb-1 text-lg">{incomingCall.callerName}</p>
-            <p className="text-sm text-gray-400 mb-8">
+            <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>
+              Incoming Call
+            </h3>
+            <p style={{ color: '#e5e7eb', fontSize: '18px', marginBottom: '4px' }}>
+              {incomingCall.callerName}
+            </p>
+            <p style={{ color: '#9ca3af', fontSize: '14px', marginBottom: '32px' }}>
               {incomingCall.callType === "video" ? "HD Video" : "HD Audio"} Call
             </p>
-            <div className="flex gap-6 justify-center">
+            <div style={{ display: 'flex', gap: '24px', justifyContent: 'center' }}>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("[IncomingCall] Decline clicked");
+                style={{
+                  width: '70px',
+                  height: '70px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #dc2626 0%, #be123c 100%)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 10px 25px rgba(220, 38, 38, 0.4)',
+                  pointerEvents: 'auto'
+                }}
+                onClick={() => {
+                  console.log("[IncomingCall] DECLINE BUTTON PRESSED");
                   handleDeclineCall();
                 }}
-                className="p-5 bg-gradient-to-br from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-full transition-all shadow-lg shadow-red-500/30 cursor-pointer"
               >
-                <PhoneOff className="w-7 h-7 pointer-events-none" />
+                <PhoneOff style={{ width: '28px', height: '28px', color: 'white' }} />
               </button>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("[IncomingCall] Accept clicked");
+                style={{
+                  width: '70px',
+                  height: '70px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 10px 25px rgba(22, 163, 74, 0.4)',
+                  pointerEvents: 'auto'
+                }}
+                onClick={() => {
+                  console.log("[IncomingCall] ACCEPT BUTTON PRESSED");
                   handleAcceptCall();
                 }}
-                className="p-5 bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-full transition-all shadow-lg shadow-green-500/30 cursor-pointer"
               >
-                <Phone className="w-7 h-7 pointer-events-none" />
+                <Phone style={{ width: '28px', height: '28px', color: 'white' }} />
               </button>
             </div>
           </div>
