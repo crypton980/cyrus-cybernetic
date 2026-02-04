@@ -301,8 +301,9 @@ export function CommsPage() {
               {incomingCall.callType === "video" ? "HD Video" : "HD Audio"} Call
             </p>
             <div style={{ display: 'flex', gap: '32px', justifyContent: 'center' }}>
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={0}
                 style={{
                   width: '80px',
                   height: '80px',
@@ -314,27 +315,18 @@ export function CommsPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 10px 25px rgba(220, 38, 38, 0.5)',
-                  pointerEvents: 'auto',
-                  touchAction: 'manipulation',
-                  WebkitTapHighlightColor: 'rgba(255,255,255,0.3)',
+                  userSelect: 'none',
                 }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("[IncomingCall] DECLINE CLICKED");
-                  handleDeclineCall();
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("[IncomingCall] DECLINE TOUCHED");
-                  handleDeclineCall();
+                onPointerDown={() => {
+                  alert("Call declined!");
+                  globalDeclineCall();
                 }}
               >
                 <PhoneOff style={{ width: '32px', height: '32px', color: 'white' }} />
-              </button>
-              <button
-                type="button"
+              </div>
+              <div
+                role="button"
+                tabIndex={0}
                 style={{
                   width: '80px',
                   height: '80px',
@@ -346,25 +338,15 @@ export function CommsPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 10px 25px rgba(22, 163, 74, 0.5)',
-                  pointerEvents: 'auto',
-                  touchAction: 'manipulation',
-                  WebkitTapHighlightColor: 'rgba(255,255,255,0.3)',
+                  userSelect: 'none',
                 }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("[IncomingCall] ACCEPT CLICKED");
-                  handleAcceptCall();
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("[IncomingCall] ACCEPT TOUCHED");
-                  handleAcceptCall();
+                onPointerDown={() => {
+                  alert("Accepting call...");
+                  globalAcceptCall();
                 }}
               >
                 <Phone style={{ width: '32px', height: '32px', color: 'white' }} />
-              </button>
+              </div>
             </div>
           </div>
         </div>
