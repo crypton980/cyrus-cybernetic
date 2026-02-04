@@ -101,11 +101,36 @@ export function CommsPage() {
     myUserId, 
     incomingCall: globalIncomingCall,
     callUser: globalCallUser,
+    acceptCall: globalAcceptCall,
+    declineCall: globalDeclineCall,
     connectPresence,
   } = usePresence();
   
-  // Merge incoming call from both sources
+  // Merge incoming call from both sources - prefer global
   const incomingCall = globalIncomingCall || localIncomingCall;
+  
+  // Use appropriate accept/decline based on call source
+  const handleAcceptCall = () => {
+    console.log("[CommsPage] Accepting call...");
+    if (globalIncomingCall) {
+      console.log("[CommsPage] Using global accept");
+      globalAcceptCall();
+    } else {
+      console.log("[CommsPage] Using local accept");
+      acceptIncomingCall();
+    }
+  };
+  
+  const handleDeclineCall = () => {
+    console.log("[CommsPage] Declining call...");
+    if (globalIncomingCall) {
+      console.log("[CommsPage] Using global decline");
+      globalDeclineCall();
+    } else {
+      console.log("[CommsPage] Using local decline");
+      declineIncomingCall();
+    }
+  };
   
   // Use global callUser from PresenceContext for proper WebSocket connection
   const callUser = (userId: string, userName: string, type: "audio" | "video") => {
@@ -239,16 +264,28 @@ export function CommsPage() {
             </p>
             <div className="flex gap-6 justify-center">
               <button
-                onClick={declineIncomingCall}
-                className="p-5 bg-gradient-to-br from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-full transition-all shadow-lg shadow-red-500/30"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("[IncomingCall] Decline clicked");
+                  handleDeclineCall();
+                }}
+                className="p-5 bg-gradient-to-br from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-full transition-all shadow-lg shadow-red-500/30 cursor-pointer"
               >
-                <PhoneOff className="w-7 h-7" />
+                <PhoneOff className="w-7 h-7 pointer-events-none" />
               </button>
               <button
-                onClick={acceptIncomingCall}
-                className="p-5 bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-full transition-all shadow-lg shadow-green-500/30"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("[IncomingCall] Accept clicked");
+                  handleAcceptCall();
+                }}
+                className="p-5 bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-full transition-all shadow-lg shadow-green-500/30 cursor-pointer"
               >
-                <Phone className="w-7 h-7" />
+                <Phone className="w-7 h-7 pointer-events-none" />
               </button>
             </div>
           </div>

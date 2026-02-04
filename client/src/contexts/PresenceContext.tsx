@@ -196,26 +196,69 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const acceptCall = useCallback(() => {
-    if (!incomingCall || !wsRef.current) return;
+    console.log("[GlobalPresence] acceptCall invoked, incomingCall:", incomingCall);
+    
+    if (!incomingCall) {
+      console.error("[GlobalPresence] No incoming call to accept");
+      return;
+    }
+    
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("[GlobalPresence] WebSocket not connected");
+      alert("Connection lost. Please refresh and try again.");
+      return;
+    }
 
-    wsRef.current.send(JSON.stringify({
+    const message = {
       type: "accept-call",
       roomId: incomingCall.roomId,
-    }));
+      callerId: incomingCall.callerId,
+    };
+    
+    console.log("[GlobalPresence] Sending accept message:", JSON.stringify(message));
 
-    setIncomingCall(null);
+    try {
+      wsRef.current.send(JSON.stringify(message));
+      console.log("[GlobalPresence] Call accepted - Room:", incomingCall.roomId);
+      alert(`Call connected with ${incomingCall.callerName}!`);
+      setIncomingCall(null);
+    } catch (err) {
+      console.error("[GlobalPresence] Failed to accept call:", err);
+      alert("Failed to accept call. Please try again.");
+    }
   }, [incomingCall]);
 
   const declineCall = useCallback(() => {
-    if (!incomingCall || !wsRef.current) return;
+    console.log("[GlobalPresence] declineCall invoked, incomingCall:", incomingCall);
+    
+    if (!incomingCall) {
+      console.error("[GlobalPresence] No incoming call to decline");
+      return;
+    }
+    
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("[GlobalPresence] WebSocket not connected");
+      setIncomingCall(null);
+      return;
+    }
 
-    wsRef.current.send(JSON.stringify({
+    const message = {
       type: "decline-call",
       roomId: incomingCall.roomId,
+      callerId: incomingCall.callerId,
       payload: { reason: "declined" },
-    }));
+    };
+    
+    console.log("[GlobalPresence] Sending decline message:", JSON.stringify(message));
 
-    setIncomingCall(null);
+    try {
+      wsRef.current.send(JSON.stringify(message));
+      console.log("[GlobalPresence] Call declined");
+      setIncomingCall(null);
+    } catch (err) {
+      console.error("[GlobalPresence] Failed to decline call:", err);
+      setIncomingCall(null);
+    }
   }, [incomingCall]);
 
   const sendPresenceMessage = useCallback((message: any) => {
