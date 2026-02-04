@@ -300,50 +300,70 @@ export function CommsPage() {
             <p style={{ color: '#9ca3af', fontSize: '14px', marginBottom: '32px' }}>
               {incomingCall.callType === "video" ? "HD Video" : "HD Audio"} Call
             </p>
-            <div style={{ display: 'flex', gap: '24px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '32px', justifyContent: 'center' }}>
               <button
                 type="button"
                 style={{
-                  width: '70px',
-                  height: '70px',
+                  width: '80px',
+                  height: '80px',
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, #dc2626 0%, #be123c 100%)',
-                  border: 'none',
+                  border: '3px solid #fff',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 10px 25px rgba(220, 38, 38, 0.4)',
-                  pointerEvents: 'auto'
+                  boxShadow: '0 10px 25px rgba(220, 38, 38, 0.5)',
+                  pointerEvents: 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'rgba(255,255,255,0.3)',
                 }}
-                onClick={() => {
-                  console.log("[IncomingCall] DECLINE BUTTON PRESSED");
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("[IncomingCall] DECLINE CLICKED");
+                  handleDeclineCall();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("[IncomingCall] DECLINE TOUCHED");
                   handleDeclineCall();
                 }}
               >
-                <PhoneOff style={{ width: '28px', height: '28px', color: 'white' }} />
+                <PhoneOff style={{ width: '32px', height: '32px', color: 'white' }} />
               </button>
               <button
                 type="button"
                 style={{
-                  width: '70px',
-                  height: '70px',
+                  width: '80px',
+                  height: '80px',
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, #16a34a 0%, #059669 100%)',
-                  border: 'none',
+                  border: '3px solid #fff',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 10px 25px rgba(22, 163, 74, 0.4)',
-                  pointerEvents: 'auto'
+                  boxShadow: '0 10px 25px rgba(22, 163, 74, 0.5)',
+                  pointerEvents: 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'rgba(255,255,255,0.3)',
                 }}
-                onClick={() => {
-                  console.log("[IncomingCall] ACCEPT BUTTON PRESSED");
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("[IncomingCall] ACCEPT CLICKED");
+                  handleAcceptCall();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("[IncomingCall] ACCEPT TOUCHED");
                   handleAcceptCall();
                 }}
               >
-                <Phone style={{ width: '28px', height: '28px', color: 'white' }} />
+                <Phone style={{ width: '32px', height: '32px', color: 'white' }} />
               </button>
             </div>
           </div>

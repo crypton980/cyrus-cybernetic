@@ -26,6 +26,7 @@ import { analyzeExtraction } from "./ingestion/analyze";
 import { buildReport } from "./ingestion/report";
 import { generateDocument } from "./docgen/generate";
 import { initSignalingServer } from "./comms/signaling";
+import { initSocketSignaling } from "./comms/socket-signaling";
 import { enqueueMessage, dequeueMessages, addReminder, listReminders } from "./comms/store";
 import { registerCommsRoutes } from "./comms/comms-routes";
 import { v4 as uuid } from "uuid";
@@ -201,6 +202,8 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Initialize signaling server for WebRTC/messaging
   initSignalingServer(httpServer);
+  initSocketSignaling(httpServer);
+  console.log("[Socket.IO] Real-time communication server active");
   registerCommsRoutes(app);
   registerAdvancedUpgradeRoutes(app);
   registerInteractiveRoutes(app);

@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from "react";
+import { io, Socket } from "socket.io-client";
 
 export interface OnlineUser {
   id: string;
   displayName: string;
   deviceId: string;
   inCall: boolean;
-  lastActivity: string;
+  lastActivity?: string;
 }
 
 export interface IncomingCall {
@@ -25,8 +26,8 @@ interface PresenceContextType {
   callUser: (targetUserId: string, targetName: string, type: "audio" | "video") => void;
   acceptCall: () => void;
   declineCall: () => void;
-  sendPresenceMessage: (message: any) => void;
-  wsRef: React.MutableRefObject<WebSocket | null>;
+  sendMessage: (targetUserId: string, message: string) => void;
+  wsRef: React.MutableRefObject<Socket | null>;
 }
 
 const PresenceContext = createContext<PresenceContextType | null>(null);
@@ -44,236 +45,176 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
 
   const connectPresence = useCallback((displayName: string = "User") => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log("[GlobalPresence] Already connected");
+    if (socketRef.current?.connected) {
+      console.log("[SocketIO Presence] Already connected");
       return;
     }
 
-    if (wsRef.current?.readyState === WebSocket.CONNECTING) {
-      console.log("[GlobalPresence] Connection in progress...");
-      return;
-    }
-
-    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const deviceId = localStorage.getItem('cyrus_device_id') || `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('cyrus_device_id', deviceId);
+    
     const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const deviceId = `device_${navigator.userAgent.substring(0, 20).replace(/\s/g, '_')}`;
-    
-    console.log(`[GlobalPresence] Connecting as ${displayName}...`);
-    
-    const ws = new WebSocket(
-      `${wsProtocol}//${window.location.host}/ws?userId=${userId}&name=${encodeURIComponent(displayName)}&deviceId=${deviceId}`
-    );
-    wsRef.current = ws;
+    currentUserIdRef.current = userId;
 
-    ws.onopen = () => {
-      console.log("[GlobalPresence] Connected to presence server");
+    console.log(`[SocketIO Presence] Connecting as ${displayName}...`);
+
+    const socket = io(window.location.origin, {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+    });
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log("[SocketIO Presence] Socket connected, registering...");
+      socket.emit('register', { userId, displayName, deviceId });
+    });
+
+    socket.on('registered', (data: { userId: string; totalOnline: number }) => {
+      console.log("[SocketIO Presence] Registered:", data);
+      setMyUserId(data.userId);
       setIsConnected(true);
-    };
+    });
 
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        
-        switch (msg.type) {
-          case "connected":
-            console.log("[GlobalPresence] My user ID:", msg.userId, "| Total online:", msg.totalOnline);
-            (ws as any)._myUserId = msg.userId;
-            setMyUserId(msg.userId);
-            break;
+    socket.on('presence-update', (data: { users: OnlineUser[]; total: number }) => {
+      const currentId = currentUserIdRef.current;
+      const otherUsers = data.users.filter((u) => u.id !== currentId);
+      console.log(`[SocketIO Presence] Online: ${data.total} total, ${otherUsers.length} others visible`);
+      setOnlineUsers(otherUsers);
+    });
 
-          case "presence-update":
-            const allUsers = msg.users?.length || 0;
-            const currentUserId = (ws as any)._myUserId || userId;
-            const otherUsers = msg.users.filter((u: OnlineUser) => u.id !== currentUserId);
-            console.log(`[GlobalPresence] Total online: ${allUsers} | Other users visible: ${otherUsers.length}`);
-            if (allUsers > 0) {
-              console.log("[GlobalPresence] All users:", msg.users.map((u: OnlineUser) => `${u.displayName} (${u.id})`).join(", "));
-            }
-            setOnlineUsers(otherUsers);
-            break;
+    socket.on('incoming-call', (data: IncomingCall) => {
+      console.log("[SocketIO Presence] INCOMING CALL:", data);
+      setIncomingCall(data);
+    });
 
-          case "incoming-call":
-            console.log("[GlobalPresence] Incoming call from:", msg.callerName);
-            setIncomingCall({
-              callerId: msg.callerId,
-              callerName: msg.callerName,
-              roomId: msg.roomId,
-              callType: msg.callType,
-            });
-            break;
+    socket.on('call-ringing', (data: { roomId: string; targetName: string }) => {
+      console.log("[SocketIO Presence] Ringing:", data.targetName);
+    });
 
-          case "call-declined":
-            console.log("[GlobalPresence] Call was declined");
-            break;
+    socket.on('call-accepted', (data: { roomId: string; peerName: string; peerId: string }) => {
+      console.log("[SocketIO Presence] Call accepted by:", data.peerName);
+      alert(`${data.peerName} accepted your call!`);
+    });
 
-          case "call-ended":
-            console.log("[GlobalPresence] Call ended by peer");
-            break;
+    socket.on('call-connected', (data: { roomId: string; peerName: string; peerId: string }) => {
+      console.log("[SocketIO Presence] Connected to:", data.peerName);
+      setIncomingCall(null);
+      alert(`Connected to ${data.peerName}!`);
+    });
 
-          case "call-failed":
-            console.log("[GlobalPresence] Call failed:", msg.reason);
-            break;
-        }
-      } catch (err) {
-        console.error("[GlobalPresence] Message parse error:", err);
-      }
-    };
+    socket.on('call-declined', (data: { roomId: string }) => {
+      console.log("[SocketIO Presence] Call was declined");
+      alert("Call was declined");
+    });
 
-    ws.onclose = () => {
-      console.log("[GlobalPresence] Disconnected from presence server");
+    socket.on('call-ended', (data: { roomId: string; reason?: string }) => {
+      console.log("[SocketIO Presence] Call ended:", data.reason || "normal");
+    });
+
+    socket.on('call-failed', (data: { reason: string }) => {
+      console.log("[SocketIO Presence] Call failed:", data.reason);
+      alert(`Call failed: ${data.reason}`);
+    });
+
+    socket.on('new-message', (data: { senderId: string; senderName: string; message: string; timestamp: string }) => {
+      console.log("[SocketIO Presence] Message from:", data.senderName, "-", data.message);
+      alert(`Message from ${data.senderName}: ${data.message}`);
+    });
+
+    socket.on('disconnect', () => {
+      console.log("[SocketIO Presence] Disconnected");
       setIsConnected(false);
-      
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      
-      reconnectTimeoutRef.current = setTimeout(() => {
-        const savedName = localStorage.getItem("cyrus-display-name");
-        if (savedName && wsRef.current === ws) {
-          console.log("[GlobalPresence] Attempting reconnect...");
-          connectPresence(savedName);
-        }
-      }, 5000);
-    };
+    });
 
-    ws.onerror = (error) => {
-      console.error("[GlobalPresence] WebSocket error:", error);
-    };
+    socket.on('connect_error', (error) => {
+      console.error("[SocketIO Presence] Connection error:", error);
+    });
+
   }, []);
 
   const disconnectPresence = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
     }
     setIsConnected(false);
     setOnlineUsers([]);
     setMyUserId(null);
+    currentUserIdRef.current = null;
   }, []);
 
   const callUser = useCallback((targetUserId: string, targetName: string, type: "audio" | "video") => {
-    console.log(`[GlobalPresence] callUser invoked: target=${targetName} (${targetUserId}), type=${type}`);
-    
-    if (!wsRef.current) {
-      console.error("[GlobalPresence] WebSocket ref is null - not connected");
-      alert("Not connected to server. Please refresh the page.");
-      return;
-    }
-    
-    if (wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error(`[GlobalPresence] WebSocket not open, state=${wsRef.current.readyState}`);
-      alert("Connection not ready. Please wait and try again.");
+    console.log(`[SocketIO Presence] Calling ${targetName} (${targetUserId}), type: ${type}`);
+
+    if (!socketRef.current?.connected) {
+      console.error("[SocketIO Presence] Socket not connected");
+      alert("Not connected. Please refresh the page.");
       return;
     }
 
-    const roomId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    const message = {
-      type: "call-user",
-      targetUserId,
-      roomId,
-      payload: { callType: type },
-    };
-    
-    console.log("[GlobalPresence] Sending call message:", JSON.stringify(message));
-
-    try {
-      wsRef.current.send(JSON.stringify(message));
-      console.log(`[GlobalPresence] Call sent to ${targetName} - Room: ${roomId}`);
-      alert(`Calling ${targetName}... Please wait for them to answer.`);
-    } catch (err) {
-      console.error("[GlobalPresence] Failed to send call:", err);
-      alert("Failed to initiate call. Please try again.");
-    }
+    socketRef.current.emit('call-user', { targetUserId, callType: type });
+    alert(`Calling ${targetName}...`);
   }, []);
 
   const acceptCall = useCallback(() => {
-    console.log("[GlobalPresence] acceptCall invoked, incomingCall:", incomingCall);
-    
+    console.log("[SocketIO Presence] Accepting call, incomingCall:", incomingCall);
+
     if (!incomingCall) {
-      console.error("[GlobalPresence] No incoming call to accept");
-      return;
-    }
-    
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error("[GlobalPresence] WebSocket not connected");
-      alert("Connection lost. Please refresh and try again.");
+      console.error("[SocketIO Presence] No incoming call");
       return;
     }
 
-    const message = {
-      type: "accept-call",
-      roomId: incomingCall.roomId,
-      callerId: incomingCall.callerId,
-    };
-    
-    console.log("[GlobalPresence] Sending accept message:", JSON.stringify(message));
-
-    try {
-      wsRef.current.send(JSON.stringify(message));
-      console.log("[GlobalPresence] Call accepted - Room:", incomingCall.roomId);
-      alert(`Call connected with ${incomingCall.callerName}!`);
-      setIncomingCall(null);
-    } catch (err) {
-      console.error("[GlobalPresence] Failed to accept call:", err);
-      alert("Failed to accept call. Please try again.");
+    if (!socketRef.current?.connected) {
+      console.error("[SocketIO Presence] Socket not connected");
+      alert("Connection lost. Please refresh.");
+      return;
     }
+
+    console.log("[SocketIO Presence] Emitting accept-call for room:", incomingCall.roomId);
+    socketRef.current.emit('accept-call', { roomId: incomingCall.roomId });
+    setIncomingCall(null);
   }, [incomingCall]);
 
   const declineCall = useCallback(() => {
-    console.log("[GlobalPresence] declineCall invoked, incomingCall:", incomingCall);
-    
+    console.log("[SocketIO Presence] Declining call");
+
     if (!incomingCall) {
-      console.error("[GlobalPresence] No incoming call to decline");
-      return;
-    }
-    
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error("[GlobalPresence] WebSocket not connected");
-      setIncomingCall(null);
+      console.error("[SocketIO Presence] No incoming call");
       return;
     }
 
-    const message = {
-      type: "decline-call",
-      roomId: incomingCall.roomId,
-      callerId: incomingCall.callerId,
-      payload: { reason: "declined" },
-    };
-    
-    console.log("[GlobalPresence] Sending decline message:", JSON.stringify(message));
-
-    try {
-      wsRef.current.send(JSON.stringify(message));
-      console.log("[GlobalPresence] Call declined");
-      setIncomingCall(null);
-    } catch (err) {
-      console.error("[GlobalPresence] Failed to decline call:", err);
-      setIncomingCall(null);
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('decline-call', { roomId: incomingCall.roomId });
     }
+    
+    setIncomingCall(null);
   }, [incomingCall]);
 
-  const sendPresenceMessage = useCallback((message: any) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
+  const sendMessage = useCallback((targetUserId: string, message: string) => {
+    if (!socketRef.current?.connected) {
+      console.error("[SocketIO Presence] Socket not connected");
+      return;
     }
+
+    socketRef.current.emit('send-message', {
+      targetUserId,
+      message,
+      timestamp: new Date().toISOString(),
+    });
   }, []);
 
   useEffect(() => {
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
       }
     };
   }, []);
@@ -290,8 +231,8 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
         callUser,
         acceptCall,
         declineCall,
-        sendPresenceMessage,
-        wsRef,
+        sendMessage,
+        wsRef: socketRef as any,
       }}
     >
       {children}
