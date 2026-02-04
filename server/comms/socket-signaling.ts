@@ -35,7 +35,9 @@ export function initSocketSignaling(server: HttpServer) {
   console.log("[Socket.IO] Signaling server initialized");
 
   io.on("connection", (socket: Socket) => {
-    console.log(`[Socket.IO] New connection: ${socket.id}`);
+    console.log(`[Socket.IO] ========================================`);
+    console.log(`[Socket.IO] NEW CONNECTION: ${socket.id}`);
+    console.log(`[Socket.IO] ========================================`);
 
     socket.on("register", (data: { userId: string; displayName: string; deviceId: string }) => {
       const { userId, displayName, deviceId } = data;

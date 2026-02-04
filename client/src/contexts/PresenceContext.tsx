@@ -49,9 +49,18 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
   const currentUserIdRef = useRef<string | null>(null);
 
   const connectPresence = useCallback((displayName: string = "User") => {
+    console.log("[SocketIO Presence] ===== connectPresence called =====");
+    console.log("[SocketIO Presence] Display name:", displayName);
+    
     if (socketRef.current?.connected) {
       console.log("[SocketIO Presence] Already connected");
       return;
+    }
+    
+    if (socketRef.current) {
+      console.log("[SocketIO Presence] Disconnecting existing socket first");
+      socketRef.current.disconnect();
+      socketRef.current = null;
     }
 
     const deviceId = localStorage.getItem('cyrus_device_id') || `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -62,6 +71,8 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
 
     console.log(`[SocketIO Presence] Connecting as ${displayName}...`);
 
+    console.log("[SocketIO Presence] Creating socket connection to:", window.location.origin);
+    
     const socket = io(window.location.origin, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
@@ -73,7 +84,9 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log("[SocketIO Presence] Socket connected, registering...");
+      console.log("[SocketIO Presence] *** SOCKET CONNECTED ***");
+      console.log("[SocketIO Presence] Socket ID:", socket.id);
+      console.log("[SocketIO Presence] Registering user:", displayName, userId);
       socket.emit('register', { userId, displayName, deviceId });
     });
 
