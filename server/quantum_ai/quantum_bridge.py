@@ -12,11 +12,27 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_this_dir = os.path.dirname(os.path.abspath(__file__))
+_workspace_root = os.path.join(_this_dir, '..', '..')
+sys.path.insert(0, _this_dir)
+if _workspace_root in sys.path:
+    sys.path.remove(_workspace_root)
 
 from quantum_ai_core import QuantumAICore, format_response_for_display
 from core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
 from core_algorithms.mathematical_formatter import MathematicalFormatter
+
+try:
+    nexus_path = os.path.join(_workspace_root, 'Quantum_Intelligence_Nexus_v2.0')
+    nexus_path = os.path.normpath(nexus_path)
+    if os.path.exists(nexus_path):
+        sys.path.insert(0, nexus_path)
+        from quantum_intelligence_nexus import QuantumIntelligenceNexus
+        NEXUS_AVAILABLE = True
+    else:
+        NEXUS_AVAILABLE = False
+except ImportError:
+    NEXUS_AVAILABLE = False
 
 
 class QuantumIntelligenceEngine:
@@ -35,6 +51,15 @@ class QuantumIntelligenceEngine:
         self.style_analyzer = WritingStyleAnalyzer()
         self.math_formatter = MathematicalFormatter()
         self.processing_history = []
+        
+        self.nexus = None
+        if NEXUS_AVAILABLE:
+            try:
+                self.nexus = QuantumIntelligenceNexus(machine_name="CYRUS_Nexus")
+                self.nexus.activate()
+            except Exception as e:
+                print(f"[Quantum Nexus] Init warning: {e}")
+                self.nexus = None
         
     def enhance_response(self, message: str, context: Optional[Dict] = None) -> Dict:
         """
@@ -325,10 +350,17 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 'status': 'healthy',
                 'service': 'quantum-ai-bridge',
                 'version': '1.0.0',
+                'nexus_available': NEXUS_AVAILABLE,
+                'nexus_active': engine.nexus is not None,
                 'timestamp': datetime.now().isoformat()
             })
         elif self.path == '/stats':
             self._send_response(200, engine.get_processing_stats())
+        elif self.path == '/nexus/status':
+            if engine.nexus:
+                self._send_response(200, engine.nexus.introspect())
+            else:
+                self._send_response(200, {'status': 'unavailable', 'nexus_available': NEXUS_AVAILABLE})
         else:
             self._send_response(404, {'error': 'Not found'})
     
@@ -359,6 +391,21 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
             text = data.get('text', '')
             analysis = engine.style_analyzer.analyze_writing_style(text)
             self._send_response(200, analysis)
+        
+        elif self.path == '/nexus/query':
+            if engine.nexus:
+                query = data.get('query', '')
+                enable_quantum = data.get('enable_quantum', True)
+                result = engine.nexus.process_query(query, enable_quantum=enable_quantum)
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Quantum Intelligence Nexus not available'})
+        
+        elif self.path == '/nexus/introspect':
+            if engine.nexus:
+                self._send_response(200, engine.nexus.introspect())
+            else:
+                self._send_response(503, {'error': 'Quantum Intelligence Nexus not available'})
         
         else:
             self._send_response(404, {'error': 'Endpoint not found'})

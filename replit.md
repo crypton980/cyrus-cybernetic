@@ -94,6 +94,18 @@ Continuously listens for "CYRUS" and similar phrases, automatically activating w
 - **Professional Presenter Mode:** Full presentation delivery system with AI-generated slides, narration, and Q&A handling.
 - **Humanoid Conversation Engine:** Advanced natural dialogue system with active listening, sentiment analysis, and topic transition handling.
 
+**Quantum Intelligence Nexus v2.0 (Integrated from quantum_nexus archive):**
+Located at `Quantum_Intelligence_Nexus_v2.0/`, this module provides an autonomous quantum intelligence machine integrated with the Quantum AI Bridge. It exposes `/nexus/status`, `/nexus/query`, and `/nexus/introspect` endpoints through the bridge server on port 5001.
+
+**Project Directory Additions (from quantum_nexus archive):**
+- `core_algorithms/` - Root convenience wrapper for `server/quantum_ai/core_algorithms/`
+- `Quantum_Intelligence_Nexus_v2.0/` - Quantum Intelligence Nexus module
+- `scripts/` - Training, quantum, and automation scripts
+- `examples/quantum_nexus/` - Example usage scripts
+- `tests/` - Test files for v2 features
+- `docs/guides/` - System architecture and feature documentation
+- `docs/quantum_nexus/` - Training and deployment guides
+
 ### External Dependencies
 -   **PostgreSQL Database:** Primary data persistence, hosted via Neon.
 -   **OpenAI API:** GPT-4o for AI-powered responses, natural language understanding, and image analysis; Whisper for audio transcription; TTS for voice synthesis.

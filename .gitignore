@@ -9,3 +9,10 @@ combined.zip
 zipFile.zip
 attached_assets/
 testfile.tmp
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+nexus_env/
+*.zip
