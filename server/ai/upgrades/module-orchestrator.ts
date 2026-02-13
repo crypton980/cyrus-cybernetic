@@ -12,6 +12,7 @@ import { hyperlinkedReality } from "./hyperlinked-reality";
 import { bioNeuralInterface } from "./bio-neural-interface";
 import { adaptiveHardwareController } from "./adaptive-hardware-controller";
 import { biologyModule, environmentalSensing, medicalDiagnostics, roboticIntegration, teachingModule, securityEncryption, bloodSamplingSystem } from "../interactive/routes";
+import { quantumBridge } from "../quantum-bridge-client";
 
 export interface ModuleStatus {
   id: string;
@@ -64,6 +65,20 @@ class ModuleOrchestrator {
     this.modules.set("teaching", { instance: teachingModule, category: "interactive", name: "Teaching & Learning" });
     this.modules.set("security", { instance: securityEncryption, category: "interactive", name: "Security & Encryption" });
     this.modules.set("blood-sampling", { instance: bloodSamplingSystem, category: "interactive", name: "Blood Sampling System" });
+
+    const nexusBridgeModule = {
+      getStatus: () => {
+        const bridgeStatus = quantumBridge.getStatus();
+        return {
+          available: bridgeStatus.available,
+          nexusAvailable: bridgeStatus.nexusAvailable,
+          nexusActive: bridgeStatus.nexusActive,
+          version: '2.0.0',
+          machineName: 'CYRUS_Nexus'
+        };
+      }
+    };
+    this.modules.set("quantum-nexus", { instance: nexusBridgeModule, category: "core", name: "Quantum Intelligence Nexus v2.0" });
 
     this.context.activeModules = Array.from(this.modules.keys());
   }
@@ -153,6 +168,11 @@ class ModuleOrchestrator {
         metrics.devices = status.deviceCount || 0;
         metrics.online = status.onlineDevices || 0;
         break;
+      case "quantum-nexus":
+        metrics.available = status.available ? 1 : 0;
+        metrics.nexusActive = status.nexusActive ? 1 : 0;
+        metrics.version = status.version || "2.0.0";
+        break;
     }
 
     return metrics;
@@ -211,6 +231,17 @@ class ModuleOrchestrator {
       context.moduleData.hardware = {
         devices: hwStatus.deviceCount,
         online: hwStatus.onlineDevices
+      };
+    } catch (e) {}
+
+    try {
+      const bridgeStatus = quantumBridge.getStatus();
+      context.moduleData.nexus = {
+        available: bridgeStatus.available,
+        active: bridgeStatus.nexusActive,
+        version: '2.0.0',
+        intelligence_layer: 'quantum_nexus_v2',
+        operational: bridgeStatus.nexusActive && bridgeStatus.available
       };
     } catch (e) {}
 

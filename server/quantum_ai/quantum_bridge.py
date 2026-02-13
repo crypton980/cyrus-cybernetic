@@ -95,16 +95,60 @@ class QuantumIntelligenceEngine:
         if query_type == 'mathematical':
             result['enhancements']['mathematical_context'] = self._get_mathematical_context(message)
         
+        nexus_insights = self._get_nexus_insights(message, query_type, context)
+        if nexus_insights:
+            result['nexus_intelligence'] = nexus_insights
+            if nexus_insights.get('processing_boost'):
+                confidence = result['enhancements'].get('confidence_metrics', {})
+                confidence['nexus_enhanced'] = True
+                confidence['nexus_processing_status'] = nexus_insights['status']
+                result['enhancements']['confidence_metrics'] = confidence
+        
         processing_time = (datetime.now() - analysis_start).total_seconds()
         result['processing_time_seconds'] = processing_time
         
         self.processing_history.append({
             'timestamp': analysis_start.isoformat(),
             'query_type': query_type,
-            'processing_time': processing_time
+            'processing_time': processing_time,
+            'nexus_active': nexus_insights is not None
         })
         
         return result
+    
+    def _get_nexus_insights(self, message: str, query_type: str, context: Optional[Dict] = None) -> Optional[Dict]:
+        """Process query through Quantum Intelligence Nexus for enhanced intelligence."""
+        if not self.nexus:
+            return None
+        
+        try:
+            nexus_result = self.nexus.process_query(message, enable_quantum=True)
+            introspection = self.nexus.introspect()
+            
+            insights = {
+                'status': nexus_result.get('status', 'unknown'),
+                'machine_name': introspection.get('machine_name', 'CYRUS_Nexus'),
+                'version': introspection.get('version', '2.0.0'),
+                'nexus_active': introspection.get('status') == 'ACTIVE',
+                'operations_count': introspection.get('operations', 0),
+                'processing_boost': True,
+                'query_processed': True,
+                'intelligence_layer': 'quantum_nexus_v2',
+                'enhancement_signals': {
+                    'query_type': query_type,
+                    'quantum_processing': True,
+                    'nexus_coherence': 'stable',
+                    'parallel_processing': True,
+                }
+            }
+            
+            if query_type in ['analytical', 'research', 'data', 'mathematical', 'technical']:
+                insights['enhancement_signals']['deep_analysis'] = True
+                insights['enhancement_signals']['precision_mode'] = True
+            
+            return insights
+        except Exception as e:
+            return {'status': 'error', 'processing_boost': False, 'error': str(e)}
     
     def _classify_query(self, message: str) -> str:
         """Classify the type of query for optimal processing."""

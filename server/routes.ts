@@ -826,6 +826,7 @@ Format your response in a clear, structured manner.`
       });
       
       // Merge orchestrator context with existing module context and quantum enhancement
+      const nexusIntel = quantumEnhancement?.nexus_intelligence;
       const enhancedModuleContext = {
         ...moduleContext,
         orchestrator: orchestratorContext,
@@ -836,6 +837,7 @@ Format your response in a clear, structured manner.`
         quantum: orchestratorContext.moduleData.quantum,
         cognitive: orchestratorContext.moduleData.cognitive,
         hardware: orchestratorContext.moduleData.hardware,
+        nexus: orchestratorContext.moduleData.nexus,
         quantumIntelligence: quantumEnhancement ? {
           active: true,
           queryType: quantumEnhancement.query_classification,
@@ -843,7 +845,12 @@ Format your response in a clear, structured manner.`
           styleGuidelines: quantumEnhancement.enhancements.writing_style?.style_guidelines,
           responseStructure: quantumEnhancement.enhancements.response_structure,
           analyticalFramework: quantumEnhancement.enhancements.analytical_framework,
-          confidenceMetrics: quantumEnhancement.enhancements.confidence_metrics
+          confidenceMetrics: quantumEnhancement.enhancements.confidence_metrics,
+          nexusEnhanced: nexusIntel?.processing_boost || false,
+          nexusIntelligenceLayer: nexusIntel?.intelligence_layer,
+          nexusCoherence: nexusIntel?.enhancement_signals?.nexus_coherence,
+          deepAnalysis: nexusIntel?.enhancement_signals?.deep_analysis || false,
+          precisionMode: nexusIntel?.enhancement_signals?.precision_mode || false
         } : null
       };
       

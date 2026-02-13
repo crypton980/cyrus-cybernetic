@@ -3,11 +3,31 @@
  * Communicates with the Python Quantum AI Core to enhance CYRUS intelligence
  */
 
+interface NexusIntelligence {
+  status: string;
+  machine_name: string;
+  version: string;
+  nexus_active: boolean;
+  operations_count: number;
+  processing_boost: boolean;
+  query_processed: boolean;
+  intelligence_layer: string;
+  enhancement_signals: {
+    query_type: string;
+    quantum_processing: boolean;
+    nexus_coherence: string;
+    parallel_processing: boolean;
+    deep_analysis?: boolean;
+    precision_mode?: boolean;
+  };
+}
+
 interface EnhancementResult {
   quantum_enhanced: boolean;
   processing_timestamp: string;
   original_query: string;
   query_classification: string;
+  nexus_intelligence?: NexusIntelligence;
   enhancements: {
     writing_style?: {
       input_style_analysis: {
@@ -35,6 +55,8 @@ interface EnhancementResult {
       query_specificity: number;
       response_confidence: number;
       recommendation: string;
+      nexus_enhanced?: boolean;
+      nexus_processing_status?: string;
     };
     analytical_framework?: {
       approach: string;
@@ -73,6 +95,8 @@ const QUANTUM_BRIDGE_URL = 'http://127.0.0.1:5001';
 class QuantumBridgeClient {
   private baseUrl: string;
   private isAvailable: boolean = false;
+  private nexusAvailable: boolean = false;
+  private nexusActive: boolean = false;
   private lastHealthCheck: number = 0;
   private healthCheckInterval: number = 30000;
 
@@ -91,13 +115,56 @@ class QuantumBridgeClient {
         method: 'GET',
         signal: AbortSignal.timeout(2000)
       });
-      this.isAvailable = response.ok;
+      if (response.ok) {
+        const data = await response.json();
+        this.isAvailable = true;
+        this.nexusAvailable = data.nexus_available || false;
+        this.nexusActive = data.nexus_active || false;
+      } else {
+        this.isAvailable = false;
+      }
       this.lastHealthCheck = now;
       return this.isAvailable;
     } catch (error) {
       this.isAvailable = false;
+      this.nexusAvailable = false;
+      this.nexusActive = false;
       this.lastHealthCheck = now;
       return false;
+    }
+  }
+
+  async getNexusStatus(): Promise<NexusIntelligence | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/status`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async queryNexus(query: string, enableQuantum: boolean = true): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, enable_quantum: enableQuantum }),
+        signal: AbortSignal.timeout(5000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch {
+      return null;
     }
   }
 
@@ -212,7 +279,21 @@ class QuantumBridgeClient {
       }
     }
     
-    // Add instruction for structured output
+    if (enhancement.nexus_intelligence?.processing_boost) {
+      parts.push(`\n[QUANTUM INTELLIGENCE NEXUS v2.0 - ACTIVE]`);
+      parts.push(`Nexus Machine: ${enhancement.nexus_intelligence.machine_name}`);
+      parts.push(`Intelligence Layer: ${enhancement.nexus_intelligence.intelligence_layer}`);
+      parts.push(`Status: ${enhancement.nexus_intelligence.nexus_active ? 'FULLY OPERATIONAL' : 'STANDBY'}`);
+      
+      if (enhancement.nexus_intelligence.enhancement_signals?.deep_analysis) {
+        parts.push(`Mode: DEEP ANALYSIS - Apply maximum precision, rigor, and comprehensive reasoning`);
+      }
+      if (enhancement.nexus_intelligence.enhancement_signals?.precision_mode) {
+        parts.push(`Precision: MAXIMUM - Provide exact data, specific metrics, and verified information`);
+      }
+      parts.push(`Quantum Processing: ${enhancement.nexus_intelligence.enhancement_signals?.quantum_processing ? 'ENGAGED' : 'STANDBY'}`);
+    }
+
     parts.push(`\nCRITICAL: You MUST use the following structure for your response. Do not include any other text outside these sections except your final natural response:
 1. ◈ QUANTUM ANALYSIS START ◈
 2. Engineering/Science Processing Pathway: (List specific algorithms used from your core: High-Dimensional, SVD, Random Walk, ML, etc.)
@@ -228,13 +309,19 @@ class QuantumBridgeClient {
   // utilizing the prompt from buildSystemPromptEnhancement.
 
 
-  getStatus(): { available: boolean; lastCheck: number } {
+  getStatus(): { available: boolean; lastCheck: number; nexusAvailable: boolean; nexusActive: boolean } {
     return {
       available: this.isAvailable,
-      lastCheck: this.lastHealthCheck
+      lastCheck: this.lastHealthCheck,
+      nexusAvailable: this.nexusAvailable,
+      nexusActive: this.nexusActive
     };
+  }
+
+  isNexusOperational(): boolean {
+    return this.isAvailable && this.nexusActive;
   }
 }
 
 export const quantumBridge = new QuantumBridgeClient();
-export type { EnhancementResult, StyleAnalysis, AdaptedStyle };
+export type { EnhancementResult, StyleAnalysis, AdaptedStyle, NexusIntelligence };
