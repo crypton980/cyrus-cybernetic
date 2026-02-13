@@ -102,7 +102,7 @@ export function initSocketSignaling(server: HttpServer) {
         callType: data.callType,
       });
 
-      socket.emit("call-ringing", { roomId, targetName: target.displayName });
+      socket.emit("call-ringing", { roomId, targetName: target.displayName, callType: data.callType });
       
       broadcastPresence(io);
     });
@@ -135,10 +135,13 @@ export function initSocketSignaling(server: HttpServer) {
 
       console.log(`[Socket.IO] Call accepted - Room: ${data.roomId} - ${caller.displayName} <-> ${user.displayName}`);
 
+      const callType = pendingCall.callType;
+      
       io.to(caller.socketId).emit("call-accepted", {
         roomId: data.roomId,
         peerName: user.displayName,
         peerId: userId,
+        callType,
       });
 
       socket.emit("call-connected", {
@@ -146,6 +149,7 @@ export function initSocketSignaling(server: HttpServer) {
         peerName: caller.displayName,
         peerId: caller.id,
         isInitiator: false,
+        callType,
       });
 
       pendingCalls.delete(data.roomId);
