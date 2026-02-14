@@ -62,9 +62,39 @@ export class SelfEvolutionEngine {
     knowledgeConsolidationInterval: 50
   };
 
+  private trainingTriggered: boolean = false;
+  private lastTrainingTime: number = 0;
+
   constructor() {
     console.log('[Self-Evolution Engine] Initializing enhanced self-improvement system');
     this.startEvolutionLoop();
+    this.triggerInitialTraining();
+  }
+
+  private async triggerInitialTraining(): Promise<void> {
+    setTimeout(async () => {
+      try {
+        if (!this.trainingTriggered) {
+          console.log('[Self-Evolution] Triggering initial capability training pipeline...');
+          const result = await quantumBridge.trainingStart({});
+          if (result && result.status === 'started') {
+            this.trainingTriggered = true;
+            this.lastTrainingTime = Date.now();
+            console.log('[Self-Evolution] Training pipeline started successfully');
+            await experienceMemory.logEvolution({
+              type: 'knowledge_integrated',
+              description: 'Initial capability training pipeline triggered - training domain classifiers, topic models, and intent recognition',
+              beforeState: { trainingTriggered: false },
+              afterState: { trainingTriggered: true, timestamp: new Date().toISOString() },
+              improvements: { trainingInitiated: 1 },
+              trigger: 'self_evolution_initial_training'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('[Self-Evolution] Initial training trigger error:', error);
+      }
+    }, 15000);
   }
 
   private startEvolutionLoop(): void {
@@ -73,6 +103,26 @@ export class SelfEvolutionEngine {
     setInterval(() => this.consolidateKnowledge(), 300000);
     
     setInterval(() => this.generateMetaInsights(), 600000);
+    
+    setInterval(() => this.checkTrainingNeeded(), 1800000);
+  }
+
+  private async checkTrainingNeeded(): Promise<void> {
+    try {
+      const timeSinceLastTraining = Date.now() - this.lastTrainingTime;
+      if (timeSinceLastTraining < 3600000) return;
+      
+      const stats = await experienceMemory.getLearningStats();
+      if (stats.totalExperiences > 0 && stats.totalExperiences % 50 === 0) {
+        console.log('[Self-Evolution] Triggering periodic retraining based on accumulated experiences');
+        const result = await quantumBridge.trainingStart({});
+        if (result && result.status === 'started') {
+          this.lastTrainingTime = Date.now();
+        }
+      }
+    } catch (error) {
+      console.error('[Self-Evolution] Training check error:', error);
+    }
   }
 
   private async runEvolutionCycle(): Promise<void> {

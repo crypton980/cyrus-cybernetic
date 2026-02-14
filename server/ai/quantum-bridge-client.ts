@@ -597,6 +597,90 @@ class QuantumBridgeClient {
     } catch { return null; }
   }
 
+  async trainingStart(config: {n_topics?: number; similarity_threshold?: number} = {}): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/training/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async trainingStop(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/training/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async trainingStatus(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/training/status`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async trainingModels(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/training/models`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async trainingClassify(query: string): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/training/classify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+        signal: AbortSignal.timeout(5000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async trainingHistory(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/training/history`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
   getStatus(): { available: boolean; lastCheck: number; nexusAvailable: boolean; nexusActive: boolean } {
     return {
       available: this.isAvailable,

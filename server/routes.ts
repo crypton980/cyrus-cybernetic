@@ -907,6 +907,22 @@ Format your response in a clear, structured manner.`
         console.error('[Visual Engine] Detection error:', visualError);
       }
 
+      let trainingClassification: Record<string, any> | null = null;
+      try {
+        const classResult = await quantumBridge.trainingClassify(message);
+        if (classResult && classResult.intent) {
+          trainingClassification = {
+            intent: classResult.intent,
+            domain: classResult.domain,
+            intentConfidence: classResult.intent_confidence,
+            domainConfidence: classResult.domain_confidence,
+            semanticMatches: classResult.semantic_matches?.slice(0, 3) || []
+          };
+        }
+      } catch (classError) {
+        // Training classification is optional enhancement
+      }
+
       res.json({
         response: formattedResponse,
         confidence: result.confidence,
@@ -918,6 +934,7 @@ Format your response in a clear, structured manner.`
         neuralPathsActivated: result.neuralPathsActivated,
         agiReasoning: result.agiReasoning,
         visual: visualData,
+        trainingIntelligence: trainingClassification,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -3643,6 +3660,65 @@ Return ONLY valid JSON.`
     try {
       const result = await quantumBridge.visualTopics();
       res.json(result || { error: "Visual engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/training/start", async (req, res) => {
+    try {
+      const config = req.body || {};
+      const result = await quantumBridge.trainingStart(config);
+      res.json(result || { error: "Training pipeline not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/training/stop", async (_req, res) => {
+    try {
+      const result = await quantumBridge.trainingStop();
+      res.json(result || { error: "Training pipeline not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/training/status", async (_req, res) => {
+    try {
+      const result = await quantumBridge.trainingStatus();
+      res.json(result || { error: "Training pipeline not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/training/models", async (_req, res) => {
+    try {
+      const result = await quantumBridge.trainingModels();
+      res.json(result || { error: "Training pipeline not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/training/classify", async (req, res) => {
+    try {
+      const { query } = req.body;
+      if (!query) {
+        return res.status(400).json({ error: "query is required" });
+      }
+      const result = await quantumBridge.trainingClassify(query);
+      res.json(result || { error: "Training pipeline not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/training/history", async (_req, res) => {
+    try {
+      const result = await quantumBridge.trainingHistory();
+      res.json(result || { error: "Training pipeline not available" });
     } catch (e) {
       res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
     }

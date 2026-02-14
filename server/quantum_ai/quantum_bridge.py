@@ -40,6 +40,12 @@ try:
 except ImportError:
     VISUAL_ENGINE_AVAILABLE = False
 
+try:
+    from training_pipeline import training_pipeline
+    TRAINING_AVAILABLE = True
+except ImportError:
+    TRAINING_AVAILABLE = False
+
 
 class QuantumIntelligenceEngine:
     """
@@ -413,6 +419,8 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 'nexus_active': engine.nexus is not None,
                 'visual_engine_available': VISUAL_ENGINE_AVAILABLE,
                 'visual_engine_active': engine.visual_engine is not None,
+                'training_available': TRAINING_AVAILABLE,
+                'training_active': training_pipeline.is_training if TRAINING_AVAILABLE else False,
                 'timestamp': datetime.now().isoformat()
             })
         elif self.path == '/stats':
@@ -452,6 +460,21 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, engine.visual_engine.get_available_topics())
             else:
                 self._send_response(503, {'error': 'Visual engine not available'})
+        elif self.path == '/training/status':
+            if TRAINING_AVAILABLE:
+                self._send_response(200, training_pipeline.get_status())
+            else:
+                self._send_response(503, {'error': 'Training pipeline not available'})
+        elif self.path == '/training/models':
+            if TRAINING_AVAILABLE:
+                self._send_response(200, training_pipeline.get_model_info())
+            else:
+                self._send_response(503, {'error': 'Training pipeline not available'})
+        elif self.path == '/training/history':
+            if TRAINING_AVAILABLE:
+                self._send_response(200, {'history': training_pipeline.get_training_history()})
+            else:
+                self._send_response(503, {'error': 'Training pipeline not available'})
         else:
             self._send_response(404, {'error': 'Not found'})
     
@@ -639,6 +662,29 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, result)
             else:
                 self._send_response(503, {'error': 'Visual engine not available'})
+        
+        elif self.path == '/training/start':
+            if TRAINING_AVAILABLE:
+                config = data or {}
+                result = training_pipeline.start_training(config)
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Training pipeline not available'})
+        
+        elif self.path == '/training/stop':
+            if TRAINING_AVAILABLE:
+                result = training_pipeline.stop_training()
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Training pipeline not available'})
+        
+        elif self.path == '/training/classify':
+            if TRAINING_AVAILABLE:
+                query = data.get('query', '')
+                result = training_pipeline.classify_query(query)
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Training pipeline not available'})
         
         else:
             self._send_response(404, {'error': 'Endpoint not found'})
