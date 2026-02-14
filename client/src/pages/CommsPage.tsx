@@ -96,27 +96,36 @@ export function CommsPage() {
     incomingCall,
     activeCall: presenceActiveCall,
     notifications,
+    localStream: presenceLocalStream,
+    remoteStream: presenceRemoteStream,
+    mediaControls: presenceMediaControls,
+    callDuration,
     callUser,
     acceptCall,
     declineCall,
     endCall: presenceEndCall,
+    toggleMute: presenceToggleMute,
+    toggleVideo: presenceToggleVideo,
     clearNotification,
   } = usePresence();
 
-  useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
+  const effectiveLocalStream = presenceLocalStream || localStream;
+  const effectiveRemoteStream = presenceRemoteStream || remoteStream;
 
   useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
+    if (localVideoRef.current && effectiveLocalStream) {
+      localVideoRef.current.srcObject = effectiveLocalStream;
     }
-    if (remoteAudioRef.current && remoteStream) {
-      remoteAudioRef.current.srcObject = remoteStream;
+  }, [effectiveLocalStream]);
+
+  useEffect(() => {
+    if (remoteVideoRef.current && effectiveRemoteStream) {
+      remoteVideoRef.current.srcObject = effectiveRemoteStream;
     }
-  }, [remoteStream]);
+    if (remoteAudioRef.current && effectiveRemoteStream) {
+      remoteAudioRef.current.srcObject = effectiveRemoteStream;
+    }
+  }, [effectiveRemoteStream]);
 
   useEffect(() => {
     const savedName = localStorage.getItem("cyrus-display-name") || "CYRUS User";
@@ -321,25 +330,83 @@ export function CommsPage() {
       {presenceActiveCall && presenceActiveCall.status === "connected" && (
         <div
           className="fixed inset-0 flex items-center justify-center"
-          style={{ zIndex: 99997, backgroundColor: 'rgba(0,0,0,0.85)' }}
+          style={{ zIndex: 99997, backgroundColor: 'rgba(0,0,0,0.92)' }}
         >
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 max-w-md w-[90%] text-center border border-green-500/30 shadow-2xl">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Phone className="w-10 h-10 text-white" />
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-lg w-[95%] text-center border border-green-500/30 shadow-2xl">
+            {presenceActiveCall.callType === "video" ? (
+              <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden mb-4">
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="absolute bottom-3 right-3 w-28 h-20 object-cover rounded-lg border-2 border-green-500/50 shadow-lg"
+                />
+                <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span className="text-xs text-green-400 font-mono">
+                    {Math.floor(callDuration / 60).toString().padStart(2, '0')}:{(callDuration % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                  <span className="text-xs text-white font-medium">{presenceActiveCall.peerName}</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-1">Connected</h3>
+                <p className="text-green-400 text-lg mb-2">{presenceActiveCall.peerName}</p>
+                <div className="flex items-center justify-center gap-2 text-green-400 text-sm mb-6">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span className="font-mono">
+                    {Math.floor(callDuration / 60).toString().padStart(2, '0')}:{(callDuration % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+                <audio ref={remoteAudioRef} autoPlay />
+              </>
+            )}
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <button
+                type="button"
+                onClick={() => presenceToggleMute()}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                  presenceMediaControls.isMuted
+                    ? 'bg-red-500/30 border-2 border-red-500/50 text-red-400'
+                    : 'bg-gray-700/50 border-2 border-gray-600/50 text-white hover:bg-gray-600/50'
+                }`}
+              >
+                {presenceMediaControls.isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+              </button>
+              {presenceActiveCall.callType === "video" && (
+                <button
+                  type="button"
+                  onClick={() => presenceToggleVideo()}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                    !presenceMediaControls.isVideoEnabled
+                      ? 'bg-red-500/30 border-2 border-red-500/50 text-red-400'
+                      : 'bg-gray-700/50 border-2 border-gray-600/50 text-white hover:bg-gray-600/50'
+                  }`}
+                >
+                  {presenceMediaControls.isVideoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => presenceEndCall()}
+                className="w-14 h-14 rounded-full bg-gradient-to-br from-red-600 to-red-700 border-2 border-white/30 flex items-center justify-center shadow-xl shadow-red-500/40 hover:from-red-500 hover:to-red-600 active:scale-95 transition-all cursor-pointer"
+              >
+                <PhoneOff className="w-6 h-6 text-white" />
+              </button>
             </div>
-            <h3 className="text-xl font-bold text-white mb-1">Connected</h3>
-            <p className="text-green-400 text-lg mb-6">{presenceActiveCall.peerName}</p>
-            <div className="flex items-center justify-center gap-2 text-green-400 text-sm mb-8">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              Call in progress
-            </div>
-            <button
-              type="button"
-              onClick={() => presenceEndCall()}
-              className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-700 border-2 border-white/30 flex items-center justify-center mx-auto shadow-xl shadow-red-500/40 hover:from-red-500 hover:to-red-600 active:scale-95 transition-all cursor-pointer"
-            >
-              <PhoneOff className="w-7 h-7 text-white" />
-            </button>
           </div>
         </div>
       )}

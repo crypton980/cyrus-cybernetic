@@ -174,18 +174,18 @@ export function initSocketSignaling(server: HttpServer) {
       }
     });
 
-    socket.on("webrtc-offer", (data: { roomId: string; offer: RTCSessionDescriptionInit }) => {
+    socket.on("webrtc-offer", (data: { roomId: string; offer: any }) => {
       console.log(`[Socket.IO] WebRTC offer in room ${data.roomId}`);
-      socket.to(data.roomId).emit("webrtc-offer", { offer: data.offer });
+      socket.to(data.roomId).emit("webrtc-offer", { offer: data.offer, roomId: data.roomId });
     });
 
-    socket.on("webrtc-answer", (data: { roomId: string; answer: RTCSessionDescriptionInit }) => {
+    socket.on("webrtc-answer", (data: { roomId: string; answer: any }) => {
       console.log(`[Socket.IO] WebRTC answer in room ${data.roomId}`);
-      socket.to(data.roomId).emit("webrtc-answer", { answer: data.answer });
+      socket.to(data.roomId).emit("webrtc-answer", { answer: data.answer, roomId: data.roomId });
     });
 
-    socket.on("webrtc-ice-candidate", (data: { roomId: string; candidate: RTCIceCandidateInit }) => {
-      socket.to(data.roomId).emit("webrtc-ice-candidate", { candidate: data.candidate });
+    socket.on("webrtc-ice-candidate", (data: { roomId: string; candidate: any }) => {
+      socket.to(data.roomId).emit("webrtc-ice-candidate", { candidate: data.candidate, roomId: data.roomId });
     });
 
     socket.on("end-call", (data: { roomId: string }) => {

@@ -1,5 +1,13 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from "react";
 import { io, Socket } from "socket.io-client";
+import {
+  createPeerConnectionConfig,
+  getOptimalVideoConstraints,
+  getAudioConstraints,
+  getCallQualityMetrics,
+  AudioProcessor,
+  CallQualityMetrics,
+} from "../lib/webrtc-config";
 
 export interface OnlineUser {
   id: string;
@@ -32,6 +40,11 @@ export interface ActiveCallState {
   status: "ringing" | "connected" | "ended";
 }
 
+export interface MediaCallControls {
+  isMuted: boolean;
+  isVideoEnabled: boolean;
+}
+
 interface PresenceContextType {
   isConnected: boolean;
   myUserId: string | null;
@@ -39,12 +52,18 @@ interface PresenceContextType {
   incomingCall: IncomingCall | null;
   activeCall: ActiveCallState | null;
   notifications: CallNotification[];
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+  mediaControls: MediaCallControls;
+  callDuration: number;
   connectPresence: (displayName: string) => void;
   disconnectPresence: () => void;
   callUser: (targetUserId: string, targetName: string, type: "audio" | "video") => void;
   acceptCall: () => void;
   declineCall: () => void;
   endCall: () => void;
+  toggleMute: () => void;
+  toggleVideo: () => void;
   sendMessage: (targetUserId: string, message: string) => void;
   clearNotification: (id: string) => void;
   wsRef: React.MutableRefObject<Socket | null>;
@@ -71,10 +90,19 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
   const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null);
   const [notifications, setNotifications] = useState<CallNotification[]>([]);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [mediaControls, setMediaControls] = useState<MediaCallControls>({ isMuted: false, isVideoEnabled: true });
+  const [callDuration, setCallDuration] = useState(0);
   const socketRef = useRef<Socket | null>(null);
   const currentUserIdRef = useRef<string | null>(null);
   const incomingCallRef = useRef<IncomingCall | null>(null);
   const activeCallRef = useRef<ActiveCallState | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const pendingCandidatesRef = useRef<RTCIceCandidate[]>([]);
+  const callTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const callTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     incomingCallRef.current = incomingCall;
@@ -100,6 +128,153 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
   const clearNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
+
+  const cleanupMedia = useCallback(() => {
+    if (callTimerRef.current) {
+      clearInterval(callTimerRef.current);
+      callTimerRef.current = null;
+    }
+    if (callTimeoutRef.current) {
+      clearTimeout(callTimeoutRef.current);
+      callTimeoutRef.current = null;
+    }
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => t.stop());
+      localStreamRef.current = null;
+    }
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.onicecandidate = null;
+      peerConnectionRef.current.oniceconnectionstatechange = null;
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    if (socketRef.current) {
+      socketRef.current.off('webrtc-offer');
+      socketRef.current.off('webrtc-answer');
+      socketRef.current.off('webrtc-ice-candidate');
+    }
+    pendingCandidatesRef.current = [];
+    setLocalStream(null);
+    setRemoteStream(null);
+    setCallDuration(0);
+    setMediaControls({ isMuted: false, isVideoEnabled: true });
+  }, []);
+
+  const startCallTimer = useCallback(() => {
+    setCallDuration(0);
+    if (callTimerRef.current) clearInterval(callTimerRef.current);
+    callTimerRef.current = setInterval(() => {
+      setCallDuration(prev => prev + 1);
+    }, 1000);
+  }, []);
+
+  const setupWebRTCMedia = useCallback(async (
+    roomId: string,
+    callType: "audio" | "video",
+    isInitiator: boolean,
+    socket: Socket
+  ) => {
+    try {
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.ontrack = null;
+        peerConnectionRef.current.onicecandidate = null;
+        peerConnectionRef.current.oniceconnectionstatechange = null;
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(t => t.stop());
+        localStreamRef.current = null;
+      }
+      socket.off('webrtc-offer');
+      socket.off('webrtc-answer');
+      socket.off('webrtc-ice-candidate');
+      pendingCandidatesRef.current = [];
+
+      const videoConstraints = callType === "video" ? getOptimalVideoConstraints() : false;
+      const audioConstraints = getAudioConstraints();
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: videoConstraints,
+        audio: audioConstraints,
+      });
+
+      localStreamRef.current = stream;
+      setLocalStream(stream);
+
+      const pc = new RTCPeerConnection(createPeerConnectionConfig());
+      peerConnectionRef.current = pc;
+
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+      pc.ontrack = (event) => {
+        console.log("[WebRTC-Presence] Remote track received:", event.track.kind);
+        setRemoteStream(event.streams[0]);
+        startCallTimer();
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate && socket.connected) {
+          socket.emit('webrtc-ice-candidate', { roomId, candidate: event.candidate });
+        }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log("[WebRTC-Presence] ICE state:", pc.iceConnectionState);
+        if (pc.iceConnectionState === "failed") {
+          addNotification("error", "Call connection failed");
+        }
+      };
+
+      socket.on('webrtc-offer', async (data: { offer: any; roomId: string }) => {
+        if (data.roomId !== roomId || !peerConnectionRef.current) return;
+        console.log("[WebRTC-Presence] Received offer");
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
+        for (const candidate of pendingCandidatesRef.current) {
+          await peerConnectionRef.current.addIceCandidate(candidate);
+        }
+        pendingCandidatesRef.current = [];
+        const answer = await peerConnectionRef.current.createAnswer();
+        await peerConnectionRef.current.setLocalDescription(answer);
+        socket.emit('webrtc-answer', { roomId, answer });
+      });
+
+      socket.on('webrtc-answer', async (data: { answer: any; roomId: string }) => {
+        if (data.roomId !== roomId || !peerConnectionRef.current) return;
+        console.log("[WebRTC-Presence] Received answer");
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+        for (const candidate of pendingCandidatesRef.current) {
+          await peerConnectionRef.current.addIceCandidate(candidate);
+        }
+        pendingCandidatesRef.current = [];
+      });
+
+      socket.on('webrtc-ice-candidate', async (data: { candidate: any; roomId: string }) => {
+        if (data.roomId !== roomId || !peerConnectionRef.current) return;
+        if (peerConnectionRef.current.remoteDescription) {
+          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } else {
+          pendingCandidatesRef.current.push(new RTCIceCandidate(data.candidate));
+        }
+      });
+
+      if (isInitiator) {
+        console.log("[WebRTC-Presence] Creating offer as initiator...");
+        const offer = await pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: callType === "video",
+        });
+        await pc.setLocalDescription(offer);
+        socket.emit('webrtc-offer', { roomId, offer });
+      }
+
+      console.log(`[WebRTC-Presence] Media setup complete - initiator: ${isInitiator}, type: ${callType}`);
+    } catch (err) {
+      console.error("[WebRTC-Presence] Media setup failed:", err);
+      addNotification("error", "Failed to access camera/microphone");
+    }
+  }, [addNotification, startCallTimer]);
 
   const connectPresence = useCallback((displayName: string = "User") => {
     console.log("[Presence] connectPresence called, displayName:", displayName);
@@ -170,48 +345,70 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
         status: "ringing",
       });
       addNotification("info", `Calling ${data.targetName}...`);
+      
+      if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
+      callTimeoutRef.current = setTimeout(() => {
+        const currentCall = activeCallRef.current;
+        if (currentCall && currentCall.status === "ringing") {
+          console.log("[Presence] Call timeout - no answer after 30s");
+          socket.emit('end-call', { roomId: data.roomId });
+          setActiveCall(null);
+          activeCallRef.current = null;
+          cleanupMedia();
+          addNotification("warning", `No answer from ${data.targetName}`);
+        }
+      }, 30000);
     });
 
     socket.on('call-accepted', (data: { roomId: string; peerName: string; peerId: string; callType?: "audio" | "video" }) => {
       console.log("[Presence] Call accepted by:", data.peerName, "type:", data.callType);
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current);
+        callTimeoutRef.current = null;
+      }
+      const callType = data.callType || activeCallRef.current?.callType || "audio";
       setActiveCall(prev => prev ? {
         ...prev,
         peerId: data.peerId,
         peerName: data.peerName,
-        callType: data.callType || prev.callType,
+        callType,
         status: "connected",
       } : {
         roomId: data.roomId,
         peerName: data.peerName,
         peerId: data.peerId,
-        callType: data.callType || "audio",
+        callType,
         isInitiator: true,
         status: "connected",
       });
       setIncomingCall(null);
       incomingCallRef.current = null;
       addNotification("success", `Connected to ${data.peerName}`);
+      setupWebRTCMedia(data.roomId, callType, true, socket);
     });
 
     socket.on('call-connected', (data: { roomId: string; peerName: string; peerId: string; isInitiator?: boolean; callType?: "audio" | "video" }) => {
       console.log("[Presence] Call connected:", data.peerName, "type:", data.callType);
+      const callType = data.callType || "audio";
       setActiveCall({
         roomId: data.roomId,
         peerName: data.peerName,
         peerId: data.peerId,
-        callType: data.callType || "audio",
+        callType,
         isInitiator: data.isInitiator || false,
         status: "connected",
       });
       setIncomingCall(null);
       incomingCallRef.current = null;
       addNotification("success", `Connected to ${data.peerName}`);
+      setupWebRTCMedia(data.roomId, callType, false, socket);
     });
 
     socket.on('call-declined', (data: { roomId: string }) => {
       console.log("[Presence] Call was declined");
       setActiveCall(null);
       activeCallRef.current = null;
+      cleanupMedia();
       addNotification("warning", "Call was declined");
     });
 
@@ -219,6 +416,9 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
       console.log("[Presence] Call ended:", data.reason || "normal");
       setActiveCall(null);
       activeCallRef.current = null;
+      setIncomingCall(null);
+      incomingCallRef.current = null;
+      cleanupMedia();
       addNotification("info", `Call ended${data.reason ? `: ${data.reason}` : ""}`);
     });
 
@@ -226,6 +426,9 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
       console.log("[Presence] Call failed:", data.reason);
       setActiveCall(null);
       activeCallRef.current = null;
+      setIncomingCall(null);
+      incomingCallRef.current = null;
+      cleanupMedia();
       addNotification("error", `Call failed: ${data.reason}`);
     });
 
@@ -248,9 +451,10 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
       console.error("[Presence] Connection error:", error.message);
     });
 
-  }, [addNotification]);
+  }, [addNotification, setupWebRTCMedia, cleanupMedia]);
 
   const disconnectPresence = useCallback(() => {
+    cleanupMedia();
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
@@ -263,7 +467,7 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
     currentUserIdRef.current = null;
     incomingCallRef.current = null;
     activeCallRef.current = null;
-  }, []);
+  }, [cleanupMedia]);
 
   const callUser = useCallback((targetUserId: string, targetName: string, type: "audio" | "video") => {
     console.log(`[Presence] Initiating ${type} call to ${targetName} (${targetUserId})`);
@@ -329,10 +533,27 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
       socketRef.current.emit('end-call', { roomId: call.roomId });
     }
 
+    cleanupMedia();
     setActiveCall(null);
     activeCallRef.current = null;
     addNotification("info", "Call ended");
-  }, [addNotification]);
+  }, [addNotification, cleanupMedia]);
+
+  const toggleMute = useCallback(() => {
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      audioTracks.forEach(track => { track.enabled = !track.enabled; });
+      setMediaControls(prev => ({ ...prev, isMuted: !prev.isMuted }));
+    }
+  }, []);
+
+  const toggleVideo = useCallback(() => {
+    if (localStreamRef.current) {
+      const videoTracks = localStreamRef.current.getVideoTracks();
+      videoTracks.forEach(track => { track.enabled = !track.enabled; });
+      setMediaControls(prev => ({ ...prev, isVideoEnabled: !prev.isVideoEnabled }));
+    }
+  }, []);
 
   const sendMessage = useCallback((targetUserId: string, message: string) => {
     if (!socketRef.current?.connected) {
@@ -351,11 +572,12 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     return () => {
+      cleanupMedia();
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
     };
-  }, []);
+  }, [cleanupMedia]);
 
   return (
     <PresenceContext.Provider
@@ -366,12 +588,18 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
         incomingCall,
         activeCall,
         notifications,
+        localStream,
+        remoteStream,
+        mediaControls,
+        callDuration,
         connectPresence,
         disconnectPresence,
         callUser,
         acceptCall,
         declineCall,
         endCall,
+        toggleMute,
+        toggleVideo,
         sendMessage,
         clearNotification,
         wsRef: socketRef as any,
