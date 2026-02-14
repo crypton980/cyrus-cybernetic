@@ -393,7 +393,7 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
             self._send_response(200, {
                 'status': 'healthy',
                 'service': 'quantum-ai-bridge',
-                'version': '1.0.0',
+                'version': '2.0.0',
                 'nexus_available': NEXUS_AVAILABLE,
                 'nexus_active': engine.nexus is not None,
                 'timestamp': datetime.now().isoformat()
@@ -405,6 +405,26 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, engine.nexus.introspect())
             else:
                 self._send_response(200, {'status': 'unavailable', 'nexus_available': NEXUS_AVAILABLE})
+        elif self.path == '/nexus/tools':
+            if engine.nexus:
+                self._send_response(200, {'tools': engine.nexus.list_tools()})
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        elif self.path == '/nexus/model-info':
+            if engine.nexus:
+                self._send_response(200, engine.nexus.execute_tool('model_info'))
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        elif self.path == '/nexus/system-status':
+            if engine.nexus:
+                self._send_response(200, engine.nexus.execute_tool('system_status'))
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        elif self.path == '/nexus/memory':
+            if engine.nexus:
+                self._send_response(200, engine.nexus.execute_tool('memory_status'))
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
         else:
             self._send_response(404, {'error': 'Not found'})
     
@@ -450,6 +470,66 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, engine.nexus.introspect())
             else:
                 self._send_response(503, {'error': 'Quantum Intelligence Nexus not available'})
+        
+        elif self.path == '/nexus/execute-tool':
+            if engine.nexus:
+                tool_name = data.get('tool', '')
+                params = data.get('params', {})
+                result = engine.nexus.execute_tool(tool_name, params)
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/predict':
+            if engine.nexus:
+                features = data.get('features', [0.5] * 10)
+                result = engine.nexus.execute_tool('predict', {'features': features})
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/batch-predict':
+            if engine.nexus:
+                features = data.get('features', [[0.5] * 10])
+                result = engine.nexus.execute_tool('batch_predict', {'features': features})
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/explain':
+            if engine.nexus:
+                features = data.get('features', [0.5] * 10)
+                method = data.get('method', 'feature_importance')
+                num_features = data.get('num_features', 10)
+                result = engine.nexus.execute_tool('explain', {
+                    'features': features, 'method': method, 'num_features': num_features
+                })
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/eda':
+            if engine.nexus:
+                csv_path = data.get('csv_path')
+                data_json = data.get('data')
+                target_col = data.get('target_col')
+                result = engine.nexus.execute_tool('eda', {
+                    'csv_path': csv_path, 'data_json': data_json, 'target_col': target_col
+                })
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/preprocess':
+            if engine.nexus:
+                csv_path = data.get('csv_path')
+                operations = data.get('operations', ['impute', 'scale'])
+                result = engine.nexus.execute_tool('preprocess', {
+                    'csv_path': csv_path, 'operations': operations
+                })
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
         
         else:
             self._send_response(404, {'error': 'Endpoint not found'})

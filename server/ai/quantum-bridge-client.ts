@@ -309,6 +309,148 @@ class QuantumBridgeClient {
   // utilizing the prompt from buildSystemPromptEnhancement.
 
 
+  async nexusPredict(features: number[]): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features }),
+        signal: AbortSignal.timeout(5000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusBatchPredict(features: number[][]): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/batch-predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features }),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusExplain(features: number[], method: string = 'feature_importance', numFeatures: number = 10): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/explain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features, method, num_features: numFeatures }),
+        signal: AbortSignal.timeout(5000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusEDA(csvPath?: string, data?: Record<string, any>[], targetCol?: string): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/eda`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv_path: csvPath, data, target_col: targetCol }),
+        signal: AbortSignal.timeout(15000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusPreprocess(csvPath?: string, operations: string[] = ['impute', 'scale']): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/preprocess`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv_path: csvPath, operations }),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusExecuteTool(toolName: string, params: Record<string, any> = {}): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/execute-tool`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool: toolName, params }),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusListTools(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/tools`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusModelInfo(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/model-info`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusSystemStatus(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/system-status`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusMemoryStatus(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/memory`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
   getStatus(): { available: boolean; lastCheck: number; nexusAvailable: boolean; nexusActive: boolean } {
     return {
       available: this.isAvailable,

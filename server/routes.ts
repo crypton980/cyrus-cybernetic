@@ -3408,5 +3408,113 @@ Return ONLY valid JSON.`
     }
   });
 
+  app.get("/api/nexus/tools", async (_req, res) => {
+    try {
+      const result = await quantumBridge.nexusListTools();
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/nexus/status", async (_req, res) => {
+    try {
+      const result = await quantumBridge.nexusSystemStatus();
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/nexus/model-info", async (_req, res) => {
+    try {
+      const result = await quantumBridge.nexusModelInfo();
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/nexus/memory", async (_req, res) => {
+    try {
+      const result = await quantumBridge.nexusMemoryStatus();
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/predict", async (req, res) => {
+    try {
+      const { features } = req.body;
+      if (!features || !Array.isArray(features)) {
+        return res.status(400).json({ error: "features array required" });
+      }
+      const result = await quantumBridge.nexusPredict(features);
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/batch-predict", async (req, res) => {
+    try {
+      const { features } = req.body;
+      if (!features || !Array.isArray(features)) {
+        return res.status(400).json({ error: "features array of arrays required" });
+      }
+      const result = await quantumBridge.nexusBatchPredict(features);
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/explain", async (req, res) => {
+    try {
+      const { features, method, num_features } = req.body;
+      if (!features || !Array.isArray(features)) {
+        return res.status(400).json({ error: "features array required" });
+      }
+      const result = await quantumBridge.nexusExplain(features, method, num_features);
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/eda", async (req, res) => {
+    try {
+      const { csv_path, data, target_col } = req.body;
+      const result = await quantumBridge.nexusEDA(csv_path, data, target_col);
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/preprocess", async (req, res) => {
+    try {
+      const { csv_path, operations } = req.body;
+      const result = await quantumBridge.nexusPreprocess(csv_path, operations);
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/execute-tool", async (req, res) => {
+    try {
+      const { tool, params } = req.body;
+      if (!tool) {
+        return res.status(400).json({ error: "tool name required" });
+      }
+      const result = await quantumBridge.nexusExecuteTool(tool, params || {});
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
   return httpServer;
 }
