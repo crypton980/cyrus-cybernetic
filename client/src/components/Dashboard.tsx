@@ -34,6 +34,13 @@ interface DetectedObject {
   bbox: [number, number, number, number];
 }
 
+interface VisualData {
+  topic: string;
+  category: string;
+  image: string;
+  method: string;
+}
+
 interface Message {
   id: string;
   role: "user" | "cyrus";
@@ -57,6 +64,7 @@ export function Dashboard() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [shareMenuId, setShareMenuId] = useState<string | null>(null);
   const [shareMenuContent, setShareMenuContent] = useState<string>("");
+  const [visualDataMap, setVisualDataMap] = useState<Record<string, VisualData>>({});
   const [wakeWordEnabled, setWakeWordEnabled] = useState(() => {
     const saved = localStorage.getItem("cyrus-wakeword-enabled");
     return saved !== null ? saved === "true" : false;
@@ -695,6 +703,13 @@ export function Dashboard() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations", currentUserId] });
       setInput("");
+      if (data?.visual?.image) {
+        const responseKey = data.response?.substring(0, 100) || "";
+        setVisualDataMap(prev => ({
+          ...prev,
+          [responseKey]: data.visual as VisualData
+        }));
+      }
       if (voiceEnabledRef.current && data?.response) {
         speakText(data.response);
       }
@@ -928,6 +943,20 @@ export function Dashboard() {
                         : "bg-[#2c2c2e] text-white rounded-2xl rounded-bl-md"
                     }`}>
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      {msg.role === "cyrus" && visualDataMap[msg.content?.substring(0, 100) || ""] && (
+                        <div className="mt-3 rounded-lg overflow-hidden border border-cyan-500/20">
+                          <img
+                            src={visualDataMap[msg.content?.substring(0, 100) || ""].image}
+                            alt={`Visual: ${visualDataMap[msg.content?.substring(0, 100) || ""].topic}`}
+                            className="w-full max-w-[500px] h-auto"
+                            loading="lazy"
+                          />
+                          <div className="px-2 py-1 bg-[#1a1a2e] text-[10px] text-cyan-400 flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            <span>Visual: {visualDataMap[msg.content?.substring(0, 100) || ""].topic} ({visualDataMap[msg.content?.substring(0, 100) || ""].category})</span>
+                          </div>
+                        </div>
+                      )}
                       <p className="text-[10px] mt-2 opacity-50">
                         {new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                       </p>

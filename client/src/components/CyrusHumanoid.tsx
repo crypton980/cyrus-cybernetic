@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Cpu, Send, Mic, MicOff, Volume2, X, Minimize2, Maximize2, Loader2 } from "lucide-react";
+import { Cpu, Send, Mic, MicOff, Volume2, X, Minimize2, Maximize2, Loader2, Eye } from "lucide-react";
 
 interface CyrusHumanoidProps {
   module: "vision" | "documents" | "navigation" | "communications" | "systems" | "aerospace" | "trading";
@@ -21,7 +21,7 @@ const modulePrompts: Record<string, string> = {
 
 export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: CyrusHumanoidProps) {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<{ role: "user" | "cyrus"; content: string }[]>([]);
+  const [messages, setMessages] = useState<{ role: "user" | "cyrus"; content: string; visual?: { topic: string; category: string; image: string } }[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isExpanded, setIsExpanded] = useState(!compact);
@@ -47,7 +47,8 @@ export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: 
     },
     onSuccess: (data) => {
       const cyrusResponse = data.response || "I apologize, I couldn't process that request.";
-      setMessages(prev => [...prev, { role: "cyrus", content: cyrusResponse }]);
+      const visual = data.visual?.image ? { topic: data.visual.topic, category: data.visual.category, image: data.visual.image } : undefined;
+      setMessages(prev => [...prev, { role: "cyrus", content: cyrusResponse, visual }]);
       onAnalysis?.(cyrusResponse);
       
       if (!compact) {
@@ -170,6 +171,15 @@ export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: 
                   : "bg-[#3a3a3c] text-white"
               }`}>
                 {msg.content}
+                {msg.visual?.image && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-cyan-500/20">
+                    <img src={msg.visual.image} alt={`Visual: ${msg.visual.topic}`} className="w-full h-auto" loading="lazy" />
+                    <div className="px-2 py-1 bg-[#1a1a2e] text-[10px] text-cyan-400 flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      <span>{msg.visual.topic} ({msg.visual.category})</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))

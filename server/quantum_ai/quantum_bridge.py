@@ -34,6 +34,12 @@ try:
 except ImportError:
     NEXUS_AVAILABLE = False
 
+try:
+    from quantum_visual import MultiModalResponseGenerator
+    VISUAL_ENGINE_AVAILABLE = True
+except ImportError:
+    VISUAL_ENGINE_AVAILABLE = False
+
 
 class QuantumIntelligenceEngine:
     """
@@ -60,6 +66,15 @@ class QuantumIntelligenceEngine:
             except Exception as e:
                 print(f"[Quantum Nexus] Init warning: {e}")
                 self.nexus = None
+
+        self.visual_engine = None
+        if VISUAL_ENGINE_AVAILABLE:
+            try:
+                self.visual_engine = MultiModalResponseGenerator()
+                print("[Visual Engine] Multi-modal visual system initialized")
+            except Exception as e:
+                print(f"[Visual Engine] Init warning: {e}")
+                self.visual_engine = None
         
     def enhance_response(self, message: str, context: Optional[Dict] = None) -> Dict:
         """
@@ -393,9 +408,11 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
             self._send_response(200, {
                 'status': 'healthy',
                 'service': 'quantum-ai-bridge',
-                'version': '2.0.0',
+                'version': '3.0.0',
                 'nexus_available': NEXUS_AVAILABLE,
                 'nexus_active': engine.nexus is not None,
+                'visual_engine_available': VISUAL_ENGINE_AVAILABLE,
+                'visual_engine_active': engine.visual_engine is not None,
                 'timestamp': datetime.now().isoformat()
             })
         elif self.path == '/stats':
@@ -430,6 +447,11 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, engine.nexus.execute_tool('train_status'))
             else:
                 self._send_response(503, {'error': 'Nexus not available'})
+        elif self.path == '/visual/topics':
+            if engine.visual_engine:
+                self._send_response(200, engine.visual_engine.get_available_topics())
+            else:
+                self._send_response(503, {'error': 'Visual engine not available'})
         else:
             self._send_response(404, {'error': 'Not found'})
     
@@ -593,6 +615,30 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, result)
             else:
                 self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/visual/analyze':
+            if engine.visual_engine:
+                query = data.get('query', '')
+                result = engine.visual_engine.generate_response(query)
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Visual engine not available'})
+        
+        elif self.path == '/visual/detect':
+            if engine.visual_engine:
+                query = data.get('query', '')
+                result = engine.visual_engine.detect_visual_topic(query)
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Visual engine not available'})
+        
+        elif self.path == '/visual/generate':
+            if engine.visual_engine:
+                topic = data.get('topic', '')
+                result = engine.visual_engine.generate_visual_only(topic)
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Visual engine not available'})
         
         else:
             self._send_response(404, {'error': 'Endpoint not found'})

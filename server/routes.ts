@@ -889,6 +889,24 @@ Format your response in a clear, structured manner.`
         }
       }
       
+      let visualData: Record<string, any> | null = null;
+      try {
+        const visualDetection = await quantumBridge.visualDetect(message);
+        if (visualDetection?.detected) {
+          const visualResult = await quantumBridge.visualGenerate(visualDetection.topic);
+          if (visualResult?.success && visualResult?.base64) {
+            visualData = {
+              topic: visualDetection.topic,
+              category: visualDetection.category,
+              image: visualResult.base64,
+              method: visualResult.method
+            };
+          }
+        }
+      } catch (visualError) {
+        console.error('[Visual Engine] Detection error:', visualError);
+      }
+
       res.json({
         response: formattedResponse,
         confidence: result.confidence,
@@ -899,6 +917,7 @@ Format your response in a clear, structured manner.`
         quantumResponseFormat: responseFormat,
         neuralPathsActivated: result.neuralPathsActivated,
         agiReasoning: result.agiReasoning,
+        visual: visualData,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -3576,6 +3595,54 @@ Return ONLY valid JSON.`
     try {
       const result = await quantumBridge.nexusTrainStop();
       res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/visual/analyze", async (req, res) => {
+    try {
+      const { query } = req.body;
+      if (!query) {
+        return res.status(400).json({ error: "query is required" });
+      }
+      const result = await quantumBridge.visualAnalyze(query);
+      res.json(result || { error: "Visual engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/visual/detect", async (req, res) => {
+    try {
+      const { query } = req.body;
+      if (!query) {
+        return res.status(400).json({ error: "query is required" });
+      }
+      const result = await quantumBridge.visualDetect(query);
+      res.json(result || { error: "Visual engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/visual/generate", async (req, res) => {
+    try {
+      const { topic } = req.body;
+      if (!topic) {
+        return res.status(400).json({ error: "topic is required" });
+      }
+      const result = await quantumBridge.visualGenerate(topic);
+      res.json(result || { error: "Visual engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/visual/topics", async (_req, res) => {
+    try {
+      const result = await quantumBridge.visualTopics();
+      res.json(result || { error: "Visual engine not available" });
     } catch (e) {
       res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
     }
