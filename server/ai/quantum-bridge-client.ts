@@ -451,6 +451,94 @@ class QuantumBridgeClient {
     } catch { return null; }
   }
 
+  async nexusExplainSHAP(features: number[]): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/explain-shap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features }),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusExplainLIME(features: number[], numFeatures: number = 10): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/explain-lime`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features, num_features: numFeatures }),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusFairness(yTrue: number[], yPred: number[], protectedGroup: number[]): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/fairness`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ y_true: yTrue, y_pred: yPred, protected_group: protectedGroup }),
+        signal: AbortSignal.timeout(5000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusTrainStart(params: {epochs?: number; batch_size?: number; learning_rate?: number; data_samples?: number; n_features?: number; n_classes?: number} = {}): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/train/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusTrainStatus(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/train/status`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async nexusTrainStop(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy || !this.nexusActive) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/nexus/train/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
   getStatus(): { available: boolean; lastCheck: number; nexusAvailable: boolean; nexusActive: boolean } {
     return {
       available: this.isAvailable,

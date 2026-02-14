@@ -3516,5 +3516,70 @@ Return ONLY valid JSON.`
     }
   });
 
+  app.post("/api/nexus/explain-shap", async (req, res) => {
+    try {
+      const { features } = req.body;
+      if (!features || !Array.isArray(features)) {
+        return res.status(400).json({ error: "features array required" });
+      }
+      const result = await quantumBridge.nexusExplainSHAP(features);
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/explain-lime", async (req, res) => {
+    try {
+      const { features, num_features } = req.body;
+      if (!features || !Array.isArray(features)) {
+        return res.status(400).json({ error: "features array required" });
+      }
+      const result = await quantumBridge.nexusExplainLIME(features, num_features || 10);
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/fairness", async (req, res) => {
+    try {
+      const { y_true, y_pred, protected_group } = req.body;
+      const result = await quantumBridge.nexusFairness(
+        y_true || [], y_pred || [], protected_group || []
+      );
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/train/start", async (req, res) => {
+    try {
+      const result = await quantumBridge.nexusTrainStart(req.body || {});
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/nexus/train/status", async (_req, res) => {
+    try {
+      const result = await quantumBridge.nexusTrainStatus();
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/nexus/train/stop", async (_req, res) => {
+    try {
+      const result = await quantumBridge.nexusTrainStop();
+      res.json(result || { error: "Nexus not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
   return httpServer;
 }

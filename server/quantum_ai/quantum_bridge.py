@@ -425,6 +425,11 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, engine.nexus.execute_tool('memory_status'))
             else:
                 self._send_response(503, {'error': 'Nexus not available'})
+        elif self.path == '/nexus/train/status':
+            if engine.nexus:
+                self._send_response(200, engine.nexus.execute_tool('train_status'))
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
         else:
             self._send_response(404, {'error': 'Not found'})
     
@@ -527,6 +532,64 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 result = engine.nexus.execute_tool('preprocess', {
                     'csv_path': csv_path, 'operations': operations
                 })
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/explain-shap':
+            if engine.nexus:
+                features = data.get('features', [0.5] * 10)
+                result = engine.nexus.execute_tool('explain_shap', {'features': features})
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/explain-lime':
+            if engine.nexus:
+                features = data.get('features', [0.5] * 10)
+                num_features = data.get('num_features', 10)
+                result = engine.nexus.execute_tool('explain_lime', {
+                    'features': features, 'num_features': num_features
+                })
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/fairness':
+            if engine.nexus:
+                result = engine.nexus.execute_tool('fairness', {
+                    'y_true': data.get('y_true'),
+                    'y_pred': data.get('y_pred'),
+                    'protected_group': data.get('protected_group')
+                })
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/train/start':
+            if engine.nexus:
+                result = engine.nexus.execute_tool('train_start', {
+                    'epochs': data.get('epochs', 50),
+                    'batch_size': data.get('batch_size', 32),
+                    'learning_rate': data.get('learning_rate', 0.001),
+                    'data_samples': data.get('data_samples', 500),
+                    'n_features': data.get('n_features', 10),
+                    'n_classes': data.get('n_classes', 2),
+                })
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/train/status':
+            if engine.nexus:
+                result = engine.nexus.execute_tool('train_status')
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Nexus not available'})
+        
+        elif self.path == '/nexus/train/stop':
+            if engine.nexus:
+                result = engine.nexus.execute_tool('train_stop')
                 self._send_response(200, result)
             else:
                 self._send_response(503, {'error': 'Nexus not available'})
