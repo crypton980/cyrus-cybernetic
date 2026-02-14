@@ -408,7 +408,7 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
             self._send_response(200, {
                 'status': 'healthy',
                 'service': 'quantum-ai-bridge',
-                'version': '3.0.0',
+                'version': '4.0.0',
                 'nexus_available': NEXUS_AVAILABLE,
                 'nexus_active': engine.nexus is not None,
                 'visual_engine_available': VISUAL_ENGINE_AVAILABLE,
