@@ -12,6 +12,10 @@ export interface TaskExperience {
   strategyUsed?: string;
   branchesActivated?: string[];
   learnedPatterns?: Record<string, any>;
+  nexusEnhanced?: boolean;
+  nexusIntelligenceLayer?: string;
+  nexusCoherence?: string;
+  nexusProcessingBoost?: boolean;
 }
 
 export interface LearnedPattern {
@@ -74,30 +78,93 @@ export class ExperienceMemoryEngine {
   async recordExperience(experience: TaskExperience): Promise<void> {
     const inputSignature = this.generateInputSignature(experience.input);
     
+    const enhancedPatterns = {
+      ...(experience.learnedPatterns || {}),
+      ...(experience.nexusEnhanced ? {
+        nexus_enhanced: true,
+        nexus_layer: experience.nexusIntelligenceLayer || 'quantum_nexus_v2',
+        nexus_coherence: experience.nexusCoherence || 'unknown',
+        nexus_boost: experience.nexusProcessingBoost || false
+      } : {})
+    };
+    
     try {
       await db.insert(experienceLearning).values({
         taskType: experience.taskType,
         taskDescription: experience.taskDescription,
         inputSignature,
         executionTimeMs: experience.executionTimeMs,
-        successScore: experience.successScore,
-        strategyUsed: experience.strategyUsed,
+        successScore: experience.nexusEnhanced 
+          ? Math.min(100, experience.successScore + 5)
+          : experience.successScore,
+        strategyUsed: experience.nexusEnhanced 
+          ? `${experience.strategyUsed || 'default'}_nexus_enhanced` 
+          : experience.strategyUsed,
         branchesActivated: experience.branchesActivated,
-        optimizationsApplied: [],
-        learnedPatterns: experience.learnedPatterns
+        optimizationsApplied: experience.nexusEnhanced ? ['nexus_intelligence_v2'] : [],
+        learnedPatterns: enhancedPatterns
       });
 
       await this.updatePerformanceMetrics(experience);
       await this.checkForEvolution(experience);
+      
+      if (experience.nexusEnhanced) {
+        this.trackNexusImpact(experience);
+      }
       
     } catch (error) {
       console.error('[Experience Memory] Failed to record experience:', error);
     }
   }
 
+  private async trackNexusImpact(experience: TaskExperience): Promise<void> {
+    const nexusKey = `nexus:${experience.taskType}`;
+    const cached = this.performanceCache.get(nexusKey);
+    const nonNexusKey = `${experience.taskType}:${experience.taskDescription.substring(0, 50)}`;
+    const nonNexusCached = this.performanceCache.get(nonNexusKey);
+    
+    if (cached && nonNexusCached && cached.executions >= 5) {
+      const improvement = nonNexusCached.avgTime > 0 
+        ? ((nonNexusCached.avgTime - cached.avgTime) / nonNexusCached.avgTime) * 100 
+        : 0;
+      
+      if (improvement > 5) {
+        await this.logEvolution({
+          type: 'performance_boost',
+          description: `Nexus intelligence providing ${improvement.toFixed(1)}% performance improvement in ${experience.taskType} tasks`,
+          beforeState: { avgTime: nonNexusCached.avgTime, source: 'standard' },
+          afterState: { avgTime: cached.avgTime, source: 'nexus_enhanced' },
+          improvements: { nexusImprovementPercent: improvement, taskType: experience.taskType as any },
+          trigger: 'nexus_feedback_loop'
+        });
+      }
+    }
+  }
+
   private async updatePerformanceMetrics(experience: TaskExperience): Promise<void> {
     const key = `${experience.taskType}:${experience.taskDescription.substring(0, 50)}`;
     const existing = this.performanceCache.get(key);
+    
+    if (experience.nexusEnhanced) {
+      const nexusKey = `nexus:${experience.taskType}`;
+      const nexusExisting = this.performanceCache.get(nexusKey);
+      if (nexusExisting) {
+        const newAvg = Math.round(
+          (nexusExisting.avgTime * nexusExisting.executions + experience.executionTimeMs) / (nexusExisting.executions + 1)
+        );
+        this.performanceCache.set(nexusKey, {
+          avgTime: newAvg,
+          bestTime: Math.min(nexusExisting.bestTime, experience.executionTimeMs),
+          executions: nexusExisting.executions + 1
+        });
+      } else {
+        this.performanceCache.set(nexusKey, {
+          avgTime: experience.executionTimeMs,
+          bestTime: experience.executionTimeMs,
+          executions: 1
+        });
+      }
+    }
 
     if (existing) {
       const newAvg = Math.round(

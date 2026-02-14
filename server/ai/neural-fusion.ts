@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 import { droneController } from '../modules/drone-control';
 import { adaptiveLearning } from './adaptive-learning';
 import { experienceMemory } from './experience-memory';
+import { quantumBridge } from './quantum-bridge-client';
 import { 
   vectorKnowledgeBase, 
   emotionalCognition, 
@@ -408,8 +409,13 @@ export class NeuralFusionEngine {
     this.updateEmergentPatterns(thought);
     this.strengthenActivePaths(thought.branchesUsed);
 
+    const nexusOperational = quantumBridge.isNexusOperational();
+    const nexusContext = (request.moduleContext as any)?.quantumIntelligence;
+    const nexusEnhanced = nexusOperational && (nexusContext?.nexusEnhanced || false);
+    
     const taskSuccess = response.length > 50 && result.processingTime < 30000;
-    const successScore = taskSuccess ? Math.min(100, Math.round(100 - (result.processingTime / 300))) : 40;
+    const baseScore = taskSuccess ? Math.min(100, Math.round(100 - (result.processingTime / 300))) : 40;
+    const successScore = nexusEnhanced ? Math.min(100, baseScore + 3) : baseScore;
     
     adaptiveLearning.endTaskTracking(
       taskId,
@@ -422,8 +428,32 @@ export class NeuralFusionEngine {
     adaptiveLearning.learnFromConversation(
       request.message,
       response,
-      { moduleContext: request.moduleContext }
+      { 
+        moduleContext: request.moduleContext,
+        nexusEnhanced,
+        nexusIntelligenceLayer: nexusContext?.nexusIntelligenceLayer,
+        nexusCoherence: nexusContext?.nexusCoherence
+      }
     ).catch(err => console.error('[Neural Fusion] Conversation learning error:', err));
+
+    experienceMemory.recordExperience({
+      taskType: taskType,
+      taskDescription: request.message.substring(0, 200),
+      input: request.message,
+      executionTimeMs: result.processingTime,
+      successScore,
+      strategyUsed: priorLearning.optimizedApproach || 'default',
+      branchesActivated: thought.branchesUsed,
+      learnedPatterns: {
+        confidence: thought.confidence,
+        quantumEnhanced: thought.quantumEnhanced,
+        branchCount: thought.branchesUsed.length
+      },
+      nexusEnhanced,
+      nexusIntelligenceLayer: nexusContext?.nexusIntelligenceLayer,
+      nexusCoherence: nexusContext?.nexusCoherence,
+      nexusProcessingBoost: nexusEnhanced
+    }).catch(err => console.error('[Neural Fusion] Experience recording error:', err));
 
     return result;
   }

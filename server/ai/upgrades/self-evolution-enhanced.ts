@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { experienceMemory, TaskExperience, KnowledgeConcept, EvolutionEvent } from '../experience-memory';
 import { vectorKnowledgeBase } from './vector-knowledge-base';
+import { quantumBridge } from '../quantum-bridge-client';
 import { db } from '../../db';
 import { knowledgeGraph, performanceMetrics, evolutionLog } from '../../../shared/schema';
 import { desc, sql } from 'drizzle-orm';
@@ -52,6 +53,8 @@ export class SelfEvolutionEngine {
   private synthesizedKnowledge: KnowledgeSynthesis[] = [];
   private metaInsights: MetaLearningInsight[] = [];
   
+  private nexusSuccessfulSyncs: number = 0;
+
   private evolutionThresholds = {
     minExperiencesForPattern: 5,
     minConfidenceForSynthesis: 0.7,
@@ -86,9 +89,61 @@ export class SelfEvolutionEngine {
         await this.synthesizeKnowledge();
       }
       
+      if (this.evolutionCycle % 5 === 0) {
+        await this.nexusEvolutionSync();
+      }
+      
       console.log(`[Self-Evolution] Cycle ${this.evolutionCycle} completed`);
     } catch (error) {
       console.error('[Self-Evolution] Cycle error:', error);
+    }
+  }
+
+  private async nexusEvolutionSync(): Promise<void> {
+    try {
+      if (!quantumBridge.isNexusOperational()) return;
+      
+      const stats = await experienceMemory.getLearningStats();
+      const evolutionHistory = await experienceMemory.getEvolutionHistory(10);
+      
+      const nexusQuery = `Evolution analysis: ${stats.totalExperiences} experiences, ${stats.knowledgeConcepts} concepts, ${stats.averageSuccessRate}% success rate. Recent evolution events: ${evolutionHistory.recentEvents.map(e => e.description).join('; ')}`;
+      
+      const nexusResult = await quantumBridge.queryNexus(nexusQuery, true);
+      
+      if (nexusResult && nexusResult.status === 'success') {
+        this.nexusSuccessfulSyncs++;
+        
+        const nexusEvolutionEvents = evolutionHistory.recentEvents.filter(
+          e => e.improvements && (e.improvements as any).nexusImprovementPercent
+        );
+        const nexusImpactSummary = nexusEvolutionEvents.length > 0
+          ? `${nexusEvolutionEvents.length} Nexus-driven improvements recorded`
+          : 'Nexus impact data accumulating';
+
+        const insight: MetaLearningInsight = {
+          insight: `Nexus sync #${this.nexusSuccessfulSyncs}: ${stats.totalExperiences} experiences processed, ${stats.knowledgeConcepts} concepts tracked, ${nexusImpactSummary}`,
+          category: 'strategy',
+          actionable: true,
+          suggestedAction: 'Continue Nexus-enhanced evolution cycles for improved knowledge synthesis',
+          confidence: 0.85
+        };
+        this.metaInsights.unshift(insight);
+        
+        if (this.metaInsights.length > 50) {
+          this.metaInsights = this.metaInsights.slice(0, 50);
+        }
+        
+        await experienceMemory.logEvolution({
+          type: 'strategy_improved',
+          description: `Nexus quantum intelligence synchronized with evolution engine (cycle ${this.evolutionCycle}, sync #${this.nexusSuccessfulSyncs})`,
+          beforeState: { evolutionCycle: this.evolutionCycle - 5, nexusSync: false, nexusImpactEvents: nexusEvolutionEvents.length },
+          afterState: { evolutionCycle: this.evolutionCycle, nexusSync: true, nexusQuantumActive: nexusResult.quantum_enhanced || false, totalNexusSyncs: this.nexusSuccessfulSyncs },
+          improvements: { nexusSyncCompleted: 1, evolutionCycle: this.evolutionCycle, totalNexusSyncs: this.nexusSuccessfulSyncs },
+          trigger: 'nexus_evolution_sync'
+        });
+      }
+    } catch (error) {
+      console.error('[Self-Evolution] Nexus sync error:', error);
     }
   }
 
@@ -266,13 +321,14 @@ Return only valid JSON.`
       }
 
       if (syntheses.length > 0) {
+        const nexusActive = quantumBridge.isNexusOperational();
         await experienceMemory.logEvolution({
           type: 'knowledge_integrated',
-          description: `Synthesized ${syntheses.length} new knowledge insights`,
+          description: `Synthesized ${syntheses.length} new knowledge insights${nexusActive ? ' (Nexus-enhanced)' : ''}`,
           beforeState: { conceptCount: knowledge.length },
-          afterState: { synthesizedCount: syntheses.length },
+          afterState: { synthesizedCount: syntheses.length, nexusEnhanced: nexusActive },
           improvements: { newInsights: syntheses.length },
-          trigger: 'knowledge_synthesis'
+          trigger: nexusActive ? 'nexus_knowledge_synthesis' : 'knowledge_synthesis'
         });
       }
 
@@ -416,8 +472,11 @@ Return only valid JSON.`
     knowledgeSyntheses: number;
     metaInsights: MetaLearningInsight[];
     recommendations: string[];
+    nexusIntegration: { operational: boolean; syncCycles: number; quantumEnhanced: boolean };
   }> {
     const metrics = await this.getEvolutionMetrics();
+    const nexusOperational = quantumBridge.isNexusOperational();
+    const bridgeStatus = quantumBridge.getStatus();
     
     const recommendations: string[] = [];
     
@@ -433,6 +492,9 @@ Return only valid JSON.`
     if (this.metaInsights.filter(i => i.actionable).length > 3) {
       recommendations.push('Review and act on pending actionable insights');
     }
+    if (!nexusOperational) {
+      recommendations.push('Activate Quantum Intelligence Nexus v2.0 for enhanced evolution capabilities');
+    }
 
     return {
       cycle: this.evolutionCycle,
@@ -440,7 +502,12 @@ Return only valid JSON.`
       recentOptimizations: this.optimizationHistory.slice(-10),
       knowledgeSyntheses: this.synthesizedKnowledge.length,
       metaInsights: this.metaInsights.slice(0, 10),
-      recommendations
+      recommendations,
+      nexusIntegration: {
+        operational: nexusOperational,
+        syncCycles: this.nexusSuccessfulSyncs,
+        quantumEnhanced: bridgeStatus.nexusActive
+      }
     };
   }
 }
