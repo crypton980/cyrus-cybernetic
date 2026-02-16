@@ -96,9 +96,16 @@ async function fetchGoogleRoute(body: RouteRequest): Promise<RouteSummary> {
 
   const url = `https://maps.googleapis.com/maps/api/directions/json?${params.toString()}`;
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Directions API failed: ${resp.status}`);
   const data: any = await resp.json();
-  if (data.status !== "OK") throw new Error(`Directions API error: ${data.status}`);
+  if (data.status === "UNKNOWN_ERROR") {
+    await new Promise(r => setTimeout(r, 500));
+    const retry = await fetch(url);
+    const retryData: any = await retry.json();
+    if (retryData.status !== "OK") throw new Error(`Directions API error: ${retryData.status}`);
+    Object.assign(data, retryData);
+  } else if (data.status !== "OK") {
+    throw new Error(`Directions API error: ${data.status}`);
+  }
   const leg = data.routes?.[0]?.legs?.[0];
   if (!leg) throw new Error("No route returned");
 
