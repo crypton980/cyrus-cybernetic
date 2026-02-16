@@ -2,22 +2,43 @@ import type { Express, Request } from "express";
 import { z } from "zod";
 import fetch from "node-fetch";
 import { getBestFix, updateFix } from "./position";
-import { PositionFix, RouteRequest, RouteSummary } from "./types";
+import { PositionFix, RouteRequest, RouteSummary, RouteStep } from "./types";
 import { startShare, stopShare, getSharedFix } from "./share";
+import { ingestFix, getFusedPosition, getFixHistory, resetFusion } from "./fusion-engine";
+import { getGNSSStatus, getSatellitesByConstellation, getSignalQuality } from "./satellite-tracker";
+import {
+  haversineDistance, vincentyDistance, bearing, destinationPoint, midpoint,
+  convertCoordinates, toUTM, toMGRS, toDMS,
+  addGeofence, removeGeofence, getGeofences, getGeofence, checkGeofences,
+  areaOfPolygon, boundingBox
+} from "./geospatial";
+import {
+  geocodeForward, geocodeReverse, getElevation, getElevationAlongPath,
+  searchNearbyPlaces, searchPlacesByText, getPlaceDetails
+} from "./google-geospatial";
 
 const manualFixSchema = z.object({
   lat: z.number().min(-90).max(90),
   lon: z.number().min(-180).max(180),
-  accuracy: z.number().min(1),
-  source: z.enum(["gps", "network", "manual"]).default("manual"),
+  accuracy: z.number().min(0.1),
+  source: z.enum(["gps", "glonass", "galileo", "beidou", "network", "wifi", "cell", "manual"]).default("manual"),
   timestamp: z.number().optional(),
+  altitude: z.number().optional(),
+  altitudeAccuracy: z.number().optional(),
+  speed: z.number().min(0).optional(),
+  heading: z.number().min(0).max(360).optional(),
+  hdop: z.number().optional(),
+  vdop: z.number().optional(),
+  pdop: z.number().optional(),
+  satellitesUsed: z.number().optional(),
+  constellation: z.enum(["GPS", "GLONASS", "Galileo", "BeiDou", "QZSS", "SBAS"]).optional(),
 });
 
 const routeSchema = z.object({
   origin: z.object({ lat: z.number(), lon: z.number() }),
   destination: z.object({ lat: z.number(), lon: z.number() }),
   waypoints: z.array(z.object({ lat: z.number(), lon: z.number() })).optional(),
-  mode: z.enum(["driving", "walking", "bicycling"]).optional(),
+  mode: z.enum(["driving", "walking", "bicycling", "transit"]).optional(),
 });
 
 const shareStartSchema = z.object({
@@ -28,6 +49,16 @@ const shareStartSchema = z.object({
 
 const shareStopSchema = z.object({
   token: z.string(),
+});
+
+const geofenceSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  center: z.object({ lat: z.number(), lon: z.number() }),
+  radiusMeters: z.number().min(1).max(100000),
+  type: z.enum(["circle", "polygon"]).default("circle"),
+  vertices: z.array(z.object({ lat: z.number(), lon: z.number() })).optional(),
+  active: z.boolean().default(true),
 });
 
 async function fetchGoogleRoute(body: RouteRequest): Promise<RouteSummary> {
@@ -51,24 +82,31 @@ async function fetchGoogleRoute(body: RouteRequest): Promise<RouteSummary> {
   if (data.status !== "OK") throw new Error(`Directions API error: ${data.status}`);
   const leg = data.routes?.[0]?.legs?.[0];
   if (!leg) throw new Error("No route returned");
-  const distanceMeters = leg.distance?.value || 0;
-  const durationSeconds = leg.duration?.value || 0;
-  const polyline = data.routes?.[0]?.overview_polyline?.points;
+
+  const steps: RouteStep[] = (leg.steps || []).map((s: any) => ({
+    instruction: s.html_instructions?.replace(/<[^>]*>/g, "") || "",
+    distanceMeters: s.distance?.value || 0,
+    durationSeconds: s.duration?.value || 0,
+    startLocation: { lat: s.start_location?.lat, lon: s.start_location?.lng },
+    endLocation: { lat: s.end_location?.lat, lon: s.end_location?.lng },
+  }));
+
   return {
-    distanceMeters,
-    durationSeconds,
-    polyline,
+    distanceMeters: leg.distance?.value || 0,
+    durationSeconds: leg.duration?.value || 0,
+    polyline: data.routes?.[0]?.overview_polyline?.points,
     fetchedAt: Date.now(),
-    confidence: 0.8,
+    confidence: 0.95,
     provider: "google",
+    steps,
   };
 }
 
 function simulateRoute(body: RouteRequest): RouteSummary {
-  const distanceMeters = 1000;
-  const durationSeconds = 900;
+  const dist = haversineDistance(body.origin.lat, body.origin.lon, body.destination.lat, body.destination.lon);
+  const durationSeconds = Math.round(dist / 13.9);
   return {
-    distanceMeters,
+    distanceMeters: Math.round(dist),
     durationSeconds,
     fetchedAt: Date.now(),
     confidence: 0.2,
@@ -83,6 +121,22 @@ export function registerNavRoutes(app: Express) {
     res.json(fix);
   });
 
+  app.get("/api/nav/fused", (_req, res) => {
+    const fused = getFusedPosition();
+    if (!fused) return res.status(404).json({ error: "No fused position available. Submit a fix first." });
+    res.json(fused);
+  });
+
+  app.get("/api/nav/history", (req, res) => {
+    const limit = parseInt(req.query.limit as string) || 50;
+    res.json(getFixHistory(limit));
+  });
+
+  app.post("/api/nav/reset", (_req, res) => {
+    resetFusion();
+    res.json({ success: true, message: "Fusion engine reset" });
+  });
+
   app.post("/api/nav/manual-fix", (req, res) => {
     const parsed = manualFixSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -94,10 +148,24 @@ export function registerNavRoutes(app: Express) {
     };
     try {
       updateFix(fix);
-      res.json({ success: true });
+      const fused = ingestFix(fix);
+      const geofenceEvents = checkGeofences(fused.lat, fused.lon);
+      res.json({ success: true, fused, geofenceEvents });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
+  });
+
+  app.get("/api/nav/gnss/status", (_req, res) => {
+    res.json(getGNSSStatus());
+  });
+
+  app.get("/api/nav/gnss/constellations", (_req, res) => {
+    res.json(getSatellitesByConstellation());
+  });
+
+  app.get("/api/nav/gnss/signal-quality", (_req, res) => {
+    res.json(getSignalQuality());
   });
 
   app.post("/api/nav/route", async (req, res) => {
@@ -117,6 +185,209 @@ export function registerNavRoutes(app: Express) {
     } catch (err: any) {
       res.status(500).json({ error: err.message || "Routing failed" });
     }
+  });
+
+  app.post("/api/nav/geocode/forward", async (req, res) => {
+    try {
+      const { address } = req.body;
+      if (!address) return res.status(400).json({ error: "address is required" });
+      const results = await geocodeForward(address);
+      res.json({ results, count: results.length });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/geocode/reverse", async (req, res) => {
+    try {
+      const { lat, lon } = req.body;
+      if (lat === undefined || lon === undefined) return res.status(400).json({ error: "lat and lon are required" });
+      const results = await geocodeReverse(lat, lon);
+      res.json({ results, count: results.length });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/elevation", async (req, res) => {
+    try {
+      const { locations } = req.body;
+      if (!locations || !Array.isArray(locations) || locations.length === 0) {
+        return res.status(400).json({ error: "locations array is required" });
+      }
+      const results = await getElevation(locations);
+      res.json({ results });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/elevation/path", async (req, res) => {
+    try {
+      const { path, samples } = req.body;
+      if (!path || !Array.isArray(path) || path.length < 2) {
+        return res.status(400).json({ error: "path array with at least 2 points is required" });
+      }
+      const results = await getElevationAlongPath(path, samples || 100);
+      res.json({ results, samples: results.length });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/places/nearby", async (req, res) => {
+    try {
+      const { lat, lon, radius, type, keyword } = req.body;
+      if (lat === undefined || lon === undefined) {
+        return res.status(400).json({ error: "lat and lon are required" });
+      }
+      const results = await searchNearbyPlaces(lat, lon, radius || 1000, type, keyword);
+      const withDistance = results.map(p => ({
+        ...p,
+        distance: Math.round(haversineDistance(lat, lon, p.lat, p.lon)),
+      }));
+      withDistance.sort((a, b) => a.distance - b.distance);
+      res.json({ results: withDistance, count: withDistance.length });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/places/search", async (req, res) => {
+    try {
+      const { query } = req.body;
+      if (!query) return res.status(400).json({ error: "query is required" });
+      const results = await searchPlacesByText(query);
+      res.json({ results, count: results.length });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/places/details/:placeId", async (req, res) => {
+    try {
+      const details = await getPlaceDetails(req.params.placeId);
+      res.json(details);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/geo/distance", (req, res) => {
+    try {
+      const { from, to, method } = req.body;
+      if (!from || !to) return res.status(400).json({ error: "from and to coordinates required" });
+      const dist = method === "vincenty"
+        ? vincentyDistance(from.lat, from.lon, to.lat, to.lon)
+        : haversineDistance(from.lat, from.lon, to.lat, to.lon);
+      const bear = bearing(from.lat, from.lon, to.lat, to.lon);
+      const mid = midpoint(from.lat, from.lon, to.lat, to.lon);
+      res.json({
+        distanceMeters: Math.round(dist * 100) / 100,
+        distanceKm: Math.round(dist / 10) / 100,
+        distanceMiles: Math.round(dist / 1609.344 * 100) / 100,
+        distanceNauticalMiles: Math.round(dist / 1852 * 100) / 100,
+        bearing: Math.round(bear * 100) / 100,
+        midpoint: mid,
+        method: method || "haversine",
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/geo/destination", (req, res) => {
+    try {
+      const { lat, lon, bearing: bear, distance } = req.body;
+      if (lat === undefined || lon === undefined || bear === undefined || distance === undefined) {
+        return res.status(400).json({ error: "lat, lon, bearing, and distance are required" });
+      }
+      const dest = destinationPoint(lat, lon, bear, distance);
+      res.json(dest);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/geo/convert", (req, res) => {
+    try {
+      const { lat, lon } = req.body;
+      if (lat === undefined || lon === undefined) {
+        return res.status(400).json({ error: "lat and lon are required" });
+      }
+      res.json(convertCoordinates(lat, lon));
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/geo/area", (req, res) => {
+    try {
+      const { vertices } = req.body;
+      if (!vertices || !Array.isArray(vertices) || vertices.length < 3) {
+        return res.status(400).json({ error: "At least 3 vertices required" });
+      }
+      const areaSqM = areaOfPolygon(vertices);
+      res.json({
+        areaSqMeters: Math.round(areaSqM * 100) / 100,
+        areaSqKm: Math.round(areaSqM / 1e6 * 10000) / 10000,
+        areaHectares: Math.round(areaSqM / 10000 * 1000) / 1000,
+        areaAcres: Math.round(areaSqM / 4046.86 * 1000) / 1000,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/geo/bbox", (req, res) => {
+    try {
+      const { lat, lon, radius } = req.body;
+      if (lat === undefined || lon === undefined || radius === undefined) {
+        return res.status(400).json({ error: "lat, lon, and radius are required" });
+      }
+      res.json(boundingBox(lat, lon, radius));
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/geofence", (req, res) => {
+    const parsed = geofenceSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid geofence", details: parsed.error.flatten() });
+    }
+    const fence = {
+      ...parsed.data,
+      id: parsed.data.id || `gf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      createdAt: Date.now(),
+    };
+    addGeofence(fence);
+    res.json({ success: true, geofence: fence });
+  });
+
+  app.get("/api/nav/geofences", (_req, res) => {
+    res.json(getGeofences());
+  });
+
+  app.get("/api/nav/geofence/:id", (req, res) => {
+    const fence = getGeofence(req.params.id);
+    if (!fence) return res.status(404).json({ error: "Geofence not found" });
+    res.json(fence);
+  });
+
+  app.delete("/api/nav/geofence/:id", (req, res) => {
+    const removed = removeGeofence(req.params.id);
+    if (!removed) return res.status(404).json({ error: "Geofence not found" });
+    res.json({ success: true });
+  });
+
+  app.post("/api/nav/geofence/check", (req, res) => {
+    const { lat, lon } = req.body;
+    if (lat === undefined || lon === undefined) {
+      return res.status(400).json({ error: "lat and lon are required" });
+    }
+    const events = checkGeofences(lat, lon);
+    res.json({ events, activeGeofences: getGeofences().filter(f => f.active).length });
   });
 
   app.post("/api/nav/share/start", (req, res) => {
@@ -144,5 +415,38 @@ export function registerNavRoutes(app: Express) {
     if (!fix) return res.status(404).json({ error: "share not found or expired" });
     res.json(fix);
   });
-}
 
+  app.get("/api/nav/capabilities", (_req, res) => {
+    const hasGoogleKey = !!process.env.GOOGLE_MAPS_API_KEY;
+    res.json({
+      status: "active",
+      version: "2.0",
+      capabilities: {
+        positionFusion: true,
+        satelliteTracking: true,
+        constellations: ["GPS", "GLONASS", "Galileo", "BeiDou", "QZSS", "SBAS"],
+        kalmanFilter: true,
+        geospatial: {
+          haversineDistance: true,
+          vincentyDistance: true,
+          bearing: true,
+          destinationPoint: true,
+          midpoint: true,
+          areaCalculation: true,
+          boundingBox: true,
+        },
+        coordinateSystems: ["WGS84", "UTM", "MGRS", "DMS", "Decimal"],
+        geofencing: true,
+        googleMaps: {
+          available: hasGoogleKey,
+          directions: hasGoogleKey,
+          geocoding: hasGoogleKey,
+          elevation: hasGoogleKey,
+          places: hasGoogleKey,
+        },
+        locationSharing: true,
+      },
+      endpoints: 30,
+    });
+  });
+}

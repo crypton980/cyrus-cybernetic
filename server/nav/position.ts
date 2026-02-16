@@ -3,9 +3,11 @@ import { PositionFix, ScoredFix } from "./types";
 let currentFix: PositionFix | null = null;
 
 function confidenceFromAccuracy(acc: number): number {
-  // Simple mapping: 0-5m -> 0.95+, 50m -> ~0.5, 200m -> ~0.2
-  if (acc <= 5) return 0.98;
-  if (acc <= 20) return 0.9;
+  if (acc <= 1) return 0.99;
+  if (acc <= 3) return 0.97;
+  if (acc <= 5) return 0.95;
+  if (acc <= 10) return 0.92;
+  if (acc <= 20) return 0.85;
   if (acc <= 50) return 0.65;
   if (acc <= 100) return 0.45;
   if (acc <= 200) return 0.25;
@@ -13,7 +15,6 @@ function confidenceFromAccuracy(acc: number): number {
 }
 
 export function updateFix(fix: PositionFix) {
-  // Reject stale timestamps > 5 minutes in the past
   const now = Date.now();
   if (now - fix.timestamp > 5 * 60 * 1000) {
     throw new Error("Fix is too old");
@@ -24,8 +25,7 @@ export function updateFix(fix: PositionFix) {
 export function getBestFix(): ScoredFix | null {
   if (!currentFix) return null;
   const ageMs = Date.now() - currentFix.timestamp;
-  const agePenalty = Math.min(ageMs / (5 * 60 * 1000), 1); // after 5m, heavy penalty
+  const agePenalty = Math.min(ageMs / (5 * 60 * 1000), 1);
   const confidence = Math.max(0, confidenceFromAccuracy(currentFix.accuracy) * (1 - 0.7 * agePenalty));
   return { ...currentFix, ageMs, confidence };
 }
-

@@ -32,7 +32,7 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Real-Time Camera Vision:** Utilizes TensorFlow.js for client-side object detection and an always-on vision system for persistent object and demographic analysis.
 - **Module Fusion System:** Integrates Command Interface with all modules, passing context for situational awareness.
 - **Voice Interaction:** Continuous speech recognition and natural female voice synthesis.
-- **GPS Location Tracking:** Continuous, high-accuracy geolocation with location-aware AI responses.
+- **Satellite-Grade Navigation & Geospatial System v2.0:** Multi-constellation GNSS tracking (GPS, GLONASS, Galileo, BeiDou, QZSS, SBAS) with Kalman filter position fusion, HDOP/VDOP/PDOP precision metrics, altitude/speed/heading tracking. Full geospatial toolkit: Haversine/Vincenty distance, bearing, coordinate conversions (WGS84, UTM, MGRS, DMS), geofencing engine (circle/polygon with enter/exit/dwell events), area calculation, bounding box. Google Maps integration: Directions, Geocoding (forward/reverse), Elevation/Terrain, Places/POI search. 30 API endpoints across `server/nav/`.
 - **Memory System:** PostgreSQL-persisted conversations and memories, categorized for persistent history.
 - **File Management:** Supports image, video, and document uploads with metadata and AI analysis.
 - **AI System Dashboard:** Monitors and controls multiple AI subsystems.
