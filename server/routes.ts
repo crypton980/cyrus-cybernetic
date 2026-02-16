@@ -855,7 +855,79 @@ Format your response in a clear, structured manner.`
   app.post("/api/infer", async (req, res) => {
     try {
       const { message, imageData, detectedObjects, location, userId, moduleContext } = req.body;
-      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      const imagePatterns = [
+        /\b(generate|create|make|draw|paint|produce|render)\b.*\b(image|picture|photo|illustration|art|artwork|drawing|painting)\b/i,
+        /\b(image|picture|photo|illustration)\b.*\b(of|for|showing|with)\b/i,
+        /\bdall-?e\b/i,
+        /\bgenerate\s+(?:a|an|the)\s+/i,
+      ];
+      const isImageRequest = imagePatterns.some(p => p.test(message));
+
+      if (isImageRequest) {
+        try {
+          console.log(`[CYRUS Image] Detected image generation request in /api/infer: "${message.substring(0, 80)}..."`);
+          const promptResponse = await callOpenAIWithTimeout((signal) =>
+            openai.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                { role: "system", content: "Extract a detailed DALL-E image generation prompt from the user's request. Return ONLY the optimized prompt text, nothing else. Make it detailed and descriptive for best image quality." },
+                { role: "user", content: message }
+              ],
+              temperature: 0.5,
+              max_tokens: 300,
+            }, { signal })
+          , 15000);
+          const imagePrompt = promptResponse.choices[0]?.message?.content || message;
+
+          const imageResult = await generateImage({
+            prompt: imagePrompt,
+            model: "dall-e-3",
+            size: "1024x1024",
+            quality: "standard",
+            style: "vivid",
+            savePath: "auto",
+          });
+
+          const savedUrl = imageResult.images[0]?.savedPath;
+          const revisedPrompt = imageResult.images[0]?.revised_prompt;
+          const responseText = `I've generated that image for you. ${revisedPrompt ? `Here's what I created: ${revisedPrompt}` : "The image has been generated successfully."}`;
+
+          return res.json({
+            response: responseText,
+            imageGenerated: true,
+            imageUrl: savedUrl,
+            imageDetails: {
+              model: imageResult.model,
+              size: imageResult.size,
+              quality: imageResult.quality,
+              style: imageResult.style,
+              revisedPrompt,
+            },
+            confidence: 0.95,
+            processingTime: 0,
+            branchesEngaged: 1,
+            quantumEnhanced: false,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (imgError: any) {
+          console.error("[CYRUS Image] Generation failed in /api/infer:", imgError?.message);
+          return res.json({
+            response: `I attempted to generate that image but encountered an error: ${imgError?.message || "Unknown error"}. Please try again or rephrase your request.`,
+            imageGenerated: false,
+            imageError: imgError?.message || "Image generation failed",
+            confidence: 0.5,
+            processingTime: 0,
+            branchesEngaged: 1,
+            quantumEnhanced: false,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+
       // Fetch recent conversation history for context (last 10 messages)
       const recentConversations = await storage.getConversations(userId, 10);
       // Reverse to chronological order (oldest first) and normalize roles

@@ -46,6 +46,8 @@ interface Message {
   role: "user" | "cyrus";
   content: string;
   createdAt: string;
+  hasImage?: number;
+  imageData?: string | null;
 }
 
 export function Dashboard() {
@@ -604,13 +606,19 @@ export function Dashboard() {
       });
     }
 
+    const voiceCyrusContent = inferData.imageGenerated && inferData.imageUrl
+      ? `${inferData.response}\n\n![Generated Image](${inferData.imageUrl})`
+      : inferData.response;
+
     await fetch("/api/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
         role: "cyrus", 
-        content: inferData.response,
+        content: voiceCyrusContent,
         userId: voiceUserId,
+        hasImage: inferData.imageGenerated ? 1 : 0,
+        imageData: inferData.imageUrl || null,
         detectedObjects: cameraActive ? JSON.stringify(detectedObjects) : null,
       }),
     });
@@ -687,13 +695,19 @@ export function Dashboard() {
         });
       }
 
+      const cyrusContent = inferData.imageGenerated && inferData.imageUrl
+        ? `${inferData.response}\n\n![Generated Image](${inferData.imageUrl})`
+        : inferData.response;
+
       await fetch("/api/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           role: "cyrus", 
-          content: inferData.response,
+          content: cyrusContent,
           userId: currentUserId,
+          hasImage: inferData.imageGenerated ? 1 : 0,
+          imageData: inferData.imageUrl || null,
           detectedObjects: cameraActive ? JSON.stringify(detectedObjects) : null,
         }),
       });
@@ -942,7 +956,32 @@ export function Dashboard() {
                         ? "bg-[#0a84ff] text-white rounded-2xl rounded-br-md"
                         : "bg-[#2c2c2e] text-white rounded-2xl rounded-bl-md"
                     }`}>
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      {(() => {
+                        const imgMarkdownMatch = msg.content?.match(/!\[Generated Image\]\(([^)]+)\)/);
+                        const imgUrl = imgMarkdownMatch?.[1] || (msg.hasImage && msg.imageData ? msg.imageData : null);
+                        const textContent = imgMarkdownMatch
+                          ? msg.content.split("\n\n![Generated Image](")[0]
+                          : msg.content;
+                        return (
+                          <>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{textContent}</p>
+                            {imgUrl && (
+                              <div className="mt-3 rounded-lg overflow-hidden border border-cyan-500/20">
+                                <img
+                                  src={imgUrl}
+                                  alt="CYRUS Generated Image"
+                                  className="w-full max-w-[500px] h-auto"
+                                  loading="lazy"
+                                />
+                                <div className="px-2 py-1 bg-[#1a1a2e] text-[10px] text-cyan-400 flex items-center gap-1">
+                                  <Eye className="w-3 h-3" />
+                                  <span>DALL-E 3 Generated Image</span>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                       {msg.role === "cyrus" && visualDataMap[msg.content?.substring(0, 100) || ""] && (
                         <div className="mt-3 rounded-lg overflow-hidden border border-cyan-500/20">
                           <img
