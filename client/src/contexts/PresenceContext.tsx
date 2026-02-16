@@ -299,11 +299,12 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
     
     const socket = io(window.location.origin, {
       path: '/socket.io',
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
-      timeout: 10000,
+      timeout: 15000,
+      upgrade: true,
     });
 
     socketRef.current = socket;

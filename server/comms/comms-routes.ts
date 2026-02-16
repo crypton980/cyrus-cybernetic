@@ -249,6 +249,49 @@ router.get("/api/comms/news", async (req: any, res) => {
       .orderBy(desc(newsItems.publishedAt))
       .limit(20);
 
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const isStale = newsList.length === 0 || 
+      (newsList[0]?.createdAt && new Date(newsList[0].createdAt) < oneHourAgo);
+
+    if (isStale) {
+      const apiKey = process.env.NEWS_API_KEY;
+      if (apiKey) {
+        try {
+          const topics = (req.query.topics as string) || "technology,science,world";
+          const url = `https://newsapi.org/v2/top-headlines?category=technology&pageSize=20&language=en&apiKey=${apiKey}`;
+          const resp = await fetch(url);
+          if (resp.ok) {
+            const data: any = await resp.json();
+            const articles = data.articles || [];
+
+            if (articles.length > 0) {
+              await db.delete(newsItems);
+
+              const insertValues = articles
+                .filter((a: any) => a.title && a.title !== "[Removed]")
+                .map((a: any) => ({
+                  title: a.title || "Untitled",
+                  summary: a.description || a.content || "",
+                  source: a.source?.name || "Unknown",
+                  url: a.url || "#",
+                  category: "technology",
+                  publishedAt: a.publishedAt ? new Date(a.publishedAt) : new Date(),
+                }));
+
+              if (insertValues.length > 0) {
+                await db.insert(newsItems).values(insertValues);
+                newsList = await db.select().from(newsItems)
+                  .orderBy(desc(newsItems.publishedAt))
+                  .limit(20);
+              }
+            }
+          }
+        } catch (fetchError) {
+          console.error("[Comms News] Failed to fetch from NewsAPI:", fetchError);
+        }
+      }
+    }
+
     const formattedNews = newsList.map(n => ({
       id: n.id,
       title: n.title,
