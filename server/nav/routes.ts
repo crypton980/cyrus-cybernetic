@@ -467,7 +467,7 @@ export function registerNavRoutes(app: Express) {
         googleMaps: {
           available: hasGoogleKey,
           directions: hasGoogleKey,
-          geocoding: hasGoogleKey,
+          geocoding: !!process.env.GOOGLE_GEOCODING_API_KEY || hasGoogleKey,
           elevation: hasGoogleKey,
           places: hasGoogleKey,
         },
