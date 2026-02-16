@@ -732,7 +732,13 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 view_type = data.get('view_type', 'overview')
                 quality = data.get('quality', 'high')
                 include_refs = data.get('include_references', True)
-                result = visualization_engine.visualize(domain, topic, view_type, quality, include_refs)
+                rendering_style = data.get('rendering_style', 'photorealistic')
+                include_annotations = data.get('include_annotations', True)
+                include_dimensions = data.get('include_dimensions', True)
+                result = visualization_engine.visualize(
+                    domain, topic, view_type, quality, include_refs,
+                    rendering_style, include_annotations, include_dimensions
+                )
                 self._send_response(200, result)
             else:
                 self._send_response(503, {'error': 'Scientific visualization engine not available'})

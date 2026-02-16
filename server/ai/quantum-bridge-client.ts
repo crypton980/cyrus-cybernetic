@@ -681,14 +681,22 @@ class QuantumBridgeClient {
     } catch { return null; }
   }
 
-  async scivisVisualize(domain: string, topic: string, viewType: string = "overview", quality: string = "high"): Promise<Record<string, any> | null> {
+  async scivisVisualize(
+    domain: string, topic: string, viewType: string = "overview",
+    quality: string = "high", renderingStyle: string = "photorealistic",
+    includeAnnotations: boolean = true, includeDimensions: boolean = true
+  ): Promise<Record<string, any> | null> {
     const isHealthy = await this.checkHealth();
     if (!isHealthy) return null;
     try {
       const response = await fetch(`${this.baseUrl}/scivis/visualize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain, topic, view_type: viewType, quality, include_references: true }),
+        body: JSON.stringify({
+          domain, topic, view_type: viewType, quality,
+          include_references: true, rendering_style: renderingStyle,
+          include_annotations: includeAnnotations, include_dimensions: includeDimensions
+        }),
         signal: AbortSignal.timeout(30000)
       });
       if (!response.ok) return null;

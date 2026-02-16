@@ -3726,11 +3726,15 @@ Return ONLY valid JSON.`
 
   app.post("/api/scivis/visualize", async (req, res) => {
     try {
-      const { domain, topic, view_type, quality } = req.body;
+      const { domain, topic, view_type, quality, rendering_style, include_annotations, include_dimensions } = req.body;
       if (!domain || !topic) {
         return res.status(400).json({ error: "domain and topic are required" });
       }
-      const result = await quantumBridge.scivisVisualize(domain, topic, view_type || "overview", quality || "high");
+      const result = await quantumBridge.scivisVisualize(
+        domain, topic, view_type || "overview", quality || "high",
+        rendering_style || "photorealistic",
+        include_annotations !== false, include_dimensions !== false
+      );
       res.json(result || { error: "Scientific visualization engine not available" });
     } catch (e) {
       res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
