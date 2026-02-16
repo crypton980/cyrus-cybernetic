@@ -3741,6 +3741,23 @@ Return ONLY valid JSON.`
     }
   });
 
+  app.post("/api/scivis/visualize-advanced", async (req, res) => {
+    try {
+      const { user_request, accuracy_level, include_references } = req.body;
+      if (!user_request) {
+        return res.status(400).json({ error: "user_request is required" });
+      }
+      const result = await quantumBridge.scivisVisualizeAdvanced(
+        user_request,
+        accuracy_level || "high",
+        include_references !== false
+      );
+      res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
   app.get("/api/scivis/status", async (_req, res) => {
     try {
       const result = await quantumBridge.scivisStatus();

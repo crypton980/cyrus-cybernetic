@@ -743,6 +743,23 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
             else:
                 self._send_response(503, {'error': 'Scientific visualization engine not available'})
         
+        elif self.path == '/scivis/visualize-advanced':
+            if SCIVIS_AVAILABLE:
+                user_request = data.get('user_request', '')
+                accuracy_level = data.get('accuracy_level', 'high')
+                include_refs = data.get('include_references', True)
+                if not user_request:
+                    self._send_response(400, {'error': 'user_request is required'})
+                else:
+                    if not hasattr(visualization_engine, 'advanced_system') or visualization_engine.advanced_system is None:
+                        visualization_engine.initialize_advanced_system()
+                    result = visualization_engine.visualize_advanced(
+                        user_request, accuracy_level, include_refs
+                    )
+                    self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Scientific visualization engine not available'})
+        
         else:
             self._send_response(404, {'error': 'Endpoint not found'})
 

@@ -704,6 +704,28 @@ class QuantumBridgeClient {
     } catch { return null; }
   }
 
+  async scivisVisualizeAdvanced(
+    userRequest: string, accuracyLevel: string = "high",
+    includeReferences: boolean = true
+  ): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/scivis/visualize-advanced`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_request: userRequest,
+          accuracy_level: accuracyLevel,
+          include_references: includeReferences
+        }),
+        signal: AbortSignal.timeout(60000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
   async scivisDomains(): Promise<Record<string, any> | null> {
     const isHealthy = await this.checkHealth();
     if (!isHealthy) return null;
