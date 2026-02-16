@@ -196,6 +196,45 @@ export function useDrone() {
     },
   });
 
+  const navGoTo = useMutation({
+    mutationFn: async (params: { latitude: number; longitude: number; altitude?: number; locationName?: string }) => {
+      const res = await fetch('/api/drone/nav-goto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/drone/state'] }),
+  });
+
+  const createFlightPlan = useMutation({
+    mutationFn: async (data: { 
+      name: string; 
+      waypoints: Array<{ latitude: number; longitude: number; altitude?: number; speed?: number; holdTime?: number; action?: string }>;
+      areaOfOperation?: { center: { lat: number; lng: number }; radiusMeters: number };
+      areaOfInterest?: Array<{ lat: number; lng: number }>;
+    }) => {
+      const res = await fetch('/api/drone/flight-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/drone/missions'] }),
+  });
+
+  const { data: navStatusData } = useQuery({
+    queryKey: ['/api/drone/nav-status'],
+    queryFn: async () => {
+      const res = await fetch('/api/drone/nav-status');
+      if (!res.ok) throw new Error('Failed to fetch nav status');
+      return res.json();
+    },
+    refetchInterval: pollingEnabled ? 2000 : false,
+  });
+
   useEffect(() => {
     if (stateData?.state?.connected) {
       setPollingEnabled(true);
@@ -207,6 +246,7 @@ export function useDrone() {
     simulationMode: stateData?.simulationMode || true,
     missions: missionsData?.missions || [],
     activeMission: missionsData?.activeMission || null,
+    navStatus: navStatusData || null,
     isLoading: stateLoading || missionsLoading,
     
     connect,
@@ -217,9 +257,11 @@ export function useDrone() {
     land,
     returnToLaunch,
     goTo,
+    navGoTo,
     setMode,
     emergencyStop,
     createMission,
+    createFlightPlan,
     startMission,
     abortMission,
   };

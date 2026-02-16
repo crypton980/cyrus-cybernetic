@@ -198,5 +198,116 @@ export function registerDroneRoutes(app: Express) {
     }
   });
 
-  console.log('[Drone Routes] Registered drone control API endpoints');
+  app.post("/api/drone/nav-goto", async (req, res) => {
+    try {
+      const { latitude, longitude, altitude, locationName } = req.body;
+      if (!latitude || !longitude) {
+        return res.status(400).json({ success: false, message: 'Navigation coordinates required' });
+      }
+      const result = await droneController.executeCommand({ 
+        type: 'goto', 
+        params: { latitude, longitude, altitude: altitude || 50 } 
+      });
+      res.json({
+        ...result,
+        navigationSource: 'nav-module',
+        targetLocation: locationName || 'Navigation waypoint',
+        coordinates: { latitude, longitude, altitude: altitude || 50 }
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/drone/flight-plan", async (req, res) => {
+    try {
+      const { name, waypoints, areaOfOperation, areaOfInterest } = req.body;
+      if (!name || !waypoints || !Array.isArray(waypoints) || waypoints.length === 0) {
+        return res.status(400).json({ success: false, message: 'Flight plan name and waypoints required' });
+      }
+      
+      const formattedWaypoints = waypoints.map((wp: any, index: number) => ({
+        id: `wp-${Date.now()}-${index}`,
+        latitude: wp.latitude,
+        longitude: wp.longitude,
+        altitude: wp.altitude || 50,
+        speed: wp.speed || 5,
+        holdTime: wp.holdTime || 0,
+        action: wp.action || 'waypoint',
+      }));
+
+      const result = await droneController.createMission(name, formattedWaypoints);
+      res.json({
+        ...result,
+        flightPlan: {
+          name,
+          waypointCount: formattedWaypoints.length,
+          waypoints: formattedWaypoints,
+          areaOfOperation: areaOfOperation || null,
+          areaOfInterest: areaOfInterest || null,
+          estimatedFlightTime: formattedWaypoints.length * 30,
+          totalDistance: calculateTotalDistance(formattedWaypoints),
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.get("/api/drone/nav-status", async (_req, res) => {
+    try {
+      const state = droneController.getState();
+      const missions = droneController.getMissions();
+      const activeMission = droneController.getActiveMission();
+      
+      res.json({
+        success: true,
+        dronePosition: {
+          latitude: state.latitude,
+          longitude: state.longitude,
+          altitude: state.altitude,
+          heading: state.heading,
+          speed: state.speed,
+        },
+        flightStatus: {
+          connected: state.connected,
+          armed: state.armed,
+          mode: state.mode,
+          battery: state.battery,
+          satellites: state.satellites,
+          signalStrength: state.signalStrength,
+          flightTime: state.flightTime,
+        },
+        missionStatus: {
+          totalMissions: missions.length,
+          activeMission: activeMission ? {
+            id: activeMission.id,
+            name: activeMission.name,
+            status: activeMission.status,
+            waypointCount: activeMission.waypoints.length,
+          } : null,
+        },
+        simulationMode: droneController.isSimulationMode(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  console.log('[Drone Routes] Registered drone control API endpoints (with NAV integration)');
+}
+
+function calculateTotalDistance(waypoints: Array<{latitude: number; longitude: number}>): string {
+  let total = 0;
+  for (let i = 1; i < waypoints.length; i++) {
+    const lat1 = waypoints[i-1].latitude * Math.PI / 180;
+    const lat2 = waypoints[i].latitude * Math.PI / 180;
+    const dLat = (waypoints[i].latitude - waypoints[i-1].latitude) * Math.PI / 180;
+    const dLon = (waypoints[i].longitude - waypoints[i-1].longitude) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    total += 6371000 * c;
+  }
+  if (total < 1000) return `${total.toFixed(0)}m`;
+  return `${(total / 1000).toFixed(2)}km`;
 }
