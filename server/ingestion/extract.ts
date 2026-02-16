@@ -12,10 +12,10 @@ import OpenAI from "openai";
 
 const execFileAsync = promisify(execFile);
 
-const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 const visionClient =
-  openaiApiKey && openaiBaseUrl
+  openaiApiKey
     ? new OpenAI({ apiKey: openaiApiKey, baseURL: openaiBaseUrl })
     : null;
 

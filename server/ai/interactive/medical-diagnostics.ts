@@ -81,7 +81,7 @@ class MedicalDiagnosticsModule {
 
   private getOpenAI(): OpenAI | null {
     if (!this.openai) {
-      const apiKey = process.env.OPENAI_API_KEY;
+      const apiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
       if (apiKey) {
         this.openai = new OpenAI({ apiKey });
       }

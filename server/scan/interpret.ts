@@ -1,10 +1,10 @@
 import OpenAI from "openai";
 
-const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 
 const interpretClient =
-  openaiApiKey && openaiBaseUrl
+  openaiApiKey
     ? new OpenAI({ apiKey: openaiApiKey, baseURL: openaiBaseUrl })
     : null;
 

@@ -3,11 +3,12 @@ import OpenAI from "openai";
 let openaiClient: OpenAI | null = null;
 
 function getOpenAI(): OpenAI | null {
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  if (!apiKey) {
     return null;
   }
   if (!openaiClient) {
-    openaiClient = new OpenAI();
+    openaiClient = new OpenAI({ apiKey });
   }
   return openaiClient;
 }
