@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { db } from "../db";
-import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems, contacts, incomingCalls } from "../../shared/schema";
+import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems, contacts, incomingCalls, groupChats } from "../../shared/schema";
 import { eq, or, and, desc, asc } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
 import { getConnectedUsers } from "./signaling";
+import { communicationEngine } from "./communication-engine";
 
 const router = Router();
 
@@ -565,26 +566,296 @@ router.post("/api/comms/call-history", async (req: any, res) => {
   }
 });
 
+router.post("/api/comms/messages/enhanced", async (req: any, res) => {
+  try {
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { recipientId, groupId, content, messageType, replyToId, fileUrl, fileName, fileSizeBytes } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: "Message content required" });
+    
+    const message = await communicationEngine.sendMessage(
+      userId, recipientId || null, groupId || null, content,
+      messageType || "text", replyToId, fileUrl, fileName, fileSizeBytes
+    );
+    res.json({ success: true, message });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/messages/:messageId/read", async (req: any, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = getUserId(req) || "unknown";
+    const result = await communicationEngine.markAsRead(messageId, userId);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/messages/:messageId/react", async (req: any, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = getUserId(req) || "unknown";
+    const { reaction } = req.body;
+    if (!reaction) return res.status(400).json({ error: "reaction is required" });
+    const reactions = await communicationEngine.addReaction(messageId, userId, reaction);
+    if (!reactions) return res.status(404).json({ error: "Message not found" });
+    res.json({ success: true, reactions });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/groups", async (req: any, res) => {
+  try {
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { name, members } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: "Group name required" });
+    const group = await communicationEngine.createGroupChat(name, userId, members || []);
+    res.json({ success: true, group });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/api/comms/groups", async (req: any, res) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.json([]);
+    const groups = await communicationEngine.getGroupChats(userId);
+    res.json(groups);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/api/comms/groups/:groupId/messages", async (req: any, res) => {
+  try {
+    const { groupId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const messages = await communicationEngine.getGroupMessages(groupId, limit);
+    res.json(messages);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/calls/initiate", async (req: any, res) => {
+  try {
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { recipientId, callType, userName } = req.body;
+    if (!recipientId) return res.status(400).json({ error: "recipientId required" });
+    const call = await communicationEngine.initiateCall(userId, userName || userId, recipientId, callType || "voice");
+    res.json({ success: true, call });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/calls/:callId/accept", async (req: any, res) => {
+  try {
+    const { callId } = req.params;
+    const userId = getUserId(req) || "unknown";
+    const success = await communicationEngine.acceptCall(callId, userId);
+    res.json({ success });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/calls/:callId/decline", async (req: any, res) => {
+  try {
+    const { callId } = req.params;
+    const userId = getUserId(req) || "unknown";
+    const success = await communicationEngine.declineCall(callId, userId);
+    res.json({ success });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/calls/:callId/end", async (req: any, res) => {
+  try {
+    const { callId } = req.params;
+    const userId = getUserId(req) || "unknown";
+    const call = await communicationEngine.endCall(callId, userId);
+    if (!call) return res.status(404).json({ error: "Call not found" });
+    res.json({ success: true, call });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/api/comms/calls/active", (req, res) => {
+  const calls = communicationEngine.getActiveCalls();
+  res.json({ totalCalls: calls.length, calls });
+});
+
+router.post("/api/comms/conferences/create", async (req: any, res) => {
+  try {
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { title, description, maxParticipants, password, participantIds, userName } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: "Title required" });
+    const conference = await communicationEngine.createConference(
+      userId, userName || userId, title, description, maxParticipants || 999, password, participantIds || []
+    );
+    res.json({ success: true, conference });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/conferences/:conferenceId/join", async (req: any, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { userName } = req.body;
+    const success = await communicationEngine.joinConference(conferenceId, userId, userName || userId);
+    if (!success) return res.status(400).json({ error: "Cannot join conference (full or not found)" });
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/conferences/:conferenceId/leave", async (req: any, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const userId = getUserId(req) || "unknown";
+    const success = await communicationEngine.leaveConference(conferenceId, userId);
+    res.json({ success });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/conferences/:conferenceId/end", (req, res) => {
+  const { conferenceId } = req.params;
+  const success = communicationEngine.endConference(conferenceId);
+  if (!success) return res.status(404).json({ error: "Conference not found" });
+  res.json({ success: true, message: "Conference ended" });
+});
+
+router.post("/api/comms/conferences/:conferenceId/screen-share/start", async (req: any, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const userId = getUserId(req) || "unknown";
+    const success = await communicationEngine.startScreenShare(conferenceId, userId);
+    if (!success) return res.status(400).json({ error: "Cannot start screen share" });
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/conferences/:conferenceId/screen-share/stop", async (req: any, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const success = await communicationEngine.stopScreenShare(conferenceId);
+    res.json({ success });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/api/comms/conferences/:conferenceId/recording/toggle", (req, res) => {
+  const { conferenceId } = req.params;
+  const isRecording = communicationEngine.toggleRecording(conferenceId);
+  res.json({ success: true, isRecording });
+});
+
+router.get("/api/comms/conferences/active", (req, res) => {
+  const conferences = communicationEngine.getActiveConferences();
+  res.json({ totalConferences: conferences.length, conferences: conferences.map(c => ({
+    conferenceId: c.conferenceId,
+    title: c.title,
+    hostId: c.hostId,
+    hostName: c.hostName,
+    participantCount: c.participants.length,
+    maxParticipants: c.maxParticipants,
+    isRecording: c.isRecording,
+    screenSharingBy: c.screenSharingBy,
+    roomCode: c.roomCode,
+    meetingLink: c.meetingLink,
+  }))});
+});
+
+router.get("/api/comms/conferences/:conferenceId", (req, res) => {
+  const { conferenceId } = req.params;
+  const conference = communicationEngine.getConference(conferenceId);
+  if (!conference) return res.status(404).json({ error: "Conference not found" });
+  res.json(conference);
+});
+
+router.post("/api/comms/presence/update", async (req: any, res) => {
+  try {
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { displayName, status } = req.body;
+    const validStatuses = ["online", "away", "do_not_disturb", "offline", "in_call"];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ error: `Status must be one of: ${validStatuses.join(", ")}` });
+    }
+    const presence = await communicationEngine.updatePresence(userId, displayName || userId, status || "online");
+    res.json({ success: true, presence });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/api/comms/presence/:userId", (req, res) => {
+  const { userId } = req.params;
+  const presence = communicationEngine.getPresence(userId);
+  if (!presence) return res.status(404).json({ error: "User presence not found" });
+  res.json(presence);
+});
+
+router.get("/api/comms/presence", (req, res) => {
+  const onlinePresence = communicationEngine.getAllOnlinePresence();
+  res.json({ totalOnline: onlinePresence.length, users: onlinePresence });
+});
+
+router.get("/api/comms/statistics", (req, res) => {
+  res.json(communicationEngine.getStatistics());
+});
+
+router.post("/api/comms/encryption/generate-key", (req: any, res) => {
+  const userId = getUserId(req) || `anon_${Date.now()}`;
+  const key = communicationEngine.generateEncryptionKey(userId);
+  res.json({ success: true, userId, keyGenerated: true });
+});
+
 router.get("/api/comms/status", (req, res) => {
+  const stats = communicationEngine.getStatistics();
   res.json({
     operational: true,
     features: {
       messaging: true,
+      enhancedMessaging: true,
+      groupChat: true,
       reminders: true,
       news: true,
       voiceCalls: true,
       videoCalls: true,
       meetings: true,
+      conferences: true,
+      screenSharing: true,
+      callRecording: true,
       webrtc: true,
       contacts: true,
       presence: true,
-      directCalling: true
+      directCalling: true,
+      encryption: true,
+      fileSharing: true,
+      messageReactions: true,
+      readReceipts: true,
     },
-    websocket: '/ws'
+    websocket: '/ws',
+    ...stats,
   });
 });
 
 export function registerCommsRoutes(app: any) {
   app.use(router);
-  console.log("[Comms] Registered communication routes (17 endpoints)");
+  console.log("[Comms] Registered communication routes (40+ endpoints)");
 }

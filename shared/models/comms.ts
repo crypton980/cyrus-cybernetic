@@ -9,6 +9,12 @@ export const onlineUsers = pgTable("online_users", {
   lastSeen: timestamp("last_seen").defaultNow(),
   isOnline: boolean("is_online").default(true),
   socketId: varchar("socket_id"),
+  status: varchar("status").default("online"),
+  currentCallId: varchar("current_call_id"),
+  currentConferenceId: varchar("current_conference_id"),
+  deviceInfo: jsonb("device_info"),
+  networkLatencyMs: varchar("network_latency_ms").default("0"),
+  connectionQuality: varchar("connection_quality").default("1.0"),
 });
 
 export const directMessages = pgTable("direct_messages", {
@@ -18,6 +24,16 @@ export const directMessages = pgTable("direct_messages", {
   content: text("content").notNull(),
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  messageType: varchar("message_type").default("text"),
+  isEncrypted: boolean("is_encrypted").default(false),
+  encryptionLevel: varchar("encryption_level").default("none"),
+  fileUrl: varchar("file_url"),
+  fileName: varchar("file_name"),
+  fileSizeBytes: integer("file_size_bytes"),
+  readAt: timestamp("read_at"),
+  replyToId: varchar("reply_to_id"),
+  groupId: varchar("group_id"),
+  reactions: jsonb("reactions"),
 });
 
 export const callHistory = pgTable("call_history", {
@@ -30,6 +46,12 @@ export const callHistory = pgTable("call_history", {
   startedAt: timestamp("started_at").defaultNow(),
   endedAt: timestamp("ended_at"),
   duration: varchar("duration"),
+  isRecording: boolean("is_recording").default(false),
+  recordingUrl: varchar("recording_url"),
+  callQuality: varchar("call_quality").default("1.0"),
+  bandwidthKbps: varchar("bandwidth_kbps").default("0"),
+  missedBy: jsonb("missed_by"),
+  declinedBy: jsonb("declined_by"),
 });
 
 export const meetingRooms = pgTable("meeting_rooms", {
@@ -41,6 +63,14 @@ export const meetingRooms = pgTable("meeting_rooms", {
   maxParticipants: varchar("max_participants").default("10"),
   createdAt: timestamp("created_at").defaultNow(),
   participants: jsonb("participants").default([]),
+  description: text("description"),
+  isRecording: boolean("is_recording").default(false),
+  recordingUrl: varchar("recording_url"),
+  screenSharingBy: varchar("screen_sharing_by"),
+  password: varchar("password"),
+  meetingLink: varchar("meeting_link"),
+  endedAt: timestamp("ended_at"),
+  duration: integer("duration"),
 });
 
 export const reminders = pgTable("reminders", {
@@ -88,6 +118,15 @@ export const incomingCalls = pgTable("incoming_calls", {
   declinedAt: timestamp("declined_at"),
 });
 
+export const groupChats = pgTable("group_chats", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  createdBy: varchar("created_by").notNull(),
+  members: jsonb("members").default([]),
+  isEncrypted: boolean("is_encrypted").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type OnlineUser = typeof onlineUsers.$inferSelect;
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type CallHistory = typeof callHistory.$inferSelect;
@@ -96,3 +135,4 @@ export type Reminder = typeof reminders.$inferSelect;
 export type NewsItem = typeof newsItems.$inferSelect;
 export type Contact = typeof contacts.$inferSelect;
 export type IncomingCall = typeof incomingCalls.$inferSelect;
+export type GroupChat = typeof groupChats.$inferSelect;
