@@ -24,6 +24,27 @@ router.get("/api/comms/users", async (req: any, res) => {
   }
 });
 
+router.get("/api/comms/users/all", async (req: any, res) => {
+  try {
+    const userId = getUserId(req);
+    const allUsers = await db.select().from(onlineUsers);
+    const filteredUsers = allUsers
+      .filter(u => u.id !== userId)
+      .map(u => ({
+        id: u.id,
+        displayName: u.displayName || "Unknown User",
+        isOnline: u.isOnline || false,
+        lastSeen: u.lastSeen?.toISOString() || null,
+        profileImageUrl: u.profileImageUrl || null,
+        status: u.status || "offline",
+      }));
+    res.json(filteredUsers);
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
 router.post("/api/comms/user/status", async (req: any, res) => {
   try {
     const userId = getUserId(req) || `anon_${Date.now()}`;

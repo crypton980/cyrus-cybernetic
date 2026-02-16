@@ -1,5 +1,8 @@
 import { Server as HttpServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
+import { db } from "../db";
+import { onlineUsers, directMessages } from "../../shared/models/comms";
+import { eq } from "drizzle-orm";
 
 interface User {
   id: string;
@@ -22,6 +25,10 @@ interface PendingCall {
 const users = new Map<string, User>();
 const pendingCalls = new Map<string, PendingCall>();
 
+export function getSocketUsers(): User[] {
+  return Array.from(users.values());
+}
+
 export function initSocketSignaling(server: HttpServer) {
   const io = new SocketIOServer(server, {
     cors: {
@@ -29,17 +36,15 @@ export function initSocketSignaling(server: HttpServer) {
       methods: ["GET", "POST"],
     },
     path: "/socket.io",
-    transports: ["websocket", "polling"],
+    transports: ["polling", "websocket"],
   });
 
   console.log("[Socket.IO] Signaling server initialized");
 
   io.on("connection", (socket: Socket) => {
-    console.log(`[Socket.IO] ========================================`);
-    console.log(`[Socket.IO] NEW CONNECTION: ${socket.id}`);
-    console.log(`[Socket.IO] ========================================`);
+    console.log(`[Socket.IO] New connection: ${socket.id}`);
 
-    socket.on("register", (data: { userId: string; displayName: string; deviceId: string }) => {
+    socket.on("register", async (data: { userId: string; displayName: string; deviceId: string }) => {
       const { userId, displayName, deviceId } = data;
       
       const user: User = {
@@ -55,6 +60,30 @@ export function initSocketSignaling(server: HttpServer) {
       
       console.log(`[Socket.IO] User registered: ${displayName} (${userId}) - Total: ${users.size}`);
       
+      try {
+        await db.insert(onlineUsers).values({
+          id: userId,
+          displayName,
+          email: null,
+          profileImageUrl: null,
+          lastSeen: new Date(),
+          isOnline: true,
+          socketId: socket.id,
+          status: "online",
+        }).onConflictDoUpdate({
+          target: onlineUsers.id,
+          set: {
+            displayName,
+            lastSeen: new Date(),
+            isOnline: true,
+            socketId: socket.id,
+            status: "online",
+          },
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist user:", err);
+      }
+      
       socket.emit("registered", { userId, totalOnline: users.size });
       
       broadcastPresence(io);
@@ -65,7 +94,6 @@ export function initSocketSignaling(server: HttpServer) {
       const caller = users.get(callerId);
       
       if (!caller) {
-        console.log("[Socket.IO] Call failed: Caller not registered");
         socket.emit("call-failed", { reason: "not-registered" });
         return;
       }
@@ -73,7 +101,6 @@ export function initSocketSignaling(server: HttpServer) {
       const target = users.get(data.targetUserId);
       
       if (!target) {
-        console.log(`[Socket.IO] Call failed: Target ${data.targetUserId} not found`);
         socket.emit("call-failed", { reason: "user-offline" });
         return;
       }
@@ -93,7 +120,7 @@ export function initSocketSignaling(server: HttpServer) {
       caller.inCall = true;
       caller.currentRoomId = roomId;
 
-      console.log(`[Socket.IO] Calling ${target.displayName} from ${caller.displayName} - Room: ${roomId}`);
+      console.log(`[Socket.IO] Call: ${caller.displayName} -> ${target.displayName} (${data.callType}) Room: ${roomId}`);
 
       io.to(target.socketId).emit("incoming-call", {
         callerId,
@@ -113,7 +140,6 @@ export function initSocketSignaling(server: HttpServer) {
       const pendingCall = pendingCalls.get(data.roomId);
 
       if (!pendingCall || !user) {
-        console.log("[Socket.IO] Accept failed: Call not found");
         socket.emit("call-failed", { reason: "call-not-found" });
         return;
       }
@@ -121,7 +147,6 @@ export function initSocketSignaling(server: HttpServer) {
       const caller = users.get(pendingCall.callerId);
       
       if (!caller) {
-        console.log("[Socket.IO] Accept failed: Caller disconnected");
         socket.emit("call-failed", { reason: "caller-disconnected" });
         pendingCalls.delete(data.roomId);
         return;
@@ -133,7 +158,7 @@ export function initSocketSignaling(server: HttpServer) {
       socket.join(data.roomId);
       io.sockets.sockets.get(caller.socketId)?.join(data.roomId);
 
-      console.log(`[Socket.IO] Call accepted - Room: ${data.roomId} - ${caller.displayName} <-> ${user.displayName}`);
+      console.log(`[Socket.IO] Call accepted: ${caller.displayName} <-> ${user.displayName}`);
 
       const callType = pendingCall.callType;
       
@@ -168,19 +193,16 @@ export function initSocketSignaling(server: HttpServer) {
           io.to(caller.socketId).emit("call-declined", { roomId: data.roomId });
         }
 
-        console.log(`[Socket.IO] Call declined - Room: ${data.roomId}`);
         pendingCalls.delete(data.roomId);
         broadcastPresence(io);
       }
     });
 
     socket.on("webrtc-offer", (data: { roomId: string; offer: any }) => {
-      console.log(`[Socket.IO] WebRTC offer in room ${data.roomId}`);
       socket.to(data.roomId).emit("webrtc-offer", { offer: data.offer, roomId: data.roomId });
     });
 
     socket.on("webrtc-answer", (data: { roomId: string; answer: any }) => {
-      console.log(`[Socket.IO] WebRTC answer in room ${data.roomId}`);
       socket.to(data.roomId).emit("webrtc-answer", { answer: data.answer, roomId: data.roomId });
     });
 
@@ -197,20 +219,31 @@ export function initSocketSignaling(server: HttpServer) {
         user.currentRoomId = undefined;
       }
 
-      console.log(`[Socket.IO] Call ended - Room: ${data.roomId}`);
       socket.to(data.roomId).emit("call-ended", { roomId: data.roomId });
       socket.leave(data.roomId);
       
       broadcastPresence(io);
     });
 
-    socket.on("send-message", (data: { targetUserId: string; message: string; timestamp: string }) => {
+    socket.on("send-message", async (data: { targetUserId: string; message: string; timestamp: string }) => {
       const senderId = (socket as any).userId;
       const sender = users.get(senderId);
       const target = users.get(data.targetUserId);
 
-      if (sender && target) {
-        console.log(`[Socket.IO] Message from ${sender.displayName} to ${target.displayName}`);
+      if (!sender) return;
+
+      try {
+        await db.insert(directMessages).values({
+          senderId: senderId,
+          recipientId: data.targetUserId,
+          content: data.message,
+          messageType: "text",
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist message:", err);
+      }
+
+      if (target) {
         io.to(target.socketId).emit("new-message", {
           senderId,
           senderName: sender.displayName,
@@ -218,9 +251,15 @@ export function initSocketSignaling(server: HttpServer) {
           timestamp: data.timestamp,
         });
       }
+
+      socket.emit("message-sent", {
+        recipientId: data.targetUserId,
+        message: data.message,
+        timestamp: data.timestamp,
+      });
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       const userId = (socket as any).userId;
       
       if (userId) {
@@ -231,7 +270,15 @@ export function initSocketSignaling(server: HttpServer) {
         }
         
         users.delete(userId);
-        console.log(`[Socket.IO] User disconnected: ${user?.displayName || userId} - Remaining: ${users.size}`);
+        console.log(`[Socket.IO] Disconnected: ${user?.displayName || userId} - Remaining: ${users.size}`);
+        
+        try {
+          await db.update(onlineUsers)
+            .set({ isOnline: false, lastSeen: new Date(), status: "offline" })
+            .where(eq(onlineUsers.id, userId));
+        } catch (err) {
+          console.error("[Socket.IO] Failed to update offline status:", err);
+        }
         
         broadcastPresence(io);
       }

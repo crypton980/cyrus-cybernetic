@@ -292,7 +292,7 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
     const deviceId = localStorage.getItem('cyrus_device_id') || `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     localStorage.setItem('cyrus_device_id', deviceId);
     
-    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const userId = deviceId;
     currentUserIdRef.current = userId;
 
     console.log(`[Presence] Creating Socket.IO connection to ${window.location.origin}`);

@@ -59,6 +59,8 @@ export function CommsPage() {
   const [callMode, setCallMode] = useState<"create" | "join">("create");
   const [copied, setCopied] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [selectedConversation, setSelectedConversation] = useState<{ id: string; name: string } | null>(null);
+  const [messageText, setMessageText] = useState("");
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -68,6 +70,7 @@ export function CommsPage() {
     reminders,
     news,
     contacts,
+    allUsers,
     activeCall: localActiveCall,
     localStream,
     remoteStream,
@@ -86,6 +89,7 @@ export function CommsPage() {
     toggleVideo,
     switchCamera,
     getAudioLevel,
+    myDeviceId,
     isLoading,
   } = useComms();
   
@@ -100,6 +104,7 @@ export function CommsPage() {
     remoteStream: presenceRemoteStream,
     mediaControls: presenceMediaControls,
     callDuration,
+    connectPresence,
     callUser,
     acceptCall,
     declineCall,
@@ -107,6 +112,7 @@ export function CommsPage() {
     toggleMute: presenceToggleMute,
     toggleVideo: presenceToggleVideo,
     clearNotification,
+    sendMessage: presenceSendMessage,
   } = usePresence();
 
   const effectiveLocalStream = presenceLocalStream || localStream;
@@ -130,7 +136,38 @@ export function CommsPage() {
   useEffect(() => {
     const savedName = localStorage.getItem("cyrus-display-name") || "CYRUS User";
     setDisplayName(savedName);
+    if (!isConnected) {
+      connectPresence(savedName);
+    }
   }, []);
+
+  const conversationMessages = selectedConversation
+    ? messages.filter(
+        (m) =>
+          (m.senderId === selectedConversation.id && m.recipientId === myDeviceId) ||
+          (m.senderId === myDeviceId && m.recipientId === selectedConversation.id)
+      )
+    : [];
+
+  const conversationPartners = (() => {
+    const partnerMap = new Map<string, { id: string; name: string; lastMessage: string; lastTime: string; unread: number }>();
+    for (const msg of messages) {
+      const partnerId = msg.senderId === myDeviceId ? msg.recipientId : msg.senderId;
+      if (partnerId === "broadcast") continue;
+      const existing = partnerMap.get(partnerId);
+      if (!existing || new Date(msg.timestamp) > new Date(existing.lastTime)) {
+        const partnerUser = allUsers.find(u => u.id === partnerId) || onlineUsers.find(u => u.id === partnerId);
+        partnerMap.set(partnerId, {
+          id: partnerId,
+          name: partnerUser?.displayName || partnerId.substring(0, 12) + "...",
+          lastMessage: msg.content,
+          lastTime: msg.timestamp,
+          unread: (!existing ? 0 : existing.unread) + (msg.senderId !== myDeviceId && !msg.read ? 1 : 0),
+        });
+      }
+    }
+    return Array.from(partnerMap.values()).sort((a, b) => new Date(b.lastTime).getTime() - new Date(a.lastTime).getTime());
+  })();
 
   const handleSendMessage = () => {
     if (!newMessage.recipient.trim() || !newMessage.content.trim()) return;
@@ -444,6 +481,32 @@ export function CommsPage() {
             </div>
           </header>
 
+          {!localStorage.getItem("cyrus-display-name") && (
+            <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 rounded-xl p-4 mb-4">
+              <p className="text-sm text-gray-300 mb-2">Set your display name so others can find you:</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Enter your name..."
+                  className="flex-1 bg-gray-800 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+                <button
+                  onClick={() => {
+                    if (displayName.trim()) {
+                      localStorage.setItem("cyrus-display-name", displayName.trim());
+                      connectPresence(displayName.trim());
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
@@ -560,7 +623,7 @@ export function CommsPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setNewMessage({ ...newMessage, recipient: user.displayName });
+                          setSelectedConversation({ id: user.id, name: user.displayName });
                           setActiveTab("messages");
                         }}
                         className="p-2.5 bg-purple-600 hover:bg-purple-500 rounded-full transition-all shadow-lg shadow-purple-500/20 cursor-pointer"
@@ -605,55 +668,176 @@ export function CommsPage() {
 
             {!isLoading && activeTab === "messages" && (
               <div className="space-y-4">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newMessage.recipient}
-                    onChange={(e) =>
-                      setNewMessage({ ...newMessage, recipient: e.target.value })
-                    }
-                    placeholder="Recipient"
-                    className="flex-1 bg-gray-800 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    value={newMessage.content}
-                    onChange={(e) =>
-                      setNewMessage({ ...newMessage, content: e.target.value })
-                    }
-                    placeholder="Message"
-                    className="flex-2 bg-gray-800 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
-                {messages.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>No messages yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className="bg-gray-800 rounded-lg p-3"
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="font-medium text-blue-400 text-sm">
-                            {msg.senderId === "self" ? "You" : msg.senderId}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(msg.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <p className="text-gray-200 text-sm">{msg.content}</p>
+                {!selectedConversation ? (
+                  <>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-medium text-gray-400 mb-2">Start New Conversation</h3>
+                      <div className="grid gap-2 max-h-40 overflow-y-auto">
+                        {[...onlineUsers, ...allUsers.filter(u => !onlineUsers.find(ou => ou.id === u.id))].map((user) => {
+                          const isOnline = onlineUsers.some(ou => ou.id === user.id);
+                          return (
+                            <button
+                              key={user.id}
+                              onClick={() => setSelectedConversation({ id: user.id, name: user.displayName })}
+                              className="flex items-center gap-3 p-2.5 bg-gray-800/60 hover:bg-gray-700/80 rounded-lg transition-colors text-left w-full"
+                            >
+                              <div className="relative">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                                  <User className="w-4 h-4 text-white" />
+                                </div>
+                                <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-gray-800 ${isOnline ? 'bg-green-500' : 'bg-gray-500'}`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white truncate">{user.displayName}</p>
+                                <p className="text-xs text-gray-400">{isOnline ? "Online" : "Offline"}</p>
+                              </div>
+                              <MessageSquare className="w-4 h-4 text-blue-400" />
+                            </button>
+                          );
+                        })}
+                        {onlineUsers.length === 0 && allUsers.length === 0 && (
+                          <p className="text-sm text-gray-500 text-center py-2">No users found. Share the app link to invite others.</p>
+                        )}
                       </div>
-                    ))}
+                    </div>
+
+                    {conversationPartners.length > 0 && (
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-medium text-gray-400 mb-2">Recent Conversations</h3>
+                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                          {conversationPartners.map((partner) => (
+                            <button
+                              key={partner.id}
+                              onClick={() => setSelectedConversation({ id: partner.id, name: partner.name })}
+                              className="flex items-center gap-3 p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-left w-full"
+                            >
+                              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center">
+                                <User className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <p className="font-medium text-white truncate">{partner.name}</p>
+                                  <span className="text-xs text-gray-500">{new Date(partner.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <p className="text-sm text-gray-400 truncate">{partner.lastMessage}</p>
+                              </div>
+                              {partner.unread > 0 && (
+                                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <span className="text-xs text-white font-bold">{partner.unread}</span>
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {messages.length === 0 && conversationPartners.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>No messages yet</p>
+                        <p className="text-xs mt-1">Select a user above to start a conversation</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col h-[450px]">
+                    <div className="flex items-center gap-3 pb-3 border-b border-gray-700 mb-3">
+                      <button
+                        onClick={() => setSelectedConversation(null)}
+                        className="p-1.5 hover:bg-gray-700 rounded-lg transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                      </button>
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-white">{selectedConversation.name}</p>
+                        <p className="text-xs text-gray-400">
+                          {onlineUsers.some(u => u.id === selectedConversation.id) ? (
+                            <span className="text-green-400">Online</span>
+                          ) : "Offline"}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleCallUser(selectedConversation.id, selectedConversation.name, "audio")}
+                          className="p-2 bg-green-600 hover:bg-green-500 rounded-full transition-colors"
+                          title="Audio Call"
+                        >
+                          <Phone className="w-3.5 h-3.5 text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleCallUser(selectedConversation.id, selectedConversation.name, "video")}
+                          className="p-2 bg-blue-600 hover:bg-blue-500 rounded-full transition-colors"
+                          title="Video Call"
+                        >
+                          <Video className="w-3.5 h-3.5 text-white" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                      {conversationMessages.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                          <p className="text-sm">No messages yet with {selectedConversation.name}</p>
+                          <p className="text-xs mt-1">Send a message to start the conversation</p>
+                        </div>
+                      ) : (
+                        conversationMessages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`flex ${msg.senderId === myDeviceId ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                              msg.senderId === myDeviceId
+                                ? 'bg-blue-600 text-white rounded-br-md'
+                                : 'bg-gray-700 text-gray-100 rounded-bl-md'
+                            }`}>
+                              <p className="text-sm">{msg.content}</p>
+                              <p className={`text-xs mt-1 ${msg.senderId === myDeviceId ? 'text-blue-200' : 'text-gray-400'}`}>
+                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-3 border-t border-gray-700 mt-3">
+                      <input
+                        type="text"
+                        value={messageText}
+                        onChange={(e) => setMessageText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && messageText.trim()) {
+                            if (isConnected) {
+                              presenceSendMessage(selectedConversation.id, messageText.trim());
+                            }
+                            sendMessage.mutate({ recipientId: selectedConversation.id, content: messageText.trim() });
+                            setMessageText("");
+                          }
+                        }}
+                        placeholder={`Message ${selectedConversation.name}...`}
+                        className="flex-1 bg-gray-800 text-white px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={() => {
+                          if (messageText.trim()) {
+                            if (isConnected) {
+                              presenceSendMessage(selectedConversation.id, messageText.trim());
+                            }
+                            sendMessage.mutate({ recipientId: selectedConversation.id, content: messageText.trim() });
+                            setMessageText("");
+                          }
+                        }}
+                        disabled={!messageText.trim()}
+                        className="p-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-xl transition-colors"
+                      >
+                        <Send className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
