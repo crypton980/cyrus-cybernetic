@@ -259,12 +259,21 @@ function NavigationPageInner({ apiKey }: { apiKey: string }) {
             </div>
           ) : loadError ? (
             <div className="absolute inset-0 flex items-center justify-center bg-[#1c1c1e]">
-              <div className="text-center p-8">
+              <div className="text-center p-8 max-w-md">
                 <div className="w-16 h-16 mx-auto mb-4 bg-[#ff375f] rounded-2xl flex items-center justify-center">
                   <MapPin className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-lg font-semibold mb-2">Map Loading Error</h2>
-                <p className="text-[rgba(235,235,245,0.6)] text-sm">Please check your API key configuration</p>
+                <h2 className="text-lg font-semibold mb-2">Maps JavaScript API Not Activated</h2>
+                <p className="text-[rgba(235,235,245,0.6)] text-sm mb-3">
+                  The Google Maps JavaScript API needs to be enabled in your Google Cloud Console.
+                </p>
+                <div className="bg-[#2c2c2e] rounded-xl p-4 text-left text-[13px] text-[rgba(235,235,245,0.6)] space-y-2">
+                  <p>1. Go to <span className="text-[#0a84ff]">console.cloud.google.com</span></p>
+                  <p>2. Navigate to APIs & Services &gt; Library</p>
+                  <p>3. Search for and enable: <span className="text-white font-medium">Maps JavaScript API</span></p>
+                  <p>4. Also enable: <span className="text-white font-medium">Geocoding API</span></p>
+                  <p>5. Reload this page after enabling</p>
+                </div>
               </div>
             </div>
           ) : !isLoaded ? (
