@@ -7,7 +7,6 @@ const getApiKey = () => process.env.OPENAI_API_KEY || process.env.AI_INTEGRATION
 
 export const openai = new OpenAI({
   apiKey: getApiKey(),
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
 function getClient(): OpenAI {
@@ -17,7 +16,6 @@ function getClient(): OpenAI {
   }
   return new OpenAI({
     apiKey: key,
-    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
   });
 }
 
