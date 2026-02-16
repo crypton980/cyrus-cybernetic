@@ -7,6 +7,86 @@ function getApiKey(): string {
   return key;
 }
 
+function getGeolocationApiKey(): string {
+  const key = process.env.GOOGLE_GEOLOCATION_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) throw new Error("GOOGLE_GEOLOCATION_API_KEY not configured");
+  return key;
+}
+
+export interface WifiAccessPoint {
+  macAddress: string;
+  signalStrength?: number;
+  channel?: number;
+  signalToNoiseRatio?: number;
+}
+
+export interface CellTower {
+  cellId: number;
+  locationAreaCode: number;
+  mobileCountryCode: number;
+  mobileNetworkCode: number;
+  signalStrength?: number;
+}
+
+export interface GeolocationRequest {
+  homeMobileCountryCode?: number;
+  homeMobileNetworkCode?: number;
+  radioType?: "gsm" | "cdma" | "wcdma" | "lte" | "nr";
+  carrier?: string;
+  considerIp?: boolean;
+  cellTowers?: CellTower[];
+  wifiAccessPoints?: WifiAccessPoint[];
+}
+
+export interface GeolocationResponse {
+  lat: number;
+  lon: number;
+  accuracy: number;
+  source: "wifi" | "cell" | "ip";
+}
+
+export async function geolocate(request: GeolocationRequest = {}): Promise<GeolocationResponse> {
+  const apiKey = getGeolocationApiKey();
+  const url = `https://www.googleapis.com/geolocation/v1/geolocate?key=${apiKey}`;
+
+  const body: any = {};
+  if (request.homeMobileCountryCode) body.homeMobileCountryCode = request.homeMobileCountryCode;
+  if (request.homeMobileNetworkCode) body.homeMobileNetworkCode = request.homeMobileNetworkCode;
+  if (request.radioType) body.radioType = request.radioType;
+  if (request.carrier) body.carrier = request.carrier;
+  if (request.considerIp !== undefined) body.considerIp = request.considerIp;
+  if (request.cellTowers?.length) body.cellTowers = request.cellTowers;
+  if (request.wifiAccessPoints?.length) body.wifiAccessPoints = request.wifiAccessPoints;
+
+  if (Object.keys(body).length === 0) {
+    body.considerIp = true;
+  }
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!resp.ok) {
+    const errData: any = await resp.json().catch(() => ({}));
+    throw new Error(`Geolocation API failed: ${resp.status} - ${errData?.error?.message || "Unknown error"}`);
+  }
+
+  const data: any = await resp.json();
+
+  let source: "wifi" | "cell" | "ip" = "ip";
+  if (request.wifiAccessPoints?.length) source = "wifi";
+  else if (request.cellTowers?.length) source = "cell";
+
+  return {
+    lat: data.location.lat,
+    lon: data.location.lng,
+    accuracy: data.accuracy,
+    source,
+  };
+}
+
 export async function geocodeForward(address: string): Promise<GeocodingResult[]> {
   const apiKey = getApiKey();
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;

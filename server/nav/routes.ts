@@ -14,7 +14,7 @@ import {
 } from "./geospatial";
 import {
   geocodeForward, geocodeReverse, getElevation, getElevationAlongPath,
-  searchNearbyPlaces, searchPlacesByText, getPlaceDetails
+  searchNearbyPlaces, searchPlacesByText, getPlaceDetails, geolocate
 } from "./google-geospatial";
 
 const manualFixSchema = z.object({
@@ -184,6 +184,26 @@ export function registerNavRoutes(app: Express) {
       res.json(summary);
     } catch (err: any) {
       res.status(500).json({ error: err.message || "Routing failed" });
+    }
+  });
+
+  app.post("/api/nav/geolocate", async (req, res) => {
+    try {
+      const { wifiAccessPoints, cellTowers, radioType, carrier, considerIp } = req.body || {};
+      const result = await geolocate({ wifiAccessPoints, cellTowers, radioType, carrier, considerIp });
+      const fix: PositionFix = {
+        lat: result.lat,
+        lon: result.lon,
+        accuracy: result.accuracy,
+        source: result.source === "wifi" ? "wifi" : result.source === "cell" ? "cell" : "network",
+        timestamp: Date.now(),
+      };
+      updateFix(fix);
+      const fused = ingestFix(fix);
+      const geofenceEvents = checkGeofences(fused.lat, fused.lon);
+      res.json({ geolocation: result, fused, geofenceEvents });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
     }
   });
 
@@ -418,14 +438,21 @@ export function registerNavRoutes(app: Express) {
 
   app.get("/api/nav/capabilities", (_req, res) => {
     const hasGoogleKey = !!process.env.GOOGLE_MAPS_API_KEY;
+    const hasGeolocationKey = !!process.env.GOOGLE_GEOLOCATION_API_KEY;
     res.json({
       status: "active",
-      version: "2.0",
+      version: "2.1",
       capabilities: {
         positionFusion: true,
         satelliteTracking: true,
         constellations: ["GPS", "GLONASS", "Galileo", "BeiDou", "QZSS", "SBAS"],
         kalmanFilter: true,
+        geolocation: {
+          available: hasGeolocationKey,
+          wifiPositioning: hasGeolocationKey,
+          cellTowerPositioning: hasGeolocationKey,
+          ipPositioning: hasGeolocationKey,
+        },
         geospatial: {
           haversineDistance: true,
           vincentyDistance: true,
@@ -446,7 +473,7 @@ export function registerNavRoutes(app: Express) {
         },
         locationSharing: true,
       },
-      endpoints: 30,
+      endpoints: 31,
     });
   });
 }
