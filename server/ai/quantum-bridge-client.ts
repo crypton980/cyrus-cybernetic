@@ -681,6 +681,99 @@ class QuantumBridgeClient {
     } catch { return null; }
   }
 
+  async scivisVisualize(domain: string, topic: string, viewType: string = "overview", quality: string = "high"): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/scivis/visualize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain, topic, view_type: viewType, quality, include_references: true }),
+        signal: AbortSignal.timeout(30000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async scivisDomains(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/scivis/domains`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async scivisTopics(domain: string): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/scivis/topics/${domain}`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async scivisStatus(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/scivis/status`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async scivisRules(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/scivis/rules`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async scivisReferences(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/scivis/references`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
+  async scivisHistory(): Promise<Record<string, any> | null> {
+    const isHealthy = await this.checkHealth();
+    if (!isHealthy) return null;
+    try {
+      const response = await fetch(`${this.baseUrl}/scivis/history`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch { return null; }
+  }
+
   getStatus(): { available: boolean; lastCheck: number; nexusAvailable: boolean; nexusActive: boolean } {
     return {
       available: this.isAvailable,

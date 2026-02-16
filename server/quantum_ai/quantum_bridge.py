@@ -46,6 +46,13 @@ try:
 except ImportError:
     TRAINING_AVAILABLE = False
 
+try:
+    from scientific_visualization import visualization_engine
+    SCIVIS_AVAILABLE = visualization_engine is not None and visualization_engine.is_available
+except ImportError:
+    SCIVIS_AVAILABLE = False
+    visualization_engine = None
+
 
 class QuantumIntelligenceEngine:
     """
@@ -421,6 +428,7 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 'visual_engine_active': engine.visual_engine is not None,
                 'training_available': TRAINING_AVAILABLE,
                 'training_active': training_pipeline.is_training if TRAINING_AVAILABLE else False,
+                'scivis_available': SCIVIS_AVAILABLE,
                 'timestamp': datetime.now().isoformat()
             })
         elif self.path == '/stats':
@@ -475,6 +483,37 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, {'history': training_pipeline.get_training_history()})
             else:
                 self._send_response(503, {'error': 'Training pipeline not available'})
+        elif self.path == '/scivis/status':
+            if SCIVIS_AVAILABLE:
+                self._send_response(200, visualization_engine.get_status())
+            else:
+                self._send_response(503, {'error': 'Scientific visualization engine not available'})
+        elif self.path == '/scivis/domains':
+            if SCIVIS_AVAILABLE:
+                self._send_response(200, visualization_engine.get_domains())
+            else:
+                self._send_response(503, {'error': 'Scientific visualization engine not available'})
+        elif self.path == '/scivis/rules':
+            if SCIVIS_AVAILABLE:
+                self._send_response(200, visualization_engine.get_validation_rules())
+            else:
+                self._send_response(503, {'error': 'Scientific visualization engine not available'})
+        elif self.path == '/scivis/references':
+            if SCIVIS_AVAILABLE:
+                self._send_response(200, visualization_engine.get_references())
+            else:
+                self._send_response(503, {'error': 'Scientific visualization engine not available'})
+        elif self.path == '/scivis/history':
+            if SCIVIS_AVAILABLE:
+                self._send_response(200, {'history': visualization_engine.get_history()})
+            else:
+                self._send_response(503, {'error': 'Scientific visualization engine not available'})
+        elif self.path.startswith('/scivis/topics/'):
+            if SCIVIS_AVAILABLE:
+                domain = self.path.split('/scivis/topics/')[-1]
+                self._send_response(200, visualization_engine.get_topics(domain))
+            else:
+                self._send_response(503, {'error': 'Scientific visualization engine not available'})
         else:
             self._send_response(404, {'error': 'Not found'})
     
@@ -685,6 +724,18 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, result)
             else:
                 self._send_response(503, {'error': 'Training pipeline not available'})
+        
+        elif self.path == '/scivis/visualize':
+            if SCIVIS_AVAILABLE:
+                domain = data.get('domain', 'medical')
+                topic = data.get('topic', '')
+                view_type = data.get('view_type', 'overview')
+                quality = data.get('quality', 'high')
+                include_refs = data.get('include_references', True)
+                result = visualization_engine.visualize(domain, topic, view_type, quality, include_refs)
+                self._send_response(200, result)
+            else:
+                self._send_response(503, {'error': 'Scientific visualization engine not available'})
         
         else:
             self._send_response(404, {'error': 'Endpoint not found'})

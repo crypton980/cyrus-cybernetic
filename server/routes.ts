@@ -3724,5 +3724,72 @@ Return ONLY valid JSON.`
     }
   });
 
+  app.post("/api/scivis/visualize", async (req, res) => {
+    try {
+      const { domain, topic, view_type, quality } = req.body;
+      if (!domain || !topic) {
+        return res.status(400).json({ error: "domain and topic are required" });
+      }
+      const result = await quantumBridge.scivisVisualize(domain, topic, view_type || "overview", quality || "high");
+      res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/scivis/status", async (_req, res) => {
+    try {
+      const result = await quantumBridge.scivisStatus();
+      res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/scivis/domains", async (_req, res) => {
+    try {
+      const result = await quantumBridge.scivisDomains();
+      res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/scivis/topics/:domain", async (req, res) => {
+    try {
+      const result = await quantumBridge.scivisTopics(req.params.domain);
+      res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/scivis/rules", async (_req, res) => {
+    try {
+      const result = await quantumBridge.scivisRules();
+      res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/scivis/references", async (_req, res) => {
+    try {
+      const result = await quantumBridge.scivisReferences();
+      res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.get("/api/scivis/history", async (_req, res) => {
+    try {
+      const result = await quantumBridge.scivisHistory();
+      res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
   return httpServer;
 }
