@@ -260,5 +260,79 @@ export type HealthSleep = typeof healthSleep.$inferSelect;
 export type InsertHealthBodyMetrics = z.infer<typeof insertHealthBodyMetricsSchema>;
 export type HealthBodyMetrics = typeof healthBodyMetrics.$inferSelect;
 
+// Location Tracking & Emergency Response System v1.0
+export const locationRecords = pgTable("location_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  latitude: text("latitude").notNull(),
+  longitude: text("longitude").notNull(),
+  accuracy: text("accuracy").default("10"),
+  altitude: text("altitude"),
+  speed: text("speed"),
+  heading: text("heading"),
+  address: text("address"),
+  locationName: text("location_name"),
+  source: text("source").default("manual"),
+  status: text("status").default("active"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const emergencyAlerts = pgTable("emergency_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  userName: text("user_name").default("Unknown"),
+  level: text("level").notNull(),
+  message: text("message").notNull(),
+  latitude: text("latitude").notNull(),
+  longitude: text("longitude").notNull(),
+  status: text("status").default("active"),
+  respondersAssigned: jsonb("responders_assigned"),
+  contactInfo: jsonb("contact_info"),
+  resolvedBy: text("resolved_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const locationShares = pgTable("location_shares_v2", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  sharedWithId: text("shared_with_id"),
+  sharedWithEmail: text("shared_with_email"),
+  permissionLevel: text("permission_level").default("view_only"),
+  isActive: integer("is_active").default(1),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const trackedUsers = pgTable("tracked_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  userName: text("user_name").notNull(),
+  role: text("role").default("user"),
+  lastLat: text("last_lat"),
+  lastLon: text("last_lon"),
+  lastAccuracy: text("last_accuracy"),
+  lastSpeed: text("last_speed"),
+  lastHeading: text("last_heading"),
+  lastAddress: text("last_address"),
+  status: text("status").default("active"),
+  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertLocationRecordSchema = createInsertSchema(locationRecords).omit({ id: true, createdAt: true });
+export const insertEmergencyAlertSchema = createInsertSchema(emergencyAlerts).omit({ id: true, createdAt: true });
+export const insertLocationShareSchema = createInsertSchema(locationShares).omit({ id: true, createdAt: true });
+export const insertTrackedUserSchema = createInsertSchema(trackedUsers).omit({ id: true, createdAt: true, lastUpdated: true });
+
+export type InsertLocationRecord = z.infer<typeof insertLocationRecordSchema>;
+export type LocationRecord = typeof locationRecords.$inferSelect;
+export type InsertEmergencyAlert = z.infer<typeof insertEmergencyAlertSchema>;
+export type EmergencyAlert = typeof emergencyAlerts.$inferSelect;
+export type InsertLocationShare = z.infer<typeof insertLocationShareSchema>;
+export type LocationShareRecord = typeof locationShares.$inferSelect;
+export type InsertTrackedUser = z.infer<typeof insertTrackedUserSchema>;
+export type TrackedUser = typeof trackedUsers.$inferSelect;
+
 export * from "./models/auth";
 export * from "./models/comms";

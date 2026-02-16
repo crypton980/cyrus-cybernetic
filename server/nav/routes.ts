@@ -16,6 +16,16 @@ import {
   geocodeForward, geocodeReverse, getElevation, getElevationAlongPath,
   searchNearbyPlaces, searchPlacesByText, getPlaceDetails, geolocate
 } from "./google-geospatial";
+import {
+  updateUserLocation, getUserLocation, getAllUserLocations,
+  getLocationHistory, calculateEta, shareLocationWithUser,
+  revokeLocationShare, getSharedWithMe, getTrackedUsersFromDb,
+  setUserOffline
+} from "./tracking";
+import {
+  triggerEmergencyAlert, resolveEmergency, getActiveAlerts,
+  getAllAlerts, getActiveAlertCount
+} from "./emergency";
 
 const manualFixSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -533,6 +543,222 @@ export function registerNavRoutes(app: Express) {
         locationSharing: true,
       },
       endpoints: 31,
+    });
+  });
+
+  // ==================== LOCATION TRACKING SYSTEM v1.0 ====================
+
+  app.post("/api/nav/track/update", async (req, res) => {
+    try {
+      const { userId, userName, lat, lon, accuracy, altitude, speed, heading, source } = req.body;
+      if (!userId || lat === undefined || lon === undefined) {
+        return res.status(400).json({ error: "userId, lat, and lon are required" });
+      }
+      const location = await updateUserLocation(
+        userId, userName || userId, lat, lon,
+        accuracy || 10, altitude, speed, heading, source || "manual"
+      );
+      res.json({ success: true, message: "Location updated", location });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/track/current", (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) return res.status(400).json({ error: "userId is required" });
+      const location = getUserLocation(userId);
+      if (!location) return res.status(404).json({ error: "User location not found" });
+      res.json(location);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/track/all", (req, res) => {
+    try {
+      const locations = getAllUserLocations();
+      const result: any = {};
+      for (const [userId, loc] of locations) {
+        result[userId] = loc;
+      }
+      res.json({ totalUsers: locations.size, locations: result });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/track/history", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      const hours = parseInt(req.query.hours as string) || 24;
+      if (!userId) return res.status(400).json({ error: "userId is required" });
+      const history = await getLocationHistory(userId, hours);
+      res.json({ userId, periodHours: hours, points: history.length, history });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/track/eta", (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      const destLat = parseFloat(req.query.destLat as string);
+      const destLon = parseFloat(req.query.destLon as string);
+      if (!userId || isNaN(destLat) || isNaN(destLon)) {
+        return res.status(400).json({ error: "userId, destLat, and destLon are required" });
+      }
+      const eta = calculateEta(userId, destLat, destLon);
+      if (!eta) return res.status(404).json({ error: "User location not found for ETA" });
+      res.json(eta);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/track/offline", (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) return res.status(400).json({ error: "userId is required" });
+      setUserOffline(userId);
+      res.json({ success: true, message: `User ${userId} marked offline` });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/admin/users", async (req, res) => {
+    try {
+      const users = await getTrackedUsersFromDb();
+      res.json({ totalUsers: users.length, users });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ==================== EMERGENCY SOS SYSTEM ====================
+
+  app.post("/api/nav/emergency/alert", async (req, res) => {
+    try {
+      const { userId, userName, level, message, lat, lon, contactInfo } = req.body;
+      if (!userId || !level || !message || lat === undefined || lon === undefined) {
+        return res.status(400).json({ error: "userId, level, message, lat, and lon are required" });
+      }
+      const validLevels = ["low", "medium", "high", "critical"];
+      if (!validLevels.includes(level)) {
+        return res.status(400).json({ error: `level must be one of: ${validLevels.join(", ")}` });
+      }
+      const alert = await triggerEmergencyAlert(userId, userName || userId, level, message, lat, lon, contactInfo);
+      res.json({
+        alertId: alert.alertId,
+        status: "active",
+        level: alert.level,
+        respondersDispatched: alert.respondersAssigned.length,
+        message: "Emergency alert triggered successfully",
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/emergency/resolve", async (req, res) => {
+    try {
+      const { alertId, responderId } = req.body;
+      if (!alertId || !responderId) {
+        return res.status(400).json({ error: "alertId and responderId are required" });
+      }
+      const resolved = await resolveEmergency(alertId, responderId);
+      if (!resolved) return res.status(404).json({ error: "Alert not found" });
+      res.json({ success: true, message: "Emergency alert resolved" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/emergency/active", async (req, res) => {
+    try {
+      const alerts = await getActiveAlerts();
+      res.json({ totalAlerts: alerts.length, alerts });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/emergency/all", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const alerts = await getAllAlerts(limit);
+      res.json({ totalAlerts: alerts.length, alerts });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/emergency/status", (req, res) => {
+    res.json({
+      activeAlerts: getActiveAlertCount(),
+      systemStatus: "operational",
+      module: "Emergency Response Engine v1.0",
+    });
+  });
+
+  // ==================== ENHANCED LOCATION SHARING ====================
+
+  app.post("/api/nav/sharing/start", async (req, res) => {
+    try {
+      const { userId, sharedWithEmail, permissionLevel, durationHours } = req.body;
+      if (!userId || !sharedWithEmail) {
+        return res.status(400).json({ error: "userId and sharedWithEmail are required" });
+      }
+      const result = await shareLocationWithUser(userId, sharedWithEmail, permissionLevel || "view_only", durationHours);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/nav/sharing/revoke", async (req, res) => {
+    try {
+      const { shareId } = req.body;
+      if (!shareId) return res.status(400).json({ error: "shareId is required" });
+      await revokeLocationShare(shareId);
+      res.json({ success: true, message: "Location sharing revoked" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/nav/sharing/shared-with-me", async (req, res) => {
+    try {
+      const userEmail = req.query.userEmail as string;
+      if (!userEmail) return res.status(400).json({ error: "userEmail is required" });
+      const shared = await getSharedWithMe(userEmail);
+      res.json({ totalShared: shared.length, sharedLocations: shared });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ==================== SYSTEM STATUS ====================
+
+  app.get("/api/nav/tracking/status", (req, res) => {
+    const locations = getAllUserLocations();
+    res.json({
+      module: "Advanced Location Tracking & Emergency Response System v1.0",
+      status: "operational",
+      activeTrackedUsers: locations.size,
+      activeEmergencyAlerts: getActiveAlertCount(),
+      capabilities: [
+        "Real-time user location tracking",
+        "Location history & analytics",
+        "User-to-user location sharing",
+        "Emergency SOS alerts",
+        "Geofencing with entry/exit alerts",
+        "ETA calculation",
+        "Reverse geocoding enrichment",
+        "Admin dashboard endpoints",
+      ],
     });
   });
 }
