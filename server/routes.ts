@@ -351,12 +351,15 @@ export async function registerRoutes(
       }
 
       const imagePatterns = [
-        /\b(generate|create|make|draw|paint|produce|render)\b.*\b(image|picture|photo|illustration|art|artwork|drawing|painting)\b/i,
-        /\b(image|picture|photo|illustration)\b.*\b(of|for|showing|with)\b/i,
+        /\b(generate|create|make|draw|paint|produce|render|sketch|design|craft)\b.*\b(image|picture|photo|illustration|art|artwork|drawing|painting|diagram|visual|graphic|portrait|scene)\b/i,
+        /\b(image|picture|photo|illustration|diagram|drawing|sketch|visual|graphic|portrait)\b.*\b(of|for|showing|with|about|depicting|featuring)\b/i,
+        /\b(show|give|display|present)\s+(me|us)?\s*(a|an|the|some)?\s*(image|picture|photo|illustration|diagram|drawing|sketch|visual|graphic|portrait)\b/i,
+        /\b(illustrate|visualize|depict)\b.*\b(the|a|an|how|what)\b.*\b(anatomy|body|skeleton|organ|cell|structure|system|process|cycle|circuit|building|landscape|scene|animal|plant|brain|heart|muscle|bone)\b/i,
         /\bdall-?e\b/i,
-        /\bgenerate\s+(?:a|an|the)\s+/i,
+        /\b(can you|could you|please|i want|i need|i'd like)\b.*\b(draw|illustrate|visualize|depict|sketch)\b.*\b(image|picture|illustration|diagram|visual|drawing|portrait|graphic|of the|of a|of an)\b/i,
       ];
-      const isImageRequest = imagePatterns.some(p => p.test(message));
+      const showMeVisualCheck = /\b(show|give|display)\s+(me|us)\s/i.test(message) && /\b(illustration|visual|image|picture|diagram|drawing|anatomy|skeleton|structure)\b/i.test(message);
+      const isImageRequest = imagePatterns.some(p => p.test(message)) || showMeVisualCheck;
 
       if (isImageRequest) {
         try {
@@ -860,12 +863,15 @@ Format your response in a clear, structured manner.`
       }
 
       const imagePatterns = [
-        /\b(generate|create|make|draw|paint|produce|render)\b.*\b(image|picture|photo|illustration|art|artwork|drawing|painting)\b/i,
-        /\b(image|picture|photo|illustration)\b.*\b(of|for|showing|with)\b/i,
+        /\b(generate|create|make|draw|paint|produce|render|sketch|design|craft)\b.*\b(image|picture|photo|illustration|art|artwork|drawing|painting|diagram|visual|graphic|portrait|scene)\b/i,
+        /\b(image|picture|photo|illustration|diagram|drawing|sketch|visual|graphic|portrait)\b.*\b(of|for|showing|with|about|depicting|featuring)\b/i,
+        /\b(show|give|display|present)\s+(me|us)?\s*(a|an|the|some)?\s*(image|picture|photo|illustration|diagram|drawing|sketch|visual|graphic|portrait)\b/i,
+        /\b(illustrate|visualize|depict)\b.*\b(the|a|an|how|what)\b.*\b(anatomy|body|skeleton|organ|cell|structure|system|process|cycle|circuit|building|landscape|scene|animal|plant|brain|heart|muscle|bone)\b/i,
         /\bdall-?e\b/i,
-        /\bgenerate\s+(?:a|an|the)\s+/i,
+        /\b(can you|could you|please|i want|i need|i'd like)\b.*\b(draw|illustrate|visualize|depict|sketch)\b.*\b(image|picture|illustration|diagram|visual|drawing|portrait|graphic|of the|of a|of an)\b/i,
       ];
-      const isImageRequest = imagePatterns.some(p => p.test(message));
+      const showMeVisualCheck = /\b(show|give|display)\s+(me|us)\s/i.test(message) && /\b(illustration|visual|image|picture|diagram|drawing|anatomy|skeleton|structure)\b/i.test(message);
+      const isImageRequest = imagePatterns.some(p => p.test(message)) || showMeVisualCheck;
 
       if (isImageRequest) {
         try {
