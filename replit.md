@@ -43,7 +43,8 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Mission-Grade Operator System Prompt:** Defines CYRUS v3.0 as OMEGA-TIER ASI with 9 operational modes.
 - **Quantum Fail-Safe Architecture:** Military-grade reliability with confidence reporting.
 - **Security Features:** Biometric verification, token-based session management, and Zod input validation.
-- **Self-Evolution Learning System:** Real-time experience learning that tracks interactions, builds knowledge graphs, and optimizes performance.
+- **Self-Evolution Learning System:** Real-time experience learning that tracks interactions, builds knowledge graphs, and optimizes performance. Auto-triggers training pipeline on startup.
+- **CYRUS Training Pipeline v2.0:** Comprehensive 7-phase training system using scikit-learn (TF-IDF vectorization, KMeans/DBSCAN clustering, NMF/LDA topic modeling, SVM/RF/MLP intent classification, GBT/LR domain classification, cross-domain relationship mapping, benchmarking). 202+ knowledge concepts across 10 domains (medicine, technology, science, engineering, security, trading, mathematics, military/defense, psychology, law). Auto-trains on startup via self-evolution engine. Exposes `/api/training/start`, `/api/training/status`, `/api/training/models`, `/api/training/classify`, `/api/training/history` endpoints. Training-enhanced classification is integrated into the main `/api/infer` pipeline.
 - **Module Orchestrator:** Unifies and coordinates all 13 AI modules as one cohesive cognitive system.
 
 **Advanced Upgrade Modules (v3.0 Enhancements - Deeply Integrated):**

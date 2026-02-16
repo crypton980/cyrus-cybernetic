@@ -62,6 +62,23 @@ KNOWLEDGE_DOMAINS = {
             'clinical laboratory diagnostics biomarkers',
             'pain management multimodal analgesia',
             'wound healing stages and tissue regeneration',
+            'human heart anatomy chambers valves blood flow',
+            'brain anatomy cerebral cortex cerebellum brainstem',
+            'lung anatomy alveoli bronchi breathing mechanics',
+            'kidney anatomy nephron glomerulus filtration',
+            'liver anatomy hepatocytes bile production detoxification',
+            'eye anatomy retina cornea lens optic nerve',
+            'stomach anatomy gastric acids digestion pepsin',
+            'spine anatomy vertebrae spinal cord disc herniation',
+            'bone fracture healing orthopedic treatment casting',
+            'diabetes insulin glucose metabolism pancreas',
+            'hypertension blood pressure medication treatment',
+            'asthma bronchial inflammation inhaler corticosteroid',
+            'cancer tumor oncology chemotherapy radiation therapy',
+            'stroke cerebrovascular accident thrombolytic treatment',
+            'pregnancy prenatal care obstetrics fetal development',
+            'mental health depression anxiety psychotherapy medication',
+            'allergy immune hypersensitivity antihistamine treatment',
         ],
         'weight': 1.2
     },
@@ -696,7 +713,7 @@ class CYRUSTrainingPipeline:
         gb.fit(X.toarray(), y)
         gb_scores = cross_val_score(gb, X.toarray(), y, cv=min(5, len(set(y))), scoring='accuracy')
         
-        lr = LogisticRegression(C=10.0, max_iter=1000, multi_class='multinomial', random_state=42)
+        lr = LogisticRegression(C=10.0, max_iter=1000, random_state=42)
         lr.fit(X, y)
         lr_scores = cross_val_score(lr, X, y, cv=min(5, len(set(y))), scoring='accuracy')
         

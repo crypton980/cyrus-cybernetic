@@ -1,0 +1,181 @@
+{
+  "timestamp": "2026-02-16T06:19:06.109641",
+  "duration_seconds": 61.220155239105225,
+  "phases_completed": 7,
+  "models_trained": [
+    "tfidf_vectorizer",
+    "domain_kmeans",
+    "domain_dbscan",
+    "nmf_topic_model",
+    "lda_topic_model",
+    "intent_classifier",
+    "domain_classifier",
+    "cross_domain_map"
+  ],
+  "config": {},
+  "model_metrics": {
+    "tfidf_vectorizer": {
+      "type": "TfidfVectorizer",
+      "n_features": 2464,
+      "n_samples": 202,
+      "vocabulary_size": 2464
+    },
+    "domain_kmeans": {
+      "type": "KMeans",
+      "n_clusters": 10,
+      "silhouette_score": 0.004192170839255077,
+      "inertia": 189.36171047883468
+    },
+    "domain_dbscan": {
+      "type": "DBSCAN",
+      "clusters_found": 1,
+      "noise_points": 200
+    },
+    "nmf_topic_model": {
+      "type": "NMF",
+      "n_topics": 15,
+      "reconstruction_error": 42.133224213103205,
+      "top_topics": {
+        "topic_0": [
+          "analysis",
+          "numerical",
+          "risk",
+          "design",
+          "pricing"
+        ],
+        "topic_1": [
+          "systems",
+          "optimization",
+          "autonomous",
+          "programming",
+          "energy"
+        ],
+        "topic_2": [
+          "and",
+          "disorders",
+          "pathways",
+          "treatment",
+          "anatomy and"
+        ],
+        "topic_3": [
+          "engineering",
+          "design",
+          "processing",
+          "mechanics",
+          "foundation"
+        ],
+        "topic_4": [
+          "security",
+          "chain",
+          "supply chain",
+          "supply",
+          "vulnerabilities"
+        ]
+      }
+    },
+    "lda_topic_model": {
+      "type": "LDA",
+      "n_topics": 15,
+      "perplexity": 4195.926623578265
+    },
+    "intent_classifier": {
+      "type": "svm",
+      "accuracy": 0.6111111111111112,
+      "svm_accuracy": 0.6111111111111112,
+      "rf_accuracy": 0.6,
+      "mlp_accuracy": 0.16666666666666666,
+      "n_intents": 6,
+      "intents": [
+        "analysis",
+        "calculation",
+        "command",
+        "creation",
+        "monitoring",
+        "question"
+      ]
+    },
+    "domain_classifier": {
+      "type": "gradient_boosting",
+      "accuracy": 0.5,
+      "svm_accuracy": 0.2078048780487805,
+      "gb_accuracy": 0.5,
+      "lr_accuracy": 0.2623170731707317,
+      "n_domains": 10,
+      "domains": [
+        "engineering",
+        "law",
+        "mathematics",
+        "medicine",
+        "military_defense",
+        "psychology",
+        "science",
+        "security",
+        "technology",
+        "trading"
+      ]
+    },
+    "cross_domain_map": {
+      "type": "CrossDomainRelationship",
+      "n_domains": 10,
+      "n_connections": 0,
+      "top_connections": [],
+      "domain_positions": {
+        "medicine": {
+          "x": -0.01340095980197051,
+          "y": -0.025039691079607337,
+          "z": 0.0038249540975763534
+        },
+        "technology": {
+          "x": -0.012047517629588424,
+          "y": -0.04236286484555876,
+          "z": 0.006439760518899296
+        },
+        "science": {
+          "x": -0.012562762329185547,
+          "y": -0.037855414910848054,
+          "z": 0.008236914284290084
+        },
+        "engineering": {
+          "x": -0.014672293006452255,
+          "y": -0.059008180897486856,
+          "z": -0.002412229522273856
+        },
+        "security": {
+          "x": -0.014128478910982583,
+          "y": -0.04873970692089402,
+          "z": -0.020276637273854436
+        },
+        "trading": {
+          "x": -0.01516707990529053,
+          "y": -0.03852017466327711,
+          "z": 0.02560626670934555
+        },
+        "mathematics": {
+          "x": -0.02028203360835018,
+          "y": -0.0714789915127012,
+          "z": 0.1856414495404538
+        },
+        "military_defense": {
+          "x": -0.015868542516652564,
+          "y": -0.08059190646673216,
+          "z": -0.1981640982233066
+        },
+        "psychology": {
+          "x": -0.18321858649951694,
+          "y": 0.2637654270963125,
+          "z": -0.007430017725824544
+        },
+        "law": {
+          "x": 0.3013482542079897,
+          "y": 0.13983150420079282,
+          "z": -0.0014663624053059625
+        }
+      },
+      "pca_explained_variance": [
+        0.20482937717476263,
+        0.18170330171088925,
+        0.121734302818805
+      ]
+    }
+  }
+}
