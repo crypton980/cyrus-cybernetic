@@ -42,6 +42,9 @@ import { registerInteractiveRoutes } from "./ai/interactive/routes";
 import { quantumBridge } from "./ai/quantum-bridge-client";
 import { quantumResponseFormatter } from "./ai/quantum-response-formatter";
 import { healthIntegrations, validateState, type HealthProvider } from "./health/integrations";
+import { registerImageRoutes } from "./replit_integrations/image/routes";
+import { generateImage } from "./replit_integrations/image/client";
+import { systemRefinementEngine } from "./ai/system-refinement-engine";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -181,7 +184,7 @@ const normalizeActionType = (type: string): string => {
 };
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
@@ -345,6 +348,60 @@ export async function registerRoutes(
       const { message } = req.body;
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
+      }
+
+      const imagePatterns = [
+        /\b(generate|create|make|draw|paint|produce|render)\b.*\b(image|picture|photo|illustration|art|artwork|drawing|painting)\b/i,
+        /\b(image|picture|photo|illustration)\b.*\b(of|for|showing|with)\b/i,
+        /\bdall-?e\b/i,
+        /\bgenerate\s+(?:a|an|the)\s+/i,
+      ];
+      const isImageRequest = imagePatterns.some(p => p.test(message));
+
+      if (isImageRequest) {
+        try {
+          console.log(`[CYRUS Image] Detected image generation request: "${message.substring(0, 80)}..."`);
+          const promptResponse = await callOpenAIWithTimeout((signal) =>
+            openai.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                { role: "system", content: "Extract a detailed DALL-E image generation prompt from the user's request. Return ONLY the optimized prompt text, nothing else. Make it detailed and descriptive for best image quality." },
+                { role: "user", content: message }
+              ],
+              temperature: 0.5,
+              max_tokens: 300,
+            }, { signal })
+          , 15000);
+          const imagePrompt = promptResponse.choices[0]?.message?.content || message;
+
+          const imageResult = await generateImage({
+            prompt: imagePrompt,
+            model: "dall-e-3",
+            size: "1024x1024",
+            quality: "standard",
+            style: "vivid",
+            savePath: "auto",
+          });
+
+          const savedUrl = imageResult.images[0]?.savedPath;
+          const revisedPrompt = imageResult.images[0]?.revised_prompt;
+
+          return res.json({
+            message: `I've generated that image for you. ${revisedPrompt ? `Here's what I created: ${revisedPrompt}` : "The image has been generated successfully."}`,
+            imageGenerated: true,
+            imageUrl: savedUrl,
+            imageDetails: {
+              model: imageResult.model,
+              size: imageResult.size,
+              quality: imageResult.quality,
+              style: imageResult.style,
+              revisedPrompt,
+            },
+            format: "image_response",
+          });
+        } catch (imgError: any) {
+          console.error("[CYRUS Image] Auto-generation failed:", imgError?.message);
+        }
       }
 
       // Use CyrusSoul for reasoning and prompt generation
@@ -2342,6 +2399,7 @@ Return ONLY valid JSON.`
 
   // Register audio/voice routes
   registerAudioRoutes(app);
+  registerImageRoutes(app);
   registerDeviceRoutes(app);
   registerNavRoutes(app);
   registerDroneRoutes(app);
@@ -3807,6 +3865,93 @@ Return ONLY valid JSON.`
     try {
       const result = await quantumBridge.scivisHistory();
       res.json(result || { error: "Scientific visualization engine not available" });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  // ===============================================
+  // SYSTEM REFINEMENT ENGINE API
+  // ===============================================
+
+  app.get("/api/refinement/status", async (_req, res) => {
+    try {
+      res.json(systemRefinementEngine.getStatus());
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
+    }
+  });
+
+  app.post("/api/refinement/analyze", async (_req, res) => {
+    try {
+      console.log("[CYRUS] Running system analysis...");
+      const analysis = await systemRefinementEngine.analyzeSystem();
+      res.json({ success: true, analysis });
+    } catch (e) {
+      console.error("[Refinement] Analysis error:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : "Analysis failed" });
+    }
+  });
+
+  app.post("/api/refinement/optimize-prompt", async (req, res) => {
+    try {
+      const { currentPrompt, targetBehavior } = req.body;
+      if (!targetBehavior) {
+        return res.status(400).json({ error: "targetBehavior is required" });
+      }
+      const prompt = currentPrompt || cyrusSoul.getSystemPrompt();
+      const result = await systemRefinementEngine.optimizePrompt(prompt, targetBehavior);
+      res.json({ success: true, result });
+    } catch (e) {
+      console.error("[Refinement] Prompt optimization error:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : "Optimization failed" });
+    }
+  });
+
+  app.post("/api/refinement/enhance-knowledge", async (req, res) => {
+    try {
+      const { domain, depth = "advanced" } = req.body;
+      if (!domain) {
+        return res.status(400).json({ error: "domain is required" });
+      }
+      const result = await systemRefinementEngine.enhanceKnowledge(domain, depth);
+      res.json({ success: true, result });
+    } catch (e) {
+      console.error("[Refinement] Knowledge enhancement error:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : "Enhancement failed" });
+    }
+  });
+
+  app.post("/api/refinement/refine-responses", async (req, res) => {
+    try {
+      const { queries } = req.body;
+      const sampleQueries = queries || [
+        "Explain quantum computing in simple terms",
+        "What is the best approach to learn machine learning?",
+        "Help me debug a complex software issue",
+      ];
+      const result = await systemRefinementEngine.refineResponseQuality(sampleQueries);
+      res.json({ success: true, result });
+    } catch (e) {
+      console.error("[Refinement] Response refinement error:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : "Refinement failed" });
+    }
+  });
+
+  app.post("/api/refinement/full-cycle", async (_req, res) => {
+    try {
+      console.log("[CYRUS] Starting full system refinement cycle...");
+      const result = await systemRefinementEngine.runFullRefinement();
+      res.json({ success: true, ...result });
+    } catch (e) {
+      console.error("[Refinement] Full cycle error:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : "Full refinement failed" });
+    }
+  });
+
+  app.get("/api/refinement/history", async (_req, res) => {
+    try {
+      res.json({ history: systemRefinementEngine.getHistory() });
     } catch (e) {
       res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
     }

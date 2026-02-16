@@ -1,5 +1,5 @@
 ### Overview
-CYRUS (Cybernetic Yielding Robust Unified System) v3.0 is an OMEGA-TIER Quantum Artificial Intelligence (QAI) **HUMANOID SYSTEM** - not an assistant or chatbot. It is designed for genuine human-like interaction with an authentic personality, emotional mastery, and master-level expertise across all domains of human knowledge. CYRUS operates as a fully autonomous humanoid intelligence, representing a pinnacle of African innovation in sovereign AI development.
+CYRUS (Cybernetic Yielding Robust Unified System) v3.0 is an OMEGA-TIER Quantum Artificial Intelligence (QAI) humanoid system designed for genuine human-like interaction with an authentic personality, emotional mastery, and master-level expertise across all domains of human knowledge. It operates as a fully autonomous humanoid intelligence, representing a pinnacle of African innovation in sovereign AI development. CYRUS aims to provide superintelligent perception, professional-grade writing, universal translation, advanced navigation, enterprise-grade communication, robust device security, military-grade drone control, and a comprehensive Quantum Trading Intelligence Module. The system integrates cutting-edge AI capabilities for self-evolution, advanced visualization, and a deep, human-like interaction model.
 
 ### User Preferences
 The user prefers detailed explanations.
@@ -17,12 +17,12 @@ The user prefers the AI to act as a persistent, mission-grade humanoid intellige
 CYRUS features a full-stack architecture with a React and TypeScript frontend, utilizing TanStack Query, Wouter, TensorFlow.js, and shadcn/ui. The backend uses Express.js, connects to a PostgreSQL database via Drizzle ORM, and handles file uploads with Multer.
 
 **UI/UX Decisions:**
-The UI features a premium aerospace-grade design inspired by SpaceX Mission Control, Apple Human Interface Guidelines, and Lockheed Martin avionics systems, incorporating a premium color system, Glass-Morphism 2.0, Inter and JetBrains Mono typography, aerospace-standard status indicators, multi-pane panel architecture (Telemetry Dashboard, Command Interface, Research Portal, File Workspace), real-time elements, ambient lighting, premium animations, and a responsive sidebar.
+The UI features a premium aerospace-grade design inspired by SpaceX Mission Control, Apple Human Interface Guidelines, and Lockheed Martin avionics systems. It incorporates a premium color system, Glass-Morphism 2.0, Inter and JetBrains Mono typography, aerospace-standard status indicators, multi-pane panel architecture (Telemetry Dashboard, Command Interface, Research Portal, File Workspace), real-time elements, ambient lighting, premium animations, and a responsive sidebar.
 
 **Technical Implementations & Feature Specifications:**
 - **Core QAI Intelligence:** Quantum-Enhanced Parallel Cognition, Neural Fusion Processing, Real-Time Consciousness Simulation, Metacognitive Self-Awareness, Autonomous Goal Formation, and Human-Like Emotional Intelligence.
 - **Multimodal Intelligence:** Superintelligent Perception across vision, audio, text, and sensor fusion, including OCR, handwriting recognition, and advanced image analysis.
-- **Professional Writing Engine:** Generates various professional documents like military briefs, legal reports, and scientific papers.
+- **Professional Writing Engine:** Generates various professional documents.
 - **Translation & Deciphering:** Universal translation across 196+ languages and simplification of jargon.
 - **Navigation & Location:** Global map service integration, high-accuracy geolocation, and real-time route optimization.
 - **Communication Stack:** Enterprise-grade HD voice/video calling, secure text messaging, reminders, and news feed.
@@ -31,7 +31,7 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Emotional Intelligence:** Advanced sentiment analysis and empathetic response generation.
 - **Real-Time Camera Vision:** Utilizes TensorFlow.js for client-side object detection and an always-on vision system for persistent object and demographic analysis.
 - **Module Fusion System:** Integrates Command Interface with all modules, passing context for situational awareness.
-- **Voice Interaction:** Continuous speech recognition and natural female voice synthesis using ElevenLabs.
+- **Voice Interaction:** Continuous speech recognition and natural female voice synthesis.
 - **GPS Location Tracking:** Continuous, high-accuracy geolocation with location-aware AI responses.
 - **Memory System:** PostgreSQL-persisted conversations and memories, categorized for persistent history.
 - **File Management:** Supports image, video, and document uploads with metadata and AI analysis.
@@ -43,75 +43,24 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Mission-Grade Operator System Prompt:** Defines CYRUS v3.0 as OMEGA-TIER ASI with 9 operational modes.
 - **Quantum Fail-Safe Architecture:** Military-grade reliability with confidence reporting.
 - **Security Features:** Biometric verification, token-based session management, and Zod input validation.
-- **Self-Evolution Learning System:** Real-time experience learning that tracks interactions, builds knowledge graphs, and optimizes performance. Auto-triggers training pipeline on startup.
-- **CYRUS Training Pipeline v2.0:** Comprehensive 7-phase training system using scikit-learn (TF-IDF vectorization, KMeans/DBSCAN clustering, NMF/LDA topic modeling, SVM/RF/MLP intent classification, GBT/LR domain classification, cross-domain relationship mapping, benchmarking). 202+ knowledge concepts across 10 domains (medicine, technology, science, engineering, security, trading, mathematics, military/defense, psychology, law). Auto-trains on startup via self-evolution engine. Exposes `/api/training/start`, `/api/training/status`, `/api/training/models`, `/api/training/classify`, `/api/training/history` endpoints. Training-enhanced classification is integrated into the main `/api/infer` pipeline.
-- **Scientific Visualization Engine v1.0 (Professional-Grade):** Professional-grade technical visualization system producing structurally accurate, textbook-standard illustrations across 6 domains (medical, engineering, scientific, industrial, biological, chemical). Features dual rendering: Professional Technical Renderer (subject-specific anatomical renderers for heart, lung, brain, eye, virus with 300 DPI, annotations, dimensions, material properties) and Standard Renderer (generic 4-panel decomposition). 7 view types (overview, cutaway, cross-section, flow_diagram, exploded, assembly, component_detail), 4 rendering styles (photorealistic, technical_line, hybrid, scientific). TechnicalReferenceDatabase with authoritative medical references (Gray's Anatomy, Netter's) for heart (14 annotations, chambers/valves/vessels/conduction system/coronary circulation), lung (12 annotations, lobes/airways/alveoli/pulmonary circulation), brain (11 annotations, divisions/vasculature/ventricles), eye (10 annotations, cornea/lens/retina/optic nerve), coronavirus (6 annotations, envelope/spike/core). AccuracyMetrics validation (structural/material/spatial/reference alignment, 96.2% accuracy for referenced subjects). Exposes `/api/scivis/visualize`, `/api/scivis/status`, `/api/scivis/domains`, `/api/scivis/topics/:domain`, `/api/scivis/rules`, `/api/scivis/references`, `/api/scivis/history` endpoints.
-- **Advanced Professional Visualization System v2.0:** State-of-the-art 8-step visualization pipeline layered on top of v1.0. Features: (1) AdvancedClassifier with NLP-based request classification (10 domain keywords, 7 intent types, 5 accuracy levels, entity extraction, confidence scoring), (2) ReferenceImageSearchEngine (PubMed, Wikimedia Commons, Academic database search), (3) GroundTruthKnowledgeBase with semantic knowledge graph for heart/lung/brain/eye/coronavirus (structures, component relationships, dimensions, material properties, accuracy scores, complexity levels, references), (4) SceneGraph construction with nodes and edges from knowledge, (5) AdvancedVisualizationPlan with multi-view planning and AI prompt engineering, (6) AdvancedImageGenerator delegating to v1.0 professional renderers, (7) AdvancedValidationPipeline with 5-stage validation (structural accuracy, anatomical correctness, material properties, dimensional accuracy, reference alignment), (8) UpscalingEngine with 8K upscaling and 5-stage enhancement pipeline (denoise, sharpen, contrast, colors, HDR). Natural language endpoint at `/api/scivis/visualize-advanced` accepts free-text requests and returns comprehensive results with classification, scene graph, visualization plan, validation results, upscaling metadata, and accuracy metrics.
+- **Self-Evolution Learning System:** Real-time experience learning that tracks interactions, builds knowledge graphs, and optimizes performance, with an auto-triggering training pipeline on startup.
+- **CYRUS Training Pipeline v2.0:** Comprehensive 7-phase training system using various machine learning techniques across 10 domains and 202+ knowledge concepts.
+- **Advanced Professional Visualization System v2.0:** State-of-the-art 8-step visualization pipeline, building on a professional technical renderer for structurally accurate, textbook-standard illustrations across 6 domains. Features advanced classification, reference image search, a ground truth knowledge base, scene graph construction, and 8K upscaling.
 - **Module Orchestrator:** Unifies and coordinates all 13 AI modules as one cohesive cognitive system.
-
-**Advanced Upgrade Modules (v3.0 Enhancements - Deeply Integrated):**
-- **Vector Knowledge Base:** Semantic memory and Retrieval-Augmented Generation.
-- **Emotional Cognition:** Advanced sentiment and empathy detection.
-- **Universal Language:** 196+ language translation.
-- **Decentralized Intelligence:** Parallel processing via a virtual worker pool.
-- **Ethical Governance:** Real-time content safety and ethical decision framework.
-- **Self-Evolution Enhanced:** Knowledge synthesis and meta-learning with Nexus feedback loop integration.
-- **Quantum Neural Networks:** Quantum circuit simulation.
-- **AI Simulations Engine:** Physics and autonomous agent simulation.
-- **Cross-Dimensional AI:** Higher-dimensional tensor processing.
-- **Nanotechnology Simulation:** Nanoscale physics engine.
-- **Hyperlinked Reality:** WebXR and AR interface.
-- **Bio-Neural Interface:** BCI simulation.
-- **Adaptive Hardware Controller:** IoT and robotics integration.
-
-**Interactive Systems Modules (v3.0 Human Interaction):**
-- **Biology Interactive Module:** DNA sequence analysis, pathogen detection, and biosensor integration.
-- **Environmental Sensing Module:** Multi-gas detection and atmospheric conditions monitoring.
-- **Medical Diagnostics Module:** Comprehensive quantified self health analytics system with a Health Sensor Hub.
-- **Robotic Integration Module:** ROS-based robotic arm control.
-- **Teaching & Adaptive Learning Module:** Interactive lessons and personalized recommendations.
-- **Security & Encryption Module:** AES-256-GCM encryption and role-based access control.
-
-**Quantum AI Core (Python-based Intelligence Enhancement):**
-Enhances response quality through 8 data science algorithms, writing style analysis, query classification, response structure optimization, mathematical formatting, and confidence metrics, integrated via a Python Bridge Service.
-
-**Python CYRUS Humanoid Intelligence Core (`cyrus_core/`):**
-A complete, standalone Python implementation of the CYRUS intelligence system with:
-- **Behavioral Mode System (`modes.py`):** State machine with CASUAL, PROFESSIONAL, PRESENTATION, QA, and STANDBY modes, including transition history, mode locking, and automatic mode switching.
-- **Memory Management (`memory.py`):** Three-tier memory system with conversation history, working memory, and long-term storage; includes topic/entity indexing, importance scoring, and context summarization.
-- **Intent Classification (`intent.py`):** Pattern-based and keyword-based intent detection with 18 intent categories, confidence scoring, question type detection, urgency analysis, and emotional tone detection.
-- **Speech Engine (`speech.py`):** Humanization engine for natural language output with thinking pauses, confidence markers, transitions, and mode-appropriate delivery styles.
-- **Response Engine (`response.py`):** Master response generation with presentation engine, Q&A engine, professional templates, and safe fallback strategies.
-- **CYRUS Core (`core.py`):** Central orchestrator coordinating all subsystems for coherent human-like interaction with system commands and callback support.
-- **Interactive Runner (`run.py`):** CLI interface for direct interaction with CYRUS.
-
-Run with: `python cyrus_core/run.py` or import: `from cyrus_core import CYRUS`
-
-**Voice Output System:**
-Enabled by default, using ElevenLabs "Rachel" voice for ultra-realistic synthesis with advanced audio processing and text preprocessing.
-
-**Wake Word Detection System:**
-Continuously listens for "CYRUS" and similar phrases, automatically activating with command capture, silence timeout, robust lifecycle management, and auto-restart on errors.
-
-**Humanoid Interaction System (v3.0 Enhancement):**
-- **Professional Presenter Mode:** Full presentation delivery system with AI-generated slides, narration, and Q&A handling.
-- **Humanoid Conversation Engine:** Advanced natural dialogue system with active listening, sentiment analysis, and topic transition handling.
-
-**Quantum Intelligence Nexus v2.0 (Integrated from quantum_nexus archive):**
-Located at `Quantum_Intelligence_Nexus_v2.0/`, this module provides an autonomous quantum intelligence machine integrated with the Quantum AI Bridge. It exposes `/nexus/status`, `/nexus/query`, and `/nexus/introspect` endpoints through the bridge server on port 5001.
-
-**Project Directory Additions (from quantum_nexus archive):**
-- `core_algorithms/` - Root convenience wrapper for `server/quantum_ai/core_algorithms/`
-- `Quantum_Intelligence_Nexus_v2.0/` - Quantum Intelligence Nexus module
-- `scripts/` - Training, quantum, and automation scripts
-- `examples/quantum_nexus/` - Example usage scripts
-- `tests/` - Test files for v2 features
-- `docs/guides/` - System architecture and feature documentation
-- `docs/quantum_nexus/` - Training and deployment guides
+- **Advanced Upgrade Modules:** Includes Vector Knowledge Base, Emotional Cognition, Universal Language, Decentralized Intelligence, Ethical Governance, Self-Evolution Enhanced, Quantum Neural Networks, AI Simulations Engine, Cross-Dimensional AI, Nanotechnology Simulation, Hyperlinked Reality, Bio-Neural Interface, and Adaptive Hardware Controller.
+- **Image Generation System:** Multi-model image generation using OpenAI's DALL-E 3, DALL-E 2, and gpt-image-1, with HD quality, style control, editing, variations, and automatic detection of image requests.
+- **System Refinement Engine v1.0:** AI-powered self-improvement system using OpenAI GPT-4o for continuous optimization, including performance analysis, prompt optimization, knowledge graph enhancement, and response quality refinement.
+- **Interactive Systems Modules:** Biology Interactive Module, Environmental Sensing Module, Medical Diagnostics Module, Robotic Integration Module, Teaching & Adaptive Learning Module, and Security & Encryption Module.
+- **Quantum AI Core (Python-based):** Enhances response quality through data science algorithms, writing style analysis, and response structure optimization, integrated via a Python Bridge Service.
+- **Python CYRUS Humanoid Intelligence Core (`cyrus_core/`):** A standalone Python implementation including a Behavioral Mode System (state machine), Memory Management (three-tier system), Intent Classification (pattern/keyword-based), Speech Engine (humanization engine), and Response Engine (master generation).
+- **Voice Output System:** Enabled by default, using ElevenLabs "Rachel" voice for ultra-realistic synthesis.
+- **Wake Word Detection System:** Continuously listens for "CYRUS" and similar phrases, automatically activating with command capture.
+- **Humanoid Interaction System:** Professional Presenter Mode and Humanoid Conversation Engine.
+- **Quantum Intelligence Nexus v2.0:** An autonomous quantum intelligence machine integrated with the Quantum AI Bridge, providing status, query, and introspection endpoints.
 
 ### External Dependencies
 -   **PostgreSQL Database:** Primary data persistence, hosted via Neon.
--   **OpenAI API:** GPT-4o for AI-powered responses, natural language understanding, and image analysis; Whisper for audio transcription; TTS for voice synthesis.
+-   **OpenAI API:** GPT-4o for AI-powered responses, natural language understanding, image analysis; Whisper for audio transcription; TTS for voice synthesis; DALL-E 3 for image generation.
 -   **TensorFlow.js:** For client-side object detection (COCO-SSD model).
 -   **Alpaca Markets Integration:** REST API v2 client for stocks and crypto trading.
 -   **ElevenLabs:** For ultra-realistic voice synthesis.
