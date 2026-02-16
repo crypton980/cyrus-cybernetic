@@ -70,6 +70,10 @@ class EncryptionEngine {
     return iv.toString("hex") + ":" + encrypted;
   }
 
+  hasKey(userId: string): boolean {
+    return this.keys.has(userId);
+  }
+
   decrypt(userId: string, encrypted: string): string {
     const key = this.keys.get(userId);
     if (!key) return encrypted;
@@ -109,12 +113,14 @@ class CommunicationEngine {
     fileName?: string,
     fileSizeBytes?: number
   ) {
-    const isEncrypted = false;
+    const hasKey = this.encryption.hasKey(senderId);
+    const isEncrypted = hasKey;
+    const storedContent = hasKey ? this.encryption.encrypt(senderId, content) : content;
     
     const [message] = await db.insert(directMessages).values({
       senderId,
       recipientId: recipientId || "broadcast",
-      content,
+      content: storedContent,
       messageType,
       isEncrypted,
       encryptionLevel: isEncrypted ? "aes_256" : "none",
@@ -233,6 +239,11 @@ class CommunicationEngine {
     call.status = "connected";
     call.startedAt = new Date();
 
+    const roomId = `call_${callId.substring(0, 8)}`;
+    await db.update(callHistory)
+      .set({ status: "connected", startedAt: call.startedAt })
+      .where(eq(callHistory.roomId, roomId));
+
     console.log(`[Comms] Call ${callId} accepted by ${acceptorId}`);
     return true;
   }
@@ -244,6 +255,11 @@ class CommunicationEngine {
     call.status = "declined";
     this.activeCalls.delete(callId);
     this.callHistoryCache.push(call);
+
+    const roomId = `call_${callId.substring(0, 8)}`;
+    await db.update(callHistory)
+      .set({ status: "declined", endedAt: new Date(), declinedBy: [declinerId] })
+      .where(eq(callHistory.roomId, roomId));
 
     console.log(`[Comms] Call ${callId} declined by ${declinerId}`);
     return true;
@@ -260,6 +276,11 @@ class CommunicationEngine {
 
     this.activeCalls.delete(callId);
     this.callHistoryCache.push(call);
+
+    const roomId = `call_${callId.substring(0, 8)}`;
+    await db.update(callHistory)
+      .set({ status: "ended", endedAt: new Date(), duration: String(duration) })
+      .where(eq(callHistory.roomId, roomId));
 
     console.log(`[Comms] Call ${callId} ended by ${endedBy} (duration: ${duration}s)`);
     return { ...call, status: "ended" };
@@ -319,6 +340,10 @@ class CommunicationEngine {
       conference.participants.push(userId);
     }
 
+    await db.update(meetingRooms)
+      .set({ participants: conference.participants })
+      .where(eq(meetingRooms.roomCode, conference.roomCode));
+
     console.log(`[Comms] ${userName} joined conference "${conference.title}" (${conference.participants.length} participants)`);
     return true;
   }
@@ -329,24 +354,35 @@ class CommunicationEngine {
 
     conference.participants = conference.participants.filter(p => p !== userId);
 
-    if (userId === conference.hostId || conference.participants.length === 0) {
-      return this.endConference(conferenceId);
-    }
-
     if (conference.screenSharingBy === userId) {
       conference.screenSharingBy = null;
+    }
+
+    await db.update(meetingRooms)
+      .set({ 
+        participants: conference.participants,
+        screenSharingBy: conference.screenSharingBy,
+      })
+      .where(eq(meetingRooms.roomCode, conference.roomCode));
+
+    if (userId === conference.hostId || conference.participants.length === 0) {
+      return this.endConference(conferenceId);
     }
 
     return true;
   }
 
-  endConference(conferenceId: string): boolean {
+  async endConference(conferenceId: string): Promise<boolean> {
     const conference = this.activeConferences.get(conferenceId);
     if (!conference) return false;
 
     const duration = conference.startedAt 
       ? Math.round((Date.now() - conference.startedAt.getTime()) / 1000) 
       : 0;
+
+    await db.update(meetingRooms)
+      .set({ isActive: false, endedAt: new Date(), isRecording: false, screenSharingBy: null })
+      .where(eq(meetingRooms.roomCode, conference.roomCode));
 
     this.activeConferences.delete(conferenceId);
     console.log(`[Comms] Conference "${conference.title}" ended (duration: ${duration}s)`);
@@ -359,6 +395,11 @@ class CommunicationEngine {
     if (conference.screenSharingBy) return false;
 
     conference.screenSharingBy = userId;
+
+    await db.update(meetingRooms)
+      .set({ screenSharingBy: userId })
+      .where(eq(meetingRooms.roomCode, conference.roomCode));
+
     console.log(`[Comms] Screen sharing started in "${conference.title}" by ${userId}`);
     return true;
   }
@@ -368,6 +409,11 @@ class CommunicationEngine {
     if (!conference) return false;
 
     conference.screenSharingBy = null;
+
+    await db.update(meetingRooms)
+      .set({ screenSharingBy: null })
+      .where(eq(meetingRooms.roomCode, conference.roomCode));
+
     console.log(`[Comms] Screen sharing stopped in "${conference.title}"`);
     return true;
   }
@@ -377,6 +423,11 @@ class CommunicationEngine {
     if (!conference) return false;
 
     conference.isRecording = !conference.isRecording;
+
+    await db.update(meetingRooms)
+      .set({ isRecording: conference.isRecording })
+      .where(eq(meetingRooms.roomCode, conference.roomCode));
+
     console.log(`[Comms] Recording ${conference.isRecording ? "started" : "stopped"} in "${conference.title}"`);
     return conference.isRecording;
   }

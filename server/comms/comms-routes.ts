@@ -249,41 +249,6 @@ router.get("/api/comms/news", async (req: any, res) => {
       .orderBy(desc(newsItems.publishedAt))
       .limit(20);
 
-    if (newsList.length === 0) {
-      newsList = [
-        {
-          id: 'news_1',
-          title: 'CYRUS v3.0 Module System Fully Operational',
-          summary: 'All 20 AI modules are now running in unified harmony, including the new Blood Sampling System with automated collection capabilities.',
-          source: 'CYRUS System',
-          url: '/modules',
-          category: 'technology',
-          publishedAt: new Date(),
-          createdAt: new Date()
-        },
-        {
-          id: 'news_2',
-          title: 'Interactive Systems Now Available',
-          summary: 'Biology, Environmental Sensing, Medical Diagnostics, Robotic Integration, Teaching, and Security modules are ready for use.',
-          source: 'CYRUS System',
-          url: '/modules',
-          category: 'updates',
-          publishedAt: new Date(Date.now() - 3600000),
-          createdAt: new Date(Date.now() - 3600000)
-        },
-        {
-          id: 'news_3',
-          title: 'Quantum Neural Networks Active',
-          summary: 'The quantum circuit simulator is now processing with 99.9% accuracy across 3 active circuits.',
-          source: 'CYRUS System',
-          url: '/modules',
-          category: 'science',
-          publishedAt: new Date(Date.now() - 7200000),
-          createdAt: new Date(Date.now() - 7200000)
-        }
-      ];
-    }
-
     const formattedNews = newsList.map(n => ({
       id: n.id,
       title: n.title,
