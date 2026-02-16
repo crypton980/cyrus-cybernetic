@@ -34,18 +34,28 @@ const manualFixSchema = z.object({
   constellation: z.enum(["GPS", "GLONASS", "Galileo", "BeiDou", "QZSS", "SBAS"]).optional(),
 });
 
+const coordOrString = z.union([
+  z.object({ lat: z.number(), lon: z.number() }),
+  z.string(),
+]);
+
 const routeSchema = z.object({
-  origin: z.object({ lat: z.number(), lon: z.number() }),
-  destination: z.object({ lat: z.number(), lon: z.number() }),
+  origin: coordOrString,
+  destination: coordOrString,
   waypoints: z.array(z.object({ lat: z.number(), lon: z.number() })).optional(),
   mode: z.enum(["driving", "walking", "bicycling", "transit"]).optional(),
 });
 
 const shareStartSchema = z.object({
-  recipientId: z.string(),
-  durationSeconds: z.number().min(30).max(3600),
+  recipientId: z.string().optional().default("public"),
+  durationSeconds: z.number().min(30).max(86400).optional(),
+  duration: z.number().min(30).max(86400).optional(),
+  expiresIn: z.number().min(30).max(86400).optional(),
   mode: z.enum(["live", "snapshot"]).default("live"),
-});
+}).transform((data) => ({
+  ...data,
+  durationSeconds: data.durationSeconds || data.duration || data.expiresIn || 3600,
+}));
 
 const shareStopSchema = z.object({
   token: z.string(),
@@ -53,13 +63,22 @@ const shareStopSchema = z.object({
 
 const geofenceSchema = z.object({
   id: z.string().optional(),
-  name: z.string(),
+  name: z.string().optional().default("Geofence"),
   center: z.object({ lat: z.number(), lon: z.number() }),
-  radiusMeters: z.number().min(1).max(100000),
+  radiusMeters: z.number().min(1).max(100000).optional(),
+  radius: z.number().min(1).max(100000).optional(),
   type: z.enum(["circle", "polygon"]).default("circle"),
   vertices: z.array(z.object({ lat: z.number(), lon: z.number() })).optional(),
   active: z.boolean().default(true),
-});
+}).transform((data) => ({
+  ...data,
+  radiusMeters: data.radiusMeters || data.radius || 1000,
+}));
+
+function formatLocation(loc: { lat: number; lon: number } | string): string {
+  if (typeof loc === "string") return loc;
+  return `${loc.lat},${loc.lon}`;
+}
 
 async function fetchGoogleRoute(body: RouteRequest): Promise<RouteSummary> {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
@@ -67,8 +86,8 @@ async function fetchGoogleRoute(body: RouteRequest): Promise<RouteSummary> {
     throw new Error("GOOGLE_MAPS_API_KEY not set");
   }
   const params = new URLSearchParams();
-  params.set("origin", `${body.origin.lat},${body.origin.lon}`);
-  params.set("destination", `${body.destination.lat},${body.destination.lon}`);
+  params.set("origin", formatLocation(body.origin));
+  params.set("destination", formatLocation(body.destination));
   if (body.waypoints?.length) {
     params.set("waypoints", body.waypoints.map((w) => `${w.lat},${w.lon}`).join("|"));
   }
@@ -103,7 +122,9 @@ async function fetchGoogleRoute(body: RouteRequest): Promise<RouteSummary> {
 }
 
 function simulateRoute(body: RouteRequest): RouteSummary {
-  const dist = haversineDistance(body.origin.lat, body.origin.lon, body.destination.lat, body.destination.lon);
+  const o = typeof body.origin === "string" ? { lat: 0, lon: 0 } : body.origin;
+  const d = typeof body.destination === "string" ? { lat: 0, lon: 0 } : body.destination;
+  const dist = haversineDistance(o.lat, o.lon, d.lat, d.lon);
   const durationSeconds = Math.round(dist / 13.9);
   return {
     distanceMeters: Math.round(dist),
@@ -235,8 +256,23 @@ export function registerNavRoutes(app: Express) {
       if (!locations || !Array.isArray(locations) || locations.length === 0) {
         return res.status(400).json({ error: "locations array is required" });
       }
-      const results = await getElevation(locations);
-      res.json({ results });
+      try {
+        const results = await getElevation(locations);
+        res.json({ results, provider: "google" });
+      } catch (apiErr: any) {
+        if (apiErr.message?.includes("REQUEST_DENIED") || apiErr.message?.includes("not activated")) {
+          const simulated = locations.map((loc: any) => ({
+            lat: loc.lat,
+            lon: loc.lon,
+            elevation: Math.round(Math.random() * 500 + 10),
+            resolution: 0,
+            provider: "simulated",
+          }));
+          res.json({ results: simulated, provider: "simulated", note: "Elevation API not enabled in Google Cloud Console. Using simulated data." });
+        } else {
+          throw apiErr;
+        }
+      }
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -261,13 +297,21 @@ export function registerNavRoutes(app: Express) {
       if (lat === undefined || lon === undefined) {
         return res.status(400).json({ error: "lat and lon are required" });
       }
-      const results = await searchNearbyPlaces(lat, lon, radius || 1000, type, keyword);
-      const withDistance = results.map(p => ({
-        ...p,
-        distance: Math.round(haversineDistance(lat, lon, p.lat, p.lon)),
-      }));
-      withDistance.sort((a, b) => a.distance - b.distance);
-      res.json({ results: withDistance, count: withDistance.length });
+      try {
+        const results = await searchNearbyPlaces(lat, lon, radius || 1000, type, keyword);
+        const withDistance = results.map(p => ({
+          ...p,
+          distance: Math.round(haversineDistance(lat, lon, p.lat, p.lon)),
+        }));
+        withDistance.sort((a, b) => a.distance - b.distance);
+        res.json({ results: withDistance, count: withDistance.length, provider: "google" });
+      } catch (apiErr: any) {
+        if (apiErr.message?.includes("REQUEST_DENIED") || apiErr.message?.includes("not enabled")) {
+          res.json({ results: [], count: 0, provider: "simulated", note: "Places API not enabled in Google Cloud Console. Enable it to get real results." });
+        } else {
+          throw apiErr;
+        }
+      }
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -277,8 +321,16 @@ export function registerNavRoutes(app: Express) {
     try {
       const { query } = req.body;
       if (!query) return res.status(400).json({ error: "query is required" });
-      const results = await searchPlacesByText(query);
-      res.json({ results, count: results.length });
+      try {
+        const results = await searchPlacesByText(query);
+        res.json({ results, count: results.length, provider: "google" });
+      } catch (apiErr: any) {
+        if (apiErr.message?.includes("REQUEST_DENIED") || apiErr.message?.includes("not enabled")) {
+          res.json({ results: [], count: 0, provider: "simulated", note: "Places API not enabled in Google Cloud Console. Enable it to get real results." });
+        } else {
+          throw apiErr;
+        }
+      }
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -343,9 +395,9 @@ export function registerNavRoutes(app: Express) {
 
   app.post("/api/nav/geo/area", (req, res) => {
     try {
-      const { vertices } = req.body;
+      const vertices = req.body.vertices || req.body.polygon || req.body.points;
       if (!vertices || !Array.isArray(vertices) || vertices.length < 3) {
-        return res.status(400).json({ error: "At least 3 vertices required" });
+        return res.status(400).json({ error: "At least 3 vertices required (use 'vertices', 'polygon', or 'points')" });
       }
       const areaSqM = areaOfPolygon(vertices);
       res.json({

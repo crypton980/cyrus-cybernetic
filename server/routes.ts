@@ -2650,7 +2650,18 @@ Return ONLY valid JSON.`
       });
     } catch (error: any) {
       console.error("[Trading] Account error:", error);
-      res.status(500).json({ error: error.message || "Failed to fetch account" });
+      if (error.message?.includes("not authorized") || error.message?.includes("forbidden")) {
+        res.json({
+          status: "auth_error",
+          message: "Alpaca API credentials need verification. Check your API key and secret in the Secrets panel.",
+          cash: 0,
+          portfolioValue: 0,
+          buyingPower: 0,
+          equity: 0,
+        });
+      } else {
+        res.status(500).json({ error: error.message || "Failed to fetch account" });
+      }
     }
   });
 

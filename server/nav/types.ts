@@ -55,8 +55,8 @@ export interface FusedPosition extends ScoredFix {
 }
 
 export interface RouteRequest {
-  origin: { lat: number; lon: number };
-  destination: { lat: number; lon: number };
+  origin: { lat: number; lon: number } | string;
+  destination: { lat: number; lon: number } | string;
   waypoints?: Array<{ lat: number; lon: number }>;
   mode?: "driving" | "walking" | "bicycling" | "transit";
 }
