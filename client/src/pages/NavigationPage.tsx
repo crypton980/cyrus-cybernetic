@@ -20,6 +20,7 @@ import {
   ZoomOut,
   LocateFixed,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 const mapContainerStyle = {
@@ -44,7 +45,43 @@ const darkMapStyles = [
 
 const libraries: ("places" | "geometry" | "drawing")[] = ["places", "geometry"];
 
+function useGoogleMapsApiKey() {
+  const [apiKey, setApiKey] = useState(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "");
+  const [loading, setLoading] = useState(!apiKey);
+
+  useEffect(() => {
+    if (!apiKey) {
+      fetch("/api/nav/maps-config")
+        .then(res => res.json())
+        .then(data => {
+          if (data.apiKey) setApiKey(data.apiKey);
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }
+  }, []);
+
+  return { apiKey, loading };
+}
+
 export function NavigationPage() {
+  const { apiKey, loading: apiKeyLoading } = useGoogleMapsApiKey();
+
+  if (apiKeyLoading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-[#1c1c1e]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-[#0a84ff] animate-spin mx-auto mb-3" />
+          <p className="text-[rgba(235,235,245,0.6)] text-sm">Loading Navigation Module...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <NavigationPageInner apiKey={apiKey} />;
+}
+
+function NavigationPageInner({ apiKey }: { apiKey: string }) {
   const [manualLat, setManualLat] = useState("");
   const [manualLon, setManualLon] = useState("");
   const [destLat, setDestLat] = useState("");
@@ -57,8 +94,6 @@ export function NavigationPage() {
   const [showInfoWindow, setShowInfoWindow] = useState(false);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [zoom, setZoom] = useState(15);
-
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey,

@@ -153,6 +153,67 @@ function simulateRoute(body: RouteRequest): RouteSummary {
 }
 
 export function registerNavRoutes(app: Express) {
+  app.get("/api/nav/maps-config", (_req, res) => {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY || "";
+    res.json({ apiKey });
+  });
+
+  app.get("/api/nav/position", (_req, res) => {
+    const fix = getBestFix();
+    if (fix) {
+      return res.json({
+        lat: fix.lat,
+        lon: fix.lon,
+        accuracy: fix.accuracy,
+        source: fix.source || "gps",
+        timestamp: fix.timestamp,
+      });
+    }
+    const fused = getFusedPosition();
+    if (fused) {
+      return res.json({
+        lat: fused.lat,
+        lon: fused.lon,
+        accuracy: fused.accuracy || 100,
+        source: fused.source || "network",
+        timestamp: fused.timestamp || Date.now(),
+      });
+    }
+    res.json({
+      lat: 0,
+      lon: 0,
+      accuracy: 0,
+      source: "none",
+      timestamp: Date.now(),
+    });
+  });
+
+  app.post("/api/nav/position", (req, res) => {
+    const parsed = manualFixSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid position data", details: parsed.error.flatten() });
+    }
+    const fix: PositionFix = {
+      ...parsed.data,
+      timestamp: parsed.data.timestamp || Date.now(),
+    };
+    try {
+      updateFix(fix);
+      const fused = ingestFix(fix);
+      const geofenceEvents = checkGeofences(fused.lat, fused.lon);
+      res.json({
+        lat: fused.lat,
+        lon: fused.lon,
+        accuracy: fused.accuracy || fix.accuracy,
+        source: fix.source,
+        timestamp: fix.timestamp,
+        geofenceEvents,
+      });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   app.get("/api/nav/fix", (_req, res) => {
     const fix = getBestFix();
     if (!fix) return res.status(404).json({ error: "No fix available" });
