@@ -35,8 +35,14 @@ export function initSocketSignaling(server: HttpServer) {
       origin: "*",
       methods: ["GET", "POST"],
     },
-    path: "/socket.io",
+    path: "/cyrus-io",
     transports: ["polling", "websocket"],
+    allowEIO3: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    connectTimeout: 60000,
+    maxHttpBufferSize: 1e6,
+    allowUpgrades: true,
   });
 
   console.log("[Socket.IO] Signaling server initialized");

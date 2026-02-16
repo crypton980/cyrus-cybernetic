@@ -297,14 +297,21 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
 
     console.log(`[Presence] Creating Socket.IO connection to ${window.location.origin}`);
     
-    const socket = io(window.location.origin, {
-      path: '/socket.io',
-      transports: ['polling', 'websocket'],
+    const socketUrl = window.location.origin;
+    console.log(`[Presence] Connecting Socket.IO to: ${socketUrl} (polling transport)`);
+    
+    const socket = io(socketUrl, {
+      path: '/cyrus-io',
+      transports: ['polling'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      timeout: 15000,
-      upgrade: true,
+      reconnectionAttempts: 20,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+      timeout: 60000,
+      upgrade: false,
+      forceNew: true,
+      withCredentials: false,
+      autoConnect: true,
     });
 
     socketRef.current = socket;
