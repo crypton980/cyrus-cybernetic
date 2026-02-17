@@ -47,6 +47,31 @@ export function initSocketSignaling(server: HttpServer) {
 
   console.log("[Socket.IO] Signaling server initialized");
 
+  (async () => {
+    try {
+      await db.update(onlineUsers)
+        .set({ isOnline: false, status: "offline" })
+        .where(eq(onlineUsers.isOnline, true));
+      console.log("[Socket.IO] Cleared stale online statuses on startup");
+    } catch (err) {
+      console.error("[Socket.IO] Failed to clear stale statuses:", err);
+    }
+  })();
+
+  setInterval(async () => {
+    try {
+      const connectedDeviceIds = new Set(Array.from(users.values()).map(u => u.id));
+      const allOnline = await db.select().from(onlineUsers).where(eq(onlineUsers.isOnline, true));
+      for (const record of allOnline) {
+        if (record.id !== 'cyrus-001' && !connectedDeviceIds.has(record.id)) {
+          await db.update(onlineUsers)
+            .set({ isOnline: false, status: "offline" })
+            .where(eq(onlineUsers.id, record.id));
+        }
+      }
+    } catch {}
+  }, 60000);
+
   io.on("connection", (socket: Socket) => {
     console.log(`[Socket.IO] New connection: ${socket.id}`);
 

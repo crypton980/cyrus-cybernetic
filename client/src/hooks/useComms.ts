@@ -133,7 +133,7 @@ export function useComms() {
       if (!res.ok) throw new Error("Failed to fetch messages");
       return res.json();
     },
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
 
   const allUsersQuery = useQuery<{ id: string; displayName: string; isOnline: boolean; lastSeen: string | null; status: string }[]>({
@@ -143,7 +143,7 @@ export function useComms() {
       if (!res.ok) throw new Error("Failed to fetch users");
       return res.json();
     },
-    refetchInterval: 10000,
+    refetchInterval: 30000,
   });
 
   const remindersQuery = useQuery<Reminder[]>({

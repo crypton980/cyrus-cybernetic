@@ -325,9 +325,16 @@ Return only valid JSON.`
               temperature: 0.4
             });
 
-            const parsed = JSON.parse(
-              (response.choices[0].message.content || '{}').replace(/```json\n?|\n?```/g, '')
-            );
+            let rawContent = (response.choices[0].message.content || '{}').replace(/```json\n?|\n?```/g, '').trim();
+            const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+            if (jsonMatch) rawContent = jsonMatch[0];
+            let parsed: any;
+            try {
+              parsed = JSON.parse(rawContent);
+            } catch {
+              console.log(`[Self-Evolution] Skipping malformed JSON for domain: ${domain}`);
+              continue;
+            }
 
             if (parsed.synthesizedConcept && parsed.confidence >= this.evolutionThresholds.minConfidenceForSynthesis) {
               const synthesis: KnowledgeSynthesis = {

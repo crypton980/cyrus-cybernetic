@@ -161,7 +161,7 @@ function NavigationPageInner({ apiKey }: { apiKey: string }) {
   }, [isLoaded]);
 
   useEffect(() => {
-    if (currentPosition && isLoaded) {
+    if (currentPosition && isLoaded && (currentPosition.lat !== 0 || currentPosition.lon !== 0)) {
       reverseGeocode(currentPosition.lat, currentPosition.lon);
     }
   }, [currentPosition, isLoaded, reverseGeocode]);
