@@ -1242,6 +1242,14 @@ Format your response in a clear, structured manner.`
     }
   });
 
+  app.get("/api/cyrus/mode", async (_req, res) => {
+    try {
+      res.json({ success: true, context: cyrusSoul.getOperationalContext() });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get operational mode" });
+    }
+  });
+
   // Set operational mode
   app.post("/api/cyrus/mode", async (req, res) => {
     try {
@@ -1259,6 +1267,14 @@ Format your response in a clear, structured manner.`
     } catch (error) {
       console.error("Error setting mode:", error);
       res.status(500).json({ error: "Failed to set operational mode" });
+    }
+  });
+
+  app.get("/api/cyrus/sensors", async (_req, res) => {
+    try {
+      res.json({ success: true, context: cyrusSoul.getOperationalContext() });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get sensor status" });
     }
   });
 
@@ -2335,6 +2351,14 @@ Return ONLY valid JSON.`
     }
   });
   
+  app.get("/api/cyrus/agent/config", async (_req, res) => {
+    try {
+      res.json({ success: true, config: agentState.behaviorConfig });
+    } catch (error) {
+      res.status(500).json({ error: `Failed to get config: ${formatError(error)}` });
+    }
+  });
+
   app.post("/api/cyrus/agent/config", async (req, res) => {
     try {
       const validationResult = agentConfigSchema.safeParse(req.body);
@@ -3354,37 +3378,37 @@ Return ONLY valid JSON.`
   // Get Alpaca account details
   app.get("/api/alpaca/account", async (req, res) => {
     if (!alpacaClient) {
-      return res.status(400).json({ error: "Alpaca not configured" });
+      return res.status(200).json({ connected: false, error: "Alpaca not configured", account: null });
     }
 
     try {
       const account = await alpacaClient.getAccount();
-      res.json(account);
-    } catch (error) {
-      console.error('[Alpaca] Account error:', error);
-      res.status(500).json({ error: "Failed to get account details" });
+      res.json({ connected: true, account });
+    } catch (error: any) {
+      const msg = error?.message || "Failed to get account details";
+      res.status(200).json({ connected: false, error: msg, account: null });
     }
   });
 
   // Get positions from Alpaca
   app.get("/api/alpaca/positions", async (req, res) => {
     if (!alpacaClient) {
-      return res.status(400).json({ error: "Alpaca not configured" });
+      return res.status(200).json({ connected: false, error: "Alpaca not configured", positions: [] });
     }
 
     try {
       const positions = await alpacaClient.getPositions();
-      res.json(positions);
-    } catch (error) {
-      console.error('[Alpaca] Positions error:', error);
-      res.status(500).json({ error: "Failed to get positions" });
+      res.json({ connected: true, positions });
+    } catch (error: any) {
+      const msg = error?.message || "Failed to get positions";
+      res.status(200).json({ connected: false, error: msg, positions: [] });
     }
   });
 
   // Get stock quotes from Alpaca
   app.get("/api/alpaca/quotes", async (req, res) => {
     if (!alpacaClient) {
-      return res.status(400).json({ error: "Alpaca not configured" });
+      return res.status(200).json({ connected: false, error: "Alpaca not configured", quotes: [] });
     }
 
     try {
@@ -3402,17 +3426,17 @@ Return ONLY valid JSON.`
         timestamp: new Date(quote.t).getTime()
       }));
       
-      res.json(formatted);
-    } catch (error) {
-      console.error('[Alpaca] Quotes error:', error);
-      res.status(500).json({ error: "Failed to get quotes" });
+      res.json({ connected: true, quotes: formatted });
+    } catch (error: any) {
+      const msg = error?.message || "Failed to get quotes";
+      res.status(200).json({ connected: false, error: msg, quotes: [] });
     }
   });
 
   // Get crypto quotes from Alpaca
   app.get("/api/alpaca/crypto", async (req, res) => {
     if (!alpacaClient) {
-      return res.status(400).json({ error: "Alpaca not configured" });
+      return res.status(200).json({ connected: false, error: "Alpaca not configured", quotes: [] });
     }
 
     try {
@@ -3428,26 +3452,26 @@ Return ONLY valid JSON.`
         timestamp: new Date(quote.t).getTime()
       }));
       
-      res.json(formatted);
-    } catch (error) {
-      console.error('[Alpaca] Crypto quotes error:', error);
-      res.status(500).json({ error: "Failed to get crypto quotes" });
+      res.json({ connected: true, quotes: formatted });
+    } catch (error: any) {
+      const msg = error?.message || "Failed to get crypto quotes";
+      res.status(200).json({ connected: false, error: msg, quotes: [] });
     }
   });
 
   // Get orders from Alpaca
   app.get("/api/alpaca/orders", async (req, res) => {
     if (!alpacaClient) {
-      return res.status(400).json({ error: "Alpaca not configured" });
+      return res.status(200).json({ connected: false, error: "Alpaca not configured", orders: [] });
     }
 
     try {
       const status = (req.query.status as string) || 'open';
       const orders = await alpacaClient.getOrders({ status, limit: 50 });
-      res.json(orders);
-    } catch (error) {
-      console.error('[Alpaca] Orders error:', error);
-      res.status(500).json({ error: "Failed to get orders" });
+      res.json({ connected: true, orders });
+    } catch (error: any) {
+      const msg = error?.message || "Failed to get orders";
+      res.status(200).json({ connected: false, error: msg, orders: [] });
     }
   });
 

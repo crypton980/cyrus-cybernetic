@@ -216,14 +216,14 @@ export function registerNavRoutes(app: Express) {
 
   app.get("/api/nav/fix", (_req, res) => {
     const fix = getBestFix();
-    if (!fix) return res.status(404).json({ error: "No fix available" });
-    res.json(fix);
+    if (!fix) return res.status(200).json({ available: false, fix: null, message: "No fix available - awaiting GPS data" });
+    res.json({ available: true, fix });
   });
 
   app.get("/api/nav/fused", (_req, res) => {
     const fused = getFusedPosition();
-    if (!fused) return res.status(404).json({ error: "No fused position available. Submit a fix first." });
-    res.json(fused);
+    if (!fused) return res.status(200).json({ available: false, position: null, message: "No fused position available - awaiting GPS fix" });
+    res.json({ available: true, position: fused });
   });
 
   app.get("/api/nav/history", (req, res) => {
