@@ -1,10 +1,47 @@
 import { Router } from "express";
 import { db } from "../db";
 import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems, contacts, incomingCalls, groupChats } from "../../shared/schema";
-import { eq, or, and, desc, asc } from "drizzle-orm";
+import { eq, or, and, desc, asc, ilike, inArray, sql } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
 import { getConnectedUsers } from "./signaling";
 import { communicationEngine } from "./communication-engine";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const COMMS_UPLOAD_DIR = path.join(process.cwd(), "uploads", "comms");
+if (!fs.existsSync(COMMS_UPLOAD_DIR)) {
+  fs.mkdirSync(COMMS_UPLOAD_DIR, { recursive: true });
+}
+
+const commsUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, COMMS_UPLOAD_DIR),
+    filename: (_req, file, cb) => {
+      const uniqueName = `${Date.now()}-${uuid()}${path.extname(file.originalname)}`;
+      cb(null, uniqueName);
+    },
+  }),
+  limits: { fileSize: 25 * 1024 * 1024 },
+});
+
+const voiceNoteUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, COMMS_UPLOAD_DIR),
+    filename: (_req, _file, cb) => {
+      const uniqueName = `${Date.now()}-${uuid()}.webm`;
+      cb(null, uniqueName);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("audio/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only audio files are allowed"));
+    }
+  },
+});
 
 const router = Router();
 
@@ -884,7 +921,303 @@ router.get("/api/comms/status", (req, res) => {
   });
 });
 
+router.post("/api/comms/upload", commsUpload.single("file"), async (req: any, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    const fileId = path.basename(req.file.filename, path.extname(req.file.filename));
+    const fileUrl = `/api/comms/media/${fileId}`;
+    res.json({
+      success: true,
+      fileId,
+      fileUrl,
+      fileName: req.file.originalname,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+    });
+  } catch (error: any) {
+    console.error("Error uploading comms file:", error);
+    res.status(500).json({ error: "Failed to upload file" });
+  }
+});
+
+router.post("/api/comms/voice-note", voiceNoteUpload.single("file"), async (req: any, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No audio file uploaded" });
+    }
+    const fileId = path.basename(req.file.filename, path.extname(req.file.filename));
+    const fileUrl = `/api/comms/media/${fileId}`;
+    const duration = req.body.duration || null;
+    res.json({
+      success: true,
+      fileId,
+      fileUrl,
+      duration,
+      mimeType: req.file.mimetype,
+      fileSize: req.file.size,
+    });
+  } catch (error: any) {
+    console.error("Error uploading voice note:", error);
+    res.status(500).json({ error: "Failed to upload voice note" });
+  }
+});
+
+router.get("/api/comms/media/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    const safeId = path.basename(id);
+    const files = fs.readdirSync(COMMS_UPLOAD_DIR);
+    const match = files.find(f => f.startsWith(safeId));
+    if (!match) {
+      return res.status(404).json({ error: "Media not found" });
+    }
+    const filePath = path.join(COMMS_UPLOAD_DIR, match);
+    res.sendFile(filePath);
+  } catch (error: any) {
+    console.error("Error serving media:", error);
+    res.status(500).json({ error: "Failed to serve media" });
+  }
+});
+
+router.get("/api/comms/admin/stats", async (_req, res) => {
+  try {
+    const stats = communicationEngine.getStatistics();
+    const activeCalls = communicationEngine.getActiveCalls();
+    const activeConferences = communicationEngine.getActiveConferences();
+    const onlinePresence = communicationEngine.getAllOnlinePresence();
+
+    const allUsers = await db.select().from(onlineUsers);
+    const onlineCount = allUsers.filter(u => u.isOnline).length;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const messagesToday = await db.select({ count: sql<number>`count(*)` })
+      .from(directMessages)
+      .where(sql`${directMessages.createdAt} >= ${today}`);
+
+    res.json({
+      ...stats,
+      activeCalls: activeCalls.length,
+      activeConferences: activeConferences.length,
+      onlineUsers: onlineCount,
+      totalUsers: allUsers.length,
+      messagesToday: Number(messagesToday[0]?.count || 0),
+      systemHealth: {
+        socketConnections: onlinePresence.length,
+        uptime: process.uptime(),
+        memoryUsage: process.memoryUsage(),
+      },
+    });
+  } catch (error: any) {
+    console.error("Error fetching admin stats:", error);
+    res.status(500).json({ error: "Failed to fetch admin stats" });
+  }
+});
+
+router.get("/api/comms/admin/active-calls", (_req, res) => {
+  try {
+    const activeCalls = communicationEngine.getActiveCalls();
+    const activeConferences = communicationEngine.getActiveConferences();
+    res.json({
+      calls: activeCalls.map(c => ({
+        callId: c.callId,
+        callType: c.callType,
+        initiatorId: c.initiatorId,
+        initiatorName: c.initiatorName,
+        participants: c.participants,
+        status: c.status,
+        startedAt: c.startedAt,
+        callQuality: c.callQuality,
+        isRecording: c.isRecording,
+      })),
+      conferences: activeConferences.map(c => ({
+        conferenceId: c.conferenceId,
+        title: c.title,
+        hostId: c.hostId,
+        hostName: c.hostName,
+        participantCount: c.participants.length,
+        maxParticipants: c.maxParticipants,
+        isRecording: c.isRecording,
+        screenSharingBy: c.screenSharingBy,
+      })),
+    });
+  } catch (error: any) {
+    console.error("Error fetching active calls:", error);
+    res.status(500).json({ error: "Failed to fetch active calls" });
+  }
+});
+
+router.get("/api/comms/admin/online-users", async (_req, res) => {
+  try {
+    const allUsers = await db.select().from(onlineUsers).where(eq(onlineUsers.isOnline, true));
+    const onlinePresence = communicationEngine.getAllOnlinePresence();
+    const presenceMap = new Map(onlinePresence.map(p => [p.userId, p]));
+
+    const detailedUsers = allUsers.map(u => {
+      const presence = presenceMap.get(u.id);
+      return {
+        id: u.id,
+        displayName: u.displayName || "Unknown",
+        email: u.email,
+        profileImageUrl: u.profileImageUrl,
+        status: presence?.status || u.status || "online",
+        lastSeen: u.lastSeen,
+        socketId: u.socketId,
+        connectionQuality: presence?.connectionQuality ?? u.connectionQuality,
+        networkLatencyMs: presence?.networkLatencyMs ?? u.networkLatencyMs,
+        currentCallId: presence?.currentCallId || u.currentCallId,
+        currentConferenceId: presence?.currentConferenceId || u.currentConferenceId,
+      };
+    });
+
+    res.json({ totalOnline: detailedUsers.length, users: detailedUsers });
+  } catch (error: any) {
+    console.error("Error fetching online users for admin:", error);
+    res.status(500).json({ error: "Failed to fetch online users" });
+  }
+});
+
+router.post("/api/comms/messages/read", async (req: any, res) => {
+  try {
+    const { messageIds } = req.body;
+    if (!Array.isArray(messageIds) || messageIds.length === 0) {
+      return res.status(400).json({ error: "messageIds array is required" });
+    }
+    const userId = getUserId(req) || "unknown";
+    const now = new Date();
+
+    await db.update(directMessages)
+      .set({ isRead: true, readAt: now })
+      .where(inArray(directMessages.id, messageIds));
+
+    res.json({ success: true, markedCount: messageIds.length, readAt: now.toISOString() });
+  } catch (error: any) {
+    console.error("Error marking messages as read:", error);
+    res.status(500).json({ error: "Failed to mark messages as read" });
+  }
+});
+
+router.get("/api/comms/users/search", async (req: any, res) => {
+  try {
+    const q = (req.query.q as string || "").trim();
+    if (!q) {
+      return res.json([]);
+    }
+    const userId = getUserId(req);
+    const results = await db.select().from(onlineUsers)
+      .where(ilike(onlineUsers.displayName, `%${q}%`))
+      .limit(20);
+
+    const filtered = results
+      .filter(u => u.id !== userId)
+      .map(u => ({
+        id: u.id,
+        displayName: u.displayName || "Unknown User",
+        email: u.email,
+        isOnline: u.isOnline || false,
+        lastSeen: u.lastSeen?.toISOString() || null,
+        profileImageUrl: u.profileImageUrl || null,
+        status: u.status || "offline",
+      }));
+
+    res.json(filtered);
+  } catch (error: any) {
+    console.error("Error searching users:", error);
+    res.status(500).json({ error: "Failed to search users" });
+  }
+});
+
+router.get("/api/comms/conversations", async (req: any, res) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.json([]);
+    }
+
+    const messages = await db.select().from(directMessages)
+      .where(
+        or(
+          eq(directMessages.senderId, userId),
+          eq(directMessages.recipientId, userId)
+        )
+      )
+      .orderBy(desc(directMessages.createdAt));
+
+    const conversationMap = new Map<string, {
+      peerId: string;
+      lastMessage: typeof messages[0];
+      unreadCount: number;
+    }>();
+
+    for (const msg of messages) {
+      const peerId = msg.senderId === userId ? msg.recipientId : msg.senderId;
+      if (!conversationMap.has(peerId)) {
+        conversationMap.set(peerId, {
+          peerId,
+          lastMessage: msg,
+          unreadCount: 0,
+        });
+      }
+      const conv = conversationMap.get(peerId)!;
+      if (msg.recipientId === userId && !msg.isRead) {
+        conv.unreadCount++;
+      }
+    }
+
+    const peerIds = Array.from(conversationMap.keys());
+    let peerMap = new Map<string, any>();
+    if (peerIds.length > 0) {
+      const peers = await db.select().from(onlineUsers)
+        .where(inArray(onlineUsers.id, peerIds));
+      peerMap = new Map(peers.map(p => [p.id, p]));
+    }
+
+    const groups = await communicationEngine.getGroupChats(userId);
+
+    const conversations = Array.from(conversationMap.values()).map(conv => {
+      const peer = peerMap.get(conv.peerId);
+      return {
+        type: "direct" as const,
+        peerId: conv.peerId,
+        peerName: peer?.displayName || "Unknown User",
+        peerAvatar: peer?.profileImageUrl || null,
+        peerOnline: peer?.isOnline || false,
+        lastMessage: {
+          content: conv.lastMessage.content,
+          timestamp: conv.lastMessage.createdAt?.toISOString() || new Date().toISOString(),
+          senderId: conv.lastMessage.senderId,
+          messageType: conv.lastMessage.messageType || "text",
+        },
+        unreadCount: conv.unreadCount,
+      };
+    });
+
+    const groupConversations = (groups || []).map((g: any) => ({
+      type: "group" as const,
+      groupId: g.id,
+      groupName: g.name,
+      members: g.members,
+      lastMessage: null,
+      unreadCount: 0,
+    }));
+
+    const allConversations = [...conversations, ...groupConversations];
+    allConversations.sort((a, b) => {
+      const aTime = a.lastMessage?.timestamp || "";
+      const bTime = b.lastMessage?.timestamp || "";
+      return bTime.localeCompare(aTime);
+    });
+
+    res.json(allConversations);
+  } catch (error: any) {
+    console.error("Error fetching conversations:", error);
+    res.status(500).json({ error: "Failed to fetch conversations" });
+  }
+});
+
 export function registerCommsRoutes(app: any) {
   app.use(router);
-  console.log("[Comms] Registered communication routes (40+ endpoints)");
+  console.log("[Comms] Registered communication routes (50+ endpoints)");
 }

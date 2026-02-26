@@ -1,8 +1,8 @@
 import { Server as HttpServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { db } from "../db";
-import { onlineUsers, directMessages } from "../../shared/models/comms";
-import { eq } from "drizzle-orm";
+import { onlineUsers, directMessages, groupChats } from "../../shared/models/comms";
+import { eq, ilike } from "drizzle-orm";
 
 interface User {
   id: string;
@@ -11,6 +11,7 @@ interface User {
   deviceId: string;
   inCall: boolean;
   currentRoomId?: string;
+  status?: "online" | "busy" | "away";
 }
 
 interface PendingCall {
@@ -22,11 +23,58 @@ interface PendingCall {
   timestamp: Date;
 }
 
+interface GroupRoom {
+  id: string;
+  name: string;
+  createdBy: string;
+  members: string[];
+  createdAt: Date;
+}
+
+interface ActiveCall {
+  roomId: string;
+  participants: string[];
+  callType: "audio" | "video";
+  startedAt: Date;
+  screenSharingBy?: string;
+}
+
+type MessageType = "text" | "emoji" | "media" | "voice-note" | "location" | "system";
+
+interface EnhancedMessage {
+  targetUserId?: string;
+  groupId?: string;
+  message: string;
+  messageType: MessageType;
+  timestamp: string;
+  fileUrl?: string;
+  fileName?: string;
+  latitude?: number;
+  longitude?: number;
+  replyToId?: string;
+}
+
 const users = new Map<string, User>();
 const pendingCalls = new Map<string, PendingCall>();
+const groupRooms = new Map<string, GroupRoom>();
+const activeCalls = new Map<string, ActiveCall>();
+
+let ioInstance: SocketIOServer | null = null;
+
+export function getSocketIO(): SocketIOServer | null {
+  return ioInstance;
+}
 
 export function getSocketUsers(): User[] {
   return Array.from(users.values());
+}
+
+export function getActiveCalls(): ActiveCall[] {
+  return Array.from(activeCalls.values());
+}
+
+export function getGroupRooms(): GroupRoom[] {
+  return Array.from(groupRooms.values());
 }
 
 export function initSocketSignaling(server: HttpServer) {
@@ -44,6 +92,8 @@ export function initSocketSignaling(server: HttpServer) {
     maxHttpBufferSize: 1e6,
     allowUpgrades: true,
   });
+
+  ioInstance = io;
 
   console.log("[Socket.IO] Signaling server initialized");
 
@@ -84,6 +134,7 @@ export function initSocketSignaling(server: HttpServer) {
         displayName,
         deviceId,
         inCall: false,
+        status: "online",
       };
       
       users.set(userId, user);
@@ -189,6 +240,14 @@ export function initSocketSignaling(server: HttpServer) {
       socket.join(data.roomId);
       io.sockets.sockets.get(caller.socketId)?.join(data.roomId);
 
+      const activeCall: ActiveCall = {
+        roomId: data.roomId,
+        participants: [pendingCall.callerId, userId],
+        callType: pendingCall.callType,
+        startedAt: new Date(),
+      };
+      activeCalls.set(data.roomId, activeCall);
+
       console.log(`[Socket.IO] Call accepted: ${caller.displayName} <-> ${user.displayName}`);
 
       const callType = pendingCall.callType;
@@ -229,16 +288,49 @@ export function initSocketSignaling(server: HttpServer) {
       }
     });
 
-    socket.on("webrtc-offer", (data: { roomId: string; offer: any }) => {
-      socket.to(data.roomId).emit("webrtc-offer", { offer: data.offer, roomId: data.roomId });
+    socket.on("webrtc-offer", (data: { roomId: string; offer: any; targetPeerId?: string }) => {
+      if (data.targetPeerId) {
+        const targetUser = users.get(data.targetPeerId);
+        if (targetUser) {
+          io.to(targetUser.socketId).emit("webrtc-offer", {
+            offer: data.offer,
+            roomId: data.roomId,
+            fromPeerId: (socket as any).userId,
+          });
+        }
+      } else {
+        socket.to(data.roomId).emit("webrtc-offer", { offer: data.offer, roomId: data.roomId, fromPeerId: (socket as any).userId });
+      }
     });
 
-    socket.on("webrtc-answer", (data: { roomId: string; answer: any }) => {
-      socket.to(data.roomId).emit("webrtc-answer", { answer: data.answer, roomId: data.roomId });
+    socket.on("webrtc-answer", (data: { roomId: string; answer: any; targetPeerId?: string }) => {
+      if (data.targetPeerId) {
+        const targetUser = users.get(data.targetPeerId);
+        if (targetUser) {
+          io.to(targetUser.socketId).emit("webrtc-answer", {
+            answer: data.answer,
+            roomId: data.roomId,
+            fromPeerId: (socket as any).userId,
+          });
+        }
+      } else {
+        socket.to(data.roomId).emit("webrtc-answer", { answer: data.answer, roomId: data.roomId, fromPeerId: (socket as any).userId });
+      }
     });
 
-    socket.on("webrtc-ice-candidate", (data: { roomId: string; candidate: any }) => {
-      socket.to(data.roomId).emit("webrtc-ice-candidate", { candidate: data.candidate, roomId: data.roomId });
+    socket.on("webrtc-ice-candidate", (data: { roomId: string; candidate: any; targetPeerId?: string }) => {
+      if (data.targetPeerId) {
+        const targetUser = users.get(data.targetPeerId);
+        if (targetUser) {
+          io.to(targetUser.socketId).emit("webrtc-ice-candidate", {
+            candidate: data.candidate,
+            roomId: data.roomId,
+            fromPeerId: (socket as any).userId,
+          });
+        }
+      } else {
+        socket.to(data.roomId).emit("webrtc-ice-candidate", { candidate: data.candidate, roomId: data.roomId, fromPeerId: (socket as any).userId });
+      }
     });
 
     socket.on("end-call", (data: { roomId: string }) => {
@@ -250,44 +342,458 @@ export function initSocketSignaling(server: HttpServer) {
         user.currentRoomId = undefined;
       }
 
-      socket.to(data.roomId).emit("call-ended", { roomId: data.roomId });
+      const activeCall = activeCalls.get(data.roomId);
+      if (activeCall) {
+        activeCall.participants = activeCall.participants.filter(p => p !== userId);
+        if (activeCall.participants.length === 0) {
+          activeCalls.delete(data.roomId);
+        }
+        if (activeCall.screenSharingBy === userId) {
+          activeCall.screenSharingBy = undefined;
+          io.to(data.roomId).emit("screen-share-stopped", { userId });
+        }
+      }
+
+      socket.to(data.roomId).emit("call-ended", { roomId: data.roomId, userId });
       socket.leave(data.roomId);
       
       broadcastPresence(io);
     });
 
-    socket.on("send-message", async (data: { targetUserId: string; message: string; timestamp: string }) => {
+    socket.on("send-message", async (data: EnhancedMessage) => {
       const senderId = (socket as any).userId;
       const sender = users.get(senderId);
-      const target = users.get(data.targetUserId);
 
       if (!sender) return;
+
+      const messageType = data.messageType || "text";
+      const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       try {
         await db.insert(directMessages).values({
           senderId: senderId,
-          recipientId: data.targetUserId,
+          recipientId: data.targetUserId || "",
+          groupId: data.groupId || null,
           content: data.message,
-          messageType: "text",
+          messageType: messageType,
+          fileUrl: data.fileUrl || null,
+          fileName: data.fileName || null,
+          replyToId: data.replyToId || null,
         });
       } catch (err) {
         console.error("[Socket.IO] Failed to persist message:", err);
       }
 
-      if (target) {
-        io.to(target.socketId).emit("new-message", {
-          senderId,
-          senderName: sender.displayName,
-          message: data.message,
-          timestamp: data.timestamp,
-        });
+      const outgoingPayload = {
+        id: messageId,
+        senderId,
+        senderName: sender.displayName,
+        message: data.message,
+        messageType,
+        timestamp: data.timestamp,
+        fileUrl: data.fileUrl,
+        fileName: data.fileName,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        replyToId: data.replyToId,
+        groupId: data.groupId,
+      };
+
+      if (data.groupId) {
+        const room = groupRooms.get(data.groupId);
+        if (room) {
+          socket.to(`group_${data.groupId}`).emit("new-message", outgoingPayload);
+        }
+      } else if (data.targetUserId) {
+        const target = users.get(data.targetUserId);
+        if (target) {
+          io.to(target.socketId).emit("new-message", outgoingPayload);
+        }
       }
 
       socket.emit("message-sent", {
+        id: messageId,
         recipientId: data.targetUserId,
+        groupId: data.groupId,
         message: data.message,
+        messageType,
         timestamp: data.timestamp,
       });
+    });
+
+    socket.on("create-group", async (data: { name: string; members: string[] }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const allMembers = Array.from(new Set([userId, ...data.members]));
+
+      const room: GroupRoom = {
+        id: groupId,
+        name: data.name,
+        createdBy: userId,
+        members: allMembers,
+        createdAt: new Date(),
+      };
+
+      groupRooms.set(groupId, room);
+
+      try {
+        await db.insert(groupChats).values({
+          id: groupId,
+          name: data.name,
+          createdBy: userId,
+          members: allMembers,
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist group:", err);
+      }
+
+      for (const memberId of allMembers) {
+        const member = users.get(memberId);
+        if (member) {
+          const memberSocket = io.sockets.sockets.get(member.socketId);
+          memberSocket?.join(`group_${groupId}`);
+          io.to(member.socketId).emit("group-created", {
+            groupId,
+            name: data.name,
+            members: allMembers,
+            createdBy: userId,
+            createdByName: user.displayName,
+          });
+        }
+      }
+
+      console.log(`[Socket.IO] Group created: ${data.name} (${groupId}) by ${user.displayName} with ${allMembers.length} members`);
+    });
+
+    socket.on("join-group", (data: { groupId: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      const room = groupRooms.get(data.groupId);
+
+      if (!user || !room) {
+        socket.emit("group-error", { reason: "group-not-found" });
+        return;
+      }
+
+      if (!room.members.includes(userId)) {
+        room.members.push(userId);
+      }
+
+      socket.join(`group_${data.groupId}`);
+      socket.to(`group_${data.groupId}`).emit("group-member-joined", {
+        groupId: data.groupId,
+        userId,
+        displayName: user.displayName,
+        members: room.members,
+      });
+
+      socket.emit("group-joined", {
+        groupId: data.groupId,
+        name: room.name,
+        members: room.members,
+      });
+    });
+
+    socket.on("leave-group", (data: { groupId: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      const room = groupRooms.get(data.groupId);
+
+      if (!room) return;
+
+      room.members = room.members.filter(m => m !== userId);
+      socket.leave(`group_${data.groupId}`);
+
+      socket.to(`group_${data.groupId}`).emit("group-member-left", {
+        groupId: data.groupId,
+        userId,
+        displayName: user?.displayName,
+        members: room.members,
+      });
+
+      if (room.members.length === 0) {
+        groupRooms.delete(data.groupId);
+      }
+    });
+
+    socket.on("group-call", (data: { groupId: string; callType: "audio" | "video" }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      const room = groupRooms.get(data.groupId);
+
+      if (!user || !room) {
+        socket.emit("call-failed", { reason: "group-not-found" });
+        return;
+      }
+
+      if (room.members.length > 6) {
+        socket.emit("call-failed", { reason: "too-many-participants", max: 6 });
+        return;
+      }
+
+      const roomId = `gcall_${data.groupId}_${Date.now()}`;
+
+      const activeCall: ActiveCall = {
+        roomId,
+        participants: [userId],
+        callType: data.callType,
+        startedAt: new Date(),
+      };
+      activeCalls.set(roomId, activeCall);
+
+      user.inCall = true;
+      user.currentRoomId = roomId;
+      socket.join(roomId);
+
+      for (const memberId of room.members) {
+        if (memberId === userId) continue;
+        const member = users.get(memberId);
+        if (member && !member.inCall) {
+          io.to(member.socketId).emit("incoming-group-call", {
+            callerId: userId,
+            callerName: user.displayName,
+            groupId: data.groupId,
+            groupName: room.name,
+            roomId,
+            callType: data.callType,
+            participants: activeCall.participants,
+          });
+        }
+      }
+
+      socket.emit("group-call-started", {
+        roomId,
+        groupId: data.groupId,
+        callType: data.callType,
+        participants: activeCall.participants,
+      });
+
+      console.log(`[Socket.IO] Group call started: ${room.name} by ${user.displayName} (${data.callType})`);
+      broadcastPresence(io);
+    });
+
+    socket.on("join-group-call", (data: { roomId: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      const activeCall = activeCalls.get(data.roomId);
+
+      if (!user || !activeCall) {
+        socket.emit("call-failed", { reason: "call-not-found" });
+        return;
+      }
+
+      if (activeCall.participants.length >= 6) {
+        socket.emit("call-failed", { reason: "call-full", max: 6 });
+        return;
+      }
+
+      user.inCall = true;
+      user.currentRoomId = data.roomId;
+      activeCall.participants.push(userId);
+
+      socket.join(data.roomId);
+
+      socket.to(data.roomId).emit("peer-joined", {
+        roomId: data.roomId,
+        peerId: userId,
+        peerName: user.displayName,
+        participants: activeCall.participants,
+      });
+
+      socket.emit("group-call-joined", {
+        roomId: data.roomId,
+        participants: activeCall.participants,
+        callType: activeCall.callType,
+        existingPeers: activeCall.participants.filter(p => p !== userId),
+      });
+
+      broadcastPresence(io);
+    });
+
+    socket.on("typing-start", (data: { targetUserId?: string; groupId?: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      const payload = { userId, displayName: user.displayName };
+
+      if (data.groupId) {
+        socket.to(`group_${data.groupId}`).emit("typing-start", { ...payload, groupId: data.groupId });
+      } else if (data.targetUserId) {
+        const target = users.get(data.targetUserId);
+        if (target) {
+          io.to(target.socketId).emit("typing-start", payload);
+        }
+      }
+    });
+
+    socket.on("typing-stop", (data: { targetUserId?: string; groupId?: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      const payload = { userId, displayName: user.displayName };
+
+      if (data.groupId) {
+        socket.to(`group_${data.groupId}`).emit("typing-stop", { ...payload, groupId: data.groupId });
+      } else if (data.targetUserId) {
+        const target = users.get(data.targetUserId);
+        if (target) {
+          io.to(target.socketId).emit("typing-stop", payload);
+        }
+      }
+    });
+
+    socket.on("screen-share-start", (data: { roomId: string }) => {
+      const userId = (socket as any).userId;
+      const activeCall = activeCalls.get(data.roomId);
+
+      if (activeCall) {
+        activeCall.screenSharingBy = userId;
+      }
+
+      socket.to(data.roomId).emit("screen-share-started", {
+        roomId: data.roomId,
+        userId,
+        displayName: users.get(userId)?.displayName,
+      });
+    });
+
+    socket.on("screen-share-stop", (data: { roomId: string }) => {
+      const userId = (socket as any).userId;
+      const activeCall = activeCalls.get(data.roomId);
+
+      if (activeCall && activeCall.screenSharingBy === userId) {
+        activeCall.screenSharingBy = undefined;
+      }
+
+      socket.to(data.roomId).emit("screen-share-stopped", {
+        roomId: data.roomId,
+        userId,
+      });
+    });
+
+    socket.on("call-chat-message", (data: { roomId: string; message: string; timestamp: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      socket.to(data.roomId).emit("call-chat-message", {
+        senderId: userId,
+        senderName: user.displayName,
+        message: data.message,
+        timestamp: data.timestamp,
+        roomId: data.roomId,
+      });
+    });
+
+    socket.on("message-read", async (data: { messageIds: string[]; readBy: string }) => {
+      const userId = (socket as any).userId;
+
+      try {
+        for (const msgId of data.messageIds) {
+          await db.update(directMessages)
+            .set({ isRead: true, readAt: new Date() })
+            .where(eq(directMessages.id, msgId));
+        }
+      } catch (err) {
+        console.error("[Socket.IO] Failed to mark messages as read:", err);
+      }
+
+      if (data.readBy) {
+        const target = users.get(data.readBy);
+        if (target) {
+          io.to(target.socketId).emit("messages-read", {
+            messageIds: data.messageIds,
+            readBy: userId,
+            readAt: new Date().toISOString(),
+          });
+        }
+      }
+    });
+
+    socket.on("message-reaction", async (data: { messageId: string; emoji: string; targetUserId?: string; groupId?: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      try {
+        const [msg] = await db.select().from(directMessages).where(eq(directMessages.id, data.messageId));
+        if (msg) {
+          const reactions = (msg.reactions as Record<string, string[]>) || {};
+          if (!reactions[data.emoji]) {
+            reactions[data.emoji] = [];
+          }
+          const idx = reactions[data.emoji].indexOf(userId);
+          if (idx >= 0) {
+            reactions[data.emoji].splice(idx, 1);
+            if (reactions[data.emoji].length === 0) {
+              delete reactions[data.emoji];
+            }
+          } else {
+            reactions[data.emoji].push(userId);
+          }
+          await db.update(directMessages)
+            .set({ reactions })
+            .where(eq(directMessages.id, data.messageId));
+        }
+      } catch (err) {
+        console.error("[Socket.IO] Failed to update reaction:", err);
+      }
+
+      const reactionPayload = {
+        messageId: data.messageId,
+        emoji: data.emoji,
+        userId,
+        displayName: user.displayName,
+      };
+
+      if (data.groupId) {
+        socket.to(`group_${data.groupId}`).emit("message-reaction", reactionPayload);
+      } else if (data.targetUserId) {
+        const target = users.get(data.targetUserId);
+        if (target) {
+          io.to(target.socketId).emit("message-reaction", reactionPayload);
+        }
+      }
+
+      socket.emit("message-reaction", reactionPayload);
+    });
+
+    socket.on("search-users", async (data: { query: string }) => {
+      const userId = (socket as any).userId;
+      try {
+        const results = await db.select().from(onlineUsers)
+          .where(ilike(onlineUsers.displayName, `%${data.query}%`));
+        
+        const enriched = results.map(u => ({
+          id: u.id,
+          displayName: u.displayName,
+          isOnline: users.has(u.id),
+          status: users.get(u.id)?.status || (u.isOnline ? "online" : "offline"),
+          inCall: users.get(u.id)?.inCall || false,
+          lastSeen: u.lastSeen,
+        }));
+
+        socket.emit("search-results", { query: data.query, users: enriched });
+      } catch (err) {
+        console.error("[Socket.IO] User search failed:", err);
+        socket.emit("search-results", { query: data.query, users: [] });
+      }
+    });
+
+    socket.on("get-user-list", () => {
+      const userList = Array.from(users.values()).map((u) => ({
+        id: u.id,
+        displayName: u.displayName,
+        deviceId: u.deviceId,
+        inCall: u.inCall,
+        status: u.status || "online",
+      }));
+      socket.emit("user-list", { users: userList, total: userList.length });
     });
 
     socket.on("disconnect", async () => {
@@ -297,7 +803,32 @@ export function initSocketSignaling(server: HttpServer) {
         const user = users.get(userId);
         
         if (user?.currentRoomId) {
-          socket.to(user.currentRoomId).emit("call-ended", { roomId: user.currentRoomId, reason: "peer-disconnected" });
+          socket.to(user.currentRoomId).emit("call-ended", { roomId: user.currentRoomId, reason: "peer-disconnected", userId });
+
+          const activeCall = activeCalls.get(user.currentRoomId);
+          if (activeCall) {
+            activeCall.participants = activeCall.participants.filter(p => p !== userId);
+            if (activeCall.participants.length === 0) {
+              activeCalls.delete(user.currentRoomId);
+            } else {
+              socket.to(user.currentRoomId).emit("peer-left", {
+                roomId: user.currentRoomId,
+                peerId: userId,
+                peerName: user.displayName,
+                participants: activeCall.participants,
+              });
+            }
+          }
+        }
+
+        for (const [groupId, room] of groupRooms) {
+          if (room.members.includes(userId)) {
+            socket.to(`group_${groupId}`).emit("group-member-offline", {
+              groupId,
+              userId,
+              displayName: user?.displayName,
+            });
+          }
         }
         
         users.delete(userId);
@@ -322,6 +853,7 @@ export function initSocketSignaling(server: HttpServer) {
       displayName: u.displayName,
       deviceId: u.deviceId,
       inCall: u.inCall,
+      status: u.status || "online",
     }));
 
     io.emit("presence-update", { users: userList, total: userList.length });
