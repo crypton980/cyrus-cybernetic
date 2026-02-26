@@ -127,6 +127,69 @@ export const groupChats = pgTable("group_chats", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const callSessions = pgTable("call_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  callId: varchar("call_id").unique().notNull(),
+  type: varchar("type").notNull().default("p2p"),
+  participants: jsonb("participants").default([]),
+  mediaConfig: jsonb("media_config").default({ audio: true, video: false, screen: false }),
+  quality: varchar("quality").default("HD"),
+  startTime: timestamp("start_time").defaultNow(),
+  endTime: timestamp("end_time"),
+  durationSeconds: integer("duration_seconds"),
+  recordingUrl: varchar("recording_url"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const callMessages = pgTable("call_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  callSessionId: varchar("call_session_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  userName: varchar("user_name"),
+  content: text("content").notNull(),
+  mediaUrls: jsonb("media_urls").default([]),
+  messageType: varchar("message_type").default("text"),
+  isPrivate: boolean("is_private").default(false),
+  privateRecipients: jsonb("private_recipients").default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const liveStreams = pgTable("live_streams", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  streamId: varchar("stream_id").unique().notNull(),
+  streamName: varchar("stream_name").notNull(),
+  sourceType: varchar("source_type").notNull(),
+  sourceUrl: varchar("source_url"),
+  broadcasterId: varchar("broadcaster_id").notNull(),
+  broadcasterName: varchar("broadcaster_name"),
+  viewers: jsonb("viewers").default([]),
+  status: varchar("status").default("active"),
+  quality: varchar("quality").default("720p"),
+  callSessionId: varchar("call_session_id"),
+  startTime: timestamp("start_time").defaultNow(),
+  endTime: timestamp("end_time"),
+  recordingUrl: varchar("recording_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const sharedMedia = pgTable("shared_media", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  mediaId: varchar("media_id").unique().notNull(),
+  uploadedBy: varchar("uploaded_by").notNull(),
+  uploaderName: varchar("uploader_name"),
+  filename: varchar("filename").notNull(),
+  mediaType: varchar("media_type").notNull(),
+  fileUrl: varchar("file_url"),
+  thumbnailUrl: varchar("thumbnail_url"),
+  fileSize: integer("file_size"),
+  mimeType: varchar("mime_type"),
+  callSessionId: varchar("call_session_id"),
+  sharedWith: jsonb("shared_with").default([]),
+  annotations: jsonb("annotations").default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type OnlineUser = typeof onlineUsers.$inferSelect;
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type CallHistory = typeof callHistory.$inferSelect;
@@ -136,3 +199,7 @@ export type NewsItem = typeof newsItems.$inferSelect;
 export type Contact = typeof contacts.$inferSelect;
 export type IncomingCall = typeof incomingCalls.$inferSelect;
 export type GroupChat = typeof groupChats.$inferSelect;
+export type CallSession = typeof callSessions.$inferSelect;
+export type CallMessage = typeof callMessages.$inferSelect;
+export type LiveStream = typeof liveStreams.$inferSelect;
+export type SharedMedia = typeof sharedMedia.$inferSelect;

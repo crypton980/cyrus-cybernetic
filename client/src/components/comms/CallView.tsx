@@ -14,9 +14,13 @@ import {
   Phone,
   X,
   Move,
+  MapPin,
+  Smile,
+  Signal,
 } from "lucide-react";
 import { InCallChat } from "./InCallChat";
 import { ScreenShareView } from "./ScreenShareView";
+import { FloatingReactions, Reaction } from "./FloatingReactions";
 
 export interface CallParticipant {
   id: string;
@@ -38,6 +42,7 @@ interface CallViewProps {
   isMuted: boolean;
   isVideoEnabled: boolean;
   callDuration: number;
+  callQuality?: "HD" | "SD" | "Low";
   isScreenSharing?: boolean;
   screenShareStream?: MediaStream | null;
   screenSharerName?: string;
@@ -47,7 +52,10 @@ interface CallViewProps {
   onStartScreenShare?: () => void;
   onStopScreenShare?: () => void;
   onSendChatMessage?: (message: string) => void;
+  onSendReaction?: (emoji: string, x: number, y: number) => void;
+  onShareLocation?: () => void;
   chatMessages?: { senderId: string; senderName: string; message: string; timestamp: string }[];
+  reactions?: Reaction[];
   socketRef?: React.MutableRefObject<any>;
 }
 
@@ -248,6 +256,7 @@ export function CallView({
   isMuted,
   isVideoEnabled,
   callDuration,
+  callQuality,
   isScreenSharing,
   screenShareStream,
   screenSharerName,
@@ -257,11 +266,15 @@ export function CallView({
   onStartScreenShare,
   onStopScreenShare,
   onSendChatMessage,
+  onSendReaction,
+  onShareLocation,
   chatMessages = [],
+  reactions = [],
   socketRef,
 }: CallViewProps) {
   const [showChat, setShowChat] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showReactions, setShowReactions] = useState(false);
   const [pipPosition, setPipPosition] = useState({ x: 16, y: 16 });
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
@@ -330,6 +343,16 @@ export function CallView({
           <span className="text-xs text-gray-400 font-mono">
             {formatCallDuration(callDuration)}
           </span>
+          {callQuality && (
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+              callQuality === "HD" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" :
+              callQuality === "SD" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+              "bg-red-500/20 text-red-400 border-red-500/30"
+            }`}>
+              <Signal className="w-3 h-3 inline mr-1" />
+              {callQuality}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -356,6 +379,11 @@ export function CallView({
 
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative p-3">
+          <FloatingReactions
+            reactions={reactions}
+            onSendReaction={onSendReaction}
+            showReactionBar={false}
+          />
           {isLocalScreenSharing || (isScreenSharing && screenShareStream) ? (
             <div className="w-full h-full flex flex-col">
               <ScreenShareView
@@ -491,7 +519,17 @@ export function CallView({
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-4 px-4 py-4 bg-gray-900/80 border-t border-gray-800/40 backdrop-blur-md">
+      {showReactions && onSendReaction && (
+        <div className="flex justify-center pb-1 bg-gray-900/60">
+          <FloatingReactions
+            reactions={[]}
+            onSendReaction={onSendReaction}
+            showReactionBar={true}
+          />
+        </div>
+      )}
+
+      <div className="flex items-center justify-center gap-3 px-4 py-4 bg-gray-900/80 border-t border-gray-800/40 backdrop-blur-md">
         <button
           onClick={onToggleMute}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMuted ? "bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20" : "bg-gray-700/80 hover:bg-gray-600/80"}`}
@@ -531,6 +569,25 @@ export function CallView({
         >
           <MessageSquare className="w-5 h-5 text-white" />
         </button>
+
+        {onSendReaction && (
+          <button
+            onClick={() => setShowReactions((p) => !p)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${showReactions ? "bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-600/20" : "bg-gray-700/80 hover:bg-gray-600/80"}`}
+          >
+            <Smile className="w-5 h-5 text-white" />
+          </button>
+        )}
+
+        {onShareLocation && (
+          <button
+            onClick={onShareLocation}
+            className="w-12 h-12 rounded-full flex items-center justify-center transition-all bg-gray-700/80 hover:bg-gray-600/80"
+            title="Share live location"
+          >
+            <MapPin className="w-5 h-5 text-white" />
+          </button>
+        )}
 
         <button
           onClick={onEndCall}

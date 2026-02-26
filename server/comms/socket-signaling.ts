@@ -1,7 +1,7 @@
 import { Server as HttpServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { db } from "../db";
-import { onlineUsers, directMessages, groupChats } from "../../shared/models/comms";
+import { onlineUsers, directMessages, groupChats, callSessions, callMessages, liveStreams, sharedMedia } from "../../shared/models/comms";
 import { eq, ilike } from "drizzle-orm";
 
 interface User {
@@ -216,7 +216,7 @@ export function initSocketSignaling(server: HttpServer) {
       broadcastPresence(io);
     });
 
-    socket.on("accept-call", (data: { roomId: string }) => {
+    socket.on("accept-call", async (data: { roomId: string }) => {
       const userId = (socket as any).userId;
       const user = users.get(userId);
       const pendingCall = pendingCalls.get(data.roomId);
@@ -247,6 +247,22 @@ export function initSocketSignaling(server: HttpServer) {
         startedAt: new Date(),
       };
       activeCalls.set(data.roomId, activeCall);
+
+      try {
+        await db.insert(callSessions).values({
+          callId: data.roomId,
+          type: "p2p",
+          participants: [
+            { userId: pendingCall.callerId, displayName: caller.displayName, joinedAt: new Date().toISOString() },
+            { userId, displayName: user.displayName, joinedAt: new Date().toISOString() },
+          ],
+          mediaConfig: { audio: true, video: pendingCall.callType === "video", screen: false },
+          quality: "HD",
+          startTime: new Date(),
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist call session:", err);
+      }
 
       console.log(`[Socket.IO] Call accepted: ${caller.displayName} <-> ${user.displayName}`);
 
@@ -333,7 +349,7 @@ export function initSocketSignaling(server: HttpServer) {
       }
     });
 
-    socket.on("end-call", (data: { roomId: string }) => {
+    socket.on("end-call", async (data: { roomId: string }) => {
       const userId = (socket as any).userId;
       const user = users.get(userId);
 
@@ -347,6 +363,15 @@ export function initSocketSignaling(server: HttpServer) {
         activeCall.participants = activeCall.participants.filter(p => p !== userId);
         if (activeCall.participants.length === 0) {
           activeCalls.delete(data.roomId);
+          const now = new Date();
+          const durationSeconds = Math.floor((now.getTime() - activeCall.startedAt.getTime()) / 1000);
+          try {
+            await db.update(callSessions)
+              .set({ endTime: now, durationSeconds })
+              .where(eq(callSessions.callId, data.roomId));
+          } catch (err) {
+            console.error("[Socket.IO] Failed to update call session end:", err);
+          }
         }
         if (activeCall.screenSharingBy === userId) {
           activeCall.screenSharingBy = undefined;
@@ -519,7 +544,7 @@ export function initSocketSignaling(server: HttpServer) {
       }
     });
 
-    socket.on("group-call", (data: { groupId: string; callType: "audio" | "video" }) => {
+    socket.on("group-call", async (data: { groupId: string; callType: "audio" | "video" }) => {
       const userId = (socket as any).userId;
       const user = users.get(userId);
       const room = groupRooms.get(data.groupId);
@@ -543,6 +568,20 @@ export function initSocketSignaling(server: HttpServer) {
         startedAt: new Date(),
       };
       activeCalls.set(roomId, activeCall);
+
+      try {
+        await db.insert(callSessions).values({
+          callId: roomId,
+          type: "group",
+          participants: [{ userId, displayName: user.displayName, joinedAt: new Date().toISOString() }],
+          mediaConfig: { audio: true, video: data.callType === "video", screen: false },
+          quality: "HD",
+          startTime: new Date(),
+          metadata: { groupId: data.groupId, groupName: room.name },
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist group call session:", err);
+      }
 
       user.inCall = true;
       user.currentRoomId = roomId;
@@ -572,6 +611,65 @@ export function initSocketSignaling(server: HttpServer) {
       });
 
       console.log(`[Socket.IO] Group call started: ${room.name} by ${user.displayName} (${data.callType})`);
+      broadcastPresence(io);
+    });
+
+    socket.on("create-group-call", async (data: { participantIds: string[]; callType: "audio" | "video"; groupName?: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      const allParticipants = Array.from(new Set([userId, ...data.participantIds]));
+      if (allParticipants.length > 6) {
+        socket.emit("call-failed", { reason: "too-many-participants", max: 6 });
+        return;
+      }
+
+      const roomId = `gcall_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      const activeCall: ActiveCall = {
+        roomId,
+        participants: [userId],
+        callType: data.callType || "video",
+        startedAt: new Date(),
+      };
+      activeCalls.set(roomId, activeCall);
+
+      try {
+        await db.insert(callSessions).values({
+          callId: roomId,
+          type: "group",
+          participants: [{ userId, displayName: user.displayName, joinedAt: new Date().toISOString() }],
+          mediaConfig: { audio: true, video: data.callType === "video", screen: false },
+          quality: "HD",
+          startTime: new Date(),
+          metadata: { groupName: data.groupName || "Group Call" },
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist group call session:", err);
+      }
+
+      user.inCall = true;
+      user.currentRoomId = roomId;
+      socket.join(roomId);
+
+      for (const participantId of data.participantIds) {
+        if (participantId === userId) continue;
+        const member = users.get(participantId);
+        if (member && !member.inCall) {
+          io.to(member.socketId).emit("incoming-group-call", {
+            callerId: userId,
+            callerName: user.displayName,
+            groupName: data.groupName || "Group Call",
+            roomId,
+            callType: data.callType || "video",
+            participants: allParticipants,
+          });
+        }
+      }
+
+      socket.emit("group-call-created", { roomId, callType: data.callType, participants: allParticipants });
+      console.log(`[Socket.IO] Group call created by ${user.displayName} with ${allParticipants.length} participants`);
       broadcastPresence(io);
     });
 
@@ -676,10 +774,23 @@ export function initSocketSignaling(server: HttpServer) {
       });
     });
 
-    socket.on("call-chat-message", (data: { roomId: string; message: string; timestamp: string }) => {
+    socket.on("call-chat-message", async (data: { roomId: string; message: string; timestamp: string }) => {
       const userId = (socket as any).userId;
       const user = users.get(userId);
       if (!user) return;
+
+      try {
+        await db.insert(callMessages).values({
+          callSessionId: data.roomId,
+          userId,
+          userName: user.displayName,
+          content: data.message,
+          messageType: "text",
+          isPrivate: false,
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist call message:", err);
+      }
 
       socket.to(data.roomId).emit("call-chat-message", {
         senderId: userId,
@@ -687,6 +798,258 @@ export function initSocketSignaling(server: HttpServer) {
         message: data.message,
         timestamp: data.timestamp,
         roomId: data.roomId,
+      });
+    });
+
+    socket.on("send-private-message", async (data: { roomId: string; message: string; privateRecipients: string[]; mediaUrls?: string[]; messageType?: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      const msgType = data.messageType || "text";
+
+      try {
+        await db.insert(callMessages).values({
+          callSessionId: data.roomId,
+          userId,
+          userName: user.displayName,
+          content: data.message,
+          mediaUrls: data.mediaUrls || [],
+          messageType: msgType,
+          isPrivate: true,
+          privateRecipients: data.privateRecipients,
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist private call message:", err);
+      }
+
+      for (const recipientId of data.privateRecipients) {
+        const target = users.get(recipientId);
+        if (target) {
+          io.to(target.socketId).emit("private-message-received", {
+            senderId: userId,
+            senderName: user.displayName,
+            message: data.message,
+            mediaUrls: data.mediaUrls,
+            messageType: msgType,
+            roomId: data.roomId,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+    });
+
+    socket.on("send-reaction", (data: { roomId: string; emoji: string; x: number; y: number }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      io.to(data.roomId).emit("reaction-received", {
+        userId,
+        displayName: user.displayName,
+        emoji: data.emoji,
+        x: data.x,
+        y: data.y,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    socket.on("share-location", (data: { roomId: string; latitude: number; longitude: number }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      const activeCall = activeCalls.get(data.roomId);
+      if (!activeCall) return;
+
+      io.to(data.roomId).emit("location-update", {
+        userId,
+        displayName: user.displayName,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    socket.on("start-live-stream", async (data: { streamName: string; sourceType: string; sourceUrl?: string; roomId?: string; quality?: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      const streamId = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      try {
+        await db.insert(liveStreams).values({
+          streamId,
+          streamName: data.streamName,
+          sourceType: data.sourceType,
+          sourceUrl: data.sourceUrl || null,
+          broadcasterId: userId,
+          broadcasterName: user.displayName,
+          viewers: [],
+          status: "active",
+          quality: data.quality || "720p",
+          callSessionId: data.roomId || null,
+          startTime: new Date(),
+        });
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist live stream:", err);
+      }
+
+      if (data.roomId) {
+        io.to(data.roomId).emit("live-stream-started", {
+          streamId,
+          streamName: data.streamName,
+          sourceType: data.sourceType,
+          broadcasterId: userId,
+          broadcasterName: user.displayName,
+          quality: data.quality || "720p",
+        });
+      }
+
+      socket.emit("stream-created", { streamId, streamName: data.streamName });
+      console.log(`[Socket.IO] Live stream started: ${data.streamName} by ${user.displayName}`);
+    });
+
+    socket.on("end-live-stream", async (data: { streamId: string; roomId?: string }) => {
+      const userId = (socket as any).userId;
+
+      try {
+        await db.update(liveStreams)
+          .set({ status: "ended", endTime: new Date() })
+          .where(eq(liveStreams.streamId, data.streamId));
+      } catch (err) {
+        console.error("[Socket.IO] Failed to end live stream:", err);
+      }
+
+      if (data.roomId) {
+        io.to(data.roomId).emit("live-stream-ended", { streamId: data.streamId, endedBy: userId });
+      }
+
+      io.emit("stream-ended", { streamId: data.streamId });
+      console.log(`[Socket.IO] Live stream ended: ${data.streamId}`);
+    });
+
+    socket.on("join-live-stream", async (data: { streamId: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      socket.join(`stream_${data.streamId}`);
+
+      try {
+        const [stream] = await db.select().from(liveStreams).where(eq(liveStreams.streamId, data.streamId));
+        if (stream) {
+          const viewers = (stream.viewers as Array<{ userId: string; joinedAt: string }>) || [];
+          if (!viewers.find((v: { userId: string }) => v.userId === userId)) {
+            viewers.push({ userId, joinedAt: new Date().toISOString() });
+            await db.update(liveStreams)
+              .set({ viewers })
+              .where(eq(liveStreams.streamId, data.streamId));
+          }
+        }
+      } catch (err) {
+        console.error("[Socket.IO] Failed to track stream viewer:", err);
+      }
+
+      io.to(`stream_${data.streamId}`).emit("stream-viewer-joined", {
+        streamId: data.streamId,
+        userId,
+        displayName: user.displayName,
+      });
+    });
+
+    socket.on("leave-live-stream", async (data: { streamId: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+
+      socket.leave(`stream_${data.streamId}`);
+
+      try {
+        const [stream] = await db.select().from(liveStreams).where(eq(liveStreams.streamId, data.streamId));
+        if (stream) {
+          const viewers = ((stream.viewers as Array<{ userId: string }>) || []).filter((v: { userId: string }) => v.userId !== userId);
+          await db.update(liveStreams)
+            .set({ viewers })
+            .where(eq(liveStreams.streamId, data.streamId));
+        }
+      } catch (err) {
+        console.error("[Socket.IO] Failed to remove stream viewer:", err);
+      }
+
+      io.to(`stream_${data.streamId}`).emit("stream-viewer-left", {
+        streamId: data.streamId,
+        userId,
+        displayName: user?.displayName,
+      });
+    });
+
+    socket.on("annotate-media", async (data: { mediaId: string; annotationType: string; annotationData: any; roomId?: string }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      const annotation = {
+        userId,
+        displayName: user.displayName,
+        type: data.annotationType,
+        data: data.annotationData,
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        const [media] = await db.select().from(sharedMedia).where(eq(sharedMedia.mediaId, data.mediaId));
+        if (media) {
+          const annotations = (media.annotations as any[]) || [];
+          annotations.push(annotation);
+          await db.update(sharedMedia)
+            .set({ annotations })
+            .where(eq(sharedMedia.mediaId, data.mediaId));
+        }
+      } catch (err) {
+        console.error("[Socket.IO] Failed to persist media annotation:", err);
+      }
+
+      if (data.roomId) {
+        io.to(data.roomId).emit("media-annotated", {
+          mediaId: data.mediaId,
+          annotation,
+        });
+      }
+    });
+
+    socket.on("send-voice-note", (data: { roomId: string; audioData: string; duration: number }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      io.to(data.roomId).emit("voice-note-received", {
+        userId,
+        displayName: user.displayName,
+        audioData: data.audioData,
+        duration: data.duration,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    socket.on("update-call-quality", async (data: { roomId: string; quality: "HD" | "SD" | "Low" }) => {
+      const userId = (socket as any).userId;
+      const user = users.get(userId);
+      if (!user) return;
+
+      try {
+        await db.update(callSessions)
+          .set({ quality: data.quality })
+          .where(eq(callSessions.callId, data.roomId));
+      } catch (err) {
+        console.error("[Socket.IO] Failed to update call quality:", err);
+      }
+
+      io.to(data.roomId).emit("call-quality-updated", {
+        roomId: data.roomId,
+        userId,
+        displayName: user.displayName,
+        quality: data.quality,
       });
     });
 

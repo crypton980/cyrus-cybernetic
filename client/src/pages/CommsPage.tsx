@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Smile,
   X,
+  Radio,
 } from "lucide-react";
 import { CommsPlatform } from "../components/comms/CommsPlatform";
 import { Conversation } from "../components/comms/ConversationList";
@@ -20,8 +21,10 @@ import { CallView, CallParticipant, IncomingCallOverlay } from "../components/co
 import { UserDiscovery } from "../components/comms/UserDiscovery";
 import { AdminDashboard } from "../components/comms/AdminDashboard";
 import { EmojiPicker } from "../components/comms/EmojiPicker";
+import { LiveStreamPanel, LiveStream } from "../components/comms/LiveStreamPanel";
+import { Reaction } from "../components/comms/FloatingReactions";
 
-type MainTab = "chat" | "calls" | "people" | "monitor";
+type MainTab = "chat" | "calls" | "people" | "streams" | "monitor";
 
 export function CommsPage() {
   const [activeTab, setActiveTab] = useState<MainTab>("chat");
@@ -36,6 +39,9 @@ export function CommsPage() {
   >([]);
   const [typingUsers, setTypingUsers] = useState<Record<string, string[]>>({});
   const [selectedConvForMessage, setSelectedConvForMessage] = useState<string | null>(null);
+  const [callReactions, setCallReactions] = useState<Reaction[]>([]);
+  const [callQuality, setCallQuality] = useState<"HD" | "SD" | "Low">("HD");
+  const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
 
   const {
     messages,
@@ -81,6 +87,29 @@ export function CommsPage() {
   }, [darkMode]);
 
   useEffect(() => {
+    fetch("/api/comms/live-streams")
+      .then(res => res.json())
+      .then(data => {
+        if (data.streams) {
+          setLiveStreams(data.streams.map((s: any) => ({
+            streamId: s.streamId,
+            streamName: s.streamName,
+            sourceType: s.sourceType,
+            sourceUrl: s.sourceUrl,
+            broadcasterId: s.broadcasterId,
+            broadcasterName: s.broadcasterName,
+            viewers: s.viewers || [],
+            status: s.status,
+            quality: s.quality || "720p",
+            startTime: s.startTime,
+            endTime: s.endTime,
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     const socket = wsRef.current;
     if (!socket) return;
 
@@ -105,14 +134,81 @@ export function CommsPage() {
       setCallChatMessages(prev => [...prev, data]);
     };
 
+    const handleReactionReceived = (data: { emoji: string; x: number; y: number; userId: string }) => {
+      setCallReactions(prev => [...prev, {
+        id: `${Date.now()}-${Math.random()}`,
+        emoji: data.emoji,
+        x: data.x,
+        y: data.y,
+        userId: data.userId,
+        timestamp: Date.now(),
+      }]);
+    };
+
+    const handleCallQualityUpdated = (data: { quality: string }) => {
+      if (data.quality === "HD" || data.quality === "SD" || data.quality === "Low") {
+        setCallQuality(data.quality);
+      }
+    };
+
+    const handleLiveStreamStarted = (data: any) => {
+      setLiveStreams(prev => {
+        if (prev.some(s => s.streamId === data.streamId)) return prev;
+        return [...prev, {
+          streamId: data.streamId,
+          streamName: data.streamName || "Stream",
+          sourceType: data.sourceType || "webcam",
+          sourceUrl: data.sourceUrl,
+          broadcasterId: data.broadcasterId || "",
+          broadcasterName: data.broadcasterName,
+          viewers: [],
+          status: "active" as const,
+          quality: data.quality || "720p",
+          startTime: data.startTime || new Date().toISOString(),
+        }];
+      });
+    };
+
+    const handleLiveStreamEnded = (data: { streamId: string }) => {
+      setLiveStreams(prev => prev.filter(s => s.streamId !== data.streamId));
+    };
+
+    const handleStreamViewerJoined = (data: { streamId: string; userId: string }) => {
+      setLiveStreams(prev => prev.map(s =>
+        s.streamId === data.streamId
+          ? { ...s, viewers: [...s.viewers, { userId: data.userId, joinedAt: new Date().toISOString() }] }
+          : s
+      ));
+    };
+
+    const handleStreamViewerLeft = (data: { streamId: string; userId: string }) => {
+      setLiveStreams(prev => prev.map(s =>
+        s.streamId === data.streamId
+          ? { ...s, viewers: s.viewers.filter(v => v.userId !== data.userId) }
+          : s
+      ));
+    };
+
     socket.on("typing-started", handleTypingStart);
     socket.on("typing-stopped", handleTypingStop);
     socket.on("call-chat-message", handleCallChatMessage);
+    socket.on("reaction-received", handleReactionReceived);
+    socket.on("call-quality-updated", handleCallQualityUpdated);
+    socket.on("live-stream-started", handleLiveStreamStarted);
+    socket.on("live-stream-ended", handleLiveStreamEnded);
+    socket.on("stream-viewer-joined", handleStreamViewerJoined);
+    socket.on("stream-viewer-left", handleStreamViewerLeft);
 
     return () => {
       socket.off("typing-started", handleTypingStart);
       socket.off("typing-stopped", handleTypingStop);
       socket.off("call-chat-message", handleCallChatMessage);
+      socket.off("reaction-received", handleReactionReceived);
+      socket.off("call-quality-updated", handleCallQualityUpdated);
+      socket.off("live-stream-started", handleLiveStreamStarted);
+      socket.off("live-stream-ended", handleLiveStreamEnded);
+      socket.off("stream-viewer-joined", handleStreamViewerJoined);
+      socket.off("stream-viewer-left", handleStreamViewerLeft);
     };
   }, [wsRef.current]);
 
@@ -270,6 +366,65 @@ export function CommsPage() {
     setShowEmojiPicker(false);
   }, []);
 
+  const handleSendReaction = useCallback((emoji: string, x: number, y: number) => {
+    if (!activeCall?.roomId) return;
+    wsRef.current?.emit("send-reaction", {
+      roomId: activeCall.roomId,
+      emoji,
+      x,
+      y,
+    });
+    setCallReactions(prev => [...prev, {
+      id: `${Date.now()}-${Math.random()}`,
+      emoji,
+      x,
+      y,
+      userId: myUserId || "",
+      timestamp: Date.now(),
+    }]);
+  }, [wsRef, activeCall, myUserId]);
+
+  const handleCallLocationShare = useCallback(() => {
+    if (!activeCall?.roomId || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        wsRef.current?.emit("share-location", {
+          roomId: activeCall.roomId,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+      },
+      (err) => console.error("Location error:", err),
+      { enableHighAccuracy: true }
+    );
+  }, [wsRef, activeCall]);
+
+  const handleStartStream = useCallback((data: {
+    streamName: string;
+    sourceType: string;
+    sourceUrl?: string;
+    quality: string;
+  }) => {
+    wsRef.current?.emit("start-live-stream", {
+      streamName: data.streamName,
+      sourceType: data.sourceType,
+      sourceUrl: data.sourceUrl,
+      quality: data.quality,
+    });
+  }, [wsRef]);
+
+  const handleEndStream = useCallback((streamId: string) => {
+    wsRef.current?.emit("end-live-stream", { streamId });
+  }, [wsRef]);
+
+  const handleJoinStream = useCallback((streamId: string) => {
+    wsRef.current?.emit("join-live-stream", { streamId });
+  }, [wsRef]);
+
+  const handleLeaveStream = useCallback((streamId: string) => {
+    wsRef.current?.emit("leave-live-stream", { streamId });
+  }, [wsRef]);
+
   const handleScreenShareStart = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -320,6 +475,7 @@ export function CommsPage() {
     { id: "chat" as MainTab, icon: MessageSquare, label: "Chat" },
     { id: "calls" as MainTab, icon: Phone, label: "Calls" },
     { id: "people" as MainTab, icon: Users, label: "People" },
+    { id: "streams" as MainTab, icon: Radio, label: "Streams" },
     { id: "monitor" as MainTab, icon: Activity, label: "Monitor" },
   ];
 
@@ -338,13 +494,17 @@ export function CommsPage() {
           isMuted={mediaControls.isMuted}
           isVideoEnabled={mediaControls.isVideoEnabled}
           callDuration={callDuration}
+          callQuality={callQuality}
           onToggleMute={toggleMute}
           onToggleVideo={toggleVideo}
           onEndCall={endCall}
           onStartScreenShare={handleScreenShareStart}
           onStopScreenShare={handleScreenShareStop}
           onSendChatMessage={handleCallChatSend}
+          onSendReaction={handleSendReaction}
+          onShareLocation={handleCallLocationShare}
           chatMessages={callChatMessages}
+          reactions={callReactions}
           socketRef={wsRef}
         />
       )}
@@ -441,6 +601,17 @@ export function CommsPage() {
               onRemoveContact={handleRemoveContact}
             />
           </div>
+        )}
+
+        {activeTab === "streams" && (
+          <LiveStreamPanel
+            streams={liveStreams}
+            currentUserId={myUserId || myDeviceId}
+            onStartStream={handleStartStream}
+            onEndStream={handleEndStream}
+            onJoinStream={handleJoinStream}
+            onLeaveStream={handleLeaveStream}
+          />
         )}
 
         {activeTab === "monitor" && (

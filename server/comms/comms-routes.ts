@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems, contacts, incomingCalls, groupChats } from "../../shared/schema";
+import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems, contacts, incomingCalls, groupChats, callSessions, liveStreams, sharedMedia, callMessages } from "../../shared/schema";
 import { eq, or, and, desc, asc, ilike, inArray, sql } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
 import { getConnectedUsers } from "./signaling";
@@ -588,22 +588,42 @@ router.patch("/api/comms/contacts/:id/favorite", async (req: any, res) => {
 router.get("/api/comms/call-history", async (req: any, res) => {
   try {
     const userId = getUserId(req);
-    if (!userId) {
-      return res.json([]);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const offset = (page - 1) * limit;
+
+    let sessions;
+    if (userId) {
+      sessions = await db.select().from(callSessions)
+        .where(
+          sql`${callSessions.participants}::jsonb @> ${JSON.stringify([{ userId }])}::jsonb`
+        )
+        .orderBy(desc(callSessions.startTime))
+        .limit(limit)
+        .offset(offset);
+    } else {
+      sessions = await db.select().from(callSessions)
+        .orderBy(desc(callSessions.startTime))
+        .limit(limit)
+        .offset(offset);
     }
 
-    const history = await db.select().from(callHistory)
-      .where(
-        or(
-          eq(callHistory.callerId, userId),
-          eq(callHistory.recipientId, userId)
-        )
-      )
-      .orderBy(desc(callHistory.startedAt))
-      .limit(50);
+    const formatted = sessions.map(s => ({
+      id: s.id,
+      callId: s.callId,
+      type: s.type,
+      participants: s.participants,
+      mediaConfig: s.mediaConfig,
+      quality: s.quality,
+      startTime: s.startTime?.toISOString() || null,
+      endTime: s.endTime?.toISOString() || null,
+      durationSeconds: s.durationSeconds,
+      recordingUrl: s.recordingUrl,
+      metadata: s.metadata,
+    }));
 
-    res.json(history);
-  } catch (error) {
+    res.json({ page, limit, sessions: formatted });
+  } catch (error: any) {
     console.error("Error fetching call history:", error);
     res.status(500).json({ error: "Failed to fetch call history" });
   }
@@ -1214,6 +1234,311 @@ router.get("/api/comms/conversations", async (req: any, res) => {
   } catch (error: any) {
     console.error("Error fetching conversations:", error);
     res.status(500).json({ error: "Failed to fetch conversations" });
+  }
+});
+
+router.get("/api/comms/call-history/:callId", async (req: any, res) => {
+  try {
+    const { callId } = req.params;
+
+    const [session] = await db.select().from(callSessions)
+      .where(eq(callSessions.callId, callId));
+
+    if (!session) {
+      return res.status(404).json({ error: "Call session not found" });
+    }
+
+    const messages = await db.select().from(callMessages)
+      .where(eq(callMessages.callSessionId, callId))
+      .orderBy(asc(callMessages.createdAt));
+
+    const media = await db.select().from(sharedMedia)
+      .where(eq(sharedMedia.callSessionId, callId))
+      .orderBy(desc(sharedMedia.createdAt));
+
+    res.json({
+      session: {
+        id: session.id,
+        callId: session.callId,
+        type: session.type,
+        participants: session.participants,
+        mediaConfig: session.mediaConfig,
+        quality: session.quality,
+        startTime: session.startTime?.toISOString() || null,
+        endTime: session.endTime?.toISOString() || null,
+        durationSeconds: session.durationSeconds,
+        recordingUrl: session.recordingUrl,
+        metadata: session.metadata,
+      },
+      messages: messages.map(m => ({
+        id: m.id,
+        userId: m.userId,
+        userName: m.userName,
+        content: m.content,
+        mediaUrls: m.mediaUrls,
+        messageType: m.messageType,
+        isPrivate: m.isPrivate,
+        privateRecipients: m.privateRecipients,
+        timestamp: m.createdAt?.toISOString() || null,
+      })),
+      media: media.map(md => ({
+        id: md.id,
+        mediaId: md.mediaId,
+        filename: md.filename,
+        mediaType: md.mediaType,
+        fileUrl: md.fileUrl,
+        thumbnailUrl: md.thumbnailUrl,
+        fileSize: md.fileSize,
+        annotations: md.annotations,
+        createdAt: md.createdAt?.toISOString() || null,
+      })),
+    });
+  } catch (error: any) {
+    console.error("Error fetching call session details:", error);
+    res.status(500).json({ error: "Failed to fetch call session details" });
+  }
+});
+
+router.get("/api/comms/live-streams", async (_req: any, res) => {
+  try {
+    const streams = await db.select().from(liveStreams)
+      .where(eq(liveStreams.status, "active"))
+      .orderBy(desc(liveStreams.startTime));
+
+    const formatted = streams.map(s => ({
+      id: s.id,
+      streamId: s.streamId,
+      streamName: s.streamName,
+      sourceType: s.sourceType,
+      sourceUrl: s.sourceUrl,
+      broadcasterId: s.broadcasterId,
+      broadcasterName: s.broadcasterName,
+      viewerCount: Array.isArray(s.viewers) ? (s.viewers as any[]).length : 0,
+      status: s.status,
+      quality: s.quality,
+      startTime: s.startTime?.toISOString() || null,
+    }));
+
+    res.json({ streams: formatted });
+  } catch (error: any) {
+    console.error("Error fetching live streams:", error);
+    res.status(500).json({ error: "Failed to fetch live streams" });
+  }
+});
+
+router.get("/api/comms/live-streams/:streamId", async (req: any, res) => {
+  try {
+    const { streamId } = req.params;
+
+    const [stream] = await db.select().from(liveStreams)
+      .where(eq(liveStreams.streamId, streamId));
+
+    if (!stream) {
+      return res.status(404).json({ error: "Stream not found" });
+    }
+
+    res.json({
+      id: stream.id,
+      streamId: stream.streamId,
+      streamName: stream.streamName,
+      sourceType: stream.sourceType,
+      sourceUrl: stream.sourceUrl,
+      broadcasterId: stream.broadcasterId,
+      broadcasterName: stream.broadcasterName,
+      viewers: stream.viewers,
+      viewerCount: Array.isArray(stream.viewers) ? (stream.viewers as any[]).length : 0,
+      status: stream.status,
+      quality: stream.quality,
+      callSessionId: stream.callSessionId,
+      startTime: stream.startTime?.toISOString() || null,
+      endTime: stream.endTime?.toISOString() || null,
+      recordingUrl: stream.recordingUrl,
+    });
+  } catch (error: any) {
+    console.error("Error fetching stream details:", error);
+    res.status(500).json({ error: "Failed to fetch stream details" });
+  }
+});
+
+router.post("/api/comms/live-streams", async (req: any, res) => {
+  try {
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { streamName, sourceType, sourceUrl, quality, callSessionId, broadcasterName } = req.body;
+
+    if (!streamName?.trim()) {
+      return res.status(400).json({ error: "streamName is required" });
+    }
+    if (!sourceType?.trim()) {
+      return res.status(400).json({ error: "sourceType is required" });
+    }
+
+    const validSourceTypes = ["drone", "cctv", "webcam", "screen", "rtsp"];
+    if (!validSourceTypes.includes(sourceType)) {
+      return res.status(400).json({ error: `sourceType must be one of: ${validSourceTypes.join(", ")}` });
+    }
+
+    const streamId = uuid();
+
+    const [stream] = await db.insert(liveStreams).values({
+      streamId,
+      streamName,
+      sourceType,
+      sourceUrl: sourceUrl || null,
+      broadcasterId: userId,
+      broadcasterName: broadcasterName || null,
+      viewers: [],
+      status: "active",
+      quality: quality || "720p",
+      callSessionId: callSessionId || null,
+    }).returning();
+
+    res.json({
+      id: stream.id,
+      streamId: stream.streamId,
+      streamName: stream.streamName,
+      sourceType: stream.sourceType,
+      sourceUrl: stream.sourceUrl,
+      broadcasterId: stream.broadcasterId,
+      broadcasterName: stream.broadcasterName,
+      viewerCount: 0,
+      status: stream.status,
+      quality: stream.quality,
+      startTime: stream.startTime?.toISOString() || null,
+    });
+  } catch (error: any) {
+    console.error("Error creating live stream:", error);
+    res.status(500).json({ error: "Failed to create live stream" });
+  }
+});
+
+router.put("/api/comms/live-streams/:streamId/end", async (req: any, res) => {
+  try {
+    const { streamId } = req.params;
+
+    const [stream] = await db.select().from(liveStreams)
+      .where(eq(liveStreams.streamId, streamId));
+
+    if (!stream) {
+      return res.status(404).json({ error: "Stream not found" });
+    }
+
+    if (stream.status === "ended") {
+      return res.status(400).json({ error: "Stream already ended" });
+    }
+
+    const endTime = new Date();
+    await db.update(liveStreams)
+      .set({ status: "ended", endTime })
+      .where(eq(liveStreams.streamId, streamId));
+
+    res.json({ success: true, streamId, endTime: endTime.toISOString() });
+  } catch (error: any) {
+    console.error("Error ending live stream:", error);
+    res.status(500).json({ error: "Failed to end live stream" });
+  }
+});
+
+router.get("/api/comms/shared-media", async (req: any, res) => {
+  try {
+    const callSessionId = req.query.callSessionId as string | undefined;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+
+    let mediaList;
+    if (callSessionId) {
+      mediaList = await db.select().from(sharedMedia)
+        .where(eq(sharedMedia.callSessionId, callSessionId))
+        .orderBy(desc(sharedMedia.createdAt))
+        .limit(limit);
+    } else {
+      mediaList = await db.select().from(sharedMedia)
+        .orderBy(desc(sharedMedia.createdAt))
+        .limit(limit);
+    }
+
+    const formatted = mediaList.map(m => ({
+      id: m.id,
+      mediaId: m.mediaId,
+      uploadedBy: m.uploadedBy,
+      uploaderName: m.uploaderName,
+      filename: m.filename,
+      mediaType: m.mediaType,
+      fileUrl: m.fileUrl,
+      thumbnailUrl: m.thumbnailUrl,
+      fileSize: m.fileSize,
+      mimeType: m.mimeType,
+      callSessionId: m.callSessionId,
+      sharedWith: m.sharedWith,
+      annotations: m.annotations,
+      createdAt: m.createdAt?.toISOString() || null,
+    }));
+
+    res.json(formatted);
+  } catch (error: any) {
+    console.error("Error fetching shared media:", error);
+    res.status(500).json({ error: "Failed to fetch shared media" });
+  }
+});
+
+router.post("/api/comms/shared-media/:mediaId/annotate", async (req: any, res) => {
+  try {
+    const { mediaId } = req.params;
+    const userId = getUserId(req) || `anon_${Date.now()}`;
+    const { annotationType, annotationData, userName } = req.body;
+
+    if (!annotationType) {
+      return res.status(400).json({ error: "annotationType is required" });
+    }
+
+    const validTypes = ["drawing", "comment", "highlight"];
+    if (!validTypes.includes(annotationType)) {
+      return res.status(400).json({ error: `annotationType must be one of: ${validTypes.join(", ")}` });
+    }
+
+    const [media] = await db.select().from(sharedMedia)
+      .where(eq(sharedMedia.mediaId, mediaId));
+
+    if (!media) {
+      return res.status(404).json({ error: "Media not found" });
+    }
+
+    const existingAnnotations = Array.isArray(media.annotations) ? (media.annotations as any[]) : [];
+    const newAnnotation = {
+      userId,
+      userName: userName || null,
+      type: annotationType,
+      data: annotationData || null,
+      timestamp: new Date().toISOString(),
+    };
+    const updatedAnnotations = [...existingAnnotations, newAnnotation];
+
+    await db.update(sharedMedia)
+      .set({ annotations: updatedAnnotations })
+      .where(eq(sharedMedia.mediaId, mediaId));
+
+    res.json({ success: true, annotation: newAnnotation, totalAnnotations: updatedAnnotations.length });
+  } catch (error: any) {
+    console.error("Error annotating media:", error);
+    res.status(500).json({ error: "Failed to annotate media" });
+  }
+});
+
+router.get("/api/comms/ice-servers", (_req: any, res) => {
+  try {
+    const iceServers = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun3.l.google.com:19302" },
+      { urls: "stun:stun4.l.google.com:19302" },
+      { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+    ];
+
+    res.json({ iceServers });
+  } catch (error: any) {
+    console.error("Error fetching ICE servers:", error);
+    res.status(500).json({ error: "Failed to fetch ICE servers" });
   }
 });
 
