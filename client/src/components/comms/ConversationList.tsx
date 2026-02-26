@@ -23,6 +23,7 @@ interface ConversationListProps {
   selectedId: string | null;
   onSelect: (conversation: Conversation) => void;
   onCreateGroup?: () => void;
+  onNewChat?: () => void;
 }
 
 export function ConversationList({
@@ -30,6 +31,7 @@ export function ConversationList({
   selectedId,
   onSelect,
   onCreateGroup,
+  onNewChat,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
 
@@ -80,15 +82,26 @@ export function ConversationList({
       <div className="px-4 pt-4 pb-2 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Chats</h2>
-          {onCreateGroup && (
-            <button
-              onClick={onCreateGroup}
-              className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
-              title="New Group"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {onNewChat && (
+              <button
+                onClick={onNewChat}
+                className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                title="New Chat"
+              >
+                <MessageSquare className="w-5 h-5" />
+              </button>
+            )}
+            {onCreateGroup && (
+              <button
+                onClick={onCreateGroup}
+                className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                title="New Group"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />

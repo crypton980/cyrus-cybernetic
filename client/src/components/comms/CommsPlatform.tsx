@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ConversationList, Conversation } from "./ConversationList";
 import { ChatView } from "./ChatView";
 import { CommsMessage } from "./MessageBubble";
@@ -8,6 +8,7 @@ interface CommsPlatformProps {
   messages: CommsMessage[];
   currentUserId: string;
   typingUsers?: Record<string, string[]>;
+  initialConversationId?: string | null;
   onSendMessage: (conversationId: string, content: string) => void;
   onSendMedia?: (conversationId: string, file: File) => void;
   onSendVoice?: (conversationId: string, blob: Blob, duration: number) => void;
@@ -19,6 +20,7 @@ interface CommsPlatformProps {
   onAudioCall?: (conversationId: string, name: string) => void;
   onVideoCall?: (conversationId: string, name: string) => void;
   onCreateGroup?: () => void;
+  onNewChat?: () => void;
   sidebar?: React.ReactNode;
 }
 
@@ -27,6 +29,7 @@ export function CommsPlatform({
   messages,
   currentUserId,
   typingUsers = {},
+  initialConversationId,
   onSendMessage,
   onSendMedia,
   onSendVoice,
@@ -38,10 +41,21 @@ export function CommsPlatform({
   onAudioCall,
   onVideoCall,
   onCreateGroup,
+  onNewChat,
   sidebar,
 }: CommsPlatformProps) {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
+
+  useEffect(() => {
+    if (initialConversationId) {
+      const conv = conversations.find(c => c.id === initialConversationId);
+      if (conv) {
+        setSelectedConversation(conv);
+        setMobileView("chat");
+      }
+    }
+  }, [initialConversationId, conversations]);
 
   const handleSelectConversation = useCallback((conv: Conversation) => {
     setSelectedConversation(conv);
@@ -81,6 +95,7 @@ export function CommsPlatform({
           selectedId={selectedConversation?.id || null}
           onSelect={handleSelectConversation}
           onCreateGroup={onCreateGroup}
+          onNewChat={onNewChat}
         />
       </div>
 

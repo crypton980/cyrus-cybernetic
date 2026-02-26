@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useComms } from "../hooks/useComms";
 import { usePresence } from "../contexts/PresenceContext";
 import { Link } from "wouter";
@@ -42,6 +42,8 @@ export function CommsPage() {
   const [callReactions, setCallReactions] = useState<Reaction[]>([]);
   const [callQuality, setCallQuality] = useState<"HD" | "SD" | "Low">("HD");
   const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
+  const [localMessages, setLocalMessages] = useState<CommsMessage[]>([]);
+  const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
 
   const {
     messages,
@@ -73,6 +75,13 @@ export function CommsPage() {
     sendMessage: presenceSendMessage,
     wsRef,
   } = usePresence();
+
+  const myUserIdRef = useRef(myUserId);
+  const myDeviceIdRef = useRef(myDeviceId);
+  const displayNameRef = useRef(displayName);
+  useEffect(() => { myUserIdRef.current = myUserId; }, [myUserId]);
+  useEffect(() => { myDeviceIdRef.current = myDeviceId; }, [myDeviceId]);
+  useEffect(() => { displayNameRef.current = displayName; }, [displayName]);
 
   useEffect(() => {
     const savedName = localStorage.getItem("cyrus-display-name") || "CYRUS User";
@@ -127,6 +136,55 @@ export function CommsPage() {
       setTypingUsers(prev => {
         const users = (prev[data.conversationId] || []).filter(u => u !== data.userName);
         return { ...prev, [data.conversationId]: users };
+      });
+    };
+
+    const handleNewMessage = (data: {
+      id: string;
+      senderId: string;
+      senderName: string;
+      message: string;
+      messageType?: string;
+      timestamp: string;
+      fileUrl?: string;
+      fileName?: string;
+    }) => {
+      const newMsg: CommsMessage = {
+        id: data.id || `local_${Date.now()}`,
+        senderId: data.senderId,
+        senderName: data.senderName || data.senderId.substring(0, 10),
+        recipientId: myUserIdRef.current || myDeviceIdRef.current || "",
+        content: data.message,
+        timestamp: data.timestamp || new Date().toISOString(),
+        read: false,
+        type: "text" as const,
+      };
+      setLocalMessages(prev => {
+        if (prev.some(m => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
+    };
+
+    const handleMessageSent = (data: {
+      id: string;
+      recipientId: string;
+      message: string;
+      messageType?: string;
+      timestamp: string;
+    }) => {
+      const sentMsg: CommsMessage = {
+        id: data.id || `sent_${Date.now()}`,
+        senderId: myUserIdRef.current || myDeviceIdRef.current || "",
+        senderName: displayNameRef.current,
+        recipientId: data.recipientId,
+        content: data.message,
+        timestamp: data.timestamp || new Date().toISOString(),
+        read: true,
+        type: "text" as const,
+      };
+      setLocalMessages(prev => {
+        if (prev.some(m => m.id === sentMsg.id)) return prev;
+        return [...prev, sentMsg];
       });
     };
 
@@ -189,6 +247,8 @@ export function CommsPage() {
       ));
     };
 
+    socket.on("new-message", handleNewMessage);
+    socket.on("message-sent", handleMessageSent);
     socket.on("typing-started", handleTypingStart);
     socket.on("typing-stopped", handleTypingStop);
     socket.on("call-chat-message", handleCallChatMessage);
@@ -200,6 +260,8 @@ export function CommsPage() {
     socket.on("stream-viewer-left", handleStreamViewerLeft);
 
     return () => {
+      socket.off("new-message", handleNewMessage);
+      socket.off("message-sent", handleMessageSent);
       socket.off("typing-started", handleTypingStart);
       socket.off("typing-stopped", handleTypingStop);
       socket.off("call-chat-message", handleCallChatMessage);
@@ -212,11 +274,53 @@ export function CommsPage() {
     };
   }, [wsRef.current]);
 
-  const conversations: Conversation[] = (() => {
+  const myId = myUserId || myDeviceId;
+
+  useEffect(() => {
+    if (localMessages.length > 0) {
+      const timer = setTimeout(() => {
+        setLocalMessages([]);
+      }, 20000);
+      return () => clearTimeout(timer);
+    }
+  }, [localMessages.length]);
+
+  useEffect(() => {
+    if (selectedConvForMessage) {
+      setPendingConversationId(selectedConvForMessage);
+      setSelectedConvForMessage(null);
+    }
+  }, [selectedConvForMessage]);
+
+  const conversations: Conversation[] = useMemo(() => {
     const convMap = new Map<string, Conversation>();
-    const msgList = messages || [];
-    for (const msg of msgList) {
-      const partnerId = msg.senderId === myDeviceId ? msg.recipientId : msg.senderId;
+    const allMsgs = [
+      ...(messages || []).map(msg => ({
+        id: msg.id,
+        senderId: msg.senderId,
+        recipientId: msg.recipientId,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        read: msg.read,
+      })),
+      ...localMessages.map(msg => ({
+        id: msg.id,
+        senderId: msg.senderId,
+        recipientId: msg.recipientId,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        read: msg.read,
+      })),
+    ];
+    const seenIds = new Set<string>();
+    const dedupedMsgs = allMsgs.filter(m => {
+      if (seenIds.has(m.id)) return false;
+      seenIds.add(m.id);
+      return true;
+    });
+
+    for (const msg of dedupedMsgs) {
+      const partnerId = msg.senderId === myId ? msg.recipientId : msg.senderId;
       if (partnerId === "broadcast" || !partnerId) continue;
       const existing = convMap.get(partnerId);
       const partnerUser = allUsers.find(u => u.id === partnerId);
@@ -225,7 +329,7 @@ export function CommsPage() {
       const isOnline = partnerUser?.isOnline || !!partnerOnline;
 
       if (!existing || new Date(msg.timestamp) > new Date(existing.lastMessageTime)) {
-        const unread = (existing?.unreadCount || 0) + (msg.senderId !== myDeviceId && !msg.read ? 1 : 0);
+        const unread = (existing?.unreadCount || 0) + (msg.senderId !== myId && !msg.read ? 1 : 0);
         convMap.set(partnerId, {
           id: partnerId,
           name,
@@ -237,31 +341,53 @@ export function CommsPage() {
         });
       }
     }
+
+    if (pendingConversationId && !convMap.has(pendingConversationId)) {
+      const partnerUser = allUsers.find(u => u.id === pendingConversationId);
+      const partnerOnline = onlineUsers.find(u => u.id === pendingConversationId);
+      const name = partnerUser?.displayName || partnerOnline?.displayName || pendingConversationId.substring(0, 12) + "...";
+      convMap.set(pendingConversationId, {
+        id: pendingConversationId,
+        name,
+        isGroup: false,
+        lastMessage: "Start a conversation...",
+        lastMessageTime: new Date().toISOString(),
+        unreadCount: 0,
+        isOnline: !!partnerOnline || partnerUser?.isOnline,
+      });
+    }
+
     return Array.from(convMap.values()).sort(
       (a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
     );
-  })();
+  }, [messages, localMessages, myId, allUsers, onlineUsers, pendingConversationId]);
 
-  const commsMessages: CommsMessage[] = (messages || []).map(msg => ({
-    id: msg.id,
-    senderId: msg.senderId,
-    senderName: msg.senderId === myDeviceId ? displayName : (
-      allUsers.find(u => u.id === msg.senderId)?.displayName ||
-      onlineUsers.find(u => u.id === msg.senderId)?.displayName ||
-      msg.senderId.substring(0, 10)
-    ),
-    recipientId: msg.recipientId,
-    content: msg.content,
-    timestamp: msg.timestamp,
-    read: msg.read,
-    type: "text" as const,
-  }));
+  const commsMessages: CommsMessage[] = useMemo(() => {
+    const dbMsgs: CommsMessage[] = (messages || []).map(msg => ({
+      id: msg.id,
+      senderId: msg.senderId,
+      senderName: msg.senderId === myId ? displayName : (
+        allUsers.find(u => u.id === msg.senderId)?.displayName ||
+        onlineUsers.find(u => u.id === msg.senderId)?.displayName ||
+        msg.senderId.substring(0, 10)
+      ),
+      recipientId: msg.recipientId,
+      content: msg.content,
+      timestamp: msg.timestamp,
+      read: msg.read,
+      type: "text" as const,
+    }));
+    const seenIds = new Set(dbMsgs.map(m => m.id));
+    const newLocalMsgs = localMessages.filter(m => !seenIds.has(m.id));
+    return [...dbMsgs, ...newLocalMsgs].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+  }, [messages, localMessages, myId, displayName, allUsers, onlineUsers]);
 
   const handleSendMessage = useCallback((conversationId: string, content: string) => {
     if (!content.trim()) return;
     presenceSendMessage(conversationId, content);
-    sendMessage.mutate({ recipientId: conversationId, content });
-  }, [presenceSendMessage, sendMessage]);
+  }, [presenceSendMessage]);
 
   const handleSendMedia = useCallback(async (conversationId: string, file: File) => {
     const formData = new FormData();
@@ -278,12 +404,11 @@ export function CommsPage() {
           ? `📷 ${data.fileName}`
           : `📎 ${data.fileName}`;
         presenceSendMessage(conversationId, mediaMsg);
-        sendMessage.mutate({ recipientId: conversationId, content: mediaMsg });
       }
     } catch (err) {
       console.error("Upload failed:", err);
     }
-  }, [myDeviceId, presenceSendMessage, sendMessage]);
+  }, [myDeviceId, presenceSendMessage]);
 
   const handleSendVoice = useCallback(async (conversationId: string, blob: Blob, duration: number) => {
     const formData = new FormData();
@@ -298,12 +423,11 @@ export function CommsPage() {
         const data = await res.json();
         const voiceMsg = `🎤 Voice note (${Math.round(duration)}s)`;
         presenceSendMessage(conversationId, voiceMsg);
-        sendMessage.mutate({ recipientId: conversationId, content: voiceMsg });
       }
     } catch (err) {
       console.error("Voice upload failed:", err);
     }
-  }, [myDeviceId, presenceSendMessage, sendMessage]);
+  }, [myDeviceId, presenceSendMessage]);
 
   const handleSendLocation = useCallback((conversationId: string) => {
     if (!navigator.geolocation) return;
@@ -312,12 +436,11 @@ export function CommsPage() {
         const { latitude, longitude } = pos.coords;
         const locationMsg = `📍 Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
         presenceSendMessage(conversationId, locationMsg);
-        sendMessage.mutate({ recipientId: conversationId, content: locationMsg });
       },
       (err) => console.error("Location error:", err),
       { enableHighAccuracy: true }
     );
-  }, [presenceSendMessage, sendMessage]);
+  }, [presenceSendMessage]);
 
   const handleTypingStart = useCallback((conversationId: string) => {
     wsRef.current?.emit("typing-start", { targetUserId: conversationId, conversationId });
@@ -344,6 +467,21 @@ export function CommsPage() {
   const handleCreateGroup = useCallback(() => {
     // TODO: Group creation modal
   }, []);
+
+  const handleNewChat = useCallback(() => {
+    const otherUsers = onlineUsers.filter(u => u.id !== myId);
+    if (otherUsers.length === 0) {
+      return;
+    }
+    const userList = otherUsers.map((u, i) => `${i + 1}. ${u.displayName}`).join("\n");
+    const choice = prompt(`Select a user to chat with:\n${userList}\n\nEnter number:`);
+    if (choice) {
+      const idx = parseInt(choice) - 1;
+      if (idx >= 0 && idx < otherUsers.length) {
+        setPendingConversationId(otherUsers[idx].id);
+      }
+    }
+  }, [onlineUsers, myId]);
 
   const handleAddContact = useCallback((contact: { contactId: string; contactName: string }) => {
     addContact.mutate(contact);
@@ -573,8 +711,9 @@ export function CommsPage() {
           <CommsPlatform
             conversations={conversations}
             messages={commsMessages}
-            currentUserId={myDeviceId}
+            currentUserId={myId}
             typingUsers={typingUsers}
+            initialConversationId={pendingConversationId}
             onSendMessage={handleSendMessage}
             onSendMedia={handleSendMedia}
             onSendVoice={handleSendVoice}
@@ -585,6 +724,7 @@ export function CommsPage() {
             onAudioCall={handleAudioCall}
             onVideoCall={handleVideoCall}
             onCreateGroup={handleCreateGroup}
+            onNewChat={handleNewChat}
           />
         )}
 
