@@ -23,9 +23,9 @@ interface VoiceSettings {
 }
 
 const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
-  stability: 0.65,
-  similarity_boost: 0.85,
-  style: 0.45,
+  stability: 0.58,
+  similarity_boost: 0.88,
+  style: 0.55,
   use_speaker_boost: true,
 };
 
@@ -127,8 +127,8 @@ function preprocessTextForSpeech(text: string): string {
     .replace(/[""]/g, '"')
     .replace(/['']/g, "'")
     .replace(/\.{3,}/g, "...")
-    .replace(/—/g, ", ")
-    .replace(/ - /g, ", ")
+    .replace(/—/g, " — ")
+    .replace(/ - /g, " — ")
     .replace(/[│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬]/g, "")
     .replace(/[◈━╭╮╯╰▸▶◀◁►▷▹▻●○◐◑◒◓◔◕◖◗★☆✓✔✕✖✗✘]/g, "")
     .replace(/\([^)]*\)/g, (match) => {
@@ -171,20 +171,40 @@ function preprocessTextForSpeech(text: string): string {
 }
 
 const EMOTION_VOICE_PRESETS: Record<string, Partial<VoiceSettings>> = {
-  happy:      { stability: 0.55, similarity_boost: 0.90, style: 0.8 },
-  excited:    { stability: 0.45, similarity_boost: 0.90, style: 1.0 },
-  sad:        { stability: 0.80, similarity_boost: 0.80, style: 0.3 },
-  angry:      { stability: 0.70, similarity_boost: 0.85, style: 0.6 },
-  calm:       { stability: 0.85, similarity_boost: 0.80, style: 0.2 },
-  confident:  { stability: 0.60, similarity_boost: 0.90, style: 0.7 },
-  empathetic: { stability: 0.70, similarity_boost: 0.85, style: 0.4 },
-  curious:    { stability: 0.55, similarity_boost: 0.85, style: 0.5 },
-  thoughtful: { stability: 0.75, similarity_boost: 0.85, style: 0.3 },
-  neutral:    { stability: 0.65, similarity_boost: 0.85, style: 0.45 },
+  happy:       { stability: 0.48, similarity_boost: 0.92, style: 0.85, use_speaker_boost: true },
+  excited:     { stability: 0.38, similarity_boost: 0.92, style: 1.0,  use_speaker_boost: true },
+  joyful:      { stability: 0.42, similarity_boost: 0.90, style: 0.90, use_speaker_boost: true },
+  sad:         { stability: 0.78, similarity_boost: 0.82, style: 0.25, use_speaker_boost: true },
+  melancholic: { stability: 0.82, similarity_boost: 0.80, style: 0.20, use_speaker_boost: true },
+  angry:       { stability: 0.68, similarity_boost: 0.88, style: 0.55, use_speaker_boost: true },
+  frustrated:  { stability: 0.65, similarity_boost: 0.85, style: 0.50, use_speaker_boost: true },
+  calm:        { stability: 0.82, similarity_boost: 0.82, style: 0.20, use_speaker_boost: true },
+  peaceful:    { stability: 0.88, similarity_boost: 0.80, style: 0.15, use_speaker_boost: true },
+  confident:   { stability: 0.55, similarity_boost: 0.92, style: 0.72, use_speaker_boost: true },
+  assertive:   { stability: 0.52, similarity_boost: 0.90, style: 0.78, use_speaker_boost: true },
+  empathetic:  { stability: 0.68, similarity_boost: 0.88, style: 0.38, use_speaker_boost: true },
+  compassionate: { stability: 0.72, similarity_boost: 0.86, style: 0.32, use_speaker_boost: true },
+  curious:     { stability: 0.50, similarity_boost: 0.88, style: 0.55, use_speaker_boost: true },
+  intrigued:   { stability: 0.48, similarity_boost: 0.86, style: 0.60, use_speaker_boost: true },
+  thoughtful:  { stability: 0.72, similarity_boost: 0.86, style: 0.28, use_speaker_boost: true },
+  reflective:  { stability: 0.75, similarity_boost: 0.84, style: 0.22, use_speaker_boost: true },
+  warm:        { stability: 0.55, similarity_boost: 0.90, style: 0.62, use_speaker_boost: true },
+  tender:      { stability: 0.65, similarity_boost: 0.90, style: 0.45, use_speaker_boost: true },
+  playful:     { stability: 0.42, similarity_boost: 0.90, style: 0.82, use_speaker_boost: true },
+  amused:      { stability: 0.45, similarity_boost: 0.88, style: 0.75, use_speaker_boost: true },
+  concerned:   { stability: 0.70, similarity_boost: 0.86, style: 0.35, use_speaker_boost: true },
+  worried:     { stability: 0.72, similarity_boost: 0.84, style: 0.30, use_speaker_boost: true },
+  surprised:   { stability: 0.40, similarity_boost: 0.90, style: 0.88, use_speaker_boost: true },
+  grateful:    { stability: 0.60, similarity_boost: 0.90, style: 0.58, use_speaker_boost: true },
+  proud:       { stability: 0.52, similarity_boost: 0.92, style: 0.70, use_speaker_boost: true },
+  encouraging: { stability: 0.52, similarity_boost: 0.90, style: 0.68, use_speaker_boost: true },
+  soothing:    { stability: 0.85, similarity_boost: 0.82, style: 0.18, use_speaker_boost: true },
+  neutral:     { stability: 0.58, similarity_boost: 0.88, style: 0.55, use_speaker_boost: true },
 };
 
 export function getEmotionVoiceSettings(emotion: string): Partial<VoiceSettings> {
-  return EMOTION_VOICE_PRESETS[emotion] || EMOTION_VOICE_PRESETS.neutral;
+  const key = emotion.toLowerCase();
+  return EMOTION_VOICE_PRESETS[key] || EMOTION_VOICE_PRESETS.neutral;
 }
 
 export async function textToSpeechWithEmotion(
@@ -216,3 +236,5 @@ export async function getAvailableVoices(): Promise<any[]> {
 }
 
 console.log("[ElevenLabs] Voice synthesis module initialized");
+console.log("[ElevenLabs] Emotion presets: " + Object.keys(EMOTION_VOICE_PRESETS).length + " profiles");
+console.log("[ElevenLabs] Voice: Rachel (clear feminine) | Model: eleven_multilingual_v2");

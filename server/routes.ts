@@ -1516,19 +1516,19 @@ If you detect a command that requires physical device interaction, inform the op
   // CYRUS Streaming Text-to-Speech endpoint (ElevenLabs - faster first-byte response)
   app.post("/api/cyrus/speak/stream", async (req, res) => {
     try {
-      const { text, voice = "rachel" } = req.body;
+      const { text, voice = "rachel", emotion } = req.body;
       
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text is required" });
       }
 
-      // Set up SSE for streaming audio chunks
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
       const elevenLabsVoice = (voice in ELEVENLABS_VOICES ? voice : "rachel") as ElevenLabsVoice;
-      const audioStream = textToSpeechStreamElevenLabs(text, elevenLabsVoice);
+      const emotionSettings = emotion ? getEmotionVoiceSettings(emotion) : {};
+      const audioStream = textToSpeechStreamElevenLabs(text, elevenLabsVoice, emotionSettings);
 
       for await (const chunk of audioStream) {
         const base64Chunk = chunk.toString("base64");

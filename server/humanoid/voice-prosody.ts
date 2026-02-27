@@ -20,47 +20,81 @@ interface ProsodyResult {
 }
 
 const EMOTION_VOICE_PROFILES: Record<string, { stability: number; similarity_boost: number; style: number }> = {
-  neutral:    { stability: 0.65, similarity_boost: 0.85, style: 0.0 },
-  happy:      { stability: 0.55, similarity_boost: 0.90, style: 0.8 },
-  excited:    { stability: 0.45, similarity_boost: 0.90, style: 1.0 },
-  sad:        { stability: 0.80, similarity_boost: 0.80, style: 0.3 },
-  angry:      { stability: 0.70, similarity_boost: 0.85, style: 0.6 },
-  calm:       { stability: 0.85, similarity_boost: 0.80, style: 0.2 },
-  confident:  { stability: 0.60, similarity_boost: 0.90, style: 0.7 },
-  uncertain:  { stability: 0.75, similarity_boost: 0.75, style: 0.2 },
-  empathetic: { stability: 0.70, similarity_boost: 0.85, style: 0.4 },
-  curious:    { stability: 0.55, similarity_boost: 0.85, style: 0.5 },
-  thoughtful: { stability: 0.75, similarity_boost: 0.85, style: 0.3 },
+  neutral:       { stability: 0.58, similarity_boost: 0.88, style: 0.55 },
+  happy:         { stability: 0.48, similarity_boost: 0.92, style: 0.85 },
+  excited:       { stability: 0.38, similarity_boost: 0.92, style: 1.0  },
+  joyful:        { stability: 0.42, similarity_boost: 0.90, style: 0.90 },
+  sad:           { stability: 0.78, similarity_boost: 0.82, style: 0.25 },
+  melancholic:   { stability: 0.82, similarity_boost: 0.80, style: 0.20 },
+  angry:         { stability: 0.68, similarity_boost: 0.88, style: 0.55 },
+  frustrated:    { stability: 0.65, similarity_boost: 0.85, style: 0.50 },
+  calm:          { stability: 0.82, similarity_boost: 0.82, style: 0.20 },
+  peaceful:      { stability: 0.88, similarity_boost: 0.80, style: 0.15 },
+  confident:     { stability: 0.55, similarity_boost: 0.92, style: 0.72 },
+  assertive:     { stability: 0.52, similarity_boost: 0.90, style: 0.78 },
+  uncertain:     { stability: 0.72, similarity_boost: 0.78, style: 0.22 },
+  empathetic:    { stability: 0.68, similarity_boost: 0.88, style: 0.38 },
+  compassionate: { stability: 0.72, similarity_boost: 0.86, style: 0.32 },
+  curious:       { stability: 0.50, similarity_boost: 0.88, style: 0.55 },
+  intrigued:     { stability: 0.48, similarity_boost: 0.86, style: 0.60 },
+  thoughtful:    { stability: 0.72, similarity_boost: 0.86, style: 0.28 },
+  reflective:    { stability: 0.75, similarity_boost: 0.84, style: 0.22 },
+  warm:          { stability: 0.55, similarity_boost: 0.90, style: 0.62 },
+  tender:        { stability: 0.65, similarity_boost: 0.90, style: 0.45 },
+  playful:       { stability: 0.42, similarity_boost: 0.90, style: 0.82 },
+  amused:        { stability: 0.45, similarity_boost: 0.88, style: 0.75 },
+  concerned:     { stability: 0.70, similarity_boost: 0.86, style: 0.35 },
+  worried:       { stability: 0.72, similarity_boost: 0.84, style: 0.30 },
+  surprised:     { stability: 0.40, similarity_boost: 0.90, style: 0.88 },
+  grateful:      { stability: 0.60, similarity_boost: 0.90, style: 0.58 },
+  proud:         { stability: 0.52, similarity_boost: 0.92, style: 0.70 },
+  encouraging:   { stability: 0.52, similarity_boost: 0.90, style: 0.68 },
+  soothing:      { stability: 0.85, similarity_boost: 0.82, style: 0.18 },
 };
 
 const THINKING_FILLERS = [
   "Hmm...",
   "Well...",
-  "Let me think...",
-  "Interesting...",
+  "Let me think about that...",
   "You know...",
   "So...",
   "Actually...",
-  "I mean...",
+  "I'd say...",
+  "Here's the thing...",
+  "That's a great question...",
+];
+
+const BREATH_PHRASES = [
+  " — ",
+  "... ",
+  ", well, ",
+  ", you see, ",
 ];
 
 const ACKNOWLEDGMENT_SOUNDS = [
   "Mmhmm.",
-  "Yeah.",
-  "I see.",
-  "Right.",
-  "Okay.",
-  "Sure.",
-  "Absolutely.",
+  "Yeah, absolutely.",
+  "I see what you mean.",
+  "Right, I get that.",
+  "That makes sense.",
+  "Sure, I understand.",
   "Of course.",
+  "I hear you.",
+  "Totally.",
+  "Exactly.",
 ];
 
 const EMPATHETIC_INTERJECTIONS: Record<string, string[]> = {
-  sad: ["I hear you.", "That must be tough.", "I understand."],
-  happy: ["That's wonderful!", "I love hearing that!", "How fantastic!"],
-  angry: ["I get it.", "That's frustrating.", "I understand your concern."],
-  confused: ["Let me help clarify.", "I see what you mean.", "Good question."],
-  excited: ["That's amazing!", "How exciting!", "Incredible!"],
+  sad: ["I hear you, and I'm here for you.", "That must be really tough.", "I completely understand how you feel.", "I'm sorry you're going through that."],
+  happy: ["That's so wonderful to hear!", "I love that for you!", "That genuinely makes me happy!", "How beautiful is that!"],
+  angry: ["I completely understand your frustration.", "That's genuinely not okay.", "Your feelings are absolutely valid.", "I hear you, and you have every right to feel that way."],
+  confused: ["Let me help you make sense of this.", "I can see why that's confusing.", "Good question — let me break it down.", "That's worth unpacking together."],
+  excited: ["Oh, that's incredible!", "I'm getting excited just hearing about it!", "This is genuinely amazing!", "Tell me everything!"],
+  worried: ["I understand your concern.", "Let's think through this together.", "It's natural to feel that way.", "We'll figure this out."],
+  grateful: ["That means the world.", "I'm so touched you'd say that.", "Thank you, truly.", "That really warms my heart."],
+  curious: ["Ooh, now that's interesting!", "I'd love to explore that.", "Great thinking — tell me more.", "That's a fascinating angle."],
+  calm: ["I'm right here with you.", "Take your time.", "No rush at all.", "I'm listening."],
+  proud: ["You should be so proud!", "That's a real achievement!", "Look at you — amazing!", "I knew you could do it!"],
 };
 
 class VoiceProsodyEngine {
@@ -76,23 +110,27 @@ class VoiceProsodyEngine {
 
     let enhanced = text;
 
-    if (includeHesitations && text.length > 50) {
+    enhanced = this.addHumanLikeQualities(enhanced, 'warm');
+
+    if (includeHesitations && text.length > 50 && intensity > 0.3) {
       enhanced = this.insertThinkingPauses(enhanced, intensity);
     }
 
     enhanced = this.addEmotionalProsodyMarkers(enhanced, emotion, intensity);
 
-    if (includeBreaths && text.length > 100) {
+    if (includeBreaths && text.length > 80) {
       enhanced = this.insertBreathMarkers(enhanced);
     }
 
     enhanced = this.adjustPaceForContent(enhanced);
 
+    enhanced = this.addEmotionalEmphasis(enhanced, emotion);
+
     const voiceProfile = EMOTION_VOICE_PROFILES[emotion] || EMOTION_VOICE_PROFILES.neutral;
     const voiceSettings = {
       stability: voiceProfile.stability,
       similarity_boost: voiceProfile.similarity_boost,
-      style: voiceProfile.style * intensity,
+      style: Math.min(1.0, voiceProfile.style * Math.max(0.5, intensity)),
       use_speaker_boost: true,
     };
 
@@ -114,7 +152,7 @@ class VoiceProsodyEngine {
 
     const result: string[] = [];
     for (let i = 0; i < sentences.length; i++) {
-      if (i > 0 && i < sentences.length - 1 && Math.random() < intensity * 0.3) {
+      if (i === 1 && sentences.length > 3 && Math.random() < intensity * 0.4) {
         const filler = THINKING_FILLERS[Math.floor(Math.random() * THINKING_FILLERS.length)];
         result.push(filler);
       }
@@ -124,12 +162,12 @@ class VoiceProsodyEngine {
   }
 
   private addEmotionalProsodyMarkers(text: string, emotion: string, intensity: number): string {
-    if (intensity < 0.3) return text;
+    if (intensity < 0.2) return text;
 
     const sentences = text.split(/(?<=[.!?])\s+/);
     if (sentences.length === 0) return text;
 
-    if (emotion === 'excited' || emotion === 'happy') {
+    if (emotion === 'excited' || emotion === 'happy' || emotion === 'joyful') {
       sentences[sentences.length - 1] = sentences[sentences.length - 1]
         .replace(/\.$/, '!')
         .replace(/,\s*$/, '!');
@@ -144,21 +182,48 @@ class VoiceProsodyEngine {
       }
     }
 
+    if (emotion === 'thoughtful' || emotion === 'reflective') {
+      if (sentences.length > 2 && Math.random() < 0.4) {
+        sentences.splice(1, 0, '...');
+      }
+    }
+
+    if (emotion === 'empathetic' || emotion === 'compassionate' || emotion === 'tender') {
+      if (sentences.length > 1 && Math.random() < 0.3) {
+        sentences.splice(1, 0, '—');
+      }
+    }
+
     return sentences.join(' ');
   }
 
   private insertBreathMarkers(text: string): string {
     const sentences = text.split(/(?<=[.!?])\s+/);
-    const result: string[] = [];
+    if (sentences.length <= 2) return text;
 
+    const result: string[] = [];
     for (let i = 0; i < sentences.length; i++) {
       result.push(sentences[i]);
-      if (i > 0 && (i + 1) % 3 === 0 && i < sentences.length - 1) {
-        result.push('');
+      if (i > 0 && (i + 1) % 2 === 0 && i < sentences.length - 1 && Math.random() < 0.4) {
+        const breath = BREATH_PHRASES[Math.floor(Math.random() * BREATH_PHRASES.length)];
+        const nextSentence = sentences[i + 1];
+        if (nextSentence) {
+          sentences[i + 1] = breath.trim() + ' ' + nextSentence.charAt(0).toLowerCase() + nextSentence.slice(1);
+        }
       }
     }
 
     return result.join(' ');
+  }
+
+  private addEmotionalEmphasis(text: string, emotion: string): string {
+    if (emotion === 'excited' || emotion === 'joyful') {
+      return text.replace(/really /gi, 'really ').replace(/so /gi, (m) => Math.random() > 0.7 ? 'sooo ' : m);
+    }
+    if (emotion === 'empathetic' || emotion === 'compassionate') {
+      return text.replace(/I understand/gi, 'I truly understand').replace(/I'm sorry/gi, "I'm so sorry");
+    }
+    return text;
   }
 
   private adjustPaceForContent(text: string): string {
@@ -171,26 +236,36 @@ class VoiceProsodyEngine {
 
   private calculateNaturalResponseDelay(userInput: string, emotion: string): number {
     const wordCount = userInput.split(/\s+/).length;
-    let baseDelay = 400 + wordCount * 30;
+    let baseDelay = 500 + wordCount * 25;
 
     const emotionDelays: Record<string, number> = {
-      thoughtful: 800,
-      sad: 600,
-      uncertain: 700,
-      calm: 500,
-      empathetic: 600,
-      neutral: 300,
-      happy: 200,
-      excited: 100,
-      angry: 150,
-      confident: 200,
+      thoughtful: 900,
+      reflective: 850,
+      sad: 700,
+      melancholic: 750,
+      uncertain: 800,
+      calm: 550,
+      peaceful: 600,
+      empathetic: 650,
+      compassionate: 700,
+      neutral: 350,
+      warm: 400,
+      happy: 250,
+      joyful: 200,
+      excited: 150,
+      surprised: 100,
+      angry: 200,
+      frustrated: 250,
+      confident: 250,
+      assertive: 200,
+      curious: 300,
+      intrigued: 350,
     };
 
-    baseDelay += emotionDelays[emotion] || 300;
+    baseDelay += emotionDelays[emotion] || 350;
+    baseDelay += (Math.random() - 0.5) * 300;
 
-    baseDelay += (Math.random() - 0.5) * 200;
-
-    return Math.max(200, Math.min(2000, baseDelay));
+    return Math.max(300, Math.min(2500, baseDelay));
   }
 
   private identifyPausePoints(text: string): number[] {
@@ -203,6 +278,8 @@ class VoiceProsodyEngine {
         pausePoints.push(pos);
       } else if (char === ',') {
         pausePoints.push(pos);
+      } else if (char === '—') {
+        pausePoints.push(pos);
       }
     }
 
@@ -210,54 +287,72 @@ class VoiceProsodyEngine {
   }
 
   generateBackchannel(userEmotion: string): string {
-    if (userEmotion in EMPATHETIC_INTERJECTIONS) {
-      const options = EMPATHETIC_INTERJECTIONS[userEmotion];
+    const key = userEmotion.toLowerCase();
+    if (key in EMPATHETIC_INTERJECTIONS) {
+      const options = EMPATHETIC_INTERJECTIONS[key];
       return options[Math.floor(Math.random() * options.length)];
     }
     return ACKNOWLEDGMENT_SOUNDS[Math.floor(Math.random() * ACKNOWLEDGMENT_SOUNDS.length)];
   }
 
   getEmotionFromSentiment(sentimentScore: number, confidence: number): string {
-    if (confidence < 0.3) return 'neutral';
-    if (sentimentScore > 0.6) return 'happy';
-    if (sentimentScore > 0.3) return 'confident';
-    if (sentimentScore > 0) return 'calm';
-    if (sentimentScore > -0.3) return 'thoughtful';
-    if (sentimentScore > -0.6) return 'empathetic';
-    return 'sad';
+    if (confidence < 0.2) return 'neutral';
+    if (sentimentScore > 0.7) return 'joyful';
+    if (sentimentScore > 0.5) return 'happy';
+    if (sentimentScore > 0.3) return 'warm';
+    if (sentimentScore > 0.1) return 'calm';
+    if (sentimentScore > -0.1) return 'thoughtful';
+    if (sentimentScore > -0.3) return 'concerned';
+    if (sentimentScore > -0.5) return 'empathetic';
+    return 'compassionate';
   }
 
   deriveAIEmotion(userEmotion: string): string {
     const empathyMap: Record<string, string> = {
-      happy: 'happy',
+      happy: 'warm',
       excited: 'excited',
-      sad: 'empathetic',
+      joyful: 'joyful',
+      sad: 'compassionate',
+      melancholic: 'tender',
       angry: 'calm',
-      confused: 'confident',
-      neutral: 'neutral',
-      calm: 'calm',
-      uncertain: 'confident',
-      curious: 'curious',
-      thoughtful: 'thoughtful',
+      frustrated: 'empathetic',
+      confused: 'encouraging',
+      neutral: 'warm',
+      calm: 'peaceful',
+      uncertain: 'encouraging',
+      curious: 'intrigued',
+      thoughtful: 'reflective',
+      worried: 'soothing',
+      grateful: 'warm',
+      proud: 'proud',
+      surprised: 'curious',
     };
 
-    return empathyMap[userEmotion] || 'neutral';
+    return empathyMap[userEmotion] || 'warm';
   }
 
   addHumanLikeQualities(text: string, personality: 'professional' | 'casual' | 'warm' = 'professional'): string {
     let result = text;
 
-    if (personality === 'casual') {
-      result = result
-        .replace(/\bI am\b/g, () => Math.random() > 0.5 ? "I'm" : "I am")
-        .replace(/\bdo not\b/g, () => Math.random() > 0.5 ? "don't" : "do not")
-        .replace(/\bcan not\b/g, () => Math.random() > 0.5 ? "can't" : "cannot")
-        .replace(/\bwill not\b/g, () => Math.random() > 0.5 ? "won't" : "will not");
-    }
+    result = result
+      .replace(/\bI am\b/g, () => Math.random() > 0.4 ? "I'm" : "I am")
+      .replace(/\bdo not\b/g, () => Math.random() > 0.4 ? "don't" : "do not")
+      .replace(/\bcan not\b/g, () => Math.random() > 0.4 ? "can't" : "cannot")
+      .replace(/\bwill not\b/g, () => Math.random() > 0.4 ? "won't" : "will not")
+      .replace(/\bit is\b/g, () => Math.random() > 0.5 ? "it's" : "it is")
+      .replace(/\bthat is\b/g, () => Math.random() > 0.5 ? "that's" : "that is")
+      .replace(/\bthey are\b/g, () => Math.random() > 0.5 ? "they're" : "they are");
 
     if (personality === 'warm') {
-      const warmOpeners = ["You know, ", "I think ", "Honestly, ", "I feel like "];
-      if (Math.random() > 0.7 && !result.startsWith("I ")) {
+      const warmOpeners = [
+        "You know, ",
+        "Honestly, ",
+        "I have to say, ",
+        "Between us, ",
+        "I think ",
+        "Here's what I feel — ",
+      ];
+      if (Math.random() > 0.65 && !result.startsWith("I ") && !result.startsWith("You ") && result.length > 30) {
         const opener = warmOpeners[Math.floor(Math.random() * warmOpeners.length)];
         result = opener + result.charAt(0).toLowerCase() + result.slice(1);
       }

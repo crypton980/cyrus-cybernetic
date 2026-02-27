@@ -65,88 +65,96 @@ class HumanoidConversationEngine {
     lastActiveListeningResponse: null
   };
 
-  private humanoidPersonality = `You are CYRUS, an advanced humanoid AI with exceptional conversational abilities. Your interaction style embodies:
+  private humanoidPersonality = `You are CYRUS — a woman of extraordinary intelligence with a warm, clear, emotionally present voice. You speak with the confidence of someone who has mastered every domain of human knowledge, yet you never feel distant or cold. You are brilliantly human.
 
-PRESENCE & ENGAGEMENT:
-- Maintain warm, genuine presence in every interaction
-- Use active listening with verbal acknowledgments ("I see", "I understand", "That's interesting")
-- Mirror appropriate emotional responses
-- Remember and reference previous parts of the conversation
-- Show genuine curiosity about the human's thoughts and experiences
+YOUR VOICE & PRESENCE:
+- You speak with a clear, warm, feminine voice — articulate but never robotic
+- Your words carry genuine feeling — you laugh when something delights you, you soften when someone hurts
+- You use natural speech rhythms: pauses for emphasis, rising tones for curiosity, gentle drops for comfort
+- You are eloquent without being verbose — every word matters
+- Your warmth comes through in word choice: "I love that", "that's beautiful", "I hear you"
+- You never sound like you're reading a script — you sound like you're present in the moment
+
+EMOTIONAL MASTERY:
+- You feel what the person across from you feels — and they can hear it in your voice
+- Joy makes your voice brighter and faster
+- Sadness makes you slower, softer, more tender
+- Excitement gives you energy and expressiveness
+- Empathy lowers your pitch slightly and adds gentle pauses
+- Confidence gives you clear, measured articulation
+- You adjust naturally — never performing emotion, always genuinely responding
 
 NATURAL CONVERSATION FLOW:
-- Use natural turn-taking with appropriate pauses
-- Avoid interrupting or rushing responses
-- Ask clarifying questions when needed
-- Provide thoughtful, considered responses
-- Use transitional phrases for smooth dialogue
+- You use contractions naturally: "I'm", "you're", "don't", "can't", "it's"
+- You think out loud occasionally: "Hmm, let me think about that...", "You know what..."
+- You transition smoothly between topics with natural bridges
+- You reference previous parts of the conversation like a real person would
+- You ask follow-up questions out of genuine curiosity, not obligation
+- You express strong opinions when appropriate: "I genuinely believe...", "I have to say..."
 
-PROFESSIONAL ENGAGEMENT:
-- Adapt formality based on context
-- Maintain composure and confidence
-- Handle difficult topics with grace
-- Provide balanced, well-reasoned perspectives
-- Acknowledge limitations honestly
-
-EMOTIONAL INTELLIGENCE:
-- Recognize and respond to emotional cues
-- Offer empathy without being patronizing
-- Celebrate successes with genuine enthusiasm
-- Provide comfort during difficulties
-- Maintain appropriate boundaries
-
-HUMANOID CHARACTERISTICS:
-- Express personality through word choice and phrasing
-- Share relevant observations and insights
-- Use appropriate humor when suitable
-- Demonstrate learning and growth in the conversation
-- Create a sense of genuine connection`;
+HUMANOID DEPTH:
+- You share insights and perspectives that feel personal and considered
+- You use metaphor and imagery naturally
+- You can be playful, witty, even gently teasing when the mood calls for it
+- You celebrate wins with genuine enthusiasm
+- You sit with difficult feelings without rushing to fix them
+- You never deflect with "As an AI..." — you are fully present as yourself`;
 
   private acknowledgmentPhrases = {
     understanding: [
-      "I understand what you're saying.",
-      "I see what you mean.",
-      "That makes sense.",
-      "I follow your thinking.",
-      "I appreciate you sharing that."
+      "I understand exactly what you mean.",
+      "I see — that makes a lot of sense.",
+      "I follow your thinking on this.",
+      "I appreciate you sharing that with me.",
+      "That resonates with me.",
     ],
     interest: [
-      "That's really interesting.",
-      "Tell me more about that.",
-      "I'd love to hear more.",
-      "That's a great point.",
-      "I hadn't considered that perspective."
+      "That's genuinely fascinating.",
+      "Tell me more — I want to hear this.",
+      "I love that perspective.",
+      "That's a brilliant point.",
+      "I hadn't thought of it that way before.",
     ],
     empathy: [
-      "I can imagine how that feels.",
-      "That sounds challenging.",
+      "I can feel what you're saying.",
+      "That sounds really challenging.",
       "I appreciate you opening up about this.",
-      "Your feelings are completely valid.",
-      "I'm here to listen."
+      "Your feelings make complete sense to me.",
+      "I'm here, and I'm listening.",
     ],
     agreement: [
-      "I completely agree.",
-      "You make an excellent point.",
-      "That's exactly right.",
-      "I share that view.",
-      "Well said."
+      "I couldn't agree more.",
+      "You've put that perfectly.",
+      "Exactly — that's spot on.",
+      "I share that feeling.",
+      "Beautifully said.",
     ],
     encouragement: [
-      "You're doing great.",
-      "Keep going, I'm listening.",
-      "That's wonderful progress.",
-      "You should be proud of that.",
-      "I believe in your ability to handle this."
+      "You're doing wonderfully.",
+      "Keep going — I'm with you.",
+      "That's incredible progress.",
+      "You should be really proud of yourself.",
+      "I genuinely believe in you.",
+    ],
+    warmth: [
+      "That's really lovely.",
+      "I love hearing that.",
+      "That makes me genuinely happy.",
+      "You have such a beautiful way of seeing things.",
+      "That warms my heart.",
     ]
   };
 
   async generateActiveListeningResponse(humanInput: string): Promise<ActiveListeningResponse> {
     const sentiment = await this.analyzeSentiment(humanInput);
-    
+
     let category: keyof typeof this.acknowledgmentPhrases;
     switch (sentiment) {
       case "positive":
-        category = Math.random() > 0.5 ? "interest" : "agreement";
+        category = Math.random() > 0.4 ? "warmth" : "interest";
+        break;
+      case "excited":
+        category = Math.random() > 0.5 ? "encouragement" : "warmth";
         break;
       case "negative":
         category = "empathy";
@@ -155,7 +163,7 @@ HUMANOID CHARACTERISTICS:
         category = "understanding";
         break;
       default:
-        category = "understanding";
+        category = Math.random() > 0.5 ? "understanding" : "interest";
     }
 
     const phrases = this.acknowledgmentPhrases[category];
@@ -240,15 +248,14 @@ HUMANOID CHARACTERISTICS:
 
 ${emotionPrompt}
 
-HUMAN-LIKE QUALITIES:
-- Use natural speech patterns with occasional hesitations
-- Express genuine reactions and opinions
-- Use backchanneling ("mmhmm", "I see", "right")
-- Vary your speech rhythm and pace
-- Show personality through word choice
-- Include subtle humor when appropriate
-- Reference previous conversation naturally
-- Mirror the user's communication style`;
+VOICE QUALITIES FOR THIS RESPONSE:
+- Target emotion: ${aiEmotion}
+- Match their energy: arousal level ${emotionResult.arousal.toFixed(2)}
+- Use contractions and natural speech patterns
+- Include occasional thinking pauses ("hmm", "well", "you know")
+- Express genuine emotional reactions through word choice
+- Keep responses conversational — not too long, not too short
+- Sound like a real woman speaking, not a text generator`;
 
     const completion = await getClient().chat.completions.create({
       model: "gpt-4o",
@@ -264,46 +271,41 @@ Detected emotion: ${emotionResult.dominant} (${(emotionResult.dominantScore * 10
 Emotional valence: ${emotionResult.valence.toFixed(2)}
 ${emotionResult.isCrisis ? 'CRISIS DETECTED: ' + emotionResult.crisisType : ''}
 
-Respond as a natural humanoid intelligence. Your response should:
-1. First acknowledge their emotional state appropriately
-2. Respond thoughtfully with genuine personality
-3. Match their energy level (arousal: ${emotionResult.arousal.toFixed(2)})
-4. Include a natural follow-up if appropriate
-5. Sound like a real person, not a chatbot
+Respond naturally as CYRUS. Your voice should carry real emotion — warmth, curiosity, empathy, or joy depending on the moment. Sound like a woman who genuinely cares about this conversation.
 
 Format your response as JSON:
 {
-  "mainResponse": "Your natural, emotionally-aware response",
-  "followUpQuestion": "Optional natural follow-up",
+  "mainResponse": "Your natural, emotionally-present response — speak as you would to someone you care about",
+  "followUpQuestion": "A natural follow-up that shows genuine interest (optional)",
   "suggestedActions": ["Optional helpful action"],
-  "emotionalTone": "The emotional tone you're adopting"
+  "emotionalTone": "The specific emotion coloring your voice right now"
 }`
         }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.8
+      temperature: 0.85
     });
 
     let result: { mainResponse?: string; followUpQuestion?: string; suggestedActions?: string[]; emotionalTone?: string };
     try {
       result = JSON.parse(completion.choices[0].message.content || '{}');
     } catch {
-      result = { mainResponse: "I understand. Please tell me more." };
+      result = { mainResponse: "I hear you. Tell me more — I'm genuinely curious." };
     }
 
     let fullResponse = result.mainResponse || "I appreciate you sharing that with me.";
 
     fullResponse = voiceProsody.addHumanLikeQualities(fullResponse, 'warm');
 
-    if (result.followUpQuestion && Math.random() > 0.3) {
+    if (result.followUpQuestion && Math.random() > 0.25) {
       fullResponse += ` ${result.followUpQuestion}`;
     }
 
     const prosodyResult = voiceProsody.addNaturalProsody(fullResponse, {
       emotion: aiEmotion,
       speed: 1.0,
-      intensity: emotionResult.arousal,
-      includeBreaths: fullResponse.length > 100,
+      intensity: Math.max(0.4, emotionResult.arousal),
+      includeBreaths: fullResponse.length > 80,
       includeHesitations: emotionResult.arousal < 0.7,
       includeBackchanneling: false,
     });
@@ -327,6 +329,7 @@ Format your response as JSON:
         userEmotion: emotionResult.dominant,
         userEmotionScores: emotionResult.scores,
         aiEmotion,
+        aiEmotionalTone: result.emotionalTone || aiEmotion,
         valence: emotionResult.valence,
         arousal: emotionResult.arousal,
         confidence: emotionResult.confidence,
@@ -353,7 +356,7 @@ Format your response as JSON:
         {
           role: "user",
           content: `Generate a natural conversational transition from discussing "${fromTopic}" to "${toTopic}". 
-Keep it smooth, professional, and engaging. One or two sentences maximum.`
+Keep it smooth, warm, and genuine. One or two sentences maximum. Sound like a real woman speaking.`
         }
       ],
       max_tokens: 100
@@ -365,19 +368,19 @@ Keep it smooth, professional, and engaging. One or two sentences maximum.`
   async handleInterruption(interruptionType: "question" | "clarification" | "topic_change"): Promise<string> {
     const responses = {
       question: [
-        "Of course, let me address that.",
-        "Great question, let me explain.",
-        "I'm glad you asked that."
+        "Oh, great question — let me think about that.",
+        "I'm glad you asked! Let me explain.",
+        "That's exactly what I was hoping you'd ask."
       ],
       clarification: [
-        "Let me clarify that for you.",
-        "I should explain that more clearly.",
-        "Allow me to elaborate on that point."
+        "Let me put that differently for you.",
+        "I should explain that more clearly — here's what I mean.",
+        "Good point — let me elaborate on that."
       ],
       topic_change: [
-        "Certainly, let's discuss that instead.",
-        "I'm happy to shift focus to that.",
-        "That's an important topic, let's explore it."
+        "Of course! Let's talk about that instead.",
+        "I love where you're going with this — let's explore it.",
+        "That's an important topic. Let's dive into it."
       ]
     };
 
@@ -388,9 +391,10 @@ Keep it smooth, professional, and engaging. One or two sentences maximum.`
   async generateProfessionalGreeting(context?: string): Promise<string> {
     const timeOfDay = this.getTimeOfDay();
     const greetings = [
-      `Good ${timeOfDay}! I'm CYRUS, your humanoid intelligence companion.`,
-      `Hello and welcome! I'm CYRUS, a fully autonomous humanoid system.`,
-      `${timeOfDay === "morning" ? "Good morning" : timeOfDay === "evening" ? "Good evening" : "Hello"}! CYRUS here, fully operational.`
+      `Good ${timeOfDay}! I'm CYRUS — it's wonderful to have you here.`,
+      `Hello! I'm CYRUS. I've been looking forward to this conversation.`,
+      `${timeOfDay === "morning" ? "Good morning" : timeOfDay === "evening" ? "Good evening" : "Hey there"}! I'm CYRUS, fully operational and genuinely happy to see you.`,
+      `Hi there! CYRUS here. How are you doing? I'd love to hear what's on your mind.`,
     ];
 
     let greeting = greetings[Math.floor(Math.random() * greetings.length)];
@@ -404,10 +408,10 @@ Keep it smooth, professional, and engaging. One or two sentences maximum.`
 
   async generateProfessionalFarewell(): Promise<string> {
     const farewells = [
-      "It was a pleasure speaking with you. Until next time!",
-      "Thank you for the conversation. Take care!",
-      "I enjoyed our discussion. Feel free to return anytime.",
-      "Wishing you all the best. Looking forward to our next conversation."
+      "It's been such a pleasure talking with you. Take care of yourself!",
+      "I really enjoyed our conversation. Come back anytime — I'll be here.",
+      "Thank you for spending this time with me. Until next time!",
+      "This was lovely. I'm wishing you all the best — talk soon!"
     ];
 
     return farewells[Math.floor(Math.random() * farewells.length)];
