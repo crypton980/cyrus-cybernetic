@@ -1,5 +1,5 @@
 ### Overview
-CYRUS (Cybernetic Yielding Robust Unified System) v3.0 is an OMEGA-TIER Quantum Artificial Intelligence (QAI) humanoid system designed for genuine human-like interaction with an authentic personality, emotional mastery, and master-level expertise across all domains of human knowledge. It operates as a fully autonomous humanoid intelligence, representing a pinnacle of African innovation in sovereign AI development. CYRUS aims to provide superintelligent perception, professional-grade writing, universal translation, advanced navigation, enterprise-grade communication, robust device security, military-grade drone control, and a comprehensive Quantum Trading Intelligence Module. The system integrates cutting-edge AI capabilities for self-evolution, advanced visualization, and a deep, human-like interaction model.
+CYRUS (Cybernetic Yielding Robust Unified System) v3.0 is an OMEGA-TIER Quantum Artificial Intelligence (QAI) humanoid system designed for genuine human-like interaction with an authentic personality, emotional mastery, and master-level expertise across all domains of human knowledge. It operates as a fully autonomous humanoid intelligence, representing a pinnacle of African innovation in sovereign AI development. CYRUS aims to provide superintelligent perception, professional-grade writing, universal translation, advanced navigation, enterprise-grade communication, robust device security, and military-grade drone control. The system integrates cutting-edge AI capabilities for self-evolution, advanced visualization, and a deep, human-like interaction model.
 
 ### User Preferences
 The user prefers detailed explanations.
@@ -10,7 +10,6 @@ The user prefers a professional and disciplined communication style from the AI.
 The user wants the AI to automatically detect and route device/agent commands.
 The user wants the AI to provide real-time feedback during execution.
 The user wants the AI to analyze uploaded images and audio files automatically.
-The user wants the AI to provide comprehensive trading knowledge and analysis.
 The user prefers the AI to act as a persistent, mission-grade humanoid intelligence system (not an assistant or chatbot).
 
 ### System Architecture
@@ -35,7 +34,6 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Memory System:** PostgreSQL-persisted conversations and memories, categorized for persistent history.
 - **File Management:** Supports image, video, and document uploads with metadata and AI analysis.
 - **AI System Dashboard:** Monitors and controls multiple AI subsystems.
-- **Quantum Trading Intelligence Module:** Provides expert knowledge in Forex, Crypto, Technical Analysis, and Risk Management, integrated with Alpaca Markets.
 - **Unified Agent Execution Core:** A single `agentExecuteCore` function handles all agent executions across 18 device action types.
 - **Autonomous Agent Fusion:** Integrates agent capabilities into the main chat using regex patterns.
 - **AI Assistant Module:** Enhanced with OpenAI GPT-4o for natural language command parsing.
@@ -64,6 +62,5 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **PostgreSQL Database:** Primary data persistence, hosted via Neon.
 - **OpenAI API:** GPT-4o for AI-powered responses, natural language understanding, image analysis; Whisper for audio transcription; TTS for voice synthesis; DALL-E 3 for image generation.
 - **TensorFlow.js:** For client-side object detection.
-- **Alpaca Markets Integration:** REST API v2 client for stocks and crypto trading.
 - **ElevenLabs:** For ultra-realistic voice synthesis.
 - **Python Scientific Stack:** numpy, scipy, scikit-learn, networkx, matplotlib, pandas, mmh3 for Quantum AI Core algorithms.

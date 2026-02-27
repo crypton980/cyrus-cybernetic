@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Cpu, Send, Mic, MicOff, Volume2, X, Minimize2, Maximize2, Loader2, Eye } from "lucide-react";
 
 interface CyrusHumanoidProps {
-  module: "vision" | "documents" | "navigation" | "communications" | "systems" | "aerospace" | "trading";
+  module: "vision" | "documents" | "navigation" | "communications" | "systems" | "aerospace";
   context?: string;
   onAnalysis?: (response: string) => void;
   compact?: boolean;
@@ -16,7 +16,6 @@ const modulePrompts: Record<string, string> = {
   communications: "You are CYRUS, a humanoid intelligence engaged in secure communications. Manage calls, compose messages, and execute communication protocols.",
   systems: "You are CYRUS, a humanoid intelligence engaged in hardware and device control. Manage devices, monitor systems, troubleshoot issues, and execute security operations.",
   aerospace: "You are CYRUS, a humanoid intelligence engaged in UAV/drone operations. Execute flight planning, mission parameters, telemetry analysis, and autonomous operations.",
-  trading: "You are CYRUS, a humanoid intelligence engaged in financial markets analysis. Provide technical analysis, trading strategies, risk assessment, and market intelligence.",
 };
 
 export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: CyrusHumanoidProps) {

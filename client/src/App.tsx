@@ -9,7 +9,6 @@ import {
   MapPin,
   Phone,
   Monitor,
-  TrendingUp,
   Plane,
   ChevronRight,
   Cpu,
@@ -33,7 +32,6 @@ import { FileAnalysisPage } from "./pages/FileAnalysisPage";
 import { NavigationPage } from "./pages/NavigationPage";
 import { CommsPage } from "./pages/CommsPage";
 import { DeviceControlPage } from "./pages/DeviceControlPage";
-import { TradingPage } from "./pages/TradingPage";
 import { DronePage } from "./pages/DronePage";
 import { ModulesPage } from "./pages/ModulesPage";
 import { MedicalPage } from "./pages/MedicalPage";
@@ -51,7 +49,6 @@ const navItems = [
   { path: "/comms", label: "Communications", sublabel: "Secure Channels", icon: Phone },
   { path: "/device", label: "Systems", sublabel: "Hardware Control", icon: Monitor },
   { path: "/drone", label: "Aerospace", sublabel: "UAV Operations", icon: Plane },
-  { path: "/trading", label: "Markets", sublabel: "Financial Intel", icon: TrendingUp },
 ];
 
 const moduleItems = [
@@ -422,7 +419,6 @@ function AppContent({
             <Route path="/comms" component={CommsPage} />
             <Route path="/device" component={DeviceControlPage} />
             <Route path="/drone" component={DronePage} />
-            <Route path="/trading" component={TradingPage} />
             <Route path="/medical" component={MedicalPage} />
             <Route path="/quantum" component={QuantumPage} />
             <Route path="/security" component={SecurityPage} />
