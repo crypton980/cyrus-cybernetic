@@ -59,51 +59,48 @@ let systemRefinementEngine: any;
 let emotionFusion: any;
 let voiceProsody: any;
 
-const yield_ = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+const tick = (ms = 10): Promise<void> => new Promise((r) => setTimeout(r, ms));
 let depsLoaded = false;
 
 async function loadDependencies() {
   if (depsLoaded) return;
+
   const storageM = await import("./storage");
   storage = storageM.storage;
-  await yield_();
-
   const schemaM = await import("../shared/schema");
   insertConversationSchema = schemaM.insertConversationSchema;
   insertMemorySchema = schemaM.insertMemorySchema;
   insertUploadedFileSchema = schemaM.insertUploadedFileSchema;
-  await yield_();
+  await tick();
 
   const nfM = await import("./ai/neural-fusion");
   neuralFusionEngine = nfM.neuralFusionEngine;
-  await yield_();
+  await tick();
 
   const csM = await import("./ai/cyrus-soul");
   cyrusSoul = csM.cyrusSoul;
-  await yield_();
+  await tick(20);
 
   const qcM = await import("./ai/quantum-core");
   quantumCore = qcM.quantumCore;
-  await yield_();
+  await tick();
 
   const brM = await import("./ai/branches/index");
   domainSummary = brM.domainSummary;
   allBranches = brM.allBranches;
-  await yield_();
+  await tick(20);
 
   const arM = await import("./replit_integrations/audio/routes");
   registerAudioRoutes = arM.registerAudioRoutes;
   const acM = await import("./replit_integrations/audio/client");
   speechToText = acM.speechToText;
   ensureCompatibleFormat = acM.ensureCompatibleFormat;
-  await yield_();
-
   const elM = await import("./elevenlabs/client");
   textToSpeechElevenLabs = elM.textToSpeechElevenLabs;
   textToSpeechStreamElevenLabs = elM.textToSpeechStreamElevenLabs;
   ELEVENLABS_VOICES = elM.ELEVENLABS_VOICES;
   getEmotionVoiceSettings = elM.getEmotionVoiceSettings;
-  await yield_();
+  await tick();
 
   const auM = await import("./autonomy/run");
   runAutonomy = auM.runAutonomy;
@@ -111,7 +108,7 @@ async function loadDependencies() {
   registerDeviceRoutes = drM.registerDeviceRoutes;
   const nvM = await import("./nav/routes");
   registerNavRoutes = nvM.registerNavRoutes;
-  await yield_();
+  await tick();
 
   const dtM = await import("./ingestion/detect");
   detectFile = dtM.detectFile;
@@ -121,11 +118,9 @@ async function loadDependencies() {
   analyzeExtraction = anM.analyzeExtraction;
   const rpM = await import("./ingestion/report");
   buildReport = rpM.buildReport;
-  await yield_();
-
   const dgM = await import("./docgen/generate");
   generateDocument = dgM.generateDocument;
-  await yield_();
+  await tick();
 
   const sgM = await import("./comms/signaling");
   initSignalingServer = sgM.initSignalingServer;
@@ -138,7 +133,7 @@ async function loadDependencies() {
   listReminders = stM.listReminders;
   const crM = await import("./comms/comms-routes");
   registerCommsRoutes = crM.registerCommsRoutes;
-  await yield_();
+  await tick();
 
   const scM = await import("./scan/analyze");
   analyzeScan = scM.analyzeScan;
@@ -146,27 +141,33 @@ async function loadDependencies() {
   decodeQr = qrM.decodeQr;
   const drnM = await import("./drone/routes");
   registerDroneRoutes = drnM.registerDroneRoutes;
-  await yield_();
+  await tick();
 
   const emM = await import("./ai/experience-memory");
   experienceMemory = emM.experienceMemory;
+  await tick();
+
   const alM = await import("./ai/adaptive-learning");
   adaptiveLearning = alM.adaptiveLearning;
-  await yield_();
+  await tick();
 
   const aurM = await import("./ai/upgrades/routes");
   registerAdvancedUpgradeRoutes = aurM.registerAdvancedUpgradeRoutes;
+  await tick(20);
+
   const moM = await import("./ai/upgrades/module-orchestrator");
   moduleOrchestrator = moM.moduleOrchestrator;
+  await tick(20);
+
   const irM = await import("./ai/interactive/routes");
   registerInteractiveRoutes = irM.registerInteractiveRoutes;
-  await yield_();
+  await tick();
 
   const qbM = await import("./ai/quantum-bridge-client");
   quantumBridge = qbM.quantumBridge;
   const qrfM = await import("./ai/quantum-response-formatter");
   quantumResponseFormatter = qrfM.quantumResponseFormatter;
-  await yield_();
+  await tick();
 
   const hiM = await import("./health/integrations");
   healthIntegrations = hiM.healthIntegrations;
@@ -175,15 +176,17 @@ async function loadDependencies() {
   registerImageRoutes = imgRM.registerImageRoutes;
   const imgCM = await import("./replit_integrations/image/client");
   generateImage = imgCM.generateImage;
-  await yield_();
+  await tick();
 
   const srM = await import("./ai/system-refinement-engine");
   systemRefinementEngine = srM.systemRefinementEngine;
+  await tick();
+
   const efM = await import("./humanoid/emotion-fusion");
   emotionFusion = efM.emotionFusion;
   const vpM = await import("./humanoid/voice-prosody");
   voiceProsody = vpM.voiceProsody;
-  await yield_();
+  await tick();
 
   depsLoaded = true;
   console.log("[Routes] All dependencies loaded");

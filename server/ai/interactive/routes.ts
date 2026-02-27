@@ -1,14 +1,48 @@
 import { Express } from "express";
-import { biologyModule } from "./biology-module";
-import { environmentalSensing } from "./environmental-sensing";
-import { medicalDiagnostics } from "./medical-diagnostics";
-import { roboticIntegration } from "./robotic-integration";
-import { teachingModule } from "./teaching-module";
-import { securityEncryption } from "./security-encryption";
-import { bloodSamplingSystem } from "./blood-sampling-system";
+
+let biologyModule: any;
+let environmentalSensing: any;
+let medicalDiagnostics: any;
+let roboticIntegration: any;
+let teachingModule: any;
+let securityEncryption: any;
+let bloodSamplingSystem: any;
+let interactiveLoaded = false;
+
+async function ensureInteractiveLoaded() {
+  if (interactiveLoaded) return;
+  const m1 = await import("./biology-module");
+  biologyModule = m1.biologyModule;
+  const m2 = await import("./environmental-sensing");
+  environmentalSensing = m2.environmentalSensing;
+  const m3 = await import("./medical-diagnostics");
+  medicalDiagnostics = m3.medicalDiagnostics;
+  const m4 = await import("./robotic-integration");
+  roboticIntegration = m4.roboticIntegration;
+  const m5 = await import("./teaching-module");
+  teachingModule = m5.teachingModule;
+  const m6 = await import("./security-encryption");
+  securityEncryption = m6.securityEncryption;
+  const m7 = await import("./blood-sampling-system");
+  bloodSamplingSystem = m7.bloodSamplingSystem;
+  interactiveLoaded = true;
+}
 
 export function registerInteractiveRoutes(app: Express): void {
   console.log("[Interactive Systems] Registering API routes");
+
+  setTimeout(() => {
+    ensureInteractiveLoaded().catch(e => console.error("[Interactive] Load error:", e));
+  }, 3000);
+
+  app.use("/api/interactive", async (req, res, next) => {
+    try {
+      await ensureInteractiveLoaded();
+      next();
+    } catch (e) {
+      res.status(503).json({ error: "Interactive modules still loading" });
+    }
+  });
 
   // ============ BIOLOGY MODULE ROUTES ============
   

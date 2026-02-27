@@ -1,24 +1,66 @@
 import { type Express } from "express";
-import { 
-  vectorKnowledgeBase, 
-  emotionalCognition, 
-  universalLanguage, 
-  decentralizedIntelligence,
-  ethicalGovernance,
-  selfEvolution,
-  quantumNeuralNetworks,
-  aiSimulationsEngine,
-  crossDimensionalAI,
-  nanotechnologySimulation,
-  hyperlinkedReality,
-  bioNeuralInterface,
-  adaptiveHardwareController,
-  getAdvancedUpgradesStatus
-} from "./index";
-import { moduleOrchestrator } from "./module-orchestrator";
+
+let vectorKnowledgeBase: any;
+let emotionalCognition: any;
+let universalLanguage: any;
+let decentralizedIntelligence: any;
+let ethicalGovernance: any;
+let selfEvolution: any;
+let quantumNeuralNetworks: any;
+let aiSimulationsEngine: any;
+let crossDimensionalAI: any;
+let nanotechnologySimulation: any;
+let hyperlinkedReality: any;
+let bioNeuralInterface: any;
+let adaptiveHardwareController: any;
+let getAdvancedUpgradesStatus: any;
+let moduleOrchestrator: any;
+let upgradesLoaded = false;
+
+async function ensureUpgradesLoaded() {
+  if (upgradesLoaded) return;
+  const tick = (ms = 10): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+  const idx = await import("./index");
+  vectorKnowledgeBase = idx.vectorKnowledgeBase;
+  emotionalCognition = idx.emotionalCognition;
+  universalLanguage = idx.universalLanguage;
+  decentralizedIntelligence = idx.decentralizedIntelligence;
+  ethicalGovernance = idx.ethicalGovernance;
+  selfEvolution = idx.selfEvolution;
+  quantumNeuralNetworks = idx.quantumNeuralNetworks;
+  aiSimulationsEngine = idx.aiSimulationsEngine;
+  crossDimensionalAI = idx.crossDimensionalAI;
+  nanotechnologySimulation = idx.nanotechnologySimulation;
+  hyperlinkedReality = idx.hyperlinkedReality;
+  bioNeuralInterface = idx.bioNeuralInterface;
+  adaptiveHardwareController = idx.adaptiveHardwareController;
+  getAdvancedUpgradesStatus = idx.getAdvancedUpgradesStatus;
+  await tick();
+
+  const moM = await import("./module-orchestrator");
+  moduleOrchestrator = moM.moduleOrchestrator;
+  await tick();
+
+  upgradesLoaded = true;
+  console.log("[Advanced Upgrades] All 13 upgrade modules loaded");
+}
 
 export function registerAdvancedUpgradeRoutes(app: Express): void {
   console.log('[Advanced Upgrades] Registering API routes');
+
+  setTimeout(() => {
+    ensureUpgradesLoaded().catch(e => console.error("[Advanced Upgrades] Load error:", e));
+  }, 2000);
+
+  app.use(["/api/upgrades", "/api/orchestrator"], async (req, res, next) => {
+    try {
+      await ensureUpgradesLoaded();
+      next();
+    } catch (e) {
+      res.status(503).json({ error: "Upgrade modules still loading" });
+    }
+  });
 
   app.get("/api/upgrades/status", async (req, res) => {
     try {
