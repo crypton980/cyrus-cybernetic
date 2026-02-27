@@ -96,11 +96,11 @@ router.get("/presenter/all", (req: Request, res: Response) => {
 
 router.post("/conversation/turn", async (req: Request, res: Response) => {
   try {
-    const { message } = req.body;
+    const { message, voiceFeatures, facialData } = req.body;
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
-    const result = await conversationEngine.processConversationTurn(message);
+    const result = await conversationEngine.processConversationTurn(message, voiceFeatures, facialData);
     res.json({ success: true, ...result });
   } catch (error: any) {
     console.error("[Conversation] Turn error:", error);

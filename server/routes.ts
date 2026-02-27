@@ -13,7 +13,7 @@ import { quantumCore } from "./ai/quantum-core";
 import { domainSummary, allBranches } from "./ai/branches/index";
 import { registerAudioRoutes } from "./replit_integrations/audio/routes";
 import { speechToText, ensureCompatibleFormat } from "./replit_integrations/audio/client";
-import { textToSpeechElevenLabs, textToSpeechStreamElevenLabs, ELEVENLABS_VOICES, type ElevenLabsVoice } from "./elevenlabs/client";
+import { textToSpeechElevenLabs, textToSpeechStreamElevenLabs, ELEVENLABS_VOICES, type ElevenLabsVoice, getEmotionVoiceSettings } from "./elevenlabs/client";
 import { createAlpacaClient, AlpacaClient } from "./trading/alpaca-client";
 import OpenAI from "openai";
 import { z } from "zod";
@@ -1494,15 +1494,15 @@ If you detect a command that requires physical device interaction, inform the op
   // CYRUS High-Quality Text-to-Speech endpoint (ElevenLabs - Natural Female Voice)
   app.post("/api/cyrus/speak", async (req, res) => {
     try {
-      const { text, voice = "rachel" } = req.body;
+      const { text, voice = "rachel", emotion } = req.body;
       
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text is required" });
       }
 
-      // Use ElevenLabs for ultra-realistic female voice synthesis
       const elevenLabsVoice = (voice in ELEVENLABS_VOICES ? voice : "rachel") as ElevenLabsVoice;
-      const audioBuffer = await textToSpeechElevenLabs(text, elevenLabsVoice);
+      const emotionSettings = emotion ? getEmotionVoiceSettings(emotion) : {};
+      const audioBuffer = await textToSpeechElevenLabs(text, elevenLabsVoice, emotionSettings);
 
       res.setHeader("Content-Type", "audio/mpeg");
       res.setHeader("Content-Length", audioBuffer.length);

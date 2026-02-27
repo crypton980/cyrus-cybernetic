@@ -170,6 +170,32 @@ function preprocessTextForSpeech(text: string): string {
   return processed;
 }
 
+const EMOTION_VOICE_PRESETS: Record<string, Partial<VoiceSettings>> = {
+  happy:      { stability: 0.55, similarity_boost: 0.90, style: 0.8 },
+  excited:    { stability: 0.45, similarity_boost: 0.90, style: 1.0 },
+  sad:        { stability: 0.80, similarity_boost: 0.80, style: 0.3 },
+  angry:      { stability: 0.70, similarity_boost: 0.85, style: 0.6 },
+  calm:       { stability: 0.85, similarity_boost: 0.80, style: 0.2 },
+  confident:  { stability: 0.60, similarity_boost: 0.90, style: 0.7 },
+  empathetic: { stability: 0.70, similarity_boost: 0.85, style: 0.4 },
+  curious:    { stability: 0.55, similarity_boost: 0.85, style: 0.5 },
+  thoughtful: { stability: 0.75, similarity_boost: 0.85, style: 0.3 },
+  neutral:    { stability: 0.65, similarity_boost: 0.85, style: 0.45 },
+};
+
+export function getEmotionVoiceSettings(emotion: string): Partial<VoiceSettings> {
+  return EMOTION_VOICE_PRESETS[emotion] || EMOTION_VOICE_PRESETS.neutral;
+}
+
+export async function textToSpeechWithEmotion(
+  text: string,
+  emotion: string = "neutral",
+  voice: ElevenLabsVoice = "rachel"
+): Promise<Buffer> {
+  const emotionSettings = getEmotionVoiceSettings(emotion);
+  return textToSpeechElevenLabs(text, voice, emotionSettings);
+}
+
 export async function getAvailableVoices(): Promise<any[]> {
   if (!ELEVENLABS_API_KEY) {
     throw new Error("ELEVENLABS_API_KEY is not configured");

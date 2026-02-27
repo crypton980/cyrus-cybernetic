@@ -24,9 +24,13 @@ import {
   Copy,
   Check,
   Radio,
+  MessageCircle,
+  Heart,
+  Brain,
 } from "lucide-react";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useAudioProcessing } from "@/hooks/useAudioProcessing";
+import { HumanoidChat } from "./HumanoidChat";
 
 interface DetectedObject {
   class: string;
@@ -66,6 +70,8 @@ export function Dashboard() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [shareMenuId, setShareMenuId] = useState<string | null>(null);
   const [shareMenuContent, setShareMenuContent] = useState<string>("");
+  const [humanoidMode, setHumanoidMode] = useState(false);
+  const [showEmotionIndicator, setShowEmotionIndicator] = useState(false);
   const [visualDataMap, setVisualDataMap] = useState<Record<string, VisualData>>({});
   const [wakeWordEnabled, setWakeWordEnabled] = useState(() => {
     const saved = localStorage.getItem("cyrus-wakeword-enabled");
@@ -934,9 +940,18 @@ export function Dashboard() {
                 <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Welcome to CYRUS</h3>
-              <p className="text-sm text-[rgba(235,235,245,0.5)] max-w-sm">
-                Autonomous quantum AI system ready. Enter a command to begin.
+              <p className="text-sm text-[rgba(235,235,245,0.5)] max-w-sm mb-3">
+                Autonomous quantum AI system ready. Enter a command or start a conversation.
               </p>
+              {!humanoidMode && (
+                <button
+                  onClick={() => setHumanoidMode(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20 text-pink-400 hover:from-pink-500/20 hover:to-purple-500/20 transition-all text-sm"
+                >
+                  <Heart className="w-4 h-4" />
+                  Start Natural Conversation
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-4 max-w-2xl mx-auto">
@@ -1065,10 +1080,15 @@ export function Dashboard() {
                     <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
                   </div>
                   <div className="bg-[#2c2c2e] rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                      {humanoidMode && (
+                        <span className="text-[10px] text-gray-500 italic ml-1">thinking...</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1143,6 +1163,17 @@ export function Dashboard() {
               <Upload className="w-5 h-5" />
               <span className="text-[10px]">Upload</span>
             </button>
+            <button
+              onClick={() => setHumanoidMode(!humanoidMode)}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors relative ${
+                humanoidMode ? 'bg-gradient-to-b from-pink-500/20 to-purple-500/20 text-pink-400 ring-1 ring-pink-500/30' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+              }`}
+              title="Toggle natural conversation mode"
+            >
+              <Heart className={`w-5 h-5 ${humanoidMode ? 'animate-pulse' : ''}`} />
+              <span className="text-[10px]">{humanoidMode ? 'Humanoid' : 'Humanoid'}</span>
+              {humanoidMode && <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-pink-400 rounded-full animate-ping" />}
+            </button>
             <button className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -1183,7 +1214,7 @@ export function Dashboard() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Message CYRUS"
+                placeholder={humanoidMode ? "Talk to CYRUS naturally..." : "Message CYRUS"}
                 className="flex-1 bg-transparent text-sm text-white placeholder-[rgba(235,235,245,0.3)] outline-none py-2"
                 disabled={sendMessage.isPending}
               />
@@ -1374,6 +1405,8 @@ export function Dashboard() {
           )}
         </div>
       </div>
+
+      {humanoidMode && <HumanoidChat />}
     </div>
   );
 }
