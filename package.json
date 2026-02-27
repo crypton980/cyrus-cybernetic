@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "uv pip install -q numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk 2>/dev/null || true; python server/quantum_ai/quantum_bridge.py & python server/comms/ml_service.py & tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --bundle --platform=node --outfile=dist/server/index.js --format=esm --packages=external",
+    "build": "vite build",
     "start": "uv pip install -q numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk 2>/dev/null || true; python server/quantum_ai/quantum_bridge.py & python server/comms/ml_service.py & NODE_ENV=production node dist/server/index.js",
     "quantum-bridge": "python server/quantum_ai/quantum_bridge.py",
     "db:push": "drizzle-kit push",
