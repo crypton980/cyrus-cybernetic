@@ -312,7 +312,7 @@ export function Dashboard() {
         } else {
           if (textIntervalId) clearInterval(textIntervalId);
         }
-      }, 120);
+      }, 250);
 
       let audioBase64 = "";
       let ttsSuccess = false;

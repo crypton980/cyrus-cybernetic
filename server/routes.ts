@@ -56,6 +56,13 @@ const agentConfigSchema = z.object({
   thinkingPauses: z.boolean().optional()
 });
 
+function stripEmojis(text: string): string {
+  return text
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 const deviceActionSchema = z.object({
   type: z.string(),
   // Pointer fields
@@ -422,12 +429,11 @@ export async function registerRoutes(
         max_tokens: 2000
       });
 
-      const aiResponse = response.choices[0].message.content || "";
+      const rawResponse = response.choices[0].message.content || "";
+      const aiResponse = stripEmojis(rawResponse);
       
-      // Get enhancement from bridge if available
       const enhancement = await quantumBridge.enhanceResponse(message);
       
-      // Format the response
       const formattedResponse = await quantumResponseFormatter.formatResponse(aiResponse, enhancement);
       
       console.log(`[Inference] Response format: ${formattedResponse.format}`);
@@ -1007,18 +1013,17 @@ Format your response in a clear, structured manner.`
       });
       
       // Apply quantum formatting to transform response presentation
-      let formattedResponse = result.response;
+      let formattedResponse = stripEmojis(result.response);
       let responseFormat = 'standard';
       
       if (quantumEnhancement) {
         try {
-          // If we have quantum enhancement, we always want the formatted version
           const formatted = await quantumResponseFormatter.formatResponse(
-            result.response,
+            formattedResponse,
             quantumEnhancement,
             quantumEnhancement.query_classification
           );
-          formattedResponse = formatted.content;
+          formattedResponse = stripEmojis(formatted.content);
           responseFormat = formatted.format;
         } catch (formatError) {
           console.error('[Quantum Formatter] Error:', formatError);
