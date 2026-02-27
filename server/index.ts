@@ -44,20 +44,18 @@ app.get("/health/ready", (_req, res) => {
   res.status(503).json({ status: "initializing" });
 });
 
-if (process.env.NODE_ENV === "production") {
-  const distPublic = findDistPublic();
-  if (distPublic) {
-    console.log(`[Static] Serving from ${distPublic}`);
-    app.use(express.static(distPublic, { index: "index.html" }));
-    app.get("/", (_req, res) => {
-      res.status(200).sendFile(path.join(distPublic, "index.html"));
-    });
-  } else {
-    console.warn("[Static] No dist/public found, serving fallback for /");
-    app.get("/", (_req, res) => {
-      res.status(200).json({ service: "CYRUS Humanoid AI System", status: "initializing" });
-    });
-  }
+const distPublic = process.env.NODE_ENV === "production" ? findDistPublic() : null;
+if (distPublic) {
+  console.log(`[Static] Serving from ${distPublic}`);
+  app.use(express.static(distPublic, { index: "index.html" }));
+  app.get("/", (_req, res) => {
+    res.status(200).sendFile(path.join(distPublic, "index.html"));
+  });
+} else if (process.env.NODE_ENV === "production") {
+  console.warn("[Static] No dist/public found, serving fallback for /");
+  app.get("/", (_req, res) => {
+    res.status(200).json({ service: "CYRUS Humanoid AI System", status: "online" });
+  });
 }
 
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
