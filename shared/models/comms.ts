@@ -190,6 +190,59 @@ export const sharedMedia = pgTable("shared_media", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const commsUserProfiles = pgTable("comms_user_profiles", {
+  userId: varchar("user_id").primaryKey(),
+  displayName: varchar("display_name"),
+  communicationPatterns: jsonb("communication_patterns").default({
+    avgMsgLength: 0,
+    peakHours: [],
+    preferredChannels: [],
+    responseTimeMs: 0,
+    avgCallDurationSec: 0,
+    messagingFrequency: 0,
+  }),
+  sentimentProfile: jsonb("sentiment_profile").default({
+    avgSentiment: 0,
+    moodDistribution: {},
+    emotionalTrend: "stable",
+  }),
+  interactionEmbeddings: jsonb("interaction_embeddings").default([]),
+  behaviorCluster: varchar("behavior_cluster"),
+  contactSuggestions: jsonb("contact_suggestions").default([]),
+  preferredLanguage: varchar("preferred_language").default("en"),
+  uiPreferences: jsonb("ui_preferences").default({}),
+  networkQualityHistory: jsonb("network_quality_history").default([]),
+  churnRiskScore: varchar("churn_risk_score").default("0"),
+  lastAnalyzedAt: timestamp("last_analyzed_at"),
+  totalInteractions: integer("total_interactions").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const commsInteractionEvents = pgTable("comms_interaction_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  eventType: varchar("event_type").notNull(),
+  targetUserId: varchar("target_user_id"),
+  metadata: jsonb("metadata").default({}),
+  sentimentScore: varchar("sentiment_score"),
+  featureVector: jsonb("feature_vector"),
+  sessionId: varchar("session_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const commsMlModels = pgTable("comms_ml_models", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  modelType: varchar("model_type").notNull(),
+  version: varchar("version"),
+  accuracy: varchar("accuracy"),
+  trainingDataSize: integer("training_data_size"),
+  hyperparameters: jsonb("hyperparameters").default({}),
+  status: varchar("status").default("active"),
+  trainedAt: timestamp("trained_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type OnlineUser = typeof onlineUsers.$inferSelect;
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type CallHistory = typeof callHistory.$inferSelect;
@@ -203,3 +256,6 @@ export type CallSession = typeof callSessions.$inferSelect;
 export type CallMessage = typeof callMessages.$inferSelect;
 export type LiveStream = typeof liveStreams.$inferSelect;
 export type SharedMedia = typeof sharedMedia.$inferSelect;
+export type CommsUserProfile = typeof commsUserProfiles.$inferSelect;
+export type CommsInteractionEvent = typeof commsInteractionEvents.$inferSelect;
+export type CommsMlModel = typeof commsMlModels.$inferSelect;

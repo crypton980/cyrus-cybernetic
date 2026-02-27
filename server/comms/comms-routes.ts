@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { db } from "../db";
 import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems, contacts, incomingCalls, groupChats, callSessions, liveStreams, sharedMedia, callMessages } from "../../shared/schema";
+import { commsInteractionEvents } from "../../shared/models/comms";
 import { eq, or, and, desc, asc, ilike, inArray, sql } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
 import { getConnectedUsers } from "./signaling";
 import { communicationEngine } from "./communication-engine";
+import { commsIntelligence } from "./comms-intelligence";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1542,7 +1544,101 @@ router.get("/api/comms/ice-servers", (_req: any, res) => {
   }
 });
 
+router.get("/api/comms/intelligence/profile/:userId", async (req: any, res) => {
+  try {
+    const { userId } = req.params;
+    const insights = await commsIntelligence.getUserInsights(userId);
+    res.json({ success: true, ...insights });
+  } catch (error: any) {
+    res.json({ success: false, profile: null, sentimentTrend: [], anomalies: [], contactSuggestions: [], churnRisk: 0, recommendations: [] });
+  }
+});
+
+router.get("/api/comms/intelligence/suggestions/:userId", async (req: any, res) => {
+  try {
+    const { userId } = req.params;
+    const suggestions = await commsIntelligence.suggestContacts(userId, 10);
+    res.json({ success: true, suggestions });
+  } catch (error: any) {
+    res.json({ success: true, suggestions: [] });
+  }
+});
+
+router.get("/api/comms/intelligence/best-time/:userId/:targetUserId", async (req: any, res) => {
+  try {
+    const { userId, targetUserId } = req.params;
+    const prediction = await commsIntelligence.predictBestCallTime(userId, targetUserId);
+    res.json({ success: true, ...prediction });
+  } catch (error: any) {
+    res.json({ success: true, bestHour: 10, bestDay: "Monday", confidence: 0.1 });
+  }
+});
+
+router.get("/api/comms/intelligence/anomalies/:userId", async (req: any, res) => {
+  try {
+    const { userId } = req.params;
+    const anomalies = await commsIntelligence.detectAnomalies(userId);
+    res.json({ success: true, anomalies });
+  } catch (error: any) {
+    res.json({ success: true, anomalies: [] });
+  }
+});
+
+router.get("/api/comms/intelligence/network-health", async (_req: any, res) => {
+  try {
+    const health = await commsIntelligence.getNetworkHealth();
+    res.json({ success: true, ...health });
+  } catch (error: any) {
+    res.json({ success: true, totalUsers: 0, activeToday: 0, messagesToday: 0, avgSentiment: 0, sentimentLabel: "neutral", callSuccessRate: 100, callsToday: 0 });
+  }
+});
+
+router.post("/api/comms/intelligence/analyze-text", async (req: any, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: "text field required" });
+    const result = commsIntelligence.analyzeSentiment(text);
+    const isUrgent = commsIntelligence.checkUrgency(text);
+    const routing = commsIntelligence.getSmartRouting(result.score, text.length, isUrgent);
+    res.json({ success: true, ...result, isUrgent, suggestedChannel: routing });
+  } catch (error: any) {
+    res.json({ success: false, score: 0, confidence: 0, label: "neutral", isUrgent: false, suggestedChannel: "text" });
+  }
+});
+
+router.get("/api/comms/intelligence/sentiment-history/:userId", async (req: any, res) => {
+  try {
+    const { userId } = req.params;
+    const events = await db.select()
+      .from(commsInteractionEvents)
+      .where(and(
+        eq(commsInteractionEvents.userId, userId),
+        sql`${commsInteractionEvents.sentimentScore} IS NOT NULL`
+      ))
+      .orderBy(desc(commsInteractionEvents.createdAt))
+      .limit(50);
+    const history = events.map(e => ({
+      score: parseFloat(e.sentimentScore || "0"),
+      eventType: e.eventType,
+      timestamp: e.createdAt?.toISOString(),
+    }));
+    res.json({ success: true, history });
+  } catch (error: any) {
+    res.json({ success: true, history: [] });
+  }
+});
+
+router.get("/api/comms/intelligence/clusters", async (_req: any, res) => {
+  try {
+    const clusters = await commsIntelligence.clusterUsers();
+    res.json({ success: true, clusters });
+  } catch (error: any) {
+    res.json({ success: true, clusters: [] });
+  }
+});
+
 export function registerCommsRoutes(app: any) {
   app.use(router);
-  console.log("[Comms] Registered communication routes (50+ endpoints)");
+  console.log("[Comms] Registered communication routes (60+ endpoints)");
+  console.log("[Comms Intelligence] 8 intelligence API endpoints active");
 }

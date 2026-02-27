@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, KeyboardEvent } from "react";
+import { useState, useRef, useCallback, KeyboardEvent, useEffect } from "react";
 import {
   Send,
   Smile,
@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { EmojiPicker } from "./EmojiPicker";
+import { analyzeTextSentiment } from "../../hooks/useCommsIntelligence";
 
 interface MessageInputProps {
   onSend: (content: string) => void;
@@ -38,11 +39,28 @@ export function MessageInput({
   const [recordingTime, setRecordingTime] = useState(0);
   const [attachPreview, setAttachPreview] = useState<{ file: File; url: string } | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [sentiment, setSentiment] = useState<{ score: number; label: string; confidence: number }>({ score: 0, label: "neutral", confidence: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sentimentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (sentimentTimeoutRef.current) clearTimeout(sentimentTimeoutRef.current);
+    if (text.trim().length < 3) {
+      setSentiment({ score: 0, label: "neutral", confidence: 0 });
+      return;
+    }
+    sentimentTimeoutRef.current = setTimeout(() => {
+      const result = analyzeTextSentiment(text);
+      setSentiment(result);
+    }, 300);
+    return () => {
+      if (sentimentTimeoutRef.current) clearTimeout(sentimentTimeoutRef.current);
+    };
+  }, [text]);
 
   const handleSend = useCallback(() => {
     if (attachPreview && onSendMedia) {
@@ -251,16 +269,37 @@ export function MessageInput({
           )}
         </div>
 
-        <textarea
-          value={text}
-          onChange={(e) => handleTextChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled}
-          rows={1}
-          className="flex-1 bg-gray-800/60 border border-gray-700/40 text-white text-sm placeholder-gray-500 px-3.5 py-2.5 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 max-h-[120px] disabled:opacity-40"
-          style={{ minHeight: "40px" }}
-        />
+        <div className="flex-1 relative">
+          <textarea
+            value={text}
+            onChange={(e) => handleTextChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            rows={1}
+            className="w-full bg-gray-800/60 border border-gray-700/40 text-white text-sm placeholder-gray-500 px-3.5 py-2.5 pr-8 rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 max-h-[120px] disabled:opacity-40"
+            style={{ minHeight: "40px" }}
+          />
+          {text.trim().length >= 3 && (
+            <div
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 group cursor-default"
+              title={`Sentiment: ${sentiment.label} (${(sentiment.score * 100).toFixed(0)}%)`}
+            >
+              <div
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
+                  sentiment.label === "positive" ? "bg-emerald-400 shadow-emerald-400/50 shadow-sm" :
+                  sentiment.label === "negative" ? "bg-red-400 shadow-red-400/50 shadow-sm" :
+                  "bg-gray-500"
+                }`}
+              />
+              <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover:block">
+                <div className="bg-gray-900 border border-gray-700 rounded-md px-2 py-1 text-[10px] text-gray-300 whitespace-nowrap shadow-lg">
+                  {sentiment.label} ({(sentiment.score * 100).toFixed(0)}%)
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {text.trim() || attachPreview ? (
           <button

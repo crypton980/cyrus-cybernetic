@@ -23,6 +23,8 @@ import { AdminDashboard } from "../components/comms/AdminDashboard";
 import { EmojiPicker } from "../components/comms/EmojiPicker";
 import { LiveStreamPanel, LiveStream } from "../components/comms/LiveStreamPanel";
 import { Reaction } from "../components/comms/FloatingReactions";
+import { CommsIntelligence } from "../components/comms/CommsIntelligence";
+import { useAnomalyAlerts } from "../hooks/useCommsIntelligence";
 
 type MainTab = "chat" | "calls" | "people" | "streams" | "monitor";
 
@@ -275,6 +277,8 @@ export function CommsPage() {
   }, [wsRef.current]);
 
   const myId = myUserId || myDeviceId;
+  const { data: anomalyData } = useAnomalyAlerts(myId);
+  const [dismissedAnomalies, setDismissedAnomalies] = useState(false);
 
   useEffect(() => {
     if (localMessages.length > 0) {
@@ -706,6 +710,26 @@ export function CommsPage() {
         </div>
       </div>
 
+      {anomalyData?.anomalies?.length > 0 && !dismissedAnomalies && (
+        <div className="mx-4 mt-2 mb-0 flex items-center justify-between gap-3 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            <span className="text-xs text-amber-300 font-medium">
+              {anomalyData.anomalies.length} behavioral anomal{anomalyData.anomalies.length === 1 ? 'y' : 'ies'} detected
+            </span>
+            <span className="text-[10px] text-amber-400/60">
+              {anomalyData.anomalies[0]?.description}
+            </span>
+          </div>
+          <button
+            onClick={() => setDismissedAnomalies(true)}
+            className="text-amber-400/60 hover:text-amber-300 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       <div className="flex-1 overflow-hidden">
         {activeTab === "chat" && (
           <CommsPlatform
@@ -755,7 +779,8 @@ export function CommsPage() {
         )}
 
         {activeTab === "monitor" && (
-          <div className="h-full overflow-y-auto">
+          <div className="h-full overflow-y-auto space-y-0">
+            <CommsIntelligence userId={myId} />
             <AdminDashboard />
           </div>
         )}

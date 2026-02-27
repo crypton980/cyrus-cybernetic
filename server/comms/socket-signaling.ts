@@ -3,6 +3,7 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import { db } from "../db";
 import { onlineUsers, directMessages, groupChats, callSessions, callMessages, liveStreams, sharedMedia } from "../../shared/models/comms";
 import { eq, ilike } from "drizzle-orm";
+import { commsIntelligence } from "./comms-intelligence";
 
 interface User {
   id: string;
@@ -283,6 +284,11 @@ export function initSocketSignaling(server: HttpServer) {
         callType,
       });
 
+      try {
+        commsIntelligence.trackInteraction(userId, 'call_started', pendingCall.callerId, { callType, roomId: data.roomId });
+        commsIntelligence.trackInteraction(pendingCall.callerId, 'call_started', userId, { callType, roomId: data.roomId });
+      } catch (_) {}
+
       pendingCalls.delete(data.roomId);
       broadcastPresence(io);
     });
@@ -381,6 +387,11 @@ export function initSocketSignaling(server: HttpServer) {
 
       socket.to(data.roomId).emit("call-ended", { roomId: data.roomId, userId });
       socket.leave(data.roomId);
+
+      try {
+        const duration = activeCall ? Math.floor((Date.now() - activeCall.startedAt.getTime()) / 1000) : 0;
+        commsIntelligence.trackInteraction(userId, 'call_ended', undefined, { duration, roomId: data.roomId });
+      } catch (_) {}
       
       broadcastPresence(io);
     });
@@ -444,6 +455,15 @@ export function initSocketSignaling(server: HttpServer) {
         messageType,
         timestamp: data.timestamp,
       });
+
+      try {
+        commsIntelligence.trackInteraction(senderId, 'message_sent', data.targetUserId || undefined, {
+          content: data.message,
+          contentLength: data.message?.length || 0,
+          channelType: data.groupId ? 'group' : 'direct',
+          messageType,
+        });
+      } catch (_) {}
     });
 
     socket.on("create-group", async (data: { name: string; members: string[] }) => {
@@ -852,6 +872,8 @@ export function initSocketSignaling(server: HttpServer) {
         y: data.y,
         timestamp: new Date().toISOString(),
       });
+
+      try { commsIntelligence.trackInteraction(userId, 'reaction_sent', undefined, { emoji: data.emoji }); } catch (_) {}
     });
 
     socket.on("share-location", (data: { roomId: string; latitude: number; longitude: number }) => {
