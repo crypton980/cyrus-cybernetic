@@ -1,8 +1,13 @@
 node_modules
 dist
-.env
 .git
+.env
 .venv
-*.log
+.upm
+.cache
 .replit
 replit.nix
+*.log
+.local
+/tmp
+drizzle

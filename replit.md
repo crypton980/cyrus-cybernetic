@@ -58,6 +58,14 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Intelligent Self-Learning Communication Intelligence v1.0:** Adaptive ML engine integrated into NEXUS COMMS that analyzes every interaction for sentiment, user behavior, contact suggestions, anomaly detection, and churn risk.
 - **Python ML Intelligence Service v1.0:** Companion Python HTTP service providing advanced ML capabilities like sentiment analysis, anomaly detection, user clustering, and behavior prediction to NEXUS COMMS Intelligence.
 
+### Standalone Deployment Package
+- **Location:** `standalone/` directory
+- **Files:** `Dockerfile`, `docker-compose.yml`, `.env.example`, `install.sh`, `start.sh`, `auth-adapter.ts`, `SETUP.md`
+- **Docker:** `cd standalone && docker compose up -d` launches PostgreSQL + schema init + CYRUS
+- **Manual:** `bash standalone/install.sh` then `npm run start:standalone`
+- **Auth Adapter:** When `REPL_ID` env var is absent, `server/index.ts` loads `standalone/auth-adapter.ts` (access-code auth) instead of Replit OIDC auth
+- **npm Scripts:** `start:standalone`, `install:standalone`
+
 ### Deployment Architecture
 - **Target:** Reserved VM (`deploymentTarget = "vm"`)
 - **Build:** `npm run build` (Vite frontend only, no esbuild server bundling)

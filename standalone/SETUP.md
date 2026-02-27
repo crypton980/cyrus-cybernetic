@@ -5,176 +5,154 @@
 
 ---
 
-## Quick Start (Docker)
+## Prerequisites
 
-The fastest way to run CYRUS independently:
+| Requirement | Minimum Version | Purpose |
+|-------------|----------------|---------|
+| Node.js | 18+ (20 recommended) | Server runtime |
+| npm | 9+ | Package manager |
+| Python | 3.10+ | Quantum AI Core, ML services |
+| PostgreSQL | 15+ | Database (local, Docker, or hosted) |
+
+---
+
+## Option 1: Docker Compose (Recommended)
+
+Everything runs in containers. No local installs needed besides Docker.
 
 ```bash
-# 1. Clone or download the project
-git clone <your-repo-url> cyrus
-cd cyrus
+# 1. Configure environment
+cp standalone/.env.example standalone/.env
 
-# 2. Configure environment
-cp standalone/.env.example .env
-# Edit .env with your OPENAI_API_KEY
+# 2. Edit .env - set at minimum:
+#    OPENAI_API_KEY=sk-your-key-here
 
-# 3. Launch with Docker Compose
+# 3. Launch everything (PostgreSQL + schema + CYRUS)
 cd standalone
 docker compose up -d
 
-# CYRUS is now running at http://localhost:5000
+# 4. Check status
+docker compose ps
+docker compose logs -f cyrus
+```
+
+CYRUS will be available at **http://localhost:5000**
+
+### Docker Compose Commands
+
+```bash
+cd standalone
+
+docker compose up -d          # Start all services
+docker compose down            # Stop all services
+docker compose down -v         # Stop and delete all data
+docker compose logs -f cyrus   # Stream CYRUS logs
+docker compose restart cyrus   # Restart CYRUS only
+docker compose ps              # Check service status
 ```
 
 ---
 
-## Manual Installation
+## Option 2: Manual Installation
 
-### Prerequisites
-
-| Software | Version | Required |
-|----------|---------|----------|
-| Node.js | 20+ | Yes |
-| npm | 9+ | Yes |
-| Python | 3.11+ | Yes |
-| PostgreSQL | 15+ | Yes |
-
-### Step 1: Install Dependencies
+### Step 1: Run the Installer
 
 ```bash
-# Run the automated installer
 bash standalone/install.sh
 ```
 
-Or manually:
-
-```bash
-# Node.js dependencies
-npm install
-
-# Python dependencies (for Quantum AI Core)
-python3 -m venv .venv
-source .venv/bin/activate
-pip install numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk
-```
+This will:
+- Verify Node.js, npm, and Python are installed
+- Create `.env` from the template
+- Install all Node.js and Python dependencies
+- Build the frontend
+- Attempt to push the database schema
 
 ### Step 2: Configure Environment
 
+Edit `.env` in the project root:
+
 ```bash
-cp standalone/.env.example .env
+# REQUIRED
+DATABASE_URL=postgresql://user:password@localhost:5432/cyrus
+OPENAI_API_KEY=sk-your-key-here
+
+# OPTIONAL
+ELEVENLABS_API_KEY=           # Voice synthesis
+GOOGLE_MAPS_API_KEY=          # Navigation features
+GOOGLE_GEOCODING_API_KEY=     # Location services
+GOOGLE_GEOLOCATION_API_KEY=   # Geolocation
+NEWS_API_KEY=                 # News intelligence
 ```
 
-Edit `.env` with your values:
+### Step 3: Set Up PostgreSQL
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `OPENAI_API_KEY` | Yes | OpenAI API key for GPT-4o |
-| `ELEVENLABS_API_KEY` | No | ElevenLabs key for voice synthesis |
-| `GOOGLE_MAPS_API_KEY` | No | Google Maps for navigation |
-| `GOOGLE_GEOCODING_API_KEY` | No | Google Geocoding API |
-| `GOOGLE_GEOLOCATION_API_KEY` | No | Google Geolocation API |
-| `NEWS_API_KEY` | No | News API for news features |
-| `SESSION_SECRET` | No | Custom session secret (auto-generated if empty) |
-| `ADMIN_ACCESS_CODE` | No | Admin login code (default: 71580019) |
-| `USER_ACCESS_CODE` | No | User login code (default: 170392) |
-| `ADMIN_USERNAME` | No | Admin username (default: DELTA UNIFORM 00) |
-
-### Step 3: Setup PostgreSQL
-
-**Option A: Docker (recommended)**
+**Option A - Docker (easiest)**
 ```bash
-cd standalone
-docker compose up -d postgres
+cd standalone && docker compose up -d postgres
 ```
 
-**Option B: Local PostgreSQL**
+**Option B - Local PostgreSQL**
 ```bash
 createdb cyrus
-# Set DATABASE_URL=postgresql://user:password@localhost:5432/cyrus in .env
 ```
 
-**Option C: Hosted Database**
-Use any PostgreSQL provider (Neon, Supabase, Railway, etc.) and set the connection URL in `.env`.
+**Option C - Hosted**
+Use Neon, Supabase, Railway, or any PostgreSQL provider.
+Set the connection URL in `DATABASE_URL`.
 
-### Step 4: Initialize Database Schema
+### Step 4: Push Database Schema
 
 ```bash
-# Load environment variables
-export $(grep -v '^#' .env | xargs)
-
-# Push schema to database
 npx drizzle-kit push
 ```
 
-### Step 5: Build Frontend
-
-```bash
-npm run build
-```
-
-### Step 6: Start CYRUS
+### Step 5: Launch CYRUS
 
 ```bash
 npm run start:standalone
 ```
 
-CYRUS will be available at `http://localhost:5000`
+CYRUS will be available at **http://localhost:5000**
 
 ---
 
-## Docker Deployment
+## Authentication
 
-### Full Stack with Docker Compose
+Outside of Replit, CYRUS uses built-in access code authentication:
 
-```bash
-cd standalone
+| Role | Username | Access Code |
+|------|----------|-------------|
+| Admin | DELTA UNIFORM 00 | 71580019 |
+| User | Any username | 170392 |
 
-# Start everything (PostgreSQL + CYRUS)
-docker compose up -d
-
-# View logs
-docker compose logs -f cyrus
-
-# Stop
-docker compose down
-
-# Stop and remove data
-docker compose down -v
+Customize in `.env`:
 ```
-
-### Build Docker Image Only
-
-```bash
-docker build -f standalone/Dockerfile -t cyrus:latest .
-```
-
-### Run with External Database
-
-```bash
-docker run -d \
-  --name cyrus \
-  -p 5000:5000 \
-  -e DATABASE_URL="postgresql://user:pass@host:5432/cyrus" \
-  -e OPENAI_API_KEY="sk-..." \
-  -e NODE_ENV=production \
-  cyrus:latest
+ADMIN_USERNAME=your-admin-name
+ADMIN_ACCESS_CODE=your-admin-code
+USER_ACCESS_CODE=your-user-code
 ```
 
 ---
 
-## Cloud Deployment
+## Production Deployment (VPS / Cloud VM)
 
-### AWS / GCP / Azure VM
+### 1. Server Setup
 
-1. Provision a VM (2+ vCPU, 4+ GB RAM recommended)
-2. Install Node.js 20+ and Python 3.11+
-3. Clone the project
-4. Run `bash standalone/install.sh`
-5. Configure `.env`
-6. Start with: `npm run start:standalone`
-7. Use a reverse proxy (nginx/caddy) for HTTPS
+```bash
+# Ubuntu/Debian
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs python3 python3-venv postgresql
 
-### Nginx Configuration
+# Clone project
+git clone <your-repo> /opt/cyrus
+cd /opt/cyrus
+
+# Install
+bash standalone/install.sh
+```
+
+### 2. Reverse Proxy (nginx)
 
 ```nginx
 server {
@@ -182,7 +160,7 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:5000;
+        proxy_pass http://127.0.0.1:5000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -191,11 +169,14 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
     }
 }
 ```
 
-### Process Manager (systemd)
+The WebSocket upgrade headers are essential for Socket.IO (NEXUS COMMS real-time features).
+
+### 3. Process Manager (systemd)
 
 Create `/etc/systemd/system/cyrus.service`:
 
@@ -209,33 +190,21 @@ Type=simple
 User=cyrus
 WorkingDirectory=/opt/cyrus
 EnvironmentFile=/opt/cyrus/.env
-ExecStart=/usr/bin/npx tsx server/index.ts
+ExecStart=/usr/bin/bash /opt/cyrus/standalone/start.sh
 Restart=always
 RestartSec=5
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 ```bash
+sudo systemctl daemon-reload
 sudo systemctl enable cyrus
 sudo systemctl start cyrus
-```
-
----
-
-## Authentication
-
-When running outside Replit, CYRUS uses a built-in authentication system:
-
-- **Admin Login**: Username `DELTA UNIFORM 00`, Access Code `71580019`
-- **User Login**: Any username, Access Code `170392`
-
-Customize these in `.env`:
-```
-ADMIN_USERNAME=your-admin-name
-ADMIN_ACCESS_CODE=your-admin-code
-USER_ACCESS_CODE=your-user-code
+sudo journalctl -u cyrus -f    # View logs
 ```
 
 ---
@@ -243,71 +212,55 @@ USER_ACCESS_CODE=your-user-code
 ## Architecture
 
 ```
-CYRUS v3.0
-├── Frontend (React + TypeScript + Vite)
-│   ├── Aerospace-grade UI with Glass-Morphism
-│   ├── TanStack Query for data fetching
-│   ├── TensorFlow.js for client-side vision
-│   └── Socket.IO client for real-time comms
-│
-├── Backend (Express.js + TypeScript)
-│   ├── 40+ AI Modules (lazy-loaded)
-│   ├── NEXUS COMMS Platform (WebRTC + Socket.IO)
-│   ├── 13 Advanced Upgrade Modules
-│   ├── 7 Interactive System Modules
-│   ├── OpenAI GPT-4o Integration
-│   └── ElevenLabs Voice Synthesis
-│
-├── Database (PostgreSQL + Drizzle ORM)
-│   ├── Conversations & Memory
-│   ├── Communication Intelligence
-│   ├── User Profiles & Sessions
-│   └── ML Model Tracking
-│
-└── Python Services
-    ├── Quantum AI Bridge (port 5001)
-    └── Comms ML Intelligence (port 5002)
+Port 5000 ─ CYRUS Main Server (Express.js + React frontend)
+Port 5001 ─ Quantum AI Bridge (Python Flask)
+Port 5002 ─ Comms ML Intelligence Service (Python Flask)
 ```
 
-### Ports
-
-| Port | Service |
-|------|---------|
-| 5000 | Main CYRUS application |
-| 5001 | Quantum AI Bridge (Python) |
-| 5002 | Comms ML Intelligence (Python) |
+All three services are started automatically by `start.sh` or the Docker CMD.
 
 ---
 
 ## Troubleshooting
 
-### Database connection failed
-- Verify PostgreSQL is running: `pg_isready`
-- Check `DATABASE_URL` format: `postgresql://user:password@host:5432/dbname`
-- Ensure the database exists: `createdb cyrus`
-
-### Port already in use
+### Cannot connect to database
 ```bash
-# Find and kill the process
+# Check PostgreSQL is running
+pg_isready -h localhost -p 5432
+
+# Verify connection string format
+# postgresql://user:password@host:5432/dbname
+```
+
+### Port 5000 already in use
+```bash
 lsof -i :5000
 kill -9 <PID>
 ```
 
-### Python modules not found
+### Frontend shows blank page
 ```bash
-source .venv/bin/activate
-pip install numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk
+# Rebuild frontend
+npm run build
+
+# Verify output exists
+ls dist/public/index.html
 ```
 
-### Frontend not loading
+### Python services not starting
 ```bash
-npm run build
-# Ensure dist/public/index.html exists
-ls dist/public/
+source .venv/bin/activate
+pip install numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk flask
+
+# Test manually
+python3 server/quantum_ai/quantum_bridge.py
+python3 server/comms/ml_service.py
 ```
 
 ### Health check endpoints
-- `http://localhost:5000/` - Main page (200)
-- `http://localhost:5000/__health` - Quick health (200)
-- `http://localhost:5000/health/live` - Liveness check
-- `http://localhost:5000/health/ready` - Readiness check
+```
+GET /           - Main page (200 when ready)
+GET /__health   - Quick health check
+GET /health/live  - Liveness probe
+GET /health/ready - Readiness probe
+```

@@ -3,32 +3,37 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import crypto from "crypto";
 
-export function setupAuth(app: Express): void {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000;
-  const pgStore = connectPg(session);
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 
+function createSessionStore() {
+  const PgStore = connectPg(session);
+  return new PgStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: true,
+    ttl: SESSION_TTL,
+    tableName: "sessions",
+  });
+}
+
+export async function setupAuth(app: Express): Promise<void> {
   const sessionMiddleware = session({
-    store: new pgStore({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-      ttl: sessionTtl,
-      tableName: "sessions",
-    }),
-    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
+    store: createSessionStore(),
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: sessionTtl,
-      sameSite: "lax",
+      secure: false,
+      maxAge: SESSION_TTL,
+      sameSite: "lax" as const,
     },
   });
 
   app.use(sessionMiddleware);
 
   app.post("/api/login", (req: any, res) => {
-    const { username, code } = req.body;
+    const { username, code } = req.body || {};
     if (!username || !code) {
       return res.status(400).json({ message: "Username and access code required" });
     }
@@ -55,7 +60,7 @@ export function setupAuth(app: Express): void {
 
     req.session.save((err: any) => {
       if (err) {
-        console.error("Session save error:", err);
+        console.error("[Auth] Session save error:", err);
         return res.status(500).json({ message: "Session error" });
       }
       res.json({ success: true, user: { id: userId, username, role } });
@@ -64,7 +69,7 @@ export function setupAuth(app: Express): void {
 
   app.post("/api/logout", (req: any, res) => {
     req.session.destroy((err: any) => {
-      if (err) console.error("Session destroy error:", err);
+      if (err) console.error("[Auth] Session destroy error:", err);
       res.json({ success: true });
     });
   });
@@ -86,24 +91,18 @@ export const isAuthenticated: RequestHandler = (req: any, res, next) => {
 };
 
 export function getSession() {
-  const pgStore = connectPg(session);
   return session({
-    store: new pgStore({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-      ttl: 7 * 24 * 60 * 60 * 1000,
-      tableName: "sessions",
-    }),
-    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
+    store: createSessionStore(),
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: "lax",
+      secure: false,
+      maxAge: SESSION_TTL,
+      sameSite: "lax" as const,
     },
   });
 }
 
-export function registerAuthRoutes(app: Express): void {}
+export function registerAuthRoutes(_app: Express): void {}
