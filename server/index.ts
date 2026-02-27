@@ -135,16 +135,24 @@ setTimeout(() => {
 }, 10);
 
 async function initializeSystem() {
-  const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
-  await setupAuth(app);
-  registerAuthRoutes(app);
+  try {
+    const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
+    await setupAuth(app);
+    registerAuthRoutes(app);
+  } catch (authErr) {
+    console.error("[Init] Auth setup failed (non-fatal):", authErr);
+  }
 
-  const { default: humanoidRoutes } = await import("./humanoid/routes");
-  const { default: visionRoutes } = await import("./humanoid/vision-analysis");
-  app.use("/api/humanoid", humanoidRoutes);
-  app.use("/api/vision", visionRoutes);
-  console.log("[Humanoid] Professional Presenter & Conversation Engine registered");
-  console.log("[Vision] Always-on people analysis system registered");
+  try {
+    const { default: humanoidRoutes } = await import("./humanoid/routes");
+    const { default: visionRoutes } = await import("./humanoid/vision-analysis");
+    app.use("/api/humanoid", humanoidRoutes);
+    app.use("/api/vision", visionRoutes);
+    console.log("[Humanoid] Professional Presenter & Conversation Engine registered");
+    console.log("[Vision] Always-on people analysis system registered");
+  } catch (humanoidErr) {
+    console.error("[Init] Humanoid module failed (non-fatal):", humanoidErr);
+  }
 
   const { registerRoutes } = await import("./routes");
   await registerRoutes(httpServer, app);
@@ -163,8 +171,12 @@ async function initializeSystem() {
   });
 
   if (process.env.NODE_ENV !== "production") {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
+    try {
+      const { setupVite } = await import("./vite");
+      await setupVite(httpServer, app);
+    } catch (viteErr) {
+      console.error("[Init] Vite setup failed:", viteErr);
+    }
   } else {
     const distPublic = findDistPublic();
     if (distPublic) {
@@ -181,4 +193,15 @@ async function initializeSystem() {
 process.on("SIGTERM", () => {
   initState.shuttingDown = true;
   httpServer.close();
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[Process] Unhandled rejection (non-fatal):", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[Process] Uncaught exception:", err);
+  if (err.message?.includes("EADDRINUSE")) {
+    process.exit(1);
+  }
 });
