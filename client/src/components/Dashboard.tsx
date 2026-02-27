@@ -16,7 +16,6 @@ import {
   Search,
   X,
   Paperclip,
-  Cpu,
   Volume2,
   VolumeX,
   Eye,
@@ -24,13 +23,11 @@ import {
   Copy,
   Check,
   Radio,
-  MessageCircle,
   Heart,
   Brain,
 } from "lucide-react";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useAudioProcessing } from "@/hooks/useAudioProcessing";
-import { HumanoidChat } from "./HumanoidChat";
 
 interface DetectedObject {
   class: string;
@@ -54,6 +51,52 @@ interface Message {
   imageData?: string | null;
 }
 
+interface EmotionState {
+  dominant: string;
+  valence: number;
+  arousal: number;
+  confidence: number;
+  moodTrend?: string;
+  aiEmotion?: string;
+  backchannel?: string;
+}
+
+const EMOTION_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  happy:         { bg: "bg-amber-500/20", text: "text-amber-400", label: "Happy" },
+  excited:       { bg: "bg-orange-500/20", text: "text-orange-400", label: "Excited" },
+  joyful:        { bg: "bg-yellow-500/20", text: "text-yellow-400", label: "Joyful" },
+  sad:           { bg: "bg-blue-500/20", text: "text-blue-400", label: "Reflective" },
+  compassionate: { bg: "bg-pink-500/20", text: "text-pink-400", label: "Compassionate" },
+  angry:         { bg: "bg-red-500/20", text: "text-red-400", label: "Intense" },
+  calm:          { bg: "bg-teal-500/20", text: "text-teal-400", label: "Calm" },
+  peaceful:      { bg: "bg-teal-500/20", text: "text-teal-300", label: "Peaceful" },
+  confident:     { bg: "bg-purple-500/20", text: "text-purple-400", label: "Confident" },
+  empathetic:    { bg: "bg-pink-500/20", text: "text-pink-400", label: "Empathetic" },
+  curious:       { bg: "bg-cyan-500/20", text: "text-cyan-400", label: "Curious" },
+  intrigued:     { bg: "bg-cyan-500/20", text: "text-cyan-300", label: "Intrigued" },
+  thoughtful:    { bg: "bg-indigo-500/20", text: "text-indigo-400", label: "Thoughtful" },
+  reflective:    { bg: "bg-indigo-500/20", text: "text-indigo-300", label: "Reflective" },
+  warm:          { bg: "bg-amber-500/20", text: "text-amber-300", label: "Warm" },
+  tender:        { bg: "bg-rose-500/20", text: "text-rose-400", label: "Tender" },
+  encouraging:   { bg: "bg-emerald-500/20", text: "text-emerald-400", label: "Encouraging" },
+  proud:         { bg: "bg-violet-500/20", text: "text-violet-400", label: "Proud" },
+  soothing:      { bg: "bg-sky-500/20", text: "text-sky-400", label: "Soothing" },
+  neutral:       { bg: "bg-gray-500/20", text: "text-gray-400", label: "Attentive" },
+};
+
+const THINKING_PHRASES = [
+  "Processing your thoughts...",
+  "Considering that carefully...",
+  "Reflecting on what you said...",
+  "Thinking about the best way to respond...",
+  "Taking a moment to understand...",
+  "Weighing my thoughts...",
+];
+
+function getEmotionStyle(emotion: string) {
+  return EMOTION_COLORS[emotion] || EMOTION_COLORS.neutral;
+}
+
 export function Dashboard() {
   const [input, setInput] = useState("");
   const [micActive, setMicActive] = useState(false);
@@ -70,9 +113,12 @@ export function Dashboard() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [shareMenuId, setShareMenuId] = useState<string | null>(null);
   const [shareMenuContent, setShareMenuContent] = useState<string>("");
-  const [humanoidMode, setHumanoidMode] = useState(false);
-  const [showEmotionIndicator, setShowEmotionIndicator] = useState(false);
+  const [showEmotionPanel, setShowEmotionPanel] = useState(false);
   const [visualDataMap, setVisualDataMap] = useState<Record<string, VisualData>>({});
+  const [thinkingPhrase, setThinkingPhrase] = useState("");
+  const [emotionState, setEmotionState] = useState<EmotionState>({
+    dominant: "neutral", valence: 0, arousal: 0.5, confidence: 0,
+  });
   const [wakeWordEnabled, setWakeWordEnabled] = useState(() => {
     const saved = localStorage.getItem("cyrus-wakeword-enabled");
     return saved !== null ? saved === "true" : false;
@@ -85,13 +131,12 @@ export function Dashboard() {
   const chatFileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentTranscriptRef = useRef<string>("");
   const micActiveRef = useRef<boolean>(false);
   const isSpeakingRef = useRef<boolean>(false);
   const voiceEnabledRef = useRef<boolean>(true);
+  const currentEmotionRef = useRef<string>("neutral");
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -108,7 +153,6 @@ export function Dashboard() {
     };
   }, [cleanupAudio]);
 
-  // Run object detection on each video frame
   const detectObjects = useCallback(async () => {
     if (!videoRef.current || !modelRef.current || !canvasRef.current) return;
     
@@ -121,11 +165,9 @@ export function Dashboard() {
       return;
     }
 
-    // Match canvas to video dimensions
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Run COCO-SSD detection
     try {
       const predictions = await modelRef.current.detect(video);
       setDetectedObjects(predictions.map(p => ({
@@ -134,7 +176,6 @@ export function Dashboard() {
         bbox: p.bbox as [number, number, number, number]
       })));
 
-      // Draw bounding boxes on canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = "#00ff88";
       ctx.lineWidth = 2;
@@ -143,17 +184,11 @@ export function Dashboard() {
 
       predictions.forEach(prediction => {
         const [x, y, width, height] = prediction.bbox;
-        
-        // Draw bounding box
         ctx.strokeRect(x, y, width, height);
-        
-        // Draw label background
         const label = `${prediction.class} ${Math.round(prediction.score * 100)}%`;
         const textWidth = ctx.measureText(label).width;
         ctx.fillStyle = "rgba(0, 255, 136, 0.8)";
         ctx.fillRect(x, y - 20, textWidth + 8, 20);
-        
-        // Draw label text
         ctx.fillStyle = "#000";
         ctx.fillText(label, x + 4, y - 6);
       });
@@ -161,14 +196,11 @@ export function Dashboard() {
       console.error("Detection error:", err);
     }
 
-    // Continue detection loop
     animationRef.current = requestAnimationFrame(detectObjects);
   }, []);
 
-  // CYRUS Vision - Camera Control with ML
   const toggleCamera = async () => {
     if (cameraActive) {
-      // Stop camera and detection
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
@@ -183,33 +215,22 @@ export function Dashboard() {
       setDetectedObjects([]);
       setCameraActive(false);
     } else {
-      // Start camera with ML
       try {
         setModelLoading(true);
-        
-        // Load COCO-SSD model if not already loaded
         if (!modelRef.current) {
           await tf.ready();
           modelRef.current = await cocoSsd.load({ base: "lite_mobilenet_v2" });
         }
-        
-        // Get camera stream
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: "user",
-            width: { ideal: 640 }, 
-            height: { ideal: 480 } 
-          },
+          video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false 
         });
-        
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadeddata = () => {
             setModelLoading(false);
             setCameraActive(true);
-            // Start detection loop
             detectObjects();
           };
         }
@@ -220,41 +241,24 @@ export function Dashboard() {
     }
   };
 
-  // Cleanup camera and ML on unmount
   useEffect(() => {
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
     };
   }, []);
 
-  useEffect(() => {
-    micActiveRef.current = micActive;
-  }, [micActive]);
-
-  useEffect(() => {
-    isSpeakingRef.current = isSpeaking;
-  }, [isSpeaking]);
-
+  useEffect(() => { micActiveRef.current = micActive; }, [micActive]);
+  useEffect(() => { isSpeakingRef.current = isSpeaking; }, [isSpeaking]);
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
     localStorage.setItem("cyrus-voice-enabled", String(voiceEnabled));
   }, [voiceEnabled]);
 
-  const toggleVoice = () => {
-    setVoiceEnabled(prev => !prev);
-  };
+  const toggleVoice = () => { setVoiceEnabled(prev => !prev); };
 
-  const speakText = async (text: string, retryCount = 0) => {
-    // Guard against overlapping calls - if already speaking, skip
-    if (isSpeakingRef.current && retryCount === 0) {
-      console.log("Already speaking, skipping new speakText call");
-      return;
-    }
+  const speakWithEmotion = async (text: string, emotion: string = "neutral", retryCount = 0) => {
+    if (isSpeakingRef.current && retryCount === 0) return;
     
     const maxRetries = 2;
     let textIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -273,8 +277,8 @@ export function Dashboard() {
     const useBrowserSpeech = () => {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.0;
-        utterance.pitch = 1.1;
+        utterance.rate = emotion === 'excited' ? 1.1 : emotion === 'sad' ? 0.85 : 1.0;
+        utterance.pitch = emotion === 'happy' ? 1.15 : emotion === 'sad' ? 0.9 : 1.05;
         utterance.volume = 1.0;
         const voices = speechSynthesis.getVoices();
         const femaleVoice = voices.find(v => 
@@ -299,7 +303,6 @@ export function Dashboard() {
       
       const words = text.split(/\s+/);
       let wordIndex = 0;
-      
       textIntervalId = setInterval(() => {
         if (wordIndex < words.length) {
           setStreamingText(prev => prev + (prev ? " " : "") + words[wordIndex]);
@@ -309,7 +312,6 @@ export function Dashboard() {
         }
       }, 400);
 
-      // Try streaming TTS first
       let audioBase64 = "";
       let ttsSuccess = false;
 
@@ -317,7 +319,7 @@ export function Dashboard() {
         const response = await fetch("/api/cyrus/speak/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, voice: "nova" }),
+          body: JSON.stringify({ text, voice: "rachel", emotion }),
         });
 
         if (response.ok) {
@@ -329,18 +331,14 @@ export function Dashboard() {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
-
               buffer += decoder.decode(value, { stream: true });
               const lines = buffer.split("\n");
               buffer = lines.pop() || "";
-
               for (const line of lines) {
                 if (line.startsWith("data: ")) {
                   try {
                     const data = JSON.parse(line.slice(6));
-                    if (data.audio) {
-                      audioBase64 += data.audio;
-                    }
+                    if (data.audio) audioBase64 += data.audio;
                   } catch {}
                 }
               }
@@ -349,22 +347,19 @@ export function Dashboard() {
           if (audioBase64.length > 0) ttsSuccess = true;
         }
       } catch (streamError) {
-        console.warn("Streaming TTS failed, trying non-streaming endpoint:", streamError);
+        console.warn("Streaming TTS failed, trying non-streaming:", streamError);
       }
 
-      // Fallback to non-streaming TTS if streaming failed - use Blob URL for large audio
       let audioBlobUrl: string | null = null;
       if (!ttsSuccess) {
         try {
           const response = await fetch("/api/cyrus/speak", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text, voice: "nova" }),
+            body: JSON.stringify({ text, voice: "rachel", emotion }),
           });
-          
           if (response.ok) {
             const arrayBuffer = await response.arrayBuffer();
-            // Use Blob URL instead of base64 to avoid stack overflow on large audio
             const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
             audioBlobUrl = URL.createObjectURL(blob);
             ttsSuccess = true;
@@ -374,7 +369,6 @@ export function Dashboard() {
         }
       }
 
-      // Play audio if we got it with enhanced audio processing for smooth voice
       if (ttsSuccess && (audioBase64 || audioBlobUrl)) {
         let audioBlob: Blob | null = null;
         let fallbackUrl: string | null = null;
@@ -397,95 +391,54 @@ export function Dashboard() {
 
           await playEnhancedAudio(
             audioBlob,
-            {
-              normalize: true,
-              removeNoise: true,
-              smoothTransitions: true,
-              addWarmth: true,
-              compressionRatio: 2.5,
-            },
+            { normalize: true, removeNoise: true, smoothTransitions: true, addWarmth: true, compressionRatio: 2.5 },
             () => {
               if (fallbackUrl) URL.revokeObjectURL(fallbackUrl);
               cleanupAndFinish(true);
             }
           );
         } catch (enhancedError) {
-          console.warn("Enhanced audio failed, falling back to standard playback:", enhancedError);
-          
-          if (!fallbackUrl && audioBlob) {
-            fallbackUrl = URL.createObjectURL(audioBlob);
-          }
-          
+          console.warn("Enhanced audio failed, falling back:", enhancedError);
+          if (!fallbackUrl && audioBlob) fallbackUrl = URL.createObjectURL(audioBlob);
           const audioSrc = fallbackUrl || `data:audio/mp3;base64,${audioBase64}`;
           const audio = new Audio(audioSrc);
-          
-          audio.onended = () => {
-            if (fallbackUrl) URL.revokeObjectURL(fallbackUrl);
-            cleanupAndFinish(true);
-          };
-          
-          audio.onerror = () => {
-            console.error("Audio playback error, trying browser speech");
-            if (fallbackUrl) URL.revokeObjectURL(fallbackUrl);
-            if (!useBrowserSpeech()) {
-              cleanupAndFinish(true);
-            }
-          };
-          
-          try {
-            await audio.play();
-          } catch (playError) {
-            console.error("Audio play failed:", playError);
-            if (fallbackUrl) URL.revokeObjectURL(fallbackUrl);
-            if (!useBrowserSpeech()) {
-              cleanupAndFinish(true);
-            }
-          }
+          audio.onended = () => { if (fallbackUrl) URL.revokeObjectURL(fallbackUrl); cleanupAndFinish(true); };
+          audio.onerror = () => { if (fallbackUrl) URL.revokeObjectURL(fallbackUrl); if (!useBrowserSpeech()) cleanupAndFinish(true); };
+          try { await audio.play(); } catch { if (fallbackUrl) URL.revokeObjectURL(fallbackUrl); if (!useBrowserSpeech()) cleanupAndFinish(true); }
         }
       } else {
-        // No audio from TTS, try browser speech as last resort
-        console.warn("No audio from TTS, using browser speech synthesis");
-        if (!useBrowserSpeech()) {
-          cleanupAndFinish(true);
-        }
+        if (!useBrowserSpeech()) cleanupAndFinish(true);
       }
     } catch (error) {
       console.error("Speech error:", error);
       if (retryCount < maxRetries) {
-        console.log(`Retrying TTS (attempt ${retryCount + 2}/${maxRetries + 1})`);
         if (textIntervalId) clearInterval(textIntervalId);
         setIsSpeaking(false);
         setIsStreaming(false);
         await new Promise(r => setTimeout(r, 500));
-        return speakText(text, retryCount + 1);
+        return speakWithEmotion(text, emotion, retryCount + 1);
       }
       cleanupAndFinish(true);
     }
   };
 
   const resetSilenceTimer = () => {
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-    }
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     silenceTimerRef.current = setTimeout(() => {
       if (currentTranscriptRef.current.trim() && recognitionRef.current) {
         recognitionRef.current.stop();
       }
-    }, 1500); // Reduced from 4s to 1.5s for faster response
+    }, 1500);
   };
 
   const startContinuousListening = () => {
     if (isSpeakingRef.current) return;
-    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Voice input is not supported in your browser. Please use Chrome or Edge.");
       return;
     }
-
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
+    if (recognitionRef.current) recognitionRef.current.stop();
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
@@ -500,12 +453,8 @@ export function Dashboard() {
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let transcript = "";
-      let isFinal = false;
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          isFinal = true;
-        }
       }
       currentTranscriptRef.current = transcript;
       setInput(transcript);
@@ -514,21 +463,18 @@ export function Dashboard() {
 
     recognition.onend = () => {
       setIsListening(false);
-      if (silenceTimerRef.current) {
-        clearTimeout(silenceTimerRef.current);
-      }
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       const finalTranscript = currentTranscriptRef.current.trim();
       if (finalTranscript && micActiveRef.current) {
         handleVoiceSubmit(finalTranscript);
       } else if (micActiveRef.current && !isSpeakingRef.current) {
-        setTimeout(() => startContinuousListening(), 100); // Faster restart
+        setTimeout(() => startContinuousListening(), 100);
       }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("Speech recognition error:", event.error);
       if (event.error === 'no-speech' && micActiveRef.current) {
-        setTimeout(() => startContinuousListening(), 100); // Faster restart on no-speech
+        setTimeout(() => startContinuousListening(), 100);
       } else if (event.error !== 'aborted') {
         setIsListening(false);
       }
@@ -545,14 +491,8 @@ export function Dashboard() {
   };
 
   const stopListening = () => {
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    if (recognitionRef.current) { recognitionRef.current.stop(); recognitionRef.current = null; }
     currentTranscriptRef.current = "";
     setIsListening(false);
     setMicActive(false);
@@ -563,8 +503,8 @@ export function Dashboard() {
   const handleVoiceSubmit = async (transcript?: string) => {
     const message = (transcript || input).trim();
     if (!message) return;
-    
     setInput("");
+    setThinkingPhrase(THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)]);
     
     const voiceUserId = localStorage.getItem("cyrus-display-name") || "anonymous";
     
@@ -574,41 +514,36 @@ export function Dashboard() {
       body: JSON.stringify({ role: "user", content: message, userId: voiceUserId }),
     });
 
-    // Build module context for CYRUS to understand active modules
     const moduleContext = {
-      vision: {
-        active: cameraActive,
-        detectedObjects: cameraActive ? detectedObjects : [],
-        objectCount: detectedObjects.length,
-      },
-      activeModules: [
-        cameraActive && "CYRUS_VISION",
-      ].filter(Boolean),
+      vision: { active: cameraActive, detectedObjects: cameraActive ? detectedObjects : [], objectCount: detectedObjects.length },
+      activeModules: [cameraActive && "CYRUS_VISION"].filter(Boolean),
     };
 
     const inferRes = await fetch("/api/infer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        message,
-        detectedObjects: cameraActive ? detectedObjects : undefined,
-        moduleContext,
-      }),
+      body: JSON.stringify({ message, detectedObjects: cameraActive ? detectedObjects : undefined, moduleContext }),
     });
     const inferData = await inferRes.json();
 
-    // If vision detected objects, store in memory
+    if (inferData.emotionAnalysis) {
+      setEmotionState({
+        dominant: inferData.emotionAnalysis.userEmotion || "neutral",
+        valence: inferData.emotionAnalysis.valence || 0,
+        arousal: inferData.emotionAnalysis.arousal || 0.5,
+        confidence: inferData.emotionAnalysis.confidence || 0,
+        aiEmotion: inferData.emotionAnalysis.aiEmotion,
+        backchannel: inferData.emotionAnalysis.backchannel,
+      });
+      currentEmotionRef.current = inferData.emotionAnalysis.aiEmotion || "neutral";
+    }
+
     if (cameraActive && detectedObjects.length > 0) {
       const objectSummary = detectedObjects.map(o => `${o.class} (${Math.round(o.score * 100)}%)`).join(", ");
       await fetch("/api/memories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          category: "vision_analysis",
-          content: `Vision detected: ${objectSummary}`,
-          importance: 7,
-          userId: voiceUserId,
-        }),
+        body: JSON.stringify({ category: "vision_analysis", content: `Vision detected: ${objectSummary}`, importance: 7, userId: voiceUserId }),
       });
     }
 
@@ -620,11 +555,8 @@ export function Dashboard() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
-        role: "cyrus", 
-        content: voiceCyrusContent,
-        userId: voiceUserId,
-        hasImage: inferData.imageGenerated ? 1 : 0,
-        imageData: inferData.imageUrl || null,
+        role: "cyrus", content: voiceCyrusContent, userId: voiceUserId,
+        hasImage: inferData.imageGenerated ? 1 : 0, imageData: inferData.imageUrl || null,
         detectedObjects: cameraActive ? JSON.stringify(detectedObjects) : null,
       }),
     });
@@ -632,17 +564,14 @@ export function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ["/api/conversations", voiceUserId] });
     
     if (voiceEnabledRef.current) {
-      speakText(inferData.response);
+      const textToSpeak = inferData.prosody?.enhancedText || inferData.response;
+      const emotion = inferData.emotionAnalysis?.aiEmotion || "neutral";
+      speakWithEmotion(textToSpeak, emotion);
     }
   };
 
   const toggleMic = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      setMicActive(true);
-      startListening();
-    }
+    if (isListening) { stopListening(); } else { setMicActive(true); startListening(); }
   };
 
   const currentUserId = localStorage.getItem("cyrus-display-name") || "anonymous";
@@ -664,40 +593,24 @@ export function Dashboard() {
         body: JSON.stringify({ role: "user", content, userId: currentUserId }),
       });
 
-      // Build module context for CYRUS to understand active modules
       const moduleContext = {
-        vision: {
-          active: cameraActive,
-          detectedObjects: cameraActive ? detectedObjects : [],
-          objectCount: detectedObjects.length,
-        },
-        activeModules: [
-          cameraActive && "CYRUS_VISION",
-        ].filter(Boolean),
+        vision: { active: cameraActive, detectedObjects: cameraActive ? detectedObjects : [], objectCount: detectedObjects.length },
+        activeModules: [cameraActive && "CYRUS_VISION"].filter(Boolean),
       };
 
       const inferRes = await fetch("/api/infer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          message: content,
-          detectedObjects: cameraActive ? detectedObjects : undefined,
-          moduleContext,
-        }),
+        body: JSON.stringify({ message: content, detectedObjects: cameraActive ? detectedObjects : undefined, moduleContext }),
       });
       const inferData = await inferRes.json();
 
-      // If vision detected objects, store in memory
       if (cameraActive && detectedObjects.length > 0) {
         const objectSummary = detectedObjects.map(o => `${o.class} (${Math.round(o.score * 100)}%)`).join(", ");
         await fetch("/api/memories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            category: "vision_analysis",
-            content: `Vision detected: ${objectSummary}`,
-            importance: 7,
-          }),
+          body: JSON.stringify({ category: "vision_analysis", content: `Vision detected: ${objectSummary}`, importance: 7 }),
         });
       }
 
@@ -709,29 +622,41 @@ export function Dashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          role: "cyrus", 
-          content: cyrusContent,
-          userId: currentUserId,
-          hasImage: inferData.imageGenerated ? 1 : 0,
-          imageData: inferData.imageUrl || null,
+          role: "cyrus", content: cyrusContent, userId: currentUserId,
+          hasImage: inferData.imageGenerated ? 1 : 0, imageData: inferData.imageUrl || null,
           detectedObjects: cameraActive ? JSON.stringify(detectedObjects) : null,
         }),
       });
 
       return inferData;
     },
+    onMutate: () => {
+      setThinkingPhrase(THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)]);
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations", currentUserId] });
       setInput("");
+
+      if (data?.emotionAnalysis) {
+        setEmotionState({
+          dominant: data.emotionAnalysis.userEmotion || "neutral",
+          valence: data.emotionAnalysis.valence || 0,
+          arousal: data.emotionAnalysis.arousal || 0.5,
+          confidence: data.emotionAnalysis.confidence || 0,
+          aiEmotion: data.emotionAnalysis.aiEmotion,
+          backchannel: data.emotionAnalysis.backchannel,
+        });
+        currentEmotionRef.current = data.emotionAnalysis.aiEmotion || "neutral";
+      }
+
       if (data?.visual?.image) {
         const responseKey = data.response?.substring(0, 100) || "";
-        setVisualDataMap(prev => ({
-          ...prev,
-          [responseKey]: data.visual as VisualData
-        }));
+        setVisualDataMap(prev => ({ ...prev, [responseKey]: data.visual as VisualData }));
       }
       if (voiceEnabledRef.current && data?.response) {
-        speakText(data.response);
+        const textToSpeak = data.prosody?.enhancedText || data.response;
+        const emotion = data.emotionAnalysis?.aiEmotion || "neutral";
+        speakWithEmotion(textToSpeak, emotion);
       }
     },
   });
@@ -740,13 +665,10 @@ export function Dashboard() {
     mutationFn: async () => {
       await fetch(`/api/conversations?userId=${encodeURIComponent(currentUserId)}`, { method: "DELETE" });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations", currentUserId] });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/conversations", currentUserId] }); },
   });
 
   const handleWakeWordCommand = useCallback((command: string) => {
-    console.log("[WakeWord] Processing command:", command);
     sendMessage.mutate(command);
   }, [sendMessage]);
 
@@ -759,36 +681,20 @@ export function Dashboard() {
     wakeWords: ["cyrus", "hey cyrus", "ok cyrus", "okay cyrus", "hi cyrus", "cyras", "sirus", "syrus"],
     silenceTimeout: 2500,
     autoRestart: true,
-    onWakeWordDetected: () => {
-      console.log("[CYRUS] Wake word detected! Listening for command...");
-    },
+    onWakeWordDetected: () => { console.log("[CYRUS] Wake word detected! Listening for command..."); },
     onCommand: handleWakeWordCommand,
-    onError: (error) => {
-      console.error("[CYRUS] Wake word error:", error);
-    },
+    onError: (error) => { console.error("[CYRUS] Wake word error:", error); },
   });
 
   useEffect(() => {
     localStorage.setItem("cyrus-wakeword-enabled", String(wakeWordEnabled));
-    if (wakeWordEnabled) {
-      startWakeWord();
-    } else {
-      stopWakeWord();
-    }
+    if (wakeWordEnabled) { startWakeWord(); } else { stopWakeWord(); }
   }, [wakeWordEnabled, startWakeWord, stopWakeWord]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, sendMessage.isPending]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, sendMessage.isPending]);
 
   const handleCopyMessage = async (content: string, id: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
+    try { await navigator.clipboard.writeText(content); setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); } catch {}
   };
 
   const handleShareMessage = (content: string, role: "user" | "cyrus", msgId: string) => {
@@ -797,37 +703,19 @@ export function Dashboard() {
     setShareMenuId(shareMenuId === msgId ? null : msgId);
   };
 
-  const shareToWhatsApp = (text: string) => {
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-    setShareMenuId(null);
-  };
-
-  const shareToFacebook = (text: string) => {
-    const url = `https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-    setShareMenuId(null);
-  };
-
-  const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text);
-    setShareMenuId(null);
-  };
+  const shareToWhatsApp = (text: string) => { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank'); setShareMenuId(null); };
+  const shareToFacebook = (text: string) => { window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(text)}`, '_blank'); setShareMenuId(null); };
+  const copyToClipboard = async (text: string) => { await navigator.clipboard.writeText(text); setShareMenuId(null); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() && !sendMessage.isPending) {
-      sendMessage.mutate(input.trim());
-    }
+    if (input.trim() && !sendMessage.isPending) sendMessage.mutate(input.trim());
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newFiles = Array.from(files).map(file => ({
-        name: file.name,
-        size: formatFileSize(file.size),
-      }));
+      const newFiles = Array.from(files).map(file => ({ name: file.name, size: formatFileSize(file.size) }));
       setUploadedFiles(prev => [...prev, ...newFiles]);
     }
   };
@@ -835,8 +723,7 @@ export function Dashboard() {
   const handleChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      setInput(prev => prev + (prev ? ' ' : '') + `[${file.name}]`);
+      setInput(prev => prev + (prev ? ' ' : '') + `[${files[0].name}]`);
     }
     if (chatFileInputRef.current) chatFileInputRef.current.value = '';
   };
@@ -858,66 +745,68 @@ export function Dashboard() {
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
-  // GPS location state
   const [gpsLocation, setGpsLocation] = useState<{lat: number, lng: number, accuracy: number} | null>(null);
 
-  // Get GPS location on mount
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setGpsLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          });
+          setGpsLocation({ lat: position.coords.latitude, lng: position.coords.longitude, accuracy: position.coords.accuracy });
         },
-        () => {
-          // Use default location if GPS fails
-          setGpsLocation({ lat: -24.5629, lng: 25.8486, accuracy: 60 });
-        }
+        () => { setGpsLocation({ lat: -24.5629, lng: 25.8486, accuracy: 60 }); }
       );
     }
   }, []);
+
+  const currentAIEmotion = getEmotionStyle(emotionState.aiEmotion || "neutral");
+  const currentUserEmotion = getEmotionStyle(emotionState.dominant);
 
   return (
     <div className="h-full flex flex-col lg:flex-row overflow-hidden">
       {/* Main Chat Panel */}
       <div className="flex-1 flex flex-col min-w-0 bg-black overflow-hidden">
-        {/* Panel Header - Matching Previous App Design */}
+        {/* Panel Header */}
         <div className="px-4 py-3 border-b border-[rgba(84,84,88,0.65)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
-              <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
+            <div className="relative">
+              <div className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-colors duration-700 ${
+                isSpeaking ? 'border-purple-400 shadow-purple-500/30 shadow-lg' : 'border-cyan-500/30 shadow-cyan-500/20 shadow-sm'
+              }`}>
+                <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
+              </div>
+              <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-black transition-colors duration-500 ${
+                isSpeaking ? 'bg-purple-400 animate-pulse' : sendMessage.isPending ? 'bg-amber-400 animate-pulse' : isListening ? 'bg-blue-400 animate-pulse' : 'bg-green-400'
+              }`} />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold">CYRUS</h2>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span className="w-2 h-2 bg-green-500 rounded-full opacity-60"></span>
-                  <span className="w-2 h-2 bg-green-500 rounded-full opacity-40"></span>
-                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full transition-all duration-700 ${currentAIEmotion.bg} ${currentAIEmotion.text}`}>
+                  {currentAIEmotion.label}
+                </span>
               </div>
-              {gpsLocation && (
-                <p className="text-xs text-[rgba(235,235,245,0.5)] flex items-center gap-1">
-                  <span className="text-cyan-400">◉</span>
-                  {gpsLocation.lat.toFixed(4)}, {gpsLocation.lng.toFixed(4)} · ±{Math.round(gpsLocation.accuracy)}m
-                </p>
-              )}
+              <p className="text-[10px] text-[rgba(235,235,245,0.5)] flex items-center gap-1">
+                {isSpeaking ? (
+                  <><span className="text-purple-400">●</span> Speaking...</>
+                ) : sendMessage.isPending ? (
+                  <><span className="text-amber-400">●</span> {thinkingPhrase || "Thinking..."}</>
+                ) : isListening ? (
+                  <><span className="text-blue-400">●</span> Listening to you...</>
+                ) : gpsLocation ? (
+                  <><span className="text-cyan-400">◉</span> {gpsLocation.lat.toFixed(4)}, {gpsLocation.lng.toFixed(4)} · ±{Math.round(gpsLocation.accuracy)}m</>
+                ) : (
+                  <><span className="text-green-400">●</span> Online</>
+                )}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 text-[rgba(235,235,245,0.4)] hover:text-white rounded-lg hover:bg-[rgba(120,120,128,0.2)] transition-colors">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-              </svg>
-            </button>
-            <button className="p-2 text-[rgba(235,235,245,0.4)] hover:text-white rounded-lg hover:bg-[rgba(120,120,128,0.2)] transition-colors">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
+            <button
+              onClick={() => setShowEmotionPanel(!showEmotionPanel)}
+              className={`p-2 rounded-lg transition-colors ${showEmotionPanel ? 'bg-pink-500/20 text-pink-400' : 'text-[rgba(235,235,245,0.4)] hover:text-white hover:bg-[rgba(120,120,128,0.2)]'}`}
+              title="Emotional awareness"
+            >
+              <Heart className="w-5 h-5" />
             </button>
             <button
               onClick={() => clearHistory.mutate()}
@@ -928,7 +817,44 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Messages Display - Independent Scrollable Area */}
+        {/* Emotion Awareness Panel */}
+        {showEmotionPanel && (
+          <div className="px-4 py-3 border-b border-[rgba(84,84,88,0.4)] bg-[rgba(20,20,25,0.8)]">
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-[10px] text-cyan-400 font-medium uppercase tracking-wider">Emotional Awareness</span>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <p className="text-[10px] text-gray-500">Your mood</p>
+                <span className={`text-xs font-medium ${currentUserEmotion.text}`}>{currentUserEmotion.label}</span>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] text-gray-500">CYRUS tone</p>
+                <span className={`text-xs font-medium ${currentAIEmotion.text}`}>{currentAIEmotion.label}</span>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] text-gray-500">Mood trend</p>
+                <span className="text-xs text-gray-300">
+                  {emotionState.moodTrend === 'improving' ? '↑ Improving' :
+                   emotionState.moodTrend === 'declining' ? '↓ Declining' : '→ Stable'}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] text-gray-500">Confidence</p>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-700"
+                         style={{ width: `${(emotionState.confidence || 0) * 100}%` }} />
+                  </div>
+                  <span className="text-[10px] text-gray-400">{Math.round((emotionState.confidence || 0) * 100)}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Messages Display */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 scrollbar-thin scrollbar-thumb-[#3a3a3c] scrollbar-track-transparent hover:scrollbar-thumb-[#48484a]" style={{ scrollBehavior: 'smooth' }}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
@@ -940,18 +866,12 @@ export function Dashboard() {
                 <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Welcome to CYRUS</h3>
-              <p className="text-sm text-[rgba(235,235,245,0.5)] max-w-sm mb-3">
-                Autonomous quantum AI system ready. Enter a command or start a conversation.
+              <p className="text-sm text-[rgba(235,235,245,0.5)] max-w-sm mb-1">
+                Autonomous quantum humanoid intelligence ready.
               </p>
-              {!humanoidMode && (
-                <button
-                  onClick={() => setHumanoidMode(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20 text-pink-400 hover:from-pink-500/20 hover:to-purple-500/20 transition-all text-sm"
-                >
-                  <Heart className="w-4 h-4" />
-                  Start Natural Conversation
-                </button>
-              )}
+              <p className="text-xs text-[rgba(235,235,245,0.3)] max-w-sm">
+                Talk naturally — I understand emotions and context
+              </p>
             </div>
           ) : (
             <div className="space-y-4 max-w-2xl mx-auto">
@@ -982,15 +902,9 @@ export function Dashboard() {
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{textContent}</p>
                             {imgUrl && (
                               <div className="mt-3 rounded-lg overflow-hidden border border-cyan-500/20">
-                                <img
-                                  src={imgUrl}
-                                  alt="CYRUS Generated Image"
-                                  className="w-full max-w-[500px] h-auto"
-                                  loading="lazy"
-                                />
+                                <img src={imgUrl} alt="CYRUS Generated Image" className="w-full max-w-[500px] h-auto" loading="lazy" />
                                 <div className="px-2 py-1 bg-[#1a1a2e] text-[10px] text-cyan-400 flex items-center gap-1">
-                                  <Eye className="w-3 h-3" />
-                                  <span>DALL-E 3 Generated Image</span>
+                                  <Eye className="w-3 h-3" /><span>DALL-E 3 Generated Image</span>
                                 </div>
                               </div>
                             )}
@@ -1002,8 +916,7 @@ export function Dashboard() {
                           <img
                             src={visualDataMap[msg.content?.substring(0, 100) || ""].image}
                             alt={`Visual: ${visualDataMap[msg.content?.substring(0, 100) || ""].topic}`}
-                            className="w-full max-w-[500px] h-auto"
-                            loading="lazy"
+                            className="w-full max-w-[500px] h-auto" loading="lazy"
                           />
                           <div className="px-2 py-1 bg-[#1a1a2e] text-[10px] text-cyan-400 flex items-center gap-1">
                             <Eye className="w-3 h-3" />
@@ -1021,11 +934,7 @@ export function Dashboard() {
                         className="p-1.5 rounded-lg bg-[#2c2c2e] hover:bg-[#3a3a3c] transition-colors"
                         title="Copy message"
                       >
-                        {copiedId === msg.id ? (
-                          <Check className="w-3 h-3 text-[#30d158]" />
-                        ) : (
-                          <Copy className="w-3 h-3 text-[rgba(235,235,245,0.6)]" />
-                        )}
+                        {copiedId === msg.id ? <Check className="w-3 h-3 text-[#30d158]" /> : <Copy className="w-3 h-3 text-[rgba(235,235,245,0.6)]" />}
                       </button>
                       <div className="relative">
                         <button
@@ -1037,30 +946,16 @@ export function Dashboard() {
                         </button>
                         {shareMenuId === msg.id && (
                           <div className="absolute bottom-full mb-2 right-0 bg-[#2c2c2e] rounded-xl shadow-xl border border-[rgba(84,84,88,0.65)] p-2 z-50 min-w-[140px]">
-                            <button
-                              onClick={() => shareToWhatsApp(shareMenuContent)}
-                              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-[#3a3a3c] transition-colors text-left"
-                            >
-                              <svg className="w-4 h-4 text-[#25D366]" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                              </svg>
+                            <button onClick={() => shareToWhatsApp(shareMenuContent)} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-[#3a3a3c] transition-colors text-left">
+                              <svg className="w-4 h-4 text-[#25D366]" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                               <span className="text-xs text-white">WhatsApp</span>
                             </button>
-                            <button
-                              onClick={() => shareToFacebook(shareMenuContent)}
-                              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-[#3a3a3c] transition-colors text-left"
-                            >
-                              <svg className="w-4 h-4 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                              </svg>
+                            <button onClick={() => shareToFacebook(shareMenuContent)} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-[#3a3a3c] transition-colors text-left">
+                              <svg className="w-4 h-4 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                               <span className="text-xs text-white">Facebook</span>
                             </button>
-                            <button
-                              onClick={() => copyToClipboard(shareMenuContent)}
-                              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-[#3a3a3c] transition-colors text-left"
-                            >
-                              <Copy className="w-4 h-4 text-[rgba(235,235,245,0.6)]" />
-                              <span className="text-xs text-white">Copy</span>
+                            <button onClick={() => copyToClipboard(shareMenuContent)} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-[#3a3a3c] transition-colors text-left">
+                              <Copy className="w-4 h-4 text-[rgba(235,235,245,0.6)]" /><span className="text-xs text-white">Copy</span>
                             </button>
                           </div>
                         )}
@@ -1079,17 +974,17 @@ export function Dashboard() {
                   <div className="w-8 h-8 rounded-lg overflow-hidden border border-cyan-500/30 shadow-sm shadow-cyan-500/20">
                     <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover" />
                   </div>
-                  <div className="bg-[#2c2c2e] rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div>
+                    <div className="bg-[#2c2c2e] rounded-2xl rounded-bl-md px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-2 h-2 bg-[rgba(235,235,245,0.4)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       </div>
-                      {humanoidMode && (
-                        <span className="text-[10px] text-gray-500 italic ml-1">thinking...</span>
-                      )}
                     </div>
+                    <p className="text-[10px] text-gray-600 mt-1 ml-1 italic">{thinkingPhrase}</p>
                   </div>
                 </div>
               )}
@@ -1100,8 +995,11 @@ export function Dashboard() {
                   </div>
                   <div className="bg-[#2c2c2e] rounded-2xl rounded-bl-md px-4 py-3 max-w-[75%]">
                     <div className="flex items-center gap-2 mb-1">
-                      <Volume2 className="w-3 h-3 text-[#0a84ff] animate-pulse" />
-                      <span className="text-[10px] text-[#0a84ff]">Speaking...</span>
+                      <Volume2 className="w-3 h-3 text-purple-400 animate-pulse" />
+                      <span className="text-[10px] text-purple-400">Speaking...</span>
+                      {emotionState.aiEmotion && (
+                        <span className={`text-[10px] ${currentAIEmotion.text}`}>{currentAIEmotion.label}</span>
+                      )}
                     </div>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap text-white">{streamingText}</p>
                   </div>
@@ -1111,6 +1009,30 @@ export function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Voice Activity Indicator */}
+        {(isListening || isSpeaking) && (
+          <div className="px-4 py-2 border-t border-[rgba(84,84,88,0.3)]">
+            <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1 rounded-full animate-pulse ${isListening ? 'bg-blue-400' : 'bg-purple-400'}`}
+                    style={{
+                      height: `${8 + Math.random() * 16}px`,
+                      animationDelay: `${i * (isListening ? 100 : 80)}ms`,
+                      animationDuration: `${(isListening ? 400 : 300) + Math.random() * 300}ms`,
+                    }}
+                  />
+                ))}
+              </div>
+              <span className={`text-[11px] ${isListening ? 'text-blue-400' : 'text-purple-400'}`}>
+                {isListening ? 'Listening...' : 'Speaking...'}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Bottom Action Bar */}
         <div className="px-4 py-2 border-t border-[rgba(84,84,88,0.65)]">
@@ -1139,8 +1061,7 @@ export function Dashboard() {
               ) : (
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                  <line x1="23" y1="9" x2="17" y2="15" />
-                  <line x1="17" y1="9" x2="23" y2="15" />
+                  <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
                 </svg>
               )}
               <span className="text-[10px]">{voiceEnabled ? 'Voice On' : 'Voice Off'}</span>
@@ -1162,17 +1083,6 @@ export function Dashboard() {
             >
               <Upload className="w-5 h-5" />
               <span className="text-[10px]">Upload</span>
-            </button>
-            <button
-              onClick={() => setHumanoidMode(!humanoidMode)}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors relative ${
-                humanoidMode ? 'bg-gradient-to-b from-pink-500/20 to-purple-500/20 text-pink-400 ring-1 ring-pink-500/30' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
-              }`}
-              title="Toggle natural conversation mode"
-            >
-              <Heart className={`w-5 h-5 ${humanoidMode ? 'animate-pulse' : ''}`} />
-              <span className="text-[10px]">{humanoidMode ? 'Humanoid' : 'Humanoid'}</span>
-              {humanoidMode && <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-pink-400 rounded-full animate-ping" />}
             </button>
             <button className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1210,18 +1120,28 @@ export function Dashboard() {
               >
                 <Paperclip className="w-5 h-5" />
               </button>
+              <button
+                type="button"
+                onClick={toggleMic}
+                className={`p-2 rounded-lg transition-all ${
+                  isListening ? "bg-red-500/20 text-red-400 animate-pulse" : "text-[rgba(235,235,245,0.4)] hover:text-blue-400"
+                }`}
+                title={isListening ? "Stop listening" : "Speak to CYRUS"}
+              >
+                {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={humanoidMode ? "Talk to CYRUS naturally..." : "Message CYRUS"}
+                placeholder={isListening ? "Speak now..." : "Talk to CYRUS naturally..."}
                 className="flex-1 bg-transparent text-sm text-white placeholder-[rgba(235,235,245,0.3)] outline-none py-2"
                 disabled={sendMessage.isPending}
               />
               <button
                 type="submit"
                 disabled={!input.trim() || sendMessage.isPending}
-                className="p-2.5 bg-[#0a84ff] text-white rounded-lg disabled:opacity-30 hover:bg-[#409cff] transition-colors"
+                className="p-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg disabled:opacity-30 hover:shadow-lg hover:shadow-cyan-500/20 transition-all"
               >
                 <Send className="w-5 h-5" />
               </button>
@@ -1230,7 +1150,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Right Panel - Display Panels (Wider) */}
+      {/* Right Panel */}
       <div className="hidden xl:flex w-[420px] flex-col bg-[#1c1c1e] border-l border-[rgba(84,84,88,0.65)]">
         {/* Research Panel */}
         <div className="p-4 border-b border-[rgba(84,84,88,0.65)]">
@@ -1253,36 +1173,28 @@ export function Dashboard() {
               <Search className="w-4 h-4" />
             </button>
           </div>
-          
-          {/* Console Display */}
           <div className="bg-black rounded-lg border border-[rgba(84,84,88,0.65)] p-3 h-24 overflow-auto">
             {researchResults.length === 0 ? (
               <p className="text-xs text-[rgba(235,235,245,0.3)] text-center py-3">No queries</p>
             ) : (
               <div className="space-y-1 font-mono text-xs">
                 {researchResults.map((result, i) => (
-                  <p key={i} className="text-[rgba(235,235,245,0.6)] py-0.5 border-b border-[rgba(84,84,88,0.3)] last:border-0">
-                    {result}
-                  </p>
+                  <p key={i} className="text-[rgba(235,235,245,0.6)] py-0.5 border-b border-[rgba(84,84,88,0.3)] last:border-0">{result}</p>
                 ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* Files Panel - Upper Section */}
+        {/* Files Panel */}
         <div className="h-[45%] p-4 flex flex-col overflow-hidden border-b border-[rgba(84,84,88,0.65)]">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold text-[rgba(235,235,245,0.5)] uppercase tracking-wide">File Workspace</h3>
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" multiple />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 text-[#0a84ff] hover:bg-[rgba(10,132,255,0.1)] rounded-lg transition-colors"
-            >
+            <button onClick={() => fileInputRef.current?.click()} className="p-1.5 text-[#0a84ff] hover:bg-[rgba(10,132,255,0.1)] rounded-lg transition-colors">
               <Upload className="w-4 h-4" />
             </button>
           </div>
-          
           {uploadedFiles.length === 0 ? (
             <div 
               className="flex-1 border border-dashed border-[rgba(84,84,88,0.65)] rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#0a84ff] transition-colors"
@@ -1302,10 +1214,7 @@ export function Dashboard() {
                     <p className="text-xs text-white truncate">{file.name}</p>
                     <p className="text-[10px] text-[rgba(235,235,245,0.4)]">{file.size}</p>
                   </div>
-                  <button
-                    onClick={() => setUploadedFiles(prev => prev.filter((_, idx) => idx !== i))}
-                    className="p-1 text-[rgba(235,235,245,0.4)] hover:text-[#ff453a] rounded transition-colors"
-                  >
+                  <button onClick={() => setUploadedFiles(prev => prev.filter((_, idx) => idx !== i))} className="p-1 text-[rgba(235,235,245,0.4)] hover:text-[#ff453a] rounded transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -1314,7 +1223,7 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* CYRUS Vision Panel - Lower Section (Live Camera Feed with ML) */}
+        {/* CYRUS Vision Panel */}
         <div className="flex-1 p-4 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -1336,40 +1245,23 @@ export function Dashboard() {
               onClick={toggleCamera}
               disabled={modelLoading}
               className={`p-1.5 rounded-lg transition-colors ${
-                cameraActive 
-                  ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" 
-                  : modelLoading
-                    ? "text-amber-400 cursor-wait"
-                    : "text-[rgba(235,235,245,0.4)] hover:bg-[rgba(120,120,128,0.2)]"
+                cameraActive ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" 
+                  : modelLoading ? "text-amber-400 cursor-wait"
+                  : "text-[rgba(235,235,245,0.4)] hover:bg-[rgba(120,120,128,0.2)]"
               }`}
             >
               {cameraActive ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
             </button>
           </div>
-          
-          {/* Camera Feed with ML Overlay */}
           <div className="flex-1 bg-black rounded-xl border border-[rgba(84,84,88,0.65)] overflow-hidden relative min-h-[180px]">
             {cameraActive || modelLoading ? (
               <>
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-                {/* Canvas overlay for bounding boxes */}
-                <canvas
-                  ref={canvasRef}
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                />
-                {/* Vision overlay */}
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="absolute top-2 left-2 flex items-center gap-1.5">
                     <Eye className="w-3 h-3 text-cyan-400" />
-                    <span className="text-[10px] text-cyan-400 font-mono">
-                      {modelLoading ? "INITIALIZING..." : "VISUAL CORTEX ACTIVE"}
-                    </span>
+                    <span className="text-[10px] text-cyan-400 font-mono">{modelLoading ? "INITIALIZING..." : "VISUAL CORTEX ACTIVE"}</span>
                   </div>
                   <div className="absolute top-2 right-2 text-[10px] text-emerald-400 font-mono">
                     {detectedObjects.length > 0 && `${detectedObjects.length} OBJECTS`}
@@ -1386,16 +1278,11 @@ export function Dashboard() {
               </div>
             )}
           </div>
-
-          {/* Detected Objects List */}
           {cameraActive && detectedObjects.length > 0 && (
             <div className="mt-2 max-h-20 overflow-auto">
               <div className="flex flex-wrap gap-1">
                 {detectedObjects.map((obj, i) => (
-                  <span 
-                    key={i}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] rounded-full font-mono"
-                  >
+                  <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] rounded-full font-mono">
                     <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
                     {obj.class} {Math.round(obj.score * 100)}%
                   </span>
@@ -1405,8 +1292,6 @@ export function Dashboard() {
           )}
         </div>
       </div>
-
-      {humanoidMode && <HumanoidChat />}
     </div>
   );
 }

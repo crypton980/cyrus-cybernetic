@@ -45,6 +45,8 @@ import { healthIntegrations, validateState, type HealthProvider } from "./health
 import { registerImageRoutes } from "./replit_integrations/image/routes";
 import { generateImage } from "./replit_integrations/image/client";
 import { systemRefinementEngine } from "./ai/system-refinement-engine";
+import { emotionFusion } from "./humanoid/emotion-fusion";
+import { voiceProsody } from "./humanoid/voice-prosody";
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -1058,6 +1060,41 @@ Format your response in a clear, structured manner.`
         // Training classification is optional enhancement
       }
 
+      let emotionAnalysis: Record<string, any> | null = null;
+      let prosodyData: Record<string, any> | null = null;
+      try {
+        const emotionResult = emotionFusion.analyzeFullInput(message);
+        const aiEmotion = voiceProsody.deriveAIEmotion(emotionResult.dominant);
+        const prosodyResult = voiceProsody.addNaturalProsody(formattedResponse, {
+          emotion: aiEmotion,
+          speed: 1.0,
+          intensity: Math.max(0.4, emotionResult.arousal),
+          includeBreaths: formattedResponse.length > 80,
+          includeHesitations: emotionResult.arousal < 0.7,
+        });
+        const backchannel = voiceProsody.generateBackchannel(emotionResult.dominant);
+        emotionAnalysis = {
+          userEmotion: emotionResult.dominant,
+          userEmotionScores: emotionResult.scores,
+          aiEmotion,
+          valence: emotionResult.valence,
+          arousal: emotionResult.arousal,
+          confidence: emotionResult.confidence,
+          suggestedTone: emotionResult.suggestedTone,
+          isCrisis: emotionResult.isCrisis,
+          crisisType: emotionResult.crisisType,
+          backchannel,
+        };
+        prosodyData = {
+          enhancedText: prosodyResult.enhancedText,
+          pausePoints: prosodyResult.suggestedPauses,
+          voiceSettings: prosodyResult.voiceSettings,
+          naturalDelay: prosodyResult.naturalDelay,
+        };
+      } catch (emotionError) {
+        // Emotion analysis is optional enhancement
+      }
+
       res.json({
         response: formattedResponse,
         confidence: result.confidence,
@@ -1070,6 +1107,8 @@ Format your response in a clear, structured manner.`
         agiReasoning: result.agiReasoning,
         visual: visualData,
         trainingIntelligence: trainingClassification,
+        emotionAnalysis,
+        prosody: prosodyData,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
