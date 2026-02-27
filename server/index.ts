@@ -1,24 +1,22 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
-import humanoidRoutes from "./humanoid/routes";
-import visionRoutes from "./humanoid/vision-analysis";
 
 const app = express();
 
-let systemReady = false;
-
 app.get("/__health", (_req, res) => {
-  res.status(200).json({ status: "ok", ready: systemReady });
+  res.status(200).send("ok");
 });
 
-// Serve static assets from public folder
+if (process.env.NODE_ENV === "production") {
+  const { serveStatic } = await import("./static");
+  serveStatic(app);
+}
+
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')));
 app.use('/videos', express.static(path.join(process.cwd(), 'public', 'videos')));
+
 const httpServer = createServer(app);
 
 declare module "http" {
@@ -50,7 +48,7 @@ export function log(message: string, source = "express") {
 
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
+  const reqPath = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -61,8 +59,8 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+    if (reqPath.startsWith("/api")) {
+      let logLine = `${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -74,51 +72,54 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
+const port = parseInt(process.env.PORT || "5000", 10);
+httpServer.listen(
+  {
+    port,
+    host: "0.0.0.0",
+    reusePort: true,
+  },
+  () => {
+    log(`serving on port ${port}`);
+
+    initializeSystem().catch((err) => {
+      console.error("System initialization error:", err);
+    });
+  },
+);
+
+async function initializeSystem() {
+  const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
+  await setupAuth(app);
+  registerAuthRoutes(app);
+
+  const { default: humanoidRoutes } = await import("./humanoid/routes");
+  const { default: visionRoutes } = await import("./humanoid/vision-analysis");
+  app.use("/api/humanoid", humanoidRoutes);
+  app.use("/api/vision", visionRoutes);
+  console.log("[Humanoid] Professional Presenter & Conversation Engine registered");
+  console.log("[Vision] Always-on people analysis system registered");
+
+  const { registerRoutes } = await import("./routes");
+  await registerRoutes(httpServer, app);
+
+  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    console.error("Internal Server Error:", err);
+
+    if (res.headersSent) {
+      return next(err);
+    }
+
+    return res.status(status).json({ message });
+  });
+
+  if (process.env.NODE_ENV !== "production") {
+    const { setupVite } = await import("./vite");
+    await setupVite(httpServer, app);
   }
 
-  const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    async () => {
-      log(`serving on port ${port}`);
-
-      await setupAuth(app);
-      registerAuthRoutes(app);
-
-      app.use("/api/humanoid", humanoidRoutes);
-      app.use("/api/vision", visionRoutes);
-      console.log("[Humanoid] Professional Presenter & Conversation Engine registered");
-      console.log("[Vision] Always-on people analysis system registered");
-
-      await registerRoutes(httpServer, app);
-
-      app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-        const status = err.status || err.statusCode || 500;
-        const message = err.message || "Internal Server Error";
-
-        console.error("Internal Server Error:", err);
-
-        if (res.headersSent) {
-          return next(err);
-        }
-
-        return res.status(status).json({ message });
-      });
-
-      if (process.env.NODE_ENV !== "production") {
-        const { setupVite } = await import("./vite");
-        await setupVite(httpServer, app);
-      }
-
-      systemReady = true;
-      log("All systems initialized");
-    },
-  );
-})();
+  log("All systems initialized");
+}
