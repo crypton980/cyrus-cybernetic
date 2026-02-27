@@ -20,36 +20,36 @@ interface ProsodyResult {
 }
 
 const EMOTION_VOICE_PROFILES: Record<string, { stability: number; similarity_boost: number; style: number }> = {
-  neutral:       { stability: 0.58, similarity_boost: 0.88, style: 0.55 },
-  happy:         { stability: 0.48, similarity_boost: 0.92, style: 0.85 },
-  excited:       { stability: 0.38, similarity_boost: 0.92, style: 1.0  },
-  joyful:        { stability: 0.42, similarity_boost: 0.90, style: 0.90 },
-  sad:           { stability: 0.78, similarity_boost: 0.82, style: 0.25 },
-  melancholic:   { stability: 0.82, similarity_boost: 0.80, style: 0.20 },
-  angry:         { stability: 0.68, similarity_boost: 0.88, style: 0.55 },
-  frustrated:    { stability: 0.65, similarity_boost: 0.85, style: 0.50 },
-  calm:          { stability: 0.82, similarity_boost: 0.82, style: 0.20 },
-  peaceful:      { stability: 0.88, similarity_boost: 0.80, style: 0.15 },
-  confident:     { stability: 0.55, similarity_boost: 0.92, style: 0.72 },
-  assertive:     { stability: 0.52, similarity_boost: 0.90, style: 0.78 },
-  uncertain:     { stability: 0.72, similarity_boost: 0.78, style: 0.22 },
-  empathetic:    { stability: 0.68, similarity_boost: 0.88, style: 0.38 },
-  compassionate: { stability: 0.72, similarity_boost: 0.86, style: 0.32 },
-  curious:       { stability: 0.50, similarity_boost: 0.88, style: 0.55 },
-  intrigued:     { stability: 0.48, similarity_boost: 0.86, style: 0.60 },
-  thoughtful:    { stability: 0.72, similarity_boost: 0.86, style: 0.28 },
-  reflective:    { stability: 0.75, similarity_boost: 0.84, style: 0.22 },
-  warm:          { stability: 0.55, similarity_boost: 0.90, style: 0.62 },
-  tender:        { stability: 0.65, similarity_boost: 0.90, style: 0.45 },
-  playful:       { stability: 0.42, similarity_boost: 0.90, style: 0.82 },
-  amused:        { stability: 0.45, similarity_boost: 0.88, style: 0.75 },
-  concerned:     { stability: 0.70, similarity_boost: 0.86, style: 0.35 },
-  worried:       { stability: 0.72, similarity_boost: 0.84, style: 0.30 },
-  surprised:     { stability: 0.40, similarity_boost: 0.90, style: 0.88 },
-  grateful:      { stability: 0.60, similarity_boost: 0.90, style: 0.58 },
-  proud:         { stability: 0.52, similarity_boost: 0.92, style: 0.70 },
-  encouraging:   { stability: 0.52, similarity_boost: 0.90, style: 0.68 },
-  soothing:      { stability: 0.85, similarity_boost: 0.82, style: 0.18 },
+  neutral:       { stability: 0.42, similarity_boost: 0.95, style: 0.72 },
+  happy:         { stability: 0.35, similarity_boost: 0.96, style: 0.90 },
+  excited:       { stability: 0.28, similarity_boost: 0.95, style: 1.0  },
+  joyful:        { stability: 0.32, similarity_boost: 0.96, style: 0.95 },
+  sad:           { stability: 0.55, similarity_boost: 0.94, style: 0.45 },
+  melancholic:   { stability: 0.60, similarity_boost: 0.93, style: 0.38 },
+  angry:         { stability: 0.50, similarity_boost: 0.94, style: 0.65 },
+  frustrated:    { stability: 0.48, similarity_boost: 0.93, style: 0.60 },
+  calm:          { stability: 0.55, similarity_boost: 0.95, style: 0.50 },
+  peaceful:      { stability: 0.58, similarity_boost: 0.95, style: 0.45 },
+  confident:     { stability: 0.40, similarity_boost: 0.96, style: 0.80 },
+  assertive:     { stability: 0.38, similarity_boost: 0.95, style: 0.82 },
+  uncertain:     { stability: 0.50, similarity_boost: 0.93, style: 0.42 },
+  empathetic:    { stability: 0.48, similarity_boost: 0.95, style: 0.55 },
+  compassionate: { stability: 0.50, similarity_boost: 0.95, style: 0.50 },
+  curious:       { stability: 0.38, similarity_boost: 0.95, style: 0.68 },
+  intrigued:     { stability: 0.36, similarity_boost: 0.94, style: 0.72 },
+  thoughtful:    { stability: 0.50, similarity_boost: 0.95, style: 0.48 },
+  reflective:    { stability: 0.52, similarity_boost: 0.94, style: 0.42 },
+  warm:          { stability: 0.42, similarity_boost: 0.96, style: 0.75 },
+  tender:        { stability: 0.48, similarity_boost: 0.96, style: 0.62 },
+  playful:       { stability: 0.30, similarity_boost: 0.95, style: 0.88 },
+  amused:        { stability: 0.33, similarity_boost: 0.95, style: 0.82 },
+  concerned:     { stability: 0.52, similarity_boost: 0.95, style: 0.52 },
+  worried:       { stability: 0.55, similarity_boost: 0.94, style: 0.48 },
+  surprised:     { stability: 0.30, similarity_boost: 0.95, style: 0.92 },
+  grateful:      { stability: 0.45, similarity_boost: 0.96, style: 0.70 },
+  proud:         { stability: 0.38, similarity_boost: 0.96, style: 0.78 },
+  encouraging:   { stability: 0.40, similarity_boost: 0.96, style: 0.75 },
+  soothing:      { stability: 0.58, similarity_boost: 0.95, style: 0.40 },
 };
 
 const THINKING_FILLERS = [
@@ -236,36 +236,36 @@ class VoiceProsodyEngine {
 
   private calculateNaturalResponseDelay(userInput: string, emotion: string): number {
     const wordCount = userInput.split(/\s+/).length;
-    let baseDelay = 500 + wordCount * 25;
+    let baseDelay = 150 + wordCount * 8;
 
     const emotionDelays: Record<string, number> = {
-      thoughtful: 900,
-      reflective: 850,
-      sad: 700,
-      melancholic: 750,
-      uncertain: 800,
-      calm: 550,
-      peaceful: 600,
-      empathetic: 650,
-      compassionate: 700,
-      neutral: 350,
-      warm: 400,
-      happy: 250,
-      joyful: 200,
-      excited: 150,
-      surprised: 100,
-      angry: 200,
-      frustrated: 250,
-      confident: 250,
-      assertive: 200,
-      curious: 300,
-      intrigued: 350,
+      thoughtful: 250,
+      reflective: 220,
+      sad: 200,
+      melancholic: 220,
+      uncertain: 200,
+      calm: 150,
+      peaceful: 150,
+      empathetic: 180,
+      compassionate: 200,
+      neutral: 100,
+      warm: 100,
+      happy: 80,
+      joyful: 60,
+      excited: 50,
+      surprised: 40,
+      angry: 80,
+      frustrated: 100,
+      confident: 80,
+      assertive: 60,
+      curious: 100,
+      intrigued: 120,
     };
 
-    baseDelay += emotionDelays[emotion] || 350;
-    baseDelay += (Math.random() - 0.5) * 300;
+    baseDelay += emotionDelays[emotion] || 100;
+    baseDelay += (Math.random() - 0.5) * 80;
 
-    return Math.max(300, Math.min(2500, baseDelay));
+    return Math.max(50, Math.min(600, baseDelay));
   }
 
   private identifyPausePoints(text: string): number[] {

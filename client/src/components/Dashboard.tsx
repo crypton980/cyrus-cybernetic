@@ -277,14 +277,16 @@ export function Dashboard() {
     const useBrowserSpeech = () => {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = emotion === 'excited' ? 1.1 : emotion === 'sad' ? 0.85 : 1.0;
-        utterance.pitch = emotion === 'happy' ? 1.15 : emotion === 'sad' ? 0.9 : 1.05;
+        utterance.rate = emotion === 'excited' ? 1.12 : emotion === 'sad' ? 0.92 : 1.05;
+        utterance.pitch = emotion === 'happy' ? 1.25 : emotion === 'sad' ? 1.0 : 1.15;
         utterance.volume = 1.0;
         const voices = speechSynthesis.getVoices();
-        const femaleVoice = voices.find(v => 
-          v.name.toLowerCase().includes('female') || 
+        const femaleVoice = voices.find(v =>
           v.name.toLowerCase().includes('samantha') ||
-          v.name.includes('Google UK English Female')
+          v.name.includes('Google UK English Female') ||
+          v.name.toLowerCase().includes('karen') ||
+          v.name.toLowerCase().includes('female') ||
+          v.name.toLowerCase().includes('zira')
         );
         if (femaleVoice) utterance.voice = femaleVoice;
         utterance.onend = () => cleanupAndFinish(true);
@@ -310,7 +312,7 @@ export function Dashboard() {
         } else {
           if (textIntervalId) clearInterval(textIntervalId);
         }
-      }, 400);
+      }, 120);
 
       let audioBase64 = "";
       let ttsSuccess = false;
@@ -415,7 +417,7 @@ export function Dashboard() {
         if (textIntervalId) clearInterval(textIntervalId);
         setIsSpeaking(false);
         setIsStreaming(false);
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 200));
         return speakWithEmotion(text, emotion, retryCount + 1);
       }
       cleanupAndFinish(true);
