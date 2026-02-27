@@ -101,9 +101,17 @@ async function initializeSystem() {
   const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 5));
 
   try {
-    const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
-    await setupAuth(app);
-    registerAuthRoutes(app);
+    if (process.env.REPL_ID) {
+      const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
+      await setupAuth(app);
+      registerAuthRoutes(app);
+      log("Replit Auth initialized");
+    } else {
+      const { setupAuth, registerAuthRoutes } = await import("../standalone/auth-adapter");
+      setupAuth(app);
+      registerAuthRoutes(app);
+      log("Standalone Auth initialized");
+    }
   } catch (e) {
     console.error("[Init] Auth setup failed (non-fatal):", e);
   }
