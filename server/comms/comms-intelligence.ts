@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { commsUserProfiles, commsInteractionEvents, commsMlModels, directMessages, callHistory, contacts } from '../../shared/models/comms';
 import { eq, desc, sql, and, count, gte } from 'drizzle-orm';
+import { commsMLClient } from './comms-ml-client';
 
 const POSITIVE_WORDS = [
   'good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'awesome', 'love', 'happy',
@@ -103,13 +104,70 @@ export class CommsIntelligenceEngine {
     return { score: parseFloat(normalizedScore.toFixed(3)), confidence: parseFloat(confidence.toFixed(3)), label };
   }
 
+  async analyzeSentimentEnhanced(text: string): Promise<{ score: number; confidence: number; label: string; method: string; toxicity?: number }> {
+    if (commsMLClient.isAvailable()) {
+      try {
+        const mlResult = await commsMLClient.analyzeSentiment(text);
+        if (mlResult) {
+          return {
+            score: mlResult.score,
+            confidence: mlResult.confidence,
+            label: mlResult.label,
+            method: mlResult.method,
+            toxicity: mlResult.toxicity,
+          };
+        }
+      } catch {}
+    }
+    const fallback = this.analyzeSentiment(text);
+    return { ...fallback, method: 'keyword_ts' };
+  }
+
+  async predictBehaviorML(interactions: any[]): Promise<any> {
+    if (commsMLClient.isAvailable()) {
+      try {
+        const result = await commsMLClient.predictBehavior(interactions);
+        if (result) return result;
+      } catch {}
+    }
+    return { predicted_behavior: 'unknown', confidence: 0, probabilities: {} };
+  }
+
+  async detectAnomaliesML(interactions: any[], baseline?: any[]): Promise<any> {
+    if (commsMLClient.isAvailable()) {
+      try {
+        const result = await commsMLClient.detectAnomalies(interactions, baseline);
+        if (result) return result;
+      } catch {}
+    }
+    return { is_anomaly: false, anomaly_score: 0, reasons: [], alert_level: 'normal' };
+  }
+
+  async clusterUsersML(profiles: any[]): Promise<any> {
+    if (commsMLClient.isAvailable()) {
+      try {
+        const result = await commsMLClient.clusterUsers(profiles);
+        if (result) return result;
+      } catch {}
+    }
+    return this.clusterUsers();
+  }
+
+  async getMLServiceStatus(): Promise<any> {
+    return commsMLClient.getStatus();
+  }
+
+  isMLServiceAvailable(): boolean {
+    return commsMLClient.isAvailable();
+  }
+
   async trackInteraction(userId: string, eventType: string, targetUserId?: string, metadata?: any): Promise<void> {
     try {
       let sentimentScore: string | null = null;
       if (eventType === 'message_sent' && metadata?.content) {
-        const sentiment = this.analyzeSentiment(metadata.content);
-        sentimentScore = sentiment.score.toString();
-        metadata = { ...metadata, sentimentLabel: sentiment.label, sentimentConfidence: sentiment.confidence };
+        const enhanced = await this.analyzeSentimentEnhanced(metadata.content);
+        sentimentScore = enhanced.score.toString();
+        metadata = { ...metadata, sentimentLabel: enhanced.label, sentimentConfidence: enhanced.confidence, sentimentMethod: enhanced.method, toxicity: enhanced.toxicity };
       }
 
       const featureVector = this.buildFeatureVector(eventType, metadata);

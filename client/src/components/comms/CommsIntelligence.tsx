@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Brain,
   Activity,
@@ -8,6 +9,7 @@ import {
   Shield,
   Zap,
   BarChart3,
+  Cpu,
 } from "lucide-react";
 import {
   useUserInsights,
@@ -68,14 +70,29 @@ export function CommsIntelligence({ userId, darkMode = true }: CommsIntelligence
 
   const health = networkHealth || {};
 
+  const { data: mlStatus } = useQuery({
+    queryKey: ['/api/comms/intelligence/ml-status'],
+    refetchInterval: 30000,
+  });
+
+  const mlAvailable = (mlStatus as any)?.mlServiceAvailable === true;
+
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4">
       <div className="flex items-center gap-2 mb-2">
         <Brain className="w-5 h-5 text-cyan-400" />
         <h2 className="text-lg font-semibold text-white">Communication Intelligence</h2>
-        <div className="ml-auto flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="text-xs text-gray-500">Live</span>
+        <div className="ml-auto flex items-center gap-3">
+          <div className="flex items-center gap-1.5" title={mlAvailable ? 'Python ML Service active (VADER + scikit-learn)' : 'Using TypeScript fallback engine'}>
+            <Cpu className={`w-3.5 h-3.5 ${mlAvailable ? 'text-emerald-400' : 'text-gray-600'}`} />
+            <span className={`text-[10px] ${mlAvailable ? 'text-emerald-400' : 'text-gray-600'}`}>
+              {mlAvailable ? 'ML Active' : 'Fallback'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="text-xs text-gray-500">Live</span>
+          </div>
         </div>
       </div>
 

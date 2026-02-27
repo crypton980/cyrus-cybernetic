@@ -1637,8 +1637,58 @@ router.get("/api/comms/intelligence/clusters", async (_req: any, res) => {
   }
 });
 
+router.get("/api/comms/intelligence/ml-status", async (_req: any, res) => {
+  try {
+    const mlAvailable = commsIntelligence.isMLServiceAvailable();
+    const mlStatus = mlAvailable ? await commsIntelligence.getMLServiceStatus() : null;
+    res.json({
+      success: true,
+      mlServiceAvailable: mlAvailable,
+      mlStatus,
+      fallbackActive: !mlAvailable,
+    });
+  } catch (error: any) {
+    res.json({ success: true, mlServiceAvailable: false, fallbackActive: true });
+  }
+});
+
+router.post("/api/comms/intelligence/analyze-enhanced", async (req: any, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      res.json({ success: false, error: 'No text provided' });
+      return;
+    }
+    const result = await commsIntelligence.analyzeSentimentEnhanced(text);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    const fallback = commsIntelligence.analyzeSentiment(req.body?.text || '');
+    res.json({ success: true, ...fallback, method: 'keyword_fallback' });
+  }
+});
+
+router.post("/api/comms/intelligence/predict-behavior", async (req: any, res) => {
+  try {
+    const { interactions } = req.body;
+    const result = await commsIntelligence.predictBehaviorML(interactions || []);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    res.json({ success: true, predicted_behavior: 'unknown', confidence: 0 });
+  }
+});
+
+router.post("/api/comms/intelligence/detect-anomalies-ml", async (req: any, res) => {
+  try {
+    const { interactions, baseline } = req.body;
+    const result = await commsIntelligence.detectAnomaliesML(interactions || [], baseline);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    res.json({ success: true, is_anomaly: false, anomaly_score: 0 });
+  }
+});
+
 export function registerCommsRoutes(app: any) {
   app.use(router);
   console.log("[Comms] Registered communication routes (60+ endpoints)");
-  console.log("[Comms Intelligence] 8 intelligence API endpoints active");
+  console.log("[Comms Intelligence] 12 intelligence API endpoints active (8 core + 4 ML-enhanced)");
 }
