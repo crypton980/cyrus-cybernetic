@@ -36,8 +36,8 @@ localPort = 5000
 externalPort = 80
 
 [deployment]
-deploymentTarget = "autoscale"
-run = ["npm", "run", "start"]
+deploymentTarget = "vm"
+run = ["bash", "-c", "uv pip install -q numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk 2>/dev/null || true; python server/quantum_ai/quantum_bridge.py & python server/comms/ml_service.py & NODE_ENV=production node dist/server/index.js"]
 build = ["npm", "run", "build"]
 
 [userenv]
