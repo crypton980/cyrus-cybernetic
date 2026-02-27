@@ -1,23 +1,28 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import path from "path";
+import fs from "fs";
 
 const app = express();
+const httpServer = createServer(app);
 
 app.get("/__health", (_req, res) => {
   res.status(200).send("ok");
 });
 
 if (process.env.NODE_ENV === "production") {
-  const { serveStatic } = await import("./static");
-  serveStatic(app);
+  const distPath = path.resolve(import.meta.dirname, "..", "public");
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    app.get("/", (_req, res) => {
+      res.sendFile(path.resolve(distPath, "index.html"));
+    });
+  }
 }
 
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')));
 app.use('/videos', express.static(path.join(process.cwd(), 'public', 'videos')));
-
-const httpServer = createServer(app);
 
 declare module "http" {
   interface IncomingMessage {
@@ -81,10 +86,11 @@ httpServer.listen(
   },
   () => {
     log(`serving on port ${port}`);
-
-    initializeSystem().catch((err) => {
-      console.error("System initialization error:", err);
-    });
+    setTimeout(() => {
+      initializeSystem().catch((err) => {
+        console.error("System initialization error:", err);
+      });
+    }, 0);
   },
 );
 
@@ -119,6 +125,13 @@ async function initializeSystem() {
   if (process.env.NODE_ENV !== "production") {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
+  } else {
+    const distPath = path.resolve(import.meta.dirname, "..", "public");
+    if (fs.existsSync(distPath)) {
+      app.use("*", (_req, res) => {
+        res.sendFile(path.resolve(distPath, "index.html"));
+      });
+    }
   }
 
   log("All systems initialized");
