@@ -566,9 +566,8 @@ export function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ["/api/conversations", voiceUserId] });
     
     if (voiceEnabledRef.current) {
-      const textToSpeak = inferData.prosody?.enhancedText || inferData.response;
       const emotion = inferData.emotionAnalysis?.aiEmotion || "neutral";
-      speakWithEmotion(textToSpeak, emotion);
+      speakWithEmotion(inferData.response, emotion);
     }
   };
 
@@ -656,9 +655,8 @@ export function Dashboard() {
         setVisualDataMap(prev => ({ ...prev, [responseKey]: data.visual as VisualData }));
       }
       if (voiceEnabledRef.current && data?.response) {
-        const textToSpeak = data.prosody?.enhancedText || data.response;
         const emotion = data.emotionAnalysis?.aiEmotion || "neutral";
-        speakWithEmotion(textToSpeak, emotion);
+        speakWithEmotion(data.response, emotion);
       }
     },
   });
