@@ -2,20 +2,60 @@ import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
+
+const initState = {
+  ready: false,
+  shuttingDown: false,
+};
+
+function findDistPublic(): string | null {
+  const candidates = [
+    path.resolve(__dirname, "..", "public"),
+    path.resolve(process.cwd(), "dist", "public"),
+    path.resolve(process.cwd(), "public"),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, "index.html"))) {
+      return dir;
+    }
+  }
+  return null;
+}
 
 app.get("/__health", (_req, res) => {
   res.status(200).send("ok");
 });
 
+app.get("/health/live", (_req, res) => {
+  res.status(200).json({ status: "alive", timestamp: new Date().toISOString() });
+});
+
+app.get("/health/ready", (_req, res) => {
+  if (initState.ready && !initState.shuttingDown) {
+    return res.status(200).json({ status: "ready" });
+  }
+  res.status(503).json({ status: "initializing" });
+});
+
 if (process.env.NODE_ENV === "production") {
-  const distPath = path.resolve(import.meta.dirname, "..", "public");
-  if (fs.existsSync(distPath)) {
-    app.use(express.static(distPath));
+  const distPublic = findDistPublic();
+  if (distPublic) {
+    console.log(`[Static] Serving from ${distPublic}`);
+    app.use(express.static(distPublic, { index: "index.html" }));
     app.get("/", (_req, res) => {
-      res.sendFile(path.resolve(distPath, "index.html"));
+      res.status(200).sendFile(path.join(distPublic, "index.html"));
+    });
+  } else {
+    console.warn("[Static] No dist/public found, serving fallback for /");
+    app.get("/", (_req, res) => {
+      res.status(200).json({ service: "CYRUS Humanoid AI System", status: "initializing" });
     });
   }
 }
@@ -86,13 +126,15 @@ httpServer.listen(
   },
   () => {
     log(`serving on port ${port}`);
-    setTimeout(() => {
-      initializeSystem().catch((err) => {
-        console.error("System initialization error:", err);
-      });
-    }, 0);
+    log(`Health check: http://0.0.0.0:${port}/`);
   },
 );
+
+setTimeout(() => {
+  initializeSystem().catch((err) => {
+    console.error("System initialization error:", err);
+  });
+}, 10);
 
 async function initializeSystem() {
   const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
@@ -126,13 +168,19 @@ async function initializeSystem() {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   } else {
-    const distPath = path.resolve(import.meta.dirname, "..", "public");
-    if (fs.existsSync(distPath)) {
+    const distPublic = findDistPublic();
+    if (distPublic) {
       app.use("*", (_req, res) => {
-        res.sendFile(path.resolve(distPath, "index.html"));
+        res.sendFile(path.join(distPublic, "index.html"));
       });
     }
   }
 
+  initState.ready = true;
   log("All systems initialized");
 }
+
+process.on("SIGTERM", () => {
+  initState.shuttingDown = true;
+  httpServer.close();
+});
