@@ -125,14 +125,14 @@ httpServer.listen(
   () => {
     log(`serving on port ${port}`);
     log(`Health check: http://0.0.0.0:${port}/`);
+
+    setImmediate(() => {
+      initializeSystem().catch((err) => {
+        console.error("System initialization error:", err);
+      });
+    });
   },
 );
-
-setTimeout(() => {
-  initializeSystem().catch((err) => {
-    console.error("System initialization error:", err);
-  });
-}, 10);
 
 async function initializeSystem() {
   try {
@@ -188,6 +188,27 @@ async function initializeSystem() {
 
   initState.ready = true;
   log("All systems initialized");
+
+  if (process.env.NODE_ENV === "production") {
+    try {
+      const { spawn } = await import("child_process");
+      const pyBridge = spawn("python", ["server/quantum_ai/quantum_bridge.py"], {
+        stdio: "ignore",
+        detached: true,
+      });
+      pyBridge.unref();
+      log("Quantum AI Bridge spawned (background)");
+
+      const pyML = spawn("python", ["server/comms/ml_service.py"], {
+        stdio: "ignore",
+        detached: true,
+      });
+      pyML.unref();
+      log("Comms ML Service spawned (background)");
+    } catch (pyErr) {
+      console.error("[Init] Python services failed to spawn (non-fatal):", pyErr);
+    }
+  }
 }
 
 process.on("SIGTERM", () => {

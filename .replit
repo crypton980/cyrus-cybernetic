@@ -41,7 +41,7 @@ externalPort = 3001
 
 [deployment]
 deploymentTarget = "vm"
-run = ["bash", "-c", "python server/quantum_ai/quantum_bridge.py &>/dev/null & python server/comms/ml_service.py &>/dev/null & NODE_ENV=production node dist/server/index.js"]
+run = ["bash", "-c", "NODE_ENV=production node dist/server/index.js"]
 build = ["npm", "run", "build"]
 
 [userenv]
