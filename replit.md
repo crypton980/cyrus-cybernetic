@@ -58,6 +58,13 @@ The UI features a premium aerospace-grade design inspired by SpaceX Mission Cont
 - **Intelligent Self-Learning Communication Intelligence v1.0:** Adaptive ML engine integrated into NEXUS COMMS that analyzes every interaction for sentiment, user behavior, contact suggestions, anomaly detection, and churn risk.
 - **Python ML Intelligence Service v1.0:** Companion Python HTTP service providing advanced ML capabilities like sentiment analysis, anomaly detection, user clustering, and behavior prediction to NEXUS COMMS Intelligence.
 
+### Deployment Architecture
+- **Target:** Reserved VM (`deploymentTarget = "vm"`)
+- **Build:** `npm run build` (Vite frontend only, no esbuild server bundling)
+- **Run:** `NODE_ENV=production npx tsx server/index.ts` (tsx for true lazy dynamic imports)
+- **Startup Strategy:** Express server starts listening immediately with health check endpoints (`/__health`, `/health/live`, `/`) responding instantly. All heavy AI modules (40+ imports in routes.ts) are loaded lazily via dynamic `import()` with event loop yields between each module, allowing health checks to pass during initialization. API routes return 503 until all dependencies are loaded. Python services (Quantum AI Bridge, Comms ML) are spawned as detached processes after full initialization.
+- **Health Check Timing:** `/` responds with 200 within 2 seconds of startup.
+
 ### External Dependencies
 - **PostgreSQL Database:** Primary data persistence, hosted via Neon.
 - **OpenAI API:** GPT-4o for AI-powered responses, natural language understanding, image analysis; Whisper for audio transcription; TTS for voice synthesis; DALL-E 3 for image generation.

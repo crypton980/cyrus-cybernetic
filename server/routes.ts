@@ -1,51 +1,193 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertConversationSchema, insertMemorySchema, insertUploadedFileSchema } from "../shared/schema";
 import multer, { type StorageEngine } from "multer";
 
 type MulterFile = Express.Multer.File;
 import path from "path";
 import { randomUUID } from "crypto";
-import { neuralFusionEngine } from "./ai/neural-fusion";
-import { cyrusSoul } from "./ai/cyrus-soul";
-import { quantumCore } from "./ai/quantum-core";
-import { domainSummary, allBranches } from "./ai/branches/index";
-import { registerAudioRoutes } from "./replit_integrations/audio/routes";
-import { speechToText, ensureCompatibleFormat } from "./replit_integrations/audio/client";
-import { textToSpeechElevenLabs, textToSpeechStreamElevenLabs, ELEVENLABS_VOICES, type ElevenLabsVoice, getEmotionVoiceSettings } from "./elevenlabs/client";
 import OpenAI from "openai";
 import { z } from "zod";
-import { runAutonomy } from "./autonomy/run";
-import { registerDeviceRoutes } from "./device/routes";
-import { registerNavRoutes } from "./nav/routes";
-import { detectFile } from "./ingestion/detect";
-import { extractFile } from "./ingestion/extract";
-import { analyzeExtraction } from "./ingestion/analyze";
-import { buildReport } from "./ingestion/report";
-import { generateDocument } from "./docgen/generate";
-import { initSignalingServer } from "./comms/signaling";
-import { initSocketSignaling } from "./comms/socket-signaling";
-import { enqueueMessage, dequeueMessages, addReminder, listReminders } from "./comms/store";
-import { registerCommsRoutes } from "./comms/comms-routes";
 import { v4 as uuid } from "uuid";
 import fetch from "node-fetch";
-import { analyzeScan } from "./scan/analyze";
-import { decodeQr } from "./scan/qr";
-import { registerDroneRoutes } from "./drone/routes";
-import { experienceMemory } from "./ai/experience-memory";
-import { adaptiveLearning } from "./ai/adaptive-learning";
-import { registerAdvancedUpgradeRoutes } from "./ai/upgrades/routes";
-import { moduleOrchestrator } from "./ai/upgrades/module-orchestrator";
-import { registerInteractiveRoutes } from "./ai/interactive/routes";
-import { quantumBridge } from "./ai/quantum-bridge-client";
-import { quantumResponseFormatter } from "./ai/quantum-response-formatter";
-import { healthIntegrations, validateState, type HealthProvider } from "./health/integrations";
-import { registerImageRoutes } from "./replit_integrations/image/routes";
-import { generateImage } from "./replit_integrations/image/client";
-import { systemRefinementEngine } from "./ai/system-refinement-engine";
-import { emotionFusion } from "./humanoid/emotion-fusion";
-import { voiceProsody } from "./humanoid/voice-prosody";
+
+let storage: any;
+let insertConversationSchema: any;
+let insertMemorySchema: any;
+let insertUploadedFileSchema: any;
+let neuralFusionEngine: any;
+let cyrusSoul: any;
+let quantumCore: any;
+let domainSummary: any;
+let allBranches: any;
+let registerAudioRoutes: any;
+let speechToText: any;
+let ensureCompatibleFormat: any;
+let textToSpeechElevenLabs: any;
+let textToSpeechStreamElevenLabs: any;
+let ELEVENLABS_VOICES: any;
+let getEmotionVoiceSettings: any;
+let runAutonomy: any;
+let registerDeviceRoutes: any;
+let registerNavRoutes: any;
+let detectFile: any;
+let extractFile: any;
+let analyzeExtraction: any;
+let buildReport: any;
+let generateDocument: any;
+let initSignalingServer: any;
+let initSocketSignaling: any;
+let enqueueMessage: any;
+let dequeueMessages: any;
+let addReminder: any;
+let listReminders: any;
+let registerCommsRoutes: any;
+let analyzeScan: any;
+let decodeQr: any;
+let registerDroneRoutes: any;
+let experienceMemory: any;
+let adaptiveLearning: any;
+let registerAdvancedUpgradeRoutes: any;
+let moduleOrchestrator: any;
+let registerInteractiveRoutes: any;
+let quantumBridge: any;
+let quantumResponseFormatter: any;
+let healthIntegrations: any;
+let validateState: any;
+let registerImageRoutes: any;
+let generateImage: any;
+let systemRefinementEngine: any;
+let emotionFusion: any;
+let voiceProsody: any;
+
+const yield_ = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+let depsLoaded = false;
+
+async function loadDependencies() {
+  if (depsLoaded) return;
+  const storageM = await import("./storage");
+  storage = storageM.storage;
+  await yield_();
+
+  const schemaM = await import("../shared/schema");
+  insertConversationSchema = schemaM.insertConversationSchema;
+  insertMemorySchema = schemaM.insertMemorySchema;
+  insertUploadedFileSchema = schemaM.insertUploadedFileSchema;
+  await yield_();
+
+  const nfM = await import("./ai/neural-fusion");
+  neuralFusionEngine = nfM.neuralFusionEngine;
+  await yield_();
+
+  const csM = await import("./ai/cyrus-soul");
+  cyrusSoul = csM.cyrusSoul;
+  await yield_();
+
+  const qcM = await import("./ai/quantum-core");
+  quantumCore = qcM.quantumCore;
+  await yield_();
+
+  const brM = await import("./ai/branches/index");
+  domainSummary = brM.domainSummary;
+  allBranches = brM.allBranches;
+  await yield_();
+
+  const arM = await import("./replit_integrations/audio/routes");
+  registerAudioRoutes = arM.registerAudioRoutes;
+  const acM = await import("./replit_integrations/audio/client");
+  speechToText = acM.speechToText;
+  ensureCompatibleFormat = acM.ensureCompatibleFormat;
+  await yield_();
+
+  const elM = await import("./elevenlabs/client");
+  textToSpeechElevenLabs = elM.textToSpeechElevenLabs;
+  textToSpeechStreamElevenLabs = elM.textToSpeechStreamElevenLabs;
+  ELEVENLABS_VOICES = elM.ELEVENLABS_VOICES;
+  getEmotionVoiceSettings = elM.getEmotionVoiceSettings;
+  await yield_();
+
+  const auM = await import("./autonomy/run");
+  runAutonomy = auM.runAutonomy;
+  const drM = await import("./device/routes");
+  registerDeviceRoutes = drM.registerDeviceRoutes;
+  const nvM = await import("./nav/routes");
+  registerNavRoutes = nvM.registerNavRoutes;
+  await yield_();
+
+  const dtM = await import("./ingestion/detect");
+  detectFile = dtM.detectFile;
+  const exM = await import("./ingestion/extract");
+  extractFile = exM.extractFile;
+  const anM = await import("./ingestion/analyze");
+  analyzeExtraction = anM.analyzeExtraction;
+  const rpM = await import("./ingestion/report");
+  buildReport = rpM.buildReport;
+  await yield_();
+
+  const dgM = await import("./docgen/generate");
+  generateDocument = dgM.generateDocument;
+  await yield_();
+
+  const sgM = await import("./comms/signaling");
+  initSignalingServer = sgM.initSignalingServer;
+  const ssM = await import("./comms/socket-signaling");
+  initSocketSignaling = ssM.initSocketSignaling;
+  const stM = await import("./comms/store");
+  enqueueMessage = stM.enqueueMessage;
+  dequeueMessages = stM.dequeueMessages;
+  addReminder = stM.addReminder;
+  listReminders = stM.listReminders;
+  const crM = await import("./comms/comms-routes");
+  registerCommsRoutes = crM.registerCommsRoutes;
+  await yield_();
+
+  const scM = await import("./scan/analyze");
+  analyzeScan = scM.analyzeScan;
+  const qrM = await import("./scan/qr");
+  decodeQr = qrM.decodeQr;
+  const drnM = await import("./drone/routes");
+  registerDroneRoutes = drnM.registerDroneRoutes;
+  await yield_();
+
+  const emM = await import("./ai/experience-memory");
+  experienceMemory = emM.experienceMemory;
+  const alM = await import("./ai/adaptive-learning");
+  adaptiveLearning = alM.adaptiveLearning;
+  await yield_();
+
+  const aurM = await import("./ai/upgrades/routes");
+  registerAdvancedUpgradeRoutes = aurM.registerAdvancedUpgradeRoutes;
+  const moM = await import("./ai/upgrades/module-orchestrator");
+  moduleOrchestrator = moM.moduleOrchestrator;
+  const irM = await import("./ai/interactive/routes");
+  registerInteractiveRoutes = irM.registerInteractiveRoutes;
+  await yield_();
+
+  const qbM = await import("./ai/quantum-bridge-client");
+  quantumBridge = qbM.quantumBridge;
+  const qrfM = await import("./ai/quantum-response-formatter");
+  quantumResponseFormatter = qrfM.quantumResponseFormatter;
+  await yield_();
+
+  const hiM = await import("./health/integrations");
+  healthIntegrations = hiM.healthIntegrations;
+  validateState = hiM.validateState;
+  const imgRM = await import("./replit_integrations/image/routes");
+  registerImageRoutes = imgRM.registerImageRoutes;
+  const imgCM = await import("./replit_integrations/image/client");
+  generateImage = imgCM.generateImage;
+  await yield_();
+
+  const srM = await import("./ai/system-refinement-engine");
+  systemRefinementEngine = srM.systemRefinementEngine;
+  const efM = await import("./humanoid/emotion-fusion");
+  emotionFusion = efM.emotionFusion;
+  const vpM = await import("./humanoid/voice-prosody");
+  voiceProsody = vpM.voiceProsody;
+  await yield_();
+
+  depsLoaded = true;
+  console.log("[Routes] All dependencies loaded");
+}
 
 // Validation schemas for agent/device control
 const agentConfigSchema = z.object({
@@ -211,7 +353,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Initialize signaling server for WebRTC/messaging
+  await loadDependencies();
+
   initSignalingServer(httpServer);
   initSocketSignaling(httpServer);
   console.log("[Socket.IO] Real-time communication server active");
