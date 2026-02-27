@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { voiceProsody } from "./voice-prosody";
+import { emotionFusion } from "./emotion-fusion";
 
 function getOpenAIClient(): OpenAI | null {
   const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
@@ -28,6 +30,8 @@ interface ConversationTurn {
   timestamp: Date;
   sentiment?: string;
   acknowledgment?: string;
+  emotion?: string;
+  emotionScores?: Record<string, number>;
 }
 
 interface ConversationState {
@@ -37,6 +41,12 @@ interface ConversationState {
   engagementLevel: number;
   speakerName: string | null;
   lastActiveListeningResponse: string | null;
+  userEmotionProfile?: {
+    dominant: string;
+    valence: number;
+    arousal: number;
+    moodTrend: string;
+  };
 }
 
 interface ActiveListeningResponse {
@@ -173,49 +183,100 @@ HUMANOID CHARACTERISTICS:
     return completion.choices[0].message.content?.toLowerCase().trim() || "neutral";
   }
 
-  async processConversationTurn(humanInput: string): Promise<{
+  async processConversationTurn(humanInput: string, voiceFeatures?: any, facialData?: any): Promise<{
     acknowledgment: string;
     response: string;
     followUpQuestion?: string;
     suggestedActions?: string[];
+    emotionAnalysis?: any;
+    prosody?: any;
+    naturalDelay?: number;
+    backchannel?: string;
+    voiceSettings?: any;
   }> {
+    const emotionResult = emotionFusion.analyzeFullInput(
+      humanInput,
+      voiceFeatures || undefined,
+      facialData || undefined
+    );
+
+    const userId = this.conversationState.speakerName || 'default';
+    emotionFusion.updateUserProfile(userId, emotionResult);
+    const userProfile = emotionFusion.getUserProfile(userId);
+
+    const emotionPrompt = emotionFusion.buildEmotionAwareSystemPrompt(emotionResult, userProfile);
+
     const activeListening = await this.generateActiveListeningResponse(humanInput);
-    
+
+    const aiEmotion = voiceProsody.deriveAIEmotion(emotionResult.dominant);
+    const backchannel = voiceProsody.generateBackchannel(emotionResult.dominant);
+
     this.conversationState.turns.push({
       role: "human",
       content: humanInput,
       timestamp: new Date(),
-      sentiment: activeListening.emotionalMirroring
+      sentiment: activeListening.emotionalMirroring,
+      emotion: emotionResult.dominant,
+      emotionScores: emotionResult.scores as Record<string, number>,
     });
+
+    this.conversationState.emotionalContext = emotionResult.dominant;
+    this.conversationState.userEmotionProfile = {
+      dominant: emotionResult.dominant,
+      valence: emotionResult.valence,
+      arousal: emotionResult.arousal,
+      moodTrend: userProfile?.moodTrend || 'stable',
+    };
 
     const conversationContext = this.conversationState.turns
       .slice(-10)
-      .map(t => `${t.role === "human" ? "Human" : "CYRUS"}: ${t.content}`)
+      .map(t => {
+        const emotionTag = t.emotion ? ` [${t.emotion}]` : '';
+        return `${t.role === "human" ? "Human" : "CYRUS"}${emotionTag}: ${t.content}`;
+      })
       .join("\n");
+
+    const enhancedSystemPrompt = `${this.humanoidPersonality}
+
+${emotionPrompt}
+
+HUMAN-LIKE QUALITIES:
+- Use natural speech patterns with occasional hesitations
+- Express genuine reactions and opinions
+- Use backchanneling ("mmhmm", "I see", "right")
+- Vary your speech rhythm and pace
+- Show personality through word choice
+- Include subtle humor when appropriate
+- Reference previous conversation naturally
+- Mirror the user's communication style`;
 
     const completion = await getClient().chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: this.humanoidPersonality },
+        { role: "system", content: enhancedSystemPrompt },
         {
           role: "user",
           content: `Recent conversation:
 ${conversationContext}
 
 Human just said: "${humanInput}"
-Detected sentiment: ${activeListening.emotionalMirroring}
+Detected emotion: ${emotionResult.dominant} (${(emotionResult.dominantScore * 100).toFixed(0)}% confidence)
+Emotional valence: ${emotionResult.valence.toFixed(2)}
+${emotionResult.isCrisis ? 'CRISIS DETECTED: ' + emotionResult.crisisType : ''}
 
-Provide a natural, humanoid response that:
-1. Acknowledges what they said
-2. Responds thoughtfully to their message
-3. Optionally includes a follow-up question to continue engagement
-4. Maintains the conversation flow naturally
+Respond as a natural humanoid intelligence. Your response should:
+1. First acknowledge their emotional state appropriately
+2. Respond thoughtfully with genuine personality
+3. Match their energy level (arousal: ${emotionResult.arousal.toFixed(2)})
+4. Include a natural follow-up if appropriate
+5. Sound like a real person, not a chatbot
 
 Format your response as JSON:
 {
-  "mainResponse": "Your thoughtful response here",
-  "followUpQuestion": "Optional engaging follow-up question",
-  "suggestedActions": ["Optional action 1", "Optional action 2"]
+  "mainResponse": "Your natural, emotionally-aware response",
+  "followUpQuestion": "Optional natural follow-up",
+  "suggestedActions": ["Optional helpful action"],
+  "emotionalTone": "The emotional tone you're adopting"
 }`
         }
       ],
@@ -223,7 +284,7 @@ Format your response as JSON:
       temperature: 0.8
     });
 
-    let result: { mainResponse?: string; followUpQuestion?: string; suggestedActions?: string[] };
+    let result: { mainResponse?: string; followUpQuestion?: string; suggestedActions?: string[]; emotionalTone?: string };
     try {
       result = JSON.parse(completion.choices[0].message.content || '{}');
     } catch {
@@ -231,16 +292,28 @@ Format your response as JSON:
     }
 
     let fullResponse = result.mainResponse || "I appreciate you sharing that with me.";
-    
+
+    fullResponse = voiceProsody.addHumanLikeQualities(fullResponse, 'warm');
+
     if (result.followUpQuestion && Math.random() > 0.3) {
       fullResponse += ` ${result.followUpQuestion}`;
     }
+
+    const prosodyResult = voiceProsody.addNaturalProsody(fullResponse, {
+      emotion: aiEmotion,
+      speed: 1.0,
+      intensity: emotionResult.arousal,
+      includeBreaths: fullResponse.length > 100,
+      includeHesitations: emotionResult.arousal < 0.7,
+      includeBackchanneling: false,
+    });
 
     this.conversationState.turns.push({
       role: "cyrus",
       content: fullResponse,
       timestamp: new Date(),
-      acknowledgment: activeListening.acknowledgment
+      acknowledgment: activeListening.acknowledgment,
+      emotion: aiEmotion,
     });
 
     this.updateEngagementLevel(humanInput);
@@ -249,7 +322,26 @@ Format your response as JSON:
       acknowledgment: activeListening.acknowledgment,
       response: fullResponse,
       followUpQuestion: result.followUpQuestion,
-      suggestedActions: result.suggestedActions
+      suggestedActions: result.suggestedActions,
+      emotionAnalysis: {
+        userEmotion: emotionResult.dominant,
+        userEmotionScores: emotionResult.scores,
+        aiEmotion,
+        valence: emotionResult.valence,
+        arousal: emotionResult.arousal,
+        confidence: emotionResult.confidence,
+        suggestedTone: emotionResult.suggestedTone,
+        moodTrend: userProfile?.moodTrend,
+        isCrisis: emotionResult.isCrisis,
+        crisisType: emotionResult.crisisType,
+      },
+      prosody: {
+        enhancedText: prosodyResult.enhancedText,
+        pausePoints: prosodyResult.suggestedPauses,
+      },
+      naturalDelay: prosodyResult.naturalDelay,
+      backchannel,
+      voiceSettings: prosodyResult.voiceSettings,
     };
   }
 
