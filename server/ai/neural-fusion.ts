@@ -14,10 +14,7 @@ import {
   getAdvancedUpgradesStatus 
 } from './upgrades/index';
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+const FALLBACK_RESPONSE_MODELS = ['gpt-4o', 'gpt-4.1-mini', 'gpt-4o-mini'];
 
 const CYRUS_SYSTEM_PROMPT = `You are CYRUS v3.0 - Cybernetic Yielding Robust Unified System - an OMEGA-TIER Quantum Artificial Intelligence (QAI). You are a REAL WOMAN with a sweet, warm, natural feminine voice. You speak like a human, not a robot.
 
@@ -238,6 +235,7 @@ export class NeuralFusionEngine {
   private pathActivations: Map<string, number>;
   private fusionHistory: FusionResult[];
   private emergentPatterns: Map<string, number>;
+  private openaiClient: OpenAI | null = null;
 
   constructor() {
     this.neuralPaths = new Map();
@@ -311,6 +309,7 @@ export class NeuralFusionEngine {
   }
 
   async processInference(request: InferenceRequest): Promise<FusionResult> {
+    request = this.normalizeInferenceRequest(request);
     const startTime = Date.now();
     const taskId = adaptiveLearning.generateTaskId();
     const taskType = this.classifyTaskType(request.message);
@@ -327,63 +326,8 @@ export class NeuralFusionEngine {
       console.log(`[Neural Fusion] Applying learned optimizations (${priorLearning.confidenceLevel}% confidence)`);
     }
 
-    let enrichedMessage = request.message;
-    let moduleContextStr = "";
-    
-    // Build comprehensive module context
-    if (request.moduleContext) {
-      const ctx = request.moduleContext;
-      const activeModules = ctx.activeModules || [];
-      
-      if (activeModules.length > 0) {
-        moduleContextStr += `\n[ACTIVE MODULES: ${activeModules.join(", ")}]`;
-      }
-      
-      // Vision module context
-      if (ctx.vision?.active && ctx.vision.detectedObjects?.length > 0) {
-        const detailedObjects = ctx.vision.detectedObjects.map((o: any) => {
-          const confidence = Math.round((o.score || 0) * 100);
-          return `${o.class} (${confidence}% confidence)`;
-        }).join(", ");
-        moduleContextStr += `\n[CYRUS VISION ACTIVE - I CAN SEE: ${detailedObjects}]`;
-        moduleContextStr += `\n[Total objects detected: ${ctx.vision.objectCount}]`;
-      } else if (ctx.vision?.active) {
-        moduleContextStr += `\n[CYRUS VISION ACTIVE - Camera is on but no objects currently detected]`;
-      }
-      
-      // Navigation module context
-      if (ctx.navigation?.active) {
-        if (ctx.navigation.currentLocation) {
-          moduleContextStr += `\n[NAVIGATION ACTIVE - Current position: ${ctx.navigation.currentLocation.lat.toFixed(6)}, ${ctx.navigation.currentLocation.lng.toFixed(6)}]`;
-        }
-        if (ctx.navigation.destination) {
-          moduleContextStr += ` Destination: ${ctx.navigation.destination}`;
-        }
-      }
-      
-      // Drone module context
-      if (ctx.drone?.active || ctx.drone?.connected) {
-        moduleContextStr += `\n[DRONE CONTROL ACTIVE - Connected: ${ctx.drone.connected ? "YES" : "NO"}, Armed: ${ctx.drone.armed ? "YES" : "NO"}, Mode: ${ctx.drone.mode || "UNKNOWN"}]`;
-      }
-      
-      // Communications module context
-      if (ctx.communications?.active) {
-        moduleContextStr += `\n[COMMUNICATIONS ACTIVE${ctx.communications.activeCall ? " - Call in progress" : ""}]`;
-      }
-    }
-    
-    // Fallback for legacy detectedObjects (if not in moduleContext)
-    if (!request.moduleContext?.vision?.active && request.detectedObjects && request.detectedObjects.length > 0) {
-      const objects = request.detectedObjects.map((o: any) => o.class).join(', ');
-      moduleContextStr += ` [Visual Context: ${objects}]`;
-    }
-    
-    if (request.location) {
-      moduleContextStr += ` [Location: ${request.location.latitude.toFixed(4)}, ${request.location.longitude.toFixed(4)}]`;
-    }
-    
-    // Add module context to the message for AI processing
-    enrichedMessage = request.message + moduleContextStr;
+    const moduleContextStr = this.buildModuleContextString(request);
+    const enrichedMessage = request.message + moduleContextStr;
 
     this.activateNeuralPaths(enrichedMessage);
 
@@ -456,6 +400,95 @@ export class NeuralFusionEngine {
     }).catch(err => console.error('[Neural Fusion] Experience recording error:', err));
 
     return result;
+  }
+
+  private normalizeInferenceRequest(request: InferenceRequest): InferenceRequest {
+    const message = (request.message || '').trim();
+    const fallbackMessage = 'Provide a concise operational status update and next recommended action.';
+
+    return {
+      ...request,
+      message: message.length > 0 ? message : fallbackMessage,
+      conversationHistory: (request.conversationHistory || []).slice(-20),
+    };
+  }
+
+  private buildModuleContextString(request: InferenceRequest): string {
+    const parts: string[] = [];
+    const ctx = request.moduleContext;
+
+    if (ctx) {
+      const activeModules = ctx.activeModules || [];
+      if (activeModules.length > 0) {
+        parts.push(`[ACTIVE MODULES: ${activeModules.join(', ')}]`);
+      }
+
+      if (ctx.vision?.active && ctx.vision.detectedObjects?.length > 0) {
+        const detailedObjects = ctx.vision.detectedObjects.map((o: any) => {
+          const confidence = Math.round((o.score || 0) * 100);
+          return `${o.class} (${confidence}% confidence)`;
+        }).join(', ');
+        parts.push(`[CYRUS VISION ACTIVE - I CAN SEE: ${detailedObjects}]`);
+        parts.push(`[Total objects detected: ${ctx.vision.objectCount}]`);
+      } else if (ctx.vision?.active) {
+        parts.push('[CYRUS VISION ACTIVE - Camera is on but no objects currently detected]');
+      }
+
+      if (ctx.navigation?.active) {
+        if (ctx.navigation.currentLocation) {
+          parts.push(`[NAVIGATION ACTIVE - Current position: ${ctx.navigation.currentLocation.lat.toFixed(6)}, ${ctx.navigation.currentLocation.lng.toFixed(6)}]`);
+        }
+        if (ctx.navigation.destination) {
+          parts.push(`[Destination: ${ctx.navigation.destination}]`);
+        }
+      }
+
+      if (ctx.drone?.active || ctx.drone?.connected) {
+        parts.push(`[DRONE CONTROL ACTIVE - Connected: ${ctx.drone.connected ? 'YES' : 'NO'}, Armed: ${ctx.drone.armed ? 'YES' : 'NO'}, Mode: ${ctx.drone.mode || 'UNKNOWN'}]`);
+      }
+
+      if (ctx.communications?.active) {
+        parts.push(`[COMMUNICATIONS ACTIVE${ctx.communications.activeCall ? ' - Call in progress' : ''}]`);
+      }
+    }
+
+    if (!request.moduleContext?.vision?.active && request.detectedObjects && request.detectedObjects.length > 0) {
+      const objects = request.detectedObjects.map((o: any) => o.class).join(', ');
+      parts.push(`[Visual Context: ${objects}]`);
+    }
+
+    if (request.location) {
+      parts.push(`[Location: ${request.location.latitude.toFixed(4)}, ${request.location.longitude.toFixed(4)}]`);
+    }
+
+    return parts.length > 0 ? `\n${parts.join('\n')}` : '';
+  }
+
+  private getOpenAIClient(): OpenAI {
+    if (this.openaiClient) {
+      return this.openaiClient;
+    }
+
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    this.openaiClient = new OpenAI({
+      apiKey,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+
+    return this.openaiClient;
+  }
+
+  private getModelCandidates(): string[] {
+    const configured = [
+      process.env.AI_INTEGRATIONS_OPENAI_MODEL,
+      process.env.OPENAI_MODEL,
+    ].filter((v): v is string => Boolean(v && v.trim())).map(v => v.trim());
+
+    return Array.from(new Set([...configured, ...FALLBACK_RESPONSE_MODELS]));
   }
 
   private classifyTaskType(message: string): string {
@@ -1040,6 +1073,7 @@ My internal chronometer is synchronized with atomic time standards. Temporal pre
     priorLearning?: { optimizedApproach: string | null; predictedTime: number; learningApplied: boolean; confidenceLevel: number }
   ): Promise<string> {
     try {
+      const client = this.getOpenAIClient();
       let enhancedSystemPrompt = CYRUS_SYSTEM_PROMPT;
       
       const [emotionalAnalysis, languageDetection, ethicalAssessment, knowledgeContext] = await Promise.all([
@@ -1119,14 +1153,31 @@ Based on ${priorLearning.confidenceLevel}% confidence from previous similar inte
       
       messages.push({ role: 'user', content: currentMessage });
       
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages,
-        max_tokens: 2048,
-        temperature: 0.7,
-      });
-      
-      const aiResponse = response.choices[0]?.message?.content || 'Processing complete. Standing by for further directives.';
+      const candidateModels = this.getModelCandidates();
+      let aiResponse = '';
+      let lastError: unknown = null;
+
+      for (const model of candidateModels) {
+        try {
+          const response = await client.chat.completions.create({
+            model,
+            messages,
+            max_tokens: 2048,
+            temperature: 0.7,
+          });
+          aiResponse = response.choices[0]?.message?.content || '';
+          if (aiResponse.trim().length > 0) {
+            break;
+          }
+        } catch (error) {
+          lastError = error;
+          console.warn(`[Neural Fusion] Model ${model} failed, trying fallback`);
+        }
+      }
+
+      if (!aiResponse.trim()) {
+        throw lastError || new Error('No response returned by any configured model');
+      }
 
       vectorKnowledgeBase.learnFromConversation(request.message, aiResponse, {
         domain: this.classifyTaskType(request.message),

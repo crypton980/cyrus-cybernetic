@@ -37,6 +37,9 @@ except ImportError:
     HAS_SKLEARN = False
     logger.warning("[Comms ML] scikit-learn not available - using algorithmic fallbacks")
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 try:
     import nltk
     nltk.download('vader_lexicon', quiet=True)

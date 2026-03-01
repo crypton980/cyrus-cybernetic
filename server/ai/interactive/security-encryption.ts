@@ -69,9 +69,23 @@ class SecurityEncryptionModule {
   }
 
   private deriveMasterKey(): Buffer {
-    const secret = process.env.ENCRYPTION_SECRET || "cyrus-secure-default-key-change-in-production";
-    const salt = process.env.ENCRYPTION_SALT || "cyrus-salt-v1";
-    return pbkdf2Sync(secret, salt, 100000, 32, "sha512");
+    const secret = process.env.ENCRYPTION_SECRET;
+    const salt = process.env.ENCRYPTION_SALT;
+
+    if (secret && salt) {
+      return pbkdf2Sync(secret, salt, 100000, 32, "sha512");
+    }
+
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "ENCRYPTION_SECRET and ENCRYPTION_SALT must be set in production. Refusing insecure default encryption key."
+      );
+    }
+
+    console.warn(
+      "[Security Module] ENCRYPTION_SECRET/ENCRYPTION_SALT not set. Using ephemeral key for non-production mode."
+    );
+    return randomBytes(32);
   }
 
   private initializeDefaultClassifications(): void {

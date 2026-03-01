@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "uv pip install -q numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk 2>/dev/null || true; python server/quantum_ai/quantum_bridge.py & python server/comms/ml_service.py & tsx server/index.ts",
+    "bootstrap": "bash scripts/bootstrap.sh",
+    "dev": "uv pip install -q numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk 2>/dev/null || true; python3 server/quantum_ai/quantum_bridge.py & python3 server/comms/ml_service.py & tsx server/index.ts",
     "build": "vite build",
-    "start": "uv pip install -q numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk 2>/dev/null || true; python server/quantum_ai/quantum_bridge.py & python server/comms/ml_service.py & NODE_ENV=production node dist/server/index.js",
-    "quantum-bridge": "python server/quantum_ai/quantum_bridge.py",
+    "start": "uv pip install -q numpy scipy scikit-learn networkx matplotlib pandas mmh3 nltk 2>/dev/null || true; python3 server/quantum_ai/quantum_bridge.py & python3 server/comms/ml_service.py & NODE_ENV=production node dist/server/index.js",
+    "quantum-bridge": "python3 server/quantum_ai/quantum_bridge.py",
     "start:standalone": "bash standalone/start.sh",
     "install:standalone": "bash standalone/install.sh",
     "db:push": "drizzle-kit push",
@@ -37,6 +38,8 @@
     "@types/memoizee": "^0.4.12",
     "@types/passport": "^1.0.17",
     "@types/pdf-parse": "^1.1.5",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "connect-pg-simple": "^10.0.0",
@@ -62,6 +65,7 @@
     "passport": "^0.7.0",
     "pdf-parse": "^1.1.1",
     "pg": "^8.13.1",
+    "postcss": "^8.4.49",
     "qrcode-reader": "^1.0.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -69,20 +73,16 @@
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^2.5.5",
+    "tailwindcss": "^3.4.15",
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^5.1.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
     "uuid": "^10.0.0",
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
     "zod": "^3.25.76",
-    "zod-validation-error": "^5.0.0",
-    "@vitejs/plugin-react": "^4.3.3",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.15",
-    "tsx": "^4.19.2",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.15"
+    "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
@@ -93,6 +93,7 @@
     "@types/react-dom": "^18.3.1",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.13",
-    "drizzle-kit": "^0.28.1"
+    "drizzle-kit": "^0.28.1",
+    "vite": "^5.4.21"
   }
 }

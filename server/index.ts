@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import path from "path";
@@ -87,7 +88,16 @@ app.use((req, res, next) => {
 });
 
 const port = parseInt(process.env.PORT || "5000", 10);
-httpServer.listen({ port, host: "0.0.0.0", reusePort: true }, () => {
+const listenOptions: { port: number; host: string; reusePort?: boolean } = {
+  port,
+  host: "0.0.0.0",
+};
+
+if (process.env.ENABLE_REUSE_PORT === "true") {
+  listenOptions.reusePort = true;
+}
+
+httpServer.listen(listenOptions, () => {
   log(`serving on port ${port}`);
 
   setTimeout(() => {

@@ -3,8 +3,33 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import crypto from "crypto";
 
-const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
+
+function resolveSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (secret) return secret;
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET must be set in production.");
+  }
+
+  console.warn("[Auth] SESSION_SECRET not set. Using ephemeral session secret for non-production mode.");
+  return crypto.randomBytes(32).toString("hex");
+}
+
+function resolveAccessConfig() {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  const adminCode = process.env.ADMIN_ACCESS_CODE || (isProduction ? "" : "71580019");
+  const userCode = process.env.USER_ACCESS_CODE || (isProduction ? "" : "170392");
+  const adminUsername = process.env.ADMIN_USERNAME || "DELTA UNIFORM 00";
+
+  if (isProduction && (!adminCode || !userCode)) {
+    throw new Error("ADMIN_ACCESS_CODE and USER_ACCESS_CODE must be set in production.");
+  }
+
+  return { adminCode, userCode, adminUsername };
+}
 
 function createSessionStore() {
   const PgStore = connectPg(session);
@@ -17,9 +42,12 @@ function createSessionStore() {
 }
 
 export async function setupAuth(app: Express): Promise<void> {
+  const sessionSecret = resolveSessionSecret();
+  const { adminCode, userCode, adminUsername } = resolveAccessConfig();
+
   const sessionMiddleware = session({
     store: createSessionStore(),
-    secret: SESSION_SECRET,
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -38,14 +66,10 @@ export async function setupAuth(app: Express): Promise<void> {
       return res.status(400).json({ message: "Username and access code required" });
     }
 
-    const ADMIN_CODE = process.env.ADMIN_ACCESS_CODE || "71580019";
-    const USER_CODE = process.env.USER_ACCESS_CODE || "170392";
-    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "DELTA UNIFORM 00";
-
     let role = "user";
-    if (username === ADMIN_USERNAME && code === ADMIN_CODE) {
+    if (username === adminUsername && code === adminCode) {
       role = "admin";
-    } else if (code !== USER_CODE) {
+    } else if (code !== userCode) {
       return res.status(401).json({ message: "Invalid access code" });
     }
 
@@ -91,9 +115,11 @@ export const isAuthenticated: RequestHandler = (req: any, res, next) => {
 };
 
 export function getSession() {
+  const sessionSecret = resolveSessionSecret();
+
   return session({
     store: createSessionStore(),
-    secret: SESSION_SECRET,
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {

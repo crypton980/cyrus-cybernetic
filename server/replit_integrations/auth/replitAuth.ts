@@ -8,11 +8,17 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} must be set`);
+  return value;
+}
+
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
+      requireEnv("REPL_ID")
     );
   },
   { maxAge: 3600 * 1000 }
@@ -28,7 +34,7 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: requireEnv("SESSION_SECRET"),
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
@@ -122,7 +128,7 @@ export async function setupAuth(app: Express) {
     req.logout(() => {
       res.redirect(
         client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
+          client_id: requireEnv("REPL_ID"),
           post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
         }).href
       );

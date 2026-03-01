@@ -1015,6 +1015,22 @@ Format your response in a clear, structured manner.`
         return res.status(400).json({ error: "Message is required" });
       }
 
+      const withTimeout = async <T>(
+        task: Promise<T>,
+        timeoutMs: number,
+        fallbackValue: T
+      ): Promise<T> => {
+        let timeoutHandle: NodeJS.Timeout | null = null;
+        try {
+          const timeoutPromise = new Promise<T>((resolve) => {
+            timeoutHandle = setTimeout(() => resolve(fallbackValue), timeoutMs);
+          });
+          return await Promise.race([task, timeoutPromise]);
+        } finally {
+          if (timeoutHandle) clearTimeout(timeoutHandle);
+        }
+      };
+
       const imagePatterns = [
         /\b(generate|create|make|draw|paint|produce|render|sketch|design|craft)\b.*\b(image|picture|photo|illustration|art|artwork|drawing|painting|diagram|visual|graphic|portrait|scene)\b/i,
         /\b(image|picture|photo|illustration|diagram|drawing|sketch|visual|graphic|portrait)\b.*\b(of|for|showing|with|about|depicting|featuring)\b/i,
@@ -1087,31 +1103,49 @@ Format your response in a clear, structured manner.`
         }
       }
 
-      // Fetch recent conversation history for context (last 10 messages)
-      const recentConversations = await storage.getConversations(userId, 10);
-      // Reverse to chronological order (oldest first) and normalize roles
-      const conversationHistory = recentConversations.reverse().map(c => {
-        // Normalize role: 'assistant'/'cyrus' -> 'cyrus', everything else -> 'user'
-        const normalizedRole = (c.role === 'cyrus' || c.role === 'assistant') ? 'cyrus' : 'user';
-        return {
-          role: normalizedRole as 'user' | 'cyrus',
-          content: c.content
-        };
-      });
+      let conversationHistory: Array<{ role: 'user' | 'cyrus'; content: string }> = [];
+      try {
+        const recentConversations = await storage.getConversations(userId, 10);
+        conversationHistory = recentConversations.reverse().map(c => {
+          const normalizedRole = (c.role === 'cyrus' || c.role === 'assistant') ? 'cyrus' : 'user';
+          return {
+            role: normalizedRole as 'user' | 'cyrus',
+            content: c.content
+          };
+        });
+      } catch (historyError) {
+        console.warn('[CYRUS] Conversation history unavailable, continuing without persisted memory:', historyError);
+      }
       
-      // Quantum Intelligence Enhancement - Enhance response quality with advanced algorithms
-      const quantumEnhancement = await quantumBridge.enhanceResponse(message, {
-        detectedObjects,
-        location,
-        conversationCount: conversationHistory.length
-      });
+      let quantumEnhancement: any = null;
+      try {
+        quantumEnhancement = await withTimeout(
+          quantumBridge.enhanceResponse(message, {
+            detectedObjects,
+            location,
+            conversationCount: conversationHistory.length
+          }),
+          5000,
+          null
+        );
+      } catch (quantumError) {
+        console.warn('[CYRUS] Quantum enhancement unavailable, using base inference path:', quantumError);
+      }
       
-      // Build unified context from all 13 modules
-      const orchestratorContext = await moduleOrchestrator.buildUnifiedContext(message, {
-        vision: moduleContext?.vision,
-        location,
-        detectedObjects
-      });
+      let orchestratorContext: any = { activeModules: [], moduleData: {} };
+      try {
+        orchestratorContext = await withTimeout(
+          moduleOrchestrator.buildUnifiedContext(message, {
+            vision: moduleContext?.vision,
+            location,
+            detectedObjects
+          }),
+          5000,
+          { activeModules: [], moduleData: {} }
+        );
+      } catch (orchestratorError) {
+        console.warn('[CYRUS] Module orchestrator context unavailable, continuing with minimal context:', orchestratorError);
+      }
       
       // Merge orchestrator context with existing module context and quantum enhancement
       const nexusIntel = quantumEnhancement?.nexus_intelligence;
@@ -1147,16 +1181,28 @@ Format your response in a clear, structured manner.`
         ? quantumBridge.buildSystemPromptEnhancement(quantumEnhancement)
         : '';
       
-      const result = await neuralFusionEngine.processInference({
-        message,
-        imageData,
-        detectedObjects,
-        location,
-        userId,
-        moduleContext: enhancedModuleContext,
-        conversationHistory,
-        quantumPromptEnhancement
-      });
+      const result = await withTimeout(
+        neuralFusionEngine.processInference({
+          message,
+          imageData,
+          detectedObjects,
+          location,
+          userId,
+          moduleContext: enhancedModuleContext,
+          conversationHistory,
+          quantumPromptEnhancement
+        }),
+        25000,
+        {
+          response: 'Core inference timed out under degraded dependencies. Systems remain operational in fallback mode; please retry once services stabilize.',
+          confidence: 0.45,
+          processingTime: 25000,
+          branchesEngaged: [],
+          quantumEnhanced: false,
+          neuralPathsActivated: 0,
+          agiReasoning: true,
+        }
+      );
       
       // Apply quantum formatting to transform response presentation
       let formattedResponse = stripEmojis(result.response);

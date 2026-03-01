@@ -3,6 +3,8 @@ import { db } from "../db";
 import { knowledgeGraph, performanceMetrics, evolutionLog } from "../../shared/schema";
 import { desc, sql } from "drizzle-orm";
 
+const FALLBACK_REFINEMENT_MODELS = ["gpt-4o", "gpt-4.1-mini", "gpt-4o-mini"];
+
 function getOpenAI(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
   if (!apiKey) {
@@ -12,6 +14,61 @@ function getOpenAI(): OpenAI {
     apiKey,
     baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
   });
+}
+
+function getModelCandidates(): string[] {
+  const configured = [
+    process.env.AI_INTEGRATIONS_OPENAI_MODEL,
+    process.env.OPENAI_MODEL,
+  ].filter((value): value is string => Boolean(value && value.trim())).map(value => value.trim());
+
+  return Array.from(new Set([...configured, ...FALLBACK_REFINEMENT_MODELS]));
+}
+
+function safeParseJsonObject(content: string | null | undefined): Record<string, any> {
+  if (!content) return {};
+  try {
+    const parsed = JSON.parse(content);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+async function createJsonCompletionWithFallback(params: {
+  messages: Array<{ role: "system" | "user"; content: string }>;
+  temperature: number;
+  maxTokens: number;
+}): Promise<Record<string, any>> {
+  const openai = getOpenAI();
+  const models = getModelCandidates();
+  let lastError: unknown = null;
+
+  for (const model of models) {
+    try {
+      const response = await openai.chat.completions.create({
+        model,
+        messages: params.messages,
+        temperature: params.temperature,
+        max_tokens: params.maxTokens,
+        response_format: { type: "json_object" },
+      });
+
+      const content = response.choices[0]?.message?.content;
+      const parsed = safeParseJsonObject(content);
+      if (Object.keys(parsed).length > 0) {
+        return parsed;
+      }
+    } catch (error) {
+      lastError = error;
+      console.warn(`[Refinement] Model ${model} failed, trying fallback`);
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+  return {};
 }
 
 export interface RefinementResult {
@@ -60,7 +117,6 @@ class SystemRefinementEngine {
   async analyzeSystem(): Promise<SystemAnalysis> {
     console.log("[Refinement] Running comprehensive system analysis...");
 
-    const openai = getOpenAI();
     let knowledgeCount = 0;
     let performanceCount = 0;
     try {
@@ -97,19 +153,14 @@ Respond ONLY with valid JSON:
 }`;
 
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+      const analysis = await createJsonCompletionWithFallback({
         messages: [
           { role: "system", content: "You are a system performance analyzer for an advanced AI humanoid system. Provide precise, actionable analysis in JSON format only." },
           { role: "user", content: analysisPrompt }
         ],
         temperature: 0.3,
-        max_tokens: 800,
-        response_format: { type: "json_object" },
+        maxTokens: 800,
       });
-
-      const content = response.choices[0]?.message?.content || "{}";
-      const analysis = JSON.parse(content);
 
       return {
         overallScore: analysis.overallScore || Math.round(avgConfidence * 100),
@@ -140,10 +191,7 @@ Respond ONLY with valid JSON:
 
   async optimizePrompt(currentPrompt: string, targetBehavior: string): Promise<PromptOptimizationResult> {
     console.log("[Refinement] Optimizing system prompt...");
-    const openai = getOpenAI();
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const result = await createJsonCompletionWithFallback({
       messages: [
         {
           role: "system",
@@ -166,12 +214,8 @@ Respond with JSON:
         }
       ],
       temperature: 0.4,
-      max_tokens: 2000,
-      response_format: { type: "json_object" },
+      maxTokens: 2000,
     });
-
-    const content = response.choices[0]?.message?.content || "{}";
-    const result = JSON.parse(content);
 
     this.systemPromptVersion++;
 
@@ -185,10 +229,7 @@ Respond with JSON:
 
   async enhanceKnowledge(domain: string, depth: "basic" | "intermediate" | "advanced" | "expert" = "advanced"): Promise<KnowledgeEnhancement> {
     console.log(`[Refinement] Enhancing knowledge: domain=${domain}, depth=${depth}`);
-    const openai = getOpenAI();
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const data = await createJsonCompletionWithFallback({
       messages: [
         {
           role: "system",
@@ -210,12 +251,9 @@ Respond with JSON:
         }
       ],
       temperature: 0.5,
-      max_tokens: 1500,
-      response_format: { type: "json_object" },
+      maxTokens: 1500,
     });
 
-    const content = response.choices[0]?.message?.content || "{}";
-    const data = JSON.parse(content);
     const concepts = data.concepts || [];
 
     let conceptsAdded = 0;
@@ -263,15 +301,13 @@ Respond with JSON:
 
   async refineResponseQuality(sampleQueries: string[]): Promise<RefinementResult> {
     console.log(`[Refinement] Refining response quality with ${sampleQueries.length} sample queries...`);
-    const openai = getOpenAI();
 
     const improvements: string[] = [];
     let totalScore = 0;
 
     for (const query of sampleQueries.slice(0, 5)) {
       try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o",
+        const evaluation = await createJsonCompletionWithFallback({
           messages: [
             {
               role: "system",
@@ -292,12 +328,9 @@ Respond with JSON:
             }
           ],
           temperature: 0.4,
-          max_tokens: 500,
-          response_format: { type: "json_object" },
+          maxTokens: 500,
         });
 
-        const content = response.choices[0]?.message?.content || "{}";
-        const evaluation = JSON.parse(content);
         totalScore += evaluation.qualityScore || 75;
         if (evaluation.keyImprovement) {
           improvements.push(evaluation.keyImprovement);
