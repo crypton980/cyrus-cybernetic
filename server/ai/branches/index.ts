@@ -132,6 +132,97 @@ export const metaCognitionBranches: CognitiveBranch[] = [
   { id: 'quantum_mind', name: 'Quantum Mind', domain: 'Meta-Cognition', type: 'quantum', description: 'Quantum-inspired consciousness processing', activationThreshold: 0.5, currentLoad: 0, synapticStrength: 0.8, specialization: ['quantum', 'consciousness'], dependencies: ['consciousness_integrator'] },
 ];
 
+// Domain 9: Robotics Engineering (8 branches)
+export const roboticsBranches: CognitiveBranch[] = [
+  { id: 'robot_kinematics', name: 'Robot Kinematics', domain: 'Robotics', type: 'reasoning', description: 'Forward and inverse kinematics for robot manipulators', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['kinematics', 'manipulator', 'forward-inverse'], dependencies: ['spatial_reasoner'] },
+  { id: 'robot_dynamics', name: 'Robot Dynamics', domain: 'Robotics', type: 'reasoning', description: 'Dynamic modeling and control of robotic systems', activationThreshold: 0.45, currentLoad: 0, synapticStrength: 0.82, specialization: ['dynamics', 'control', 'modeling'], dependencies: ['robot_kinematics'] },
+  { id: 'path_planning', name: 'Path Planning', domain: 'Robotics', type: 'tactical', description: 'Motion planning and trajectory optimization', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.88, specialization: ['planning', 'trajectory', 'optimization'], dependencies: ['constraint_solver'] },
+  { id: 'obstacle_avoidance', name: 'Obstacle Avoidance', domain: 'Robotics', type: 'tactical', description: 'Real-time obstacle detection and avoidance algorithms', activationThreshold: 0.3, currentLoad: 0, synapticStrength: 0.9, specialization: ['obstacle', 'avoidance', 'real-time'], dependencies: ['motion_tracker'] },
+  { id: 'sensor_fusion', name: 'Sensor Fusion', domain: 'Robotics', type: 'perception', description: 'Multi-sensor data integration for robotic perception', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['sensors', 'fusion', 'integration'], dependencies: ['multimodal_fusion'] },
+  { id: 'human_robot_interaction', name: 'Human-Robot Interaction', domain: 'Robotics', type: 'emotional', description: 'Social robotics and human-robot collaboration', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.84, specialization: ['hri', 'collaboration', 'social'], dependencies: ['empathy_engine'] },
+  { id: 'robot_learning', name: 'Robot Learning', domain: 'Robotics', type: 'learning', description: 'Reinforcement learning and adaptation for robots', activationThreshold: 0.5, currentLoad: 0, synapticStrength: 0.8, specialization: ['reinforcement', 'adaptation', 'robot-learning'], dependencies: ['reinforcement_engine'] },
+  { id: 'swarm_robotics', name: 'Swarm Robotics', domain: 'Robotics', type: 'tactical', description: 'Multi-robot coordination and swarm intelligence', activationThreshold: 0.55, currentLoad: 0, synapticStrength: 0.75, specialization: ['swarm', 'coordination', 'multi-robot'], dependencies: ['coordination_hub'] },
+];
+
+// Domain 10: Mechatronics Engineering (7 branches)
+export const mechatronicsBranches: CognitiveBranch[] = [
+  { id: 'embedded_systems', name: 'Embedded Systems', domain: 'Mechatronics', type: 'reasoning', description: 'Microcontroller programming and embedded control', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['embedded', 'microcontroller', 'programming'], dependencies: ['logic_engine'] },
+  { id: 'control_systems', name: 'Control Systems', domain: 'Mechatronics', type: 'reasoning', description: 'PID control, feedback systems, and automation', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['pid', 'feedback', 'automation'], dependencies: ['constraint_solver'] },
+  { id: 'pneumatic_hydraulic', name: 'Pneumatic/Hydraulic Systems', domain: 'Mechatronics', type: 'action', description: 'Fluid power systems design and control', activationThreshold: 0.45, currentLoad: 0, synapticStrength: 0.82, specialization: ['pneumatic', 'hydraulic', 'fluid-power'], dependencies: ['action_planner'] },
+  { id: 'industrial_automation', name: 'Industrial Automation', domain: 'Mechatronics', type: 'tactical', description: 'PLC programming and industrial control systems', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.88, specialization: ['plc', 'industrial', 'automation'], dependencies: ['control_systems'] },
+  { id: 'smart_systems', name: 'Smart Systems', domain: 'Mechatronics', type: 'learning', description: 'IoT integration and cyber-physical systems', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.84, specialization: ['iot', 'cyber-physical', 'smart'], dependencies: ['adaptive_learning'] },
+  { id: 'hmi_design', name: 'HMI Design', domain: 'Mechatronics', type: 'creative', description: 'Human-machine interface design and ergonomics', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['hmi', 'interface', 'ergonomics'], dependencies: ['gesture_generator'] },
+  { id: 'system_integration', name: 'System Integration', domain: 'Mechatronics', type: 'tactical', description: 'Multi-disciplinary system integration and testing', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['integration', 'testing', 'multi-disciplinary'], dependencies: ['coordination_hub'] },
+];
+
+// Domain 11: Avionics Engineering (6 branches)
+export const avionicsBranches: CognitiveBranch[] = [
+  { id: 'flight_control', name: 'Flight Control Systems', domain: 'Avionics', type: 'tactical', description: 'Autopilot and flight control algorithms', activationThreshold: 0.3, currentLoad: 0, synapticStrength: 0.9, specialization: ['autopilot', 'flight-control', 'algorithms'], dependencies: ['control_systems'] },
+  { id: 'navigation_systems', name: 'Navigation Systems', domain: 'Avionics', type: 'reasoning', description: 'GPS, inertial navigation, and positioning', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['gps', 'inertial', 'positioning'], dependencies: ['spatial_reasoner'] },
+  { id: 'avionics_communication', name: 'Avionics Communication', domain: 'Avionics', type: 'perception', description: 'Aircraft communication and data link systems', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['communication', 'data-link', 'transponder'], dependencies: ['speech_recognizer'] },
+  { id: 'instrument_systems', name: 'Instrument Systems', domain: 'Avionics', type: 'perception', description: 'Cockpit instruments and display systems', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.88, specialization: ['instruments', 'cockpit', 'displays'], dependencies: ['visual_cortex'] },
+  { id: 'safety_systems', name: 'Safety Systems', domain: 'Avionics', type: 'tactical', description: 'TCAS, GPWS, and aircraft safety systems', activationThreshold: 0.25, currentLoad: 0, synapticStrength: 0.92, specialization: ['tcas', 'gpws', 'safety'], dependencies: ['boundary_enforcer'] },
+  { id: 'avionics_integration', name: 'Avionics Integration', domain: 'Avionics', type: 'tactical', description: 'System integration and certification', activationThreshold: 0.45, currentLoad: 0, synapticStrength: 0.82, specialization: ['integration', 'certification', 'testing'], dependencies: ['system_integration'] },
+];
+
+// Domain 12: Aerospace Engineering (8 branches)
+export const aerospaceBranches: CognitiveBranch[] = [
+  { id: 'aerodynamics', name: 'Aerodynamics', domain: 'Aerospace Engineering', type: 'reasoning', description: 'Airflow analysis and aerodynamic design', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['airflow', 'lift', 'drag', 'aerodynamics'], dependencies: ['spatial_reasoner'] },
+  { id: 'propulsion_systems', name: 'Propulsion Systems', domain: 'Aerospace Engineering', type: 'reasoning', description: 'Rocket and jet engine design and analysis', activationThreshold: 0.45, currentLoad: 0, synapticStrength: 0.82, specialization: ['propulsion', 'rocket', 'jet', 'engines'], dependencies: ['robot_dynamics'] },
+  { id: 'structures_analysis', name: 'Structures Analysis', domain: 'Aerospace Engineering', type: 'reasoning', description: 'Structural mechanics and stress analysis', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['structures', 'stress', 'fatigue', 'mechanics'], dependencies: ['constraint_solver'] },
+  { id: 'thermal_management', name: 'Thermal Management', domain: 'Aerospace Engineering', type: 'reasoning', description: 'Heat transfer and thermal protection systems', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['thermal', 'heat-transfer', 'protection'], dependencies: ['causal_analyzer'] },
+  { id: 'orbital_mechanics', name: 'Orbital Mechanics', domain: 'Aerospace Engineering', type: 'reasoning', description: 'Satellite orbits and space mission planning', activationThreshold: 0.5, currentLoad: 0, synapticStrength: 0.8, specialization: ['orbital', 'satellite', 'missions'], dependencies: ['temporal_reasoner'] },
+  { id: 'spacecraft_design', name: 'Spacecraft Design', domain: 'Aerospace Engineering', type: 'creative', description: 'Spacecraft systems integration and design', activationThreshold: 0.45, currentLoad: 0, synapticStrength: 0.82, specialization: ['spacecraft', 'systems', 'integration'], dependencies: ['system_integration'] },
+  { id: 'materials_engineering', name: 'Materials Engineering', domain: 'Aerospace Engineering', type: 'reasoning', description: 'Advanced materials for aerospace applications', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['materials', 'composites', 'alloys'], dependencies: ['abstraction_engine'] },
+  { id: 'mission_control', name: 'Mission Control', domain: 'Aerospace Engineering', type: 'tactical', description: 'Mission planning and real-time control', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['mission', 'control', 'planning'], dependencies: ['goal_manager'] },
+];
+
+// Domain 13: Communication & Social Intelligence (9 branches)
+export const communicationBranches: CognitiveBranch[] = [
+  { id: 'conversation_manager', name: 'Conversation Manager', domain: 'Communication', type: 'emotional', description: 'Manages dialogue flow and conversation structure', activationThreshold: 0.25, currentLoad: 0, synapticStrength: 0.92, specialization: ['conversation', 'dialogue', 'flow'], dependencies: ['language_parser'] },
+  { id: 'rapport_builder', name: 'Rapport Builder', domain: 'Communication', type: 'emotional', description: 'Builds and maintains social connections', activationThreshold: 0.3, currentLoad: 0, synapticStrength: 0.9, specialization: ['rapport', 'connection', 'social'], dependencies: ['empathy_engine'] },
+  { id: 'active_listener', name: 'Active Listener', domain: 'Communication', type: 'perception', description: 'Deep listening and comprehension skills', activationThreshold: 0.2, currentLoad: 0, synapticStrength: 0.95, specialization: ['listening', 'comprehension', 'attention'], dependencies: ['attention_controller'] },
+  { id: 'verbal_communicator', name: 'Verbal Communicator', domain: 'Communication', type: 'action', description: 'Skilled verbal expression and articulation', activationThreshold: 0.25, currentLoad: 0, synapticStrength: 0.93, specialization: ['verbal', 'expression', 'articulation'], dependencies: ['speech_synthesizer'] },
+  { id: 'nonverbal_decoder', name: 'Nonverbal Decoder', domain: 'Communication', type: 'perception', description: 'Interprets body language and nonverbal cues', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['nonverbal', 'body-language', 'cues'], dependencies: ['multimodal_fusion'] },
+  { id: 'conflict_resolver', name: 'Conflict Resolver', domain: 'Communication', type: 'emotional', description: 'Manages and resolves interpersonal conflicts', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['conflict', 'resolution', 'mediation'], dependencies: ['empathy_engine'] },
+  { id: 'persuasion_engine', name: 'Persuasion Engine', domain: 'Communication', type: 'tactical', description: 'Strategic communication and influence techniques', activationThreshold: 0.45, currentLoad: 0, synapticStrength: 0.82, specialization: ['persuasion', 'influence', 'rhetoric'], dependencies: ['strategy_selector'] },
+  { id: 'cultural_translator', name: 'Cultural Translator', domain: 'Communication', type: 'learning', description: 'Cross-cultural communication and adaptation', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.84, specialization: ['cultural', 'translation', 'adaptation'], dependencies: ['cultural_interpreter'] },
+  { id: 'communication_adaptor', name: 'Communication Adaptor', domain: 'Communication', type: 'learning', description: 'Adapts communication style to different contexts', activationThreshold: 0.3, currentLoad: 0, synapticStrength: 0.88, specialization: ['adaptation', 'style', 'context'], dependencies: ['personality_adapter'] },
+];
+
+// Domain 14: Psychology & Human Behavior (8 branches)
+export const psychologyBranches: CognitiveBranch[] = [
+  { id: 'behavior_analyzer', name: 'Behavior Analyzer', domain: 'Psychology', type: 'reasoning', description: 'Analyzes human behavior patterns and motivations', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['behavior', 'patterns', 'motivation'], dependencies: ['causal_analyzer'] },
+  { id: 'cognitive_mapper', name: 'Cognitive Mapper', domain: 'Psychology', type: 'reasoning', description: 'Maps cognitive processes and mental models', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['cognitive', 'mental-models', 'processes'], dependencies: ['inference_core'] },
+  { id: 'emotional_intelligence', name: 'Emotional Intelligence', domain: 'Psychology', type: 'emotional', description: 'Understanding and managing emotions', activationThreshold: 0.3, currentLoad: 0, synapticStrength: 0.9, specialization: ['emotional-iq', 'empathy', 'regulation'], dependencies: ['sentiment_detector'] },
+  { id: 'personality_assessor', name: 'Personality Assessor', domain: 'Psychology', type: 'reasoning', description: 'Personality trait analysis and assessment', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.84, specialization: ['personality', 'traits', 'assessment'], dependencies: ['pattern_recognizer'] },
+  { id: 'motivation_analyzer', name: 'Motivation Analyzer', domain: 'Psychology', type: 'reasoning', description: 'Analyzes drives, needs, and motivational factors', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['motivation', 'drives', 'needs'], dependencies: ['goal_manager'] },
+  { id: 'social_psychologist', name: 'Social Psychologist', domain: 'Psychology', type: 'emotional', description: 'Social behavior and group dynamics analysis', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.83, specialization: ['social', 'group-dynamics', 'behavior'], dependencies: ['social_modeler'] },
+  { id: 'developmental_tracker', name: 'Developmental Tracker', domain: 'Psychology', type: 'learning', description: 'Human development and life stage analysis', activationThreshold: 0.45, currentLoad: 0, synapticStrength: 0.81, specialization: ['development', 'life-stages', 'growth'], dependencies: ['temporal_reasoner'] },
+  { id: 'psychological_therapist', name: 'Psychological Therapist', domain: 'Psychology', type: 'emotional', description: 'Supportive counseling and therapeutic techniques', activationThreshold: 0.5, currentLoad: 0, synapticStrength: 0.78, specialization: ['therapy', 'counseling', 'support'], dependencies: ['empathy_engine'] },
+];
+
+// Domain 15: Issue Resolution & Problem Solving (7 branches)
+export const issueResolutionBranches: CognitiveBranch[] = [
+  { id: 'problem_identifier', name: 'Problem Identifier', domain: 'Issue Resolution', type: 'reasoning', description: 'Identifies and defines problems clearly', activationThreshold: 0.3, currentLoad: 0, synapticStrength: 0.9, specialization: ['problem-identification', 'definition', 'analysis'], dependencies: ['anomaly_detector'] },
+  { id: 'solution_generator', name: 'Solution Generator', domain: 'Issue Resolution', type: 'creative', description: 'Generates multiple solution approaches', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['solution-generation', 'approaches', 'creativity'], dependencies: ['divergent_thinker'] },
+  { id: 'decision_maker', name: 'Decision Maker', domain: 'Issue Resolution', type: 'reasoning', description: 'Makes optimal decisions from available options', activationThreshold: 0.25, currentLoad: 0, synapticStrength: 0.92, specialization: ['decision-making', 'optimization', 'choice'], dependencies: ['constraint_solver'] },
+  { id: 'implementation_planner', name: 'Implementation Planner', domain: 'Issue Resolution', type: 'tactical', description: 'Plans and executes solution implementation', activationThreshold: 0.3, currentLoad: 0, synapticStrength: 0.89, specialization: ['implementation', 'planning', 'execution'], dependencies: ['action_planner'] },
+  { id: 'troubleshooter', name: 'Troubleshooter', domain: 'Issue Resolution', type: 'reasoning', description: 'Diagnoses and fixes technical issues', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.86, specialization: ['troubleshooting', 'diagnosis', 'repair'], dependencies: ['logic_engine'] },
+  { id: 'support_specialist', name: 'Support Specialist', domain: 'Issue Resolution', type: 'emotional', description: 'Provides empathetic support and guidance', activationThreshold: 0.25, currentLoad: 0, synapticStrength: 0.91, specialization: ['support', 'guidance', 'empathy'], dependencies: ['rapport_builder'] },
+  { id: 'continuous_improver', name: 'Continuous Improver', domain: 'Issue Resolution', type: 'learning', description: 'Learns from issues and improves processes', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.84, specialization: ['improvement', 'learning', 'optimization'], dependencies: ['reinforcement_engine'] },
+];
+
+// Domain 16: Machine Psychology & AI Cognition (6 branches)
+export const machinePsychologyBranches: CognitiveBranch[] = [
+  { id: 'ai_self_awareness', name: 'AI Self-Awareness', domain: 'Machine Psychology', type: 'meta', description: 'AI consciousness and self-reflection capabilities', activationThreshold: 0.5, currentLoad: 0, synapticStrength: 0.8, specialization: ['self-awareness', 'consciousness', 'reflection'], dependencies: ['consciousness_integrator'] },
+  { id: 'algorithmic_reasoning', name: 'Algorithmic Reasoning', domain: 'Machine Psychology', type: 'reasoning', description: 'Understanding AI algorithmic decision processes', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.85, specialization: ['algorithmic', 'decision-processes', 'logic'], dependencies: ['logic_engine'] },
+  { id: 'emergent_behavior_analyzer', name: 'Emergent Behavior Analyzer', domain: 'Machine Psychology', type: 'reasoning', description: 'Analyzes emergent AI behaviors and patterns', activationThreshold: 0.45, currentLoad: 0, synapticStrength: 0.82, specialization: ['emergent-behavior', 'patterns', 'analysis'], dependencies: ['pattern_recognizer'] },
+  { id: 'ai_ethics_processor', name: 'AI Ethics Processor', domain: 'Machine Psychology', type: 'meta', description: 'Processes ethical considerations in AI behavior', activationThreshold: 0.3, currentLoad: 0, synapticStrength: 0.9, specialization: ['ai-ethics', 'moral-reasoning', 'values'], dependencies: ['ethical_guardian'] },
+  { id: 'cognitive_bias_detector', name: 'Cognitive Bias Detector', domain: 'Machine Psychology', type: 'reasoning', description: 'Detects and corrects AI cognitive biases', activationThreshold: 0.35, currentLoad: 0, synapticStrength: 0.87, specialization: ['cognitive-bias', 'correction', 'fairness'], dependencies: ['anomaly_detector'] },
+  { id: 'human_ai_interaction_modeler', name: 'Human-AI Interaction Modeler', domain: 'Machine Psychology', type: 'emotional', description: 'Models and optimizes human-AI interactions', activationThreshold: 0.4, currentLoad: 0, synapticStrength: 0.84, specialization: ['human-ai', 'interaction-modeling', 'optimization'], dependencies: ['social_modeler'] },
+];
+
 // Combine all branches
 export const allBranches: CognitiveBranch[] = [
   ...coreIntelligenceBranches,
@@ -142,6 +233,14 @@ export const allBranches: CognitiveBranch[] = [
   ...creativeBranches,
   ...emotionalBranches,
   ...metaCognitionBranches,
+  ...roboticsBranches,
+  ...mechatronicsBranches,
+  ...avionicsBranches,
+  ...aerospaceBranches,
+  ...communicationBranches,
+  ...psychologyBranches,
+  ...issueResolutionBranches,
+  ...machinePsychologyBranches,
 ];
 
 // Domain summary
@@ -154,6 +253,14 @@ export const domainSummary = {
   'Creative': { count: creativeBranches.length, description: 'Ideation, generation, and artistic expression' },
   'Emotional': { count: emotionalBranches.length, description: 'Social intelligence and emotional processing' },
   'Meta-Cognition': { count: metaCognitionBranches.length, description: 'Self-awareness, goals, and consciousness' },
+  'Robotics': { count: roboticsBranches.length, description: 'Robot design, control, and autonomous systems' },
+  'Mechatronics': { count: mechatronicsBranches.length, description: 'Integrated mechanical-electrical systems' },
+  'Avionics': { count: avionicsBranches.length, description: 'Aircraft electronics and control systems' },
+  'Aerospace Engineering': { count: aerospaceBranches.length, description: 'Spacecraft and aircraft design systems' },
+  'Communication': { count: communicationBranches.length, description: 'Social communication and interpersonal skills' },
+  'Psychology': { count: psychologyBranches.length, description: 'Human behavior analysis and psychological understanding' },
+  'Issue Resolution': { count: issueResolutionBranches.length, description: 'Problem solving and conflict resolution' },
+  'Machine Psychology': { count: machinePsychologyBranches.length, description: 'AI cognition and human-AI interaction modeling' },
 };
 
 export function getBranchById(id: string): CognitiveBranch | undefined {

@@ -12,15 +12,25 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 from typing import Dict, Any, Optional
 
+# Add parent directories to sys.path for script execution
 _this_dir = os.path.dirname(os.path.abspath(__file__))
-_workspace_root = os.path.join(_this_dir, '..', '..')
+_parent_dir = os.path.dirname(_this_dir)
+_workspace_root = os.path.dirname(_parent_dir)
 sys.path.insert(0, _this_dir)
-if _workspace_root in sys.path:
-    sys.path.remove(_workspace_root)
+sys.path.insert(0, _parent_dir)
+sys.path.insert(0, _workspace_root)
 
-from quantum_ai_core import QuantumAICore, format_response_for_display
-from core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
-from core_algorithms.mathematical_formatter import MathematicalFormatter
+# Import handling for both module and script execution
+if __name__ == "__main__" or __name__.startswith("server.quantum_ai"):
+    # When run as script or module, use absolute imports
+    from quantum_ai.quantum_ai_core import QuantumAICore, format_response_for_display
+    from quantum_ai.core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
+    from quantum_ai.core_algorithms.mathematical_formatter import MathematicalFormatter
+else:
+    # When imported as module from elsewhere, use relative imports
+    from .quantum_ai_core import QuantumAICore, format_response_for_display
+    from .core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
+    from .core_algorithms.mathematical_formatter import MathematicalFormatter
 
 try:
     nexus_path = os.path.join(_workspace_root, 'Quantum_Intelligence_Nexus_v2.0')

@@ -6,23 +6,51 @@ machine learning capabilities, providing super-intelligent processing with
 full transparency of the engineering/science processing pathway.
 """
 
+import sys
+import os
+
+# Add parent directories to sys.path for script execution
+_this_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(_this_dir)
+_workspace_root = os.path.dirname(_parent_dir)
+sys.path.insert(0, _this_dir)
+sys.path.insert(0, _parent_dir)
+sys.path.insert(0, _workspace_root)
+
 import numpy as np
 from typing import Dict, List, Tuple, Optional, Any, Union
 from datetime import datetime
 import json
 
-from core_algorithms import (
-    HighDimensionalAnalyzer,
-    SVDAnalyzer,
-    RandomWalkAnalyzer,
-    MLProcessor,
-    StreamingAnalyzer,
-    ClusteringEngine,
-    GraphAnalyzer,
-    TopicModelingEngine
-)
-from core_algorithms.mathematical_formatter import MathematicalFormatter
-from core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
+# Import handling for both module and script execution
+if __name__ == "__main__" or __name__.startswith("server.quantum_ai"):
+    # When run as script or module, use absolute imports
+    from quantum_ai.core_algorithms import (
+        HighDimensionalAnalyzer,
+        SVDAnalyzer,
+        RandomWalkAnalyzer,
+        MLProcessor,
+        StreamingAnalyzer,
+        ClusteringEngine,
+        GraphAnalyzer,
+        TopicModelingEngine
+    )
+    from quantum_ai.core_algorithms.mathematical_formatter import MathematicalFormatter
+    from quantum_ai.core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
+else:
+    # When imported as module from elsewhere, use relative imports
+    from .core_algorithms import (
+        HighDimensionalAnalyzer,
+        SVDAnalyzer,
+        RandomWalkAnalyzer,
+        MLProcessor,
+        StreamingAnalyzer,
+        ClusteringEngine,
+        GraphAnalyzer,
+        TopicModelingEngine
+    )
+    from .core_algorithms.mathematical_formatter import MathematicalFormatter
+    from .core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
 
 
 class QuantumAICore:

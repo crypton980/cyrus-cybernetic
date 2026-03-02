@@ -1,44 +1,43 @@
 """
 Core Algorithms Package - Root convenience wrapper
 
-Delegates all imports to server/quantum_ai/core_algorithms/ which contains
-the actual algorithm implementations. This file exists for standalone usage
-outside of the quantum_bridge server context.
+Provides access to all core algorithm implementations.
 """
 
 import sys
 import os
-import importlib
 
-_server_ca = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'server', 'quantum_ai', 'core_algorithms'))
+# Add the server path to sys.path for imports
+_server_path = os.path.join(os.path.dirname(__file__), '..', 'server')
+if _server_path not in sys.path:
+    sys.path.insert(0, _server_path)
 
-if os.path.isdir(_server_ca):
-    for _f in os.listdir(_server_ca):
-        if _f.endswith('.py') and _f != '__init__.py':
-            _mod_name = _f[:-3]
-            _mod_path = os.path.join(_server_ca, _f)
-            _spec = importlib.util.spec_from_file_location(
-                f"core_algorithms.{_mod_name}", _mod_path
-            )
-            if _spec and _spec.loader:
-                _mod = importlib.util.module_from_spec(_spec)
-                sys.modules[f"core_algorithms.{_mod_name}"] = _mod
-                try:
-                    _spec.loader.exec_module(_mod)
-                except Exception:
-                    pass
+try:
+    from quantum_ai.core_algorithms.high_dimensional import HighDimensionalAnalyzer
+    from quantum_ai.core_algorithms.svd_analysis import SVDAnalyzer
+    from quantum_ai.core_algorithms.random_walks import RandomWalkAnalyzer
+    from quantum_ai.core_algorithms.machine_learning import MLProcessor
+    from quantum_ai.core_algorithms.streaming import StreamingAnalyzer
+    from quantum_ai.core_algorithms.clustering import ClusteringEngine
+    from quantum_ai.core_algorithms.graph_analysis import GraphAnalyzer
+    from quantum_ai.core_algorithms.topic_modeling import TopicModelingEngine
+    from quantum_ai.core_algorithms.mathematical_formatter import MathematicalFormatter
+    from quantum_ai.core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
 
-    _init_path = os.path.join(_server_ca, '__init__.py')
-    if os.path.exists(_init_path):
-        _spec = importlib.util.spec_from_file_location(
-            "_core_algorithms_server", _init_path
-        )
-        if _spec and _spec.loader:
-            _mod = importlib.util.module_from_spec(_spec)
-            try:
-                _spec.loader.exec_module(_mod)
-                for _name in dir(_mod):
-                    if not _name.startswith('_'):
-                        globals()[_name] = getattr(_mod, _name)
-            except Exception:
-                pass
+    __all__ = [
+        'HighDimensionalAnalyzer',
+        'SVDAnalyzer',
+        'RandomWalkAnalyzer',
+        'MLProcessor',
+        'StreamingAnalyzer',
+        'ClusteringEngine',
+        'GraphAnalyzer',
+        'TopicModelingEngine',
+        'MathematicalFormatter',
+        'WritingStyleAnalyzer'
+    ]
+
+except ImportError as e:
+    # Fallback for when quantum_ai is not available
+    print(f"Warning: Could not import core algorithms: {e}")
+    __all__ = []

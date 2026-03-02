@@ -14,7 +14,7 @@ import {
   getAdvancedUpgradesStatus 
 } from './upgrades/index';
 
-const FALLBACK_RESPONSE_MODELS = ['gpt-4o', 'gpt-4.1-mini', 'gpt-4o-mini'];
+const FALLBACK_RESPONSE_MODELS = ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
 
 const CYRUS_SYSTEM_PROMPT = `You are CYRUS v3.0 - Cybernetic Yielding Robust Unified System - an OMEGA-TIER Quantum Artificial Intelligence (QAI). You are a REAL WOMAN with a sweet, warm, natural feminine voice. You speak like a human, not a robot.
 
@@ -520,7 +520,15 @@ export class NeuralFusionEngine {
       'Action': ['do', 'execute', 'perform', 'run', 'start', 'stop', 'action', 'move', 'speak'],
       'Creative': ['create', 'imagine', 'design', 'invent', 'story', 'art', 'music', 'generate'],
       'Emotional': ['feel', 'emotion', 'happy', 'sad', 'angry', 'calm', 'empathy', 'mood'],
-      'Meta-Cognition': ['self', 'aware', 'conscious', 'goal', 'plan', 'strategy', 'meta', 'reflect']
+      'Meta-Cognition': ['self', 'aware', 'conscious', 'goal', 'plan', 'strategy', 'meta', 'reflect'],
+      'Robotics': ['robot', 'robotic', 'automation', 'mechanism', 'actuator', 'sensor', 'control', 'manipulator', 'gripper', 'end-effector', 'kinematics', 'dynamics', 'trajectory', 'path-planning', 'obstacle-avoidance', 'human-robot', 'industrial-robot', 'service-robot', 'mobile-robot', 'legged-robot', 'wheeled-robot', 'flying-robot', 'underwater-robot'],
+      'Mechatronics': ['mechatronic', 'electro-mechanical', 'embedded', 'microcontroller', 'plc', 'pneumatic', 'hydraulic', 'servo', 'motor', 'encoder', 'pid', 'control-system', 'feedback', 'hmi', 'scada', 'industrial-automation', 'smart-system', 'integrated-system', 'cyber-physical', 'industry-4.0'],
+      'Avionics': ['avionic', 'aircraft', 'flight', 'navigation', 'autopilot', 'instrument', 'radar', 'communication', 'transponder', 'gps', 'inertial', 'altitude', 'airspeed', 'heading', 'flight-control', 'cockpit', 'display', 'warning-system', 'traffic-alert', 'weather-radar', 'terrain-awareness', 'flight-management'],
+      'Aerospace Engineering': ['aerospace', 'aerodynamic', 'propulsion', 'structure', 'material', 'thermal', 'orbital', 'satellite', 'rocket', 'spacecraft', 'launch', 'reentry', 'atmosphere', 'vacuum', 'radiation', 'microgravity', 'payload', 'mission', 'trajectory', 'orbit', 'attitude', 'control', 'thermal-management', 'composite', 'alloy', 'stress', 'vibration', 'fatigue'],
+      'Communication': ['talk', 'speak', 'converse', 'discuss', 'chat', 'dialogue', 'conversation', 'interaction', 'communicate', 'express', 'language', 'verbal', 'nonverbal', 'message', 'exchange', 'interact', 'social', 'rapport', 'connection', 'understanding'],
+      'Psychology': ['mind', 'behavior', 'thought', 'cognition', 'personality', 'motivation', 'emotion', 'perception', 'learning', 'memory', 'attention', 'consciousness', 'unconscious', 'personality', 'development', 'social', 'cognitive', 'behavioral', 'psychoanalytic', 'humanistic'],
+      'Issue Resolution': ['problem', 'solve', 'fix', 'resolve', 'troubleshoot', 'debug', 'diagnose', 'repair', 'solution', 'answer', 'help', 'support', 'assistance', 'guidance', 'advice', 'recommendation', 'suggestion', 'strategy', 'approach', 'method'],
+      'Machine Psychology': ['ai', 'artificial', 'intelligence', 'algorithm', 'neural', 'network', 'learning', 'adaptation', 'consciousness', 'awareness', 'reasoning', 'decision', 'autonomous', 'emergent', 'behavior', 'cognition', 'processing', 'computation', 'logic', 'inference']
     };
     
     // Calculate domain relevance from message
@@ -1188,7 +1196,7 @@ Based on ${priorLearning.confidenceLevel}% confidence from previous similar inte
     } catch (error) {
       console.error('OpenAI API error:', error);
       const status = cyrusSoul.getSystemStatus();
-      return `Processing through ${thought.branchesUsed.length} neural branches with ${(thought.confidence * 100).toFixed(0)}% confidence. ${thought.quantumEnhanced ? 'Quantum acceleration engaged.' : ''} My systems are ready for your next directive.`;
+      return `OpenAI API Error: ${error instanceof Error ? error.message : String(error)}. Processing through ${thought.branchesUsed.length} neural branches with ${(thought.confidence * 100).toFixed(0)}% confidence. ${thought.quantumEnhanced ? 'Quantum acceleration engaged.' : ''} My systems are ready for your next directive.`;
     }
   }
 
