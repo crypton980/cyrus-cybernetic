@@ -1,0 +1,32 @@
+{
+  "id": "a8f8a85b-276a-4331-a576-619150ae02af",
+  "content": "",
+  "metadata": {
+    "keywords": [],
+    "language": "en-US",
+    "wordCount": 1,
+    "readingTime": 1,
+    "summary": "",
+    "readability": {
+      "wordCount": 0,
+      "sentenceCount": 0,
+      "avgWordsPerSentence": 0,
+      "readingTime": 0
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://pytorch.org/docs/",
+    "processedAt": "2026-03-03T09:27:39.530Z"
+  },
+  "source": "https://pytorch.org/docs/",
+  "timestamp": "2026-03-03T09:27:39.530Z",
+  "category": "general",
+  "tags": []
+}

@@ -1,0 +1,52 @@
+{
+  "id": "c69a659b-8ae4-47af-b3e7-35b1f1de7161",
+  "content": "The story of home affordability in the U.S. told from a single front porch.",
+  "metadata": {
+    "pubDate": "Sat, 25 Jan 2025 21:00:00 -0500",
+    "author": "",
+    "guid": "WP-WSJ-0002305634",
+    "feedTitle": "WSJ.com: Markets",
+    "categories": [
+      "PAID"
+    ],
+    "summary": "The story of home affordability in the U. told from a single front porch",
+    "keywords": [
+      "story",
+      "home",
+      "affordability",
+      "us",
+      "told",
+      "from",
+      "single",
+      "front",
+      "porch"
+    ],
+    "readability": {
+      "wordCount": 14,
+      "sentenceCount": 3,
+      "avgWordsPerSentence": 4.666666666666667,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.wsj.com/articles/rising-house-mortgage-costs-north-carolina-home-468a46e5?mod=rss_markets_main",
+    "processedAt": "2026-03-03T09:15:38.112Z"
+  },
+  "source": "https://www.wsj.com/articles/rising-house-mortgage-costs-north-carolina-home-468a46e5?mod=rss_markets_main",
+  "timestamp": "2026-03-03T09:15:38.157Z",
+  "category": "news",
+  "tags": [
+    "story",
+    "home",
+    "affordability",
+    "us",
+    "told"
+  ]
+}

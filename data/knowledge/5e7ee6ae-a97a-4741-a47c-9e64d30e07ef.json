@@ -1,0 +1,62 @@
+{
+  "id": "5e7ee6ae-a97a-4741-a47c-9e64d30e07ef",
+  "content": "Stripe released a preview intended to allow AI companies to easily track, pass through, and make a profit on underlying AI model fees.",
+  "metadata": {
+    "pubDate": "Mon, 02 Mar 2026 23:18:27 +0000",
+    "author": "Julie Bort",
+    "guid": "https://techcrunch.com/?p=3098620",
+    "feedTitle": "TechCrunch",
+    "categories": [
+      "Fintech",
+      "Startups",
+      "TC",
+      "agentic ai",
+      "stripe",
+      "tokens"
+    ],
+    "summary": "Stripe released a preview intended to allow AI companies to easily track, pass through, and make a profit on underlying AI model fees",
+    "keywords": [
+      "stripe",
+      "released",
+      "preview",
+      "intended",
+      "allow",
+      "companies",
+      "easily",
+      "track",
+      "pass",
+      "through",
+      "make",
+      "profit",
+      "underlying",
+      "model",
+      "fees"
+    ],
+    "readability": {
+      "wordCount": 23,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 23,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://techcrunch.com/2026/03/02/stripe-wants-to-turn-your-ai-costs-into-a-profit-center/",
+    "processedAt": "2026-03-03T09:38:13.233Z"
+  },
+  "source": "https://techcrunch.com/2026/03/02/stripe-wants-to-turn-your-ai-costs-into-a-profit-center/",
+  "timestamp": "2026-03-03T09:38:13.253Z",
+  "category": "news",
+  "tags": [
+    "stripe",
+    "released",
+    "preview",
+    "intended",
+    "allow"
+  ]
+}

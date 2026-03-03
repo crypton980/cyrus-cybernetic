@@ -1,0 +1,49 @@
+{
+  "id": "9aadaf11-31cd-4737-91cc-653cf00d2856",
+  "content": "Maverick Natural Resources has operations in Texas and Oklahoma.",
+  "metadata": {
+    "pubDate": "Mon, 27 Jan 2025 06:57:00 -0500",
+    "author": "",
+    "guid": "WP-WSJ-0002353480",
+    "feedTitle": "WSJ.com: Markets",
+    "categories": [
+      "PAID"
+    ],
+    "summary": "Maverick Natural Resources has operations in Texas and Oklahoma",
+    "keywords": [
+      "maverick",
+      "natural",
+      "resources",
+      "operations",
+      "texas",
+      "oklahoma"
+    ],
+    "readability": {
+      "wordCount": 9,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 9,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.wsj.com/articles/natural-gas-firm-diversified-energy-nears-deal-for-permian-basin-player-4c1c5ff5?mod=rss_markets_main",
+    "processedAt": "2026-03-03T09:02:22.163Z"
+  },
+  "source": "https://www.wsj.com/articles/natural-gas-firm-diversified-energy-nears-deal-for-permian-basin-player-4c1c5ff5?mod=rss_markets_main",
+  "timestamp": "2026-03-03T09:02:22.207Z",
+  "category": "news",
+  "tags": [
+    "maverick",
+    "natural",
+    "resources",
+    "operations",
+    "texas"
+  ]
+}

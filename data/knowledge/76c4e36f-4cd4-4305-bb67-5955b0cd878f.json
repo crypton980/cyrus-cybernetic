@@ -1,0 +1,60 @@
+{
+  "id": "76c4e36f-4cd4-4305-bb67-5955b0cd878f",
+  "content": "span property  schema name  class  field field--string field--title  Savannah River Site History 1990-Present  span   span rel  schema author  class  field field--author field--uid   span lang about    typeof  schema Person  property  schema name  datatype    span property  schema dateCreated  content   T18 01 20 00 00  class  field field--timestamp field--created   time datetime   T13 01 20-05 00  title  Tuesday, March 5, 2019 - 13 01  March 5, 2019  time    span   section class  layout blade-section--boxed    div class  grid-container    div class  blade-color     div class  grid-row    div class  grid-col    div class  block block-layout-builder block-inline-blockbasic    div class  field field--text_default field--body field field--name-body field--type-text-with-summary field--label-hidden field__item   p The Savannah River Site was constructed during the early 1950s to produce the basic materials used in the fabrication of nuclear weapons, primarily tritium and plutonium-239, in support of our nation's defense programs. Five reactors were built to produce these materials. Also built were a number of support facilities including two chemical separations plants, a heavy water extraction plant, a nuclear fuel and target fabrication facility, a tritium extraction facility and waste management facilities.  p   div    div   div class  block block-layout-builder block-inline-blockmedia    div class  field field--entity_reference_entity_view field--field_media field field--name-field-media field--type-entity-reference field--label-hidden field__item    div   div class  timeline  id  timeline-embed--232266    div    div    div    div    div    div    div    div    section",
+  "metadata": {
+    "pubDate": "Tue, 05 Mar 2019 18:01:20 +0000",
+    "author": "cameron.braziel@srs.gov",
+    "guid": "4065873 at https://www.energy.gov",
+    "feedTitle": "Department of Energy",
+    "summary": "span property  schema name  class  field field--string field--title  Savannah River Site History 1990-Present  span   span rel  schema author  class  field field--author field--uid   span lang abou...",
+    "keywords": [
+      "class",
+      "field",
+      "span",
+      "schema",
+      "property",
+      "2019",
+      "name",
+      "savannah",
+      "river",
+      "site",
+      "time",
+      "march",
+      "section",
+      "block",
+      "blocklayoutbuilder",
+      "fieldlabelhidden",
+      "field__item",
+      "produce",
+      "materials",
+      "fabrication"
+    ],
+    "readability": {
+      "wordCount": 204,
+      "sentenceCount": 4,
+      "avgWordsPerSentence": 51,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.energy.gov/srs/savannah-river-site-history-1990-present",
+    "processedAt": "2026-03-03T11:06:41.807Z"
+  },
+  "source": "https://www.energy.gov/srs/savannah-river-site-history-1990-present",
+  "timestamp": "2026-03-03T11:06:41.946Z",
+  "category": "news",
+  "tags": [
+    "class",
+    "field",
+    "span",
+    "schema",
+    "property"
+  ]
+}

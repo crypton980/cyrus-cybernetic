@@ -248,6 +248,69 @@ export class QuantumCore {
     };
   }
 
+  // Analyze query using quantum processing
+  async analyzeQuery(query: string): Promise<{
+    intent: string;
+    sentiment: 'positive' | 'negative' | 'neutral';
+    complexity: 'simple' | 'moderate' | 'complex';
+    entities: string[];
+    confidence: number;
+  }> {
+    // Simple analysis - could be enhanced with more sophisticated NLP
+    const lowerQuery = query.toLowerCase();
+
+    // Determine intent
+    let intent = 'general';
+    if (lowerQuery.includes('what') || lowerQuery.includes('how') || lowerQuery.includes('why')) {
+      intent = 'question';
+    } else if (lowerQuery.includes('do') || lowerQuery.includes('make') || lowerQuery.includes('create')) {
+      intent = 'action';
+    } else if (lowerQuery.includes('explain') || lowerQuery.includes('describe')) {
+      intent = 'explanation';
+    }
+
+    // Determine sentiment
+    let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
+    const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'happy'];
+    const negativeWords = ['bad', 'terrible', 'awful', 'horrible', 'sad', 'angry'];
+
+    const positiveCount = positiveWords.reduce((count, word) => count + (lowerQuery.includes(word) ? 1 : 0), 0);
+    const negativeCount = negativeWords.reduce((count, word) => count + (lowerQuery.includes(word) ? 1 : 0), 0);
+
+    if (positiveCount > negativeCount) sentiment = 'positive';
+    if (negativeCount > positiveCount) sentiment = 'negative';
+
+    // Determine complexity
+    let complexity: 'simple' | 'moderate' | 'complex' = 'simple';
+    const wordCount = query.split(' ').length;
+    const questionWords = ['what', 'how', 'why', 'when', 'where', 'who', 'which'];
+
+    const questionCount = questionWords.reduce((count, word) => count + (lowerQuery.includes(word) ? 1 : 0), 0);
+
+    if (wordCount > 20 || questionCount > 1) complexity = 'complex';
+    else if (wordCount > 10 || questionCount > 0) complexity = 'moderate';
+
+    // Extract basic entities (could be enhanced)
+    const entities: string[] = [];
+    const words = query.split(' ');
+    for (const word of words) {
+      if (word.length > 4 && !['what', 'how', 'why', 'when', 'where', 'who', 'which', 'that', 'this', 'these', 'those'].includes(word.toLowerCase())) {
+        entities.push(word);
+      }
+    }
+
+    // Calculate confidence based on analysis quality
+    const confidence = Math.min(0.9, 0.5 + (wordCount * 0.01) + (questionCount * 0.1));
+
+    return {
+      intent,
+      sentiment,
+      complexity,
+      entities: entities.slice(0, 5), // Limit entities
+      confidence
+    };
+  }
+
   applyDecoherence(): void {
     this.state.coherenceLevel = Math.max(0.1, this.state.coherenceLevel - this.decoherenceRate);
   }

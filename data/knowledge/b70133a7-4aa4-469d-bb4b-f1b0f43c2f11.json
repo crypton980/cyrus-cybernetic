@@ -1,0 +1,67 @@
+{
+  "id": "b70133a7-4aa4-469d-bb4b-f1b0f43c2f11",
+  "content": "figure   img alt  An image of Nvidia s logo  data-caption    data-portal-copyright  Image  Cath Virginia   The Verge  data-has-syndication-rights  1  src    strip all crop 0,0,100,100      figcaption    figcaption    figure   p class  has-text-align-none  Nvidia announced on Monday that it's investing  2 billion each into  a href    and  a href    which are both developing photonics technology for data centers, like optical transceivers, circuit switches, and lasers, which are used to move data at high speeds over long distances. Their tech could improve energy efficiency, data transfer speeds, and bandwidth in future AI data centers, after Nvidia already capitalized on its 2020 acquisition of the  a href    hardware company Mellanox  a  to beef up NVLink and increase the amount of data moving between its GPUs.   p   p class  has-text-align-none  For Lumentum, the nonexclusive multiyear deal includes a  multibillion purchase commitment    p   p  a href    the full story at The Verge.  a   p",
+  "metadata": {
+    "pubDate": "2026-03-02T11:56:49-05:00",
+    "author": "[object Object]",
+    "guid": "https://www.theverge.com/?p=887635",
+    "feedTitle": "The Verge",
+    "categories": [
+      "[object Object]",
+      "[object Object]",
+      "[object Object]",
+      "[object Object]"
+    ],
+    "summary": "figure   img alt  An image of Nvidia s logo  data-caption    data-portal-copyright  Image  Cath Virginia   The Verge  data-has-syndication-rights  1  src    strip all crop 0,0,100,100      figcapti...",
+    "keywords": [
+      "data",
+      "href",
+      "nvidia",
+      "figure",
+      "image",
+      "verge",
+      "figcaption",
+      "class",
+      "hastextalignnone",
+      "which",
+      "centers",
+      "speeds",
+      "2020",
+      "logo",
+      "datacaption",
+      "dataportalcopyright",
+      "cath",
+      "virginia",
+      "datahassyndicationrights",
+      "strip"
+    ],
+    "readability": {
+      "wordCount": 146,
+      "sentenceCount": 4,
+      "avgWordsPerSentence": 36.5,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains boilerplate content",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.theverge.com/tech/887635/nvidia-ai-photonics-lumentum-coherent",
+    "processedAt": "2026-03-03T09:02:22.101Z"
+  },
+  "source": "https://www.theverge.com/tech/887635/nvidia-ai-photonics-lumentum-coherent",
+  "timestamp": "2026-03-03T09:02:22.120Z",
+  "category": "news",
+  "tags": [
+    "data",
+    "href",
+    "nvidia",
+    "figure",
+    "image"
+  ]
+}

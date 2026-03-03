@@ -1,0 +1,63 @@
+{
+  "id": "ad9e1855-63f9-4d89-addb-5248663177bd",
+  "content": "div id    class  hds-media hds-module wp-block-image   div class  margin-left-auto margin-right-auto nasa-block-align-inline   div class  hds-media-wrapper margin-left-auto margin-right-auto   figure class  hds-media-inner hds-cover-wrapper hds-media-ratio-none    a href    decoding  async  width  2048  height  1150  src    class  attachment-2048x2048 size-2048x2048  alt  A view of the Atlantic Ocean from the International Space Station. Sun shines on the water, turning the water in the middle of the photo yellow-orange. There are flat, white clouds scattered above the ocean. In the distance, Earth s gentle curve is outlined by a pale blue hazy line   that s our atmosphere. Beyond that is the darkness of space.  style  transform  scale 1   transform-origin  50  50   object-position  50  50   object-fit  cover   block_context  nasa-block  loading  eager  srcset    4928w,   300w,   768w,   1024w,   1536w,   2048w,   400w,   600w,   900w,   1200w,   2000w  sizes  auto,  max-width  2048px  100vw, 2048px      a   figure  figcaption class  hds-caption padding-y-2   div class  hds-credits  NASA  div   figcaption   div   div   div   p Sunlight beams off a partly cloudy Atlantic Ocean just after sunrise as the International Space Station orbited 263 miles above on March 5, 2025. This is an example of  a href    rel  noopener  sunglint,  a  an optical phenomenon that occurs when sunlight reflects off the surface of water at the same angle that a satellite sensor views it. The result is a mirror-like specular reflection of sunlight off the water and back at the satellite sensor or astronaut.  p   p While sunglint often produces visually stunning images, the phenomenon can create problems for remote sensing scientists because it obscures features that are usually visible. This is particularly true for oceanographers who use satellites to study phytoplankton and  a href    rel  noopener  ocean color.  a  As a result, researchers have developed  a href    rel  noopener  several methods  a  to screen sunglint-contaminated imagery out of data archives.  p   p Despite the challenges posed by sunglint, the phenomenon does offer some unique scientific opportunities. It makes it easier, for instance, to detect oil on the water surface, whether it is from natural oil seeps or human-caused oil spills. This is because a layer of oil smooths water surfaces.  p   p  em Text credit  Adam Voiland  em   p   p  em Image credit  NASA  em   p",
+  "metadata": {
+    "pubDate": "Mon, 02 Mar 2026 16:54:04 +0000",
+    "author": "Monika Luabeya",
+    "guid": "https://www.nasa.gov/?post_type=image-article&#038;p=969113",
+    "feedTitle": "NASA",
+    "categories": [
+      "Earth"
+    ],
+    "summary": "div id    class  hds-media hds-module wp-block-image   div class  margin-left-auto margin-right-auto nasa-block-align-inline   div class  hds-media-wrapper margin-left-auto margin-right-auto   figu...",
+    "keywords": [
+      "class",
+      "water",
+      "href",
+      "ocean",
+      "space",
+      "sunlight",
+      "noopener",
+      "sunglint",
+      "phenomenon",
+      "marginleftauto",
+      "marginrightauto",
+      "figure",
+      "atlantic",
+      "from",
+      "international",
+      "station",
+      "above",
+      "2048px",
+      "figcaption",
+      "nasa"
+    ],
+    "readability": {
+      "wordCount": 356,
+      "sentenceCount": 15,
+      "avgWordsPerSentence": 23.733333333333334,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.nasa.gov/image-article/sunglint-on-atlantic-ocean/",
+    "processedAt": "2026-03-03T09:39:27.499Z"
+  },
+  "source": "https://www.nasa.gov/image-article/sunglint-on-atlantic-ocean/",
+  "timestamp": "2026-03-03T09:39:27.607Z",
+  "category": "news",
+  "tags": [
+    "class",
+    "water",
+    "href",
+    "ocean",
+    "space"
+  ]
+}

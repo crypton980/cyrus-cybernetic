@@ -1,0 +1,60 @@
+{
+  "id": "8ec0f5ab-b845-48bd-a150-a6b08a716c81",
+  "content": "span property  schema name  class  field field--string field--title  Secretary Bill Richardson  1998-2001   span   span rel  schema author  class  field field--author field--uid   span lang about    typeof  schema Person  property  schema name  datatype    span property  schema dateCreated  content   T20 59 34 00 00  class  field field--timestamp field--created   time datetime   T15 59 34-05 00  title  Monday, February 5, 2018 - 15 59  February 5, 2018  time    span   section class  layout blade-section--boxed    div class  grid-container    div class  blade-color     div class  grid-row    div class  grid-col    div class  block block-layout-builder block-inline-blockbasic     div   div class  block block-layout-builder block-inline-blockmedia    div class  field field--entity_reference_entity_view field--field_media field field--name-field-media field--type-entity-reference field--label-hidden field__item    div   div class  timeline  id  timeline-embed--232256    div    div    div    div    div    div    div    div    section",
+  "metadata": {
+    "pubDate": "Mon, 05 Feb 2018 20:59:34 +0000",
+    "author": "renee.saunders@em.doe.gov",
+    "guid": "3281202 at https://www.energy.gov",
+    "feedTitle": "Department of Energy",
+    "summary": "span property  schema name  class  field field--string field--title  Secretary Bill Richardson  1998-2001   span   span rel  schema author  class  field field--author field--uid   span lang about  ...",
+    "keywords": [
+      "class",
+      "span",
+      "schema",
+      "field",
+      "property",
+      "2018",
+      "name",
+      "time",
+      "february",
+      "section",
+      "block",
+      "blocklayoutbuilder",
+      "3405",
+      "19982001",
+      "fieldstring",
+      "fieldtitle",
+      "secretary",
+      "bill",
+      "richardson",
+      "author"
+    ],
+    "readability": {
+      "wordCount": 116,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 116,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.energy.gov/em/secretary-bill-richardson-1998-2001",
+    "processedAt": "2026-03-03T11:06:42.095Z"
+  },
+  "source": "https://www.energy.gov/em/secretary-bill-richardson-1998-2001",
+  "timestamp": "2026-03-03T11:06:42.191Z",
+  "category": "news",
+  "tags": [
+    "class",
+    "span",
+    "schema",
+    "field",
+    "property"
+  ]
+}

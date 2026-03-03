@@ -1,0 +1,33 @@
+{
+  "id": "fb80f694-b359-4758-b6e3-56ff4ee429aa",
+  "content": "",
+  "metadata": {
+    "keywords": [],
+    "language": "en",
+    "wordCount": 1,
+    "readingTime": 1,
+    "summary": "",
+    "readability": {
+      "wordCount": 0,
+      "sentenceCount": 0,
+      "avgWordsPerSentence": 0,
+      "readingTime": 0
+    },
+    "quality": {
+      "score": 50,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Contains images",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.sae.org/standards",
+    "processedAt": "2026-03-03T09:25:52.124Z"
+  },
+  "source": "https://www.sae.org/standards",
+  "timestamp": "2026-03-03T09:25:52.124Z",
+  "category": "general",
+  "tags": []
+}

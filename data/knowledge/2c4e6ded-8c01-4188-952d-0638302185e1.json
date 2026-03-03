@@ -1,0 +1,66 @@
+{
+  "id": "2c4e6ded-8c01-4188-952d-0638302185e1",
+  "content": "figure   img alt  An illustration of Mastodon logo  data-caption    data-portal-copyright  Image  Cath Virginia   The Verge  data-has-syndication-rights  1  src    strip all crop 0,0,100,100      figcaption    figcaption    figure   p class  has-text-align-none  Sharing content to Mastodon is getting easier with the addition of a universal  Share to Mastodon  button for the decentralized social media platform.  a href    on Monday  a , the widget allows users to share content on any Mastodon server by connecting your Mastodon account and redirecting you to the server that account is on. The blog post announcing the feature also explains that the tool  works entirely in your browser  there is no tracking data, and it does not store any information on the server.    p   p class  has-text-align-none  Previously, a  share  widget wasn't available on Mastodon mainly due to the technical challenges that come with the platform's decentralized d    p   p  a href    the full story at The Verge.  a   p",
+  "metadata": {
+    "pubDate": "2026-03-02T15:18:58-05:00",
+    "author": "[object Object]",
+    "guid": "https://www.theverge.com/?p=887791",
+    "feedTitle": "The Verge",
+    "categories": [
+      "[object Object]",
+      "[object Object]",
+      "[object Object]"
+    ],
+    "summary": "figure   img alt  An illustration of Mastodon logo  data-caption    data-portal-copyright  Image  Cath Virginia   The Verge  data-has-syndication-rights  1  src    strip all crop 0,0,100,100      f...",
+    "keywords": [
+      "mastodon",
+      "share",
+      "server",
+      "figure",
+      "verge",
+      "figcaption",
+      "class",
+      "hastextalignnone",
+      "content",
+      "decentralized",
+      "href",
+      "widget",
+      "your",
+      "account",
+      "illustration",
+      "logo",
+      "datacaption",
+      "dataportalcopyright",
+      "image",
+      "cath"
+    ],
+    "readability": {
+      "wordCount": 151,
+      "sentenceCount": 5,
+      "avgWordsPerSentence": 30.2,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains boilerplate content",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.theverge.com/tech/887791/mastodon-official-share-button-widget",
+    "processedAt": "2026-03-03T09:38:13.685Z"
+  },
+  "source": "https://www.theverge.com/tech/887791/mastodon-official-share-button-widget",
+  "timestamp": "2026-03-03T09:38:13.757Z",
+  "category": "news",
+  "tags": [
+    "mastodon",
+    "share",
+    "server",
+    "figure",
+    "verge"
+  ]
+}

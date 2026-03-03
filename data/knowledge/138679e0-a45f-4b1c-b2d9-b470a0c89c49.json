@@ -1,0 +1,32 @@
+{
+  "id": "138679e0-a45f-4b1c-b2d9-b470a0c89c49",
+  "content": "",
+  "metadata": {
+    "keywords": [],
+    "language": "en",
+    "wordCount": 1,
+    "readingTime": 1,
+    "summary": "",
+    "readability": {
+      "wordCount": 0,
+      "sentenceCount": 0,
+      "avgWordsPerSentence": 0,
+      "readingTime": 0
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.maxongroup.com/maxon/view/content/index",
+    "processedAt": "2026-03-03T09:19:33.336Z"
+  },
+  "source": "https://www.maxongroup.com/maxon/view/content/index",
+  "timestamp": "2026-03-03T09:19:33.336Z",
+  "category": "general",
+  "tags": []
+}

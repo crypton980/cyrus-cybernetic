@@ -1,0 +1,72 @@
+{
+  "id": "3a7f8e24-184d-48dc-8c66-1d741fb078eb",
+  "content": "div id  attachment_587120  style  width  1010px  class  wp-caption aligncenter   a href    loading  lazy  decoding  async  aria-describedby  caption-attachment-587120  class  wp-image-587120 size-full  src    alt  Kassow's collaborative robot arm performs a dispensing task.  width  1000  height  649  srcset    1000w,   300w,   150w,   768w,   368w  sizes  auto,  max-width  1000px  100vw, 1000px      a  p id  caption-attachment-587120  class  wp-caption-text  Kassow says its collaborative robots bring accuracy, efficiency, and customization to dispensing tasks.   Source  Kassow Robots  p   div   p class  p1  Collaborative robots are being adopted across manufacturing floors as a practical way to automate specific tasks within existing production constraints. Manufacturers need to improve their processes across several dimensions, such as making them more consistent, reducing strain on employees, and maximizing the space they are working with.  p   p class  p1  At the same time,  a href    target  _blank  rel  noopener  manufacturers  a  want to avoid pausing production or redesigning entire lines to achieve those goals. In those situations,  a href    target  _blank  rel  noopener  cobots  a  offer a practical path forward when they are integrated with a clear understanding of how the line already operates.  p   p class  p1  Adding a force- and power-limited robot to an established production line is rarely as simple as placing a robot at a station and pressing  Start.  Existing lines have a rhythm shaped by operator routines, physical layouts, and upstream and downstream dependencies. Introducing a robot without accounting for those realities can create additional inefficiencies instead of resolving existing ones.  p   p class  p1  However, when planned carefully cobots can help stabilize cycle time, reduce variation, and support operators without forcing major changes to surrounding processes.  p   h2 class  p2   b Start with the right collaborative task  b   h2   p class  p1  Task selection is one of the most important initial decisions. Collaborative robots tend to deliver the most value when assigned work that is repetitive, predictable, and physically demanding.  p   p class  p1  Common examples include loading or unloading parts, tending machines, transferring components between stations or handling routine inspection steps. These tasks often contribute disproportionately to operator fatigue and process variability over the course of a shift, even though they do not require critical problem-solving.  p   p class  p1  Integration efforts often struggle when automation is layered on top of an inconsistent task. If operators routinely compensate for fixture variation, adjust part placement, or work around tooling limitations, those issues will not disappear once a robot is added. In many cases, automation makes those inconsistencies more visible. Addressing them first allows the cobot to strengthen the station rather than inherit its problems.  p   h2 class  p2   b Work within physical constraints  b   h2   div id  attachment_587121  style  width  1290px  class  wp-caption aligncenter   a href    loading  lazy  decoding  async  aria-describedby  caption-attachment-587121  class  wp-image-587121 size-full  src    alt  A person operating a Kassow robot with a tablet.   width  1280  height  720  srcset    1280w,   300w,   1024w,   150w,   768w,   368w  sizes  auto,  max-width  1280px  100vw, 1280px      a  p id  caption-attachment-587121  class  wp-caption-text  Cobots are intended to be easily reprogrammed and adapted to different tasks.   Source  Kassow  p   div   p class  p1  Space constraints are another major factor. Many existing production lines were never designed with robotics in mind. Stations may be tightly packed, equipment placement may be fixed, or operator walk paths may leave little room for additional hardware. In these environments, a robot s ability to reach multiple interaction points from a single mounting location becomes more important than raw speed or payload capacity.  p   p class  p1  Cobots with extended reach and flexible joint configurations often approach parts and machines from angles that would otherwise require layout changes. An additional joint beyond a traditional six-axis design can provide greater freedom of motion, allowing the robot to navigate around fixtures or tooling while maintaining precise positioning. This flexibility enables side mounting or offset placement rather than positioning the robot directly in front of the station, which helps preserve access for operators and maintenance teams while keeping the overall footprint compact.  p   p class  p1  Compact bases and narrow mounting solutions further support integration in space-constrained environments, particularly in older facilities where floor space is already at a premium.  p   hr     div style  text-align  center    a href     img loading  lazy  decoding  async  class  aligncenter size-full wp-image-568305  src    alt  SITE AD for the 2026 Robotics Summit save the date.  width  728  height  90      a   div   hr     h2 class  p2   b Preserve operator access and material flow  b   h2   p class  p1  Even when a collaborative robot automates part of a task, operators still load components, remove finished parts, perform changeovers, and respond to alarms. If a robot s placement forces operators to reach awkwardly or work around it, any gains in consistency are quickly lost. Successful integrations allow the cobot to work alongside people without interrupting how they move through the station.  p   p class  p1  Material flow deserves equal attention. A robot may be able to reach all its programmed positions, but if its motion disrupts the natural path of parts or introduces additional handling steps, overall throughput can suffer.  p   p class  p1  In many cases, delays are not caused by the robot s cycle time, but by how its movements interact with the flow of material between processes. Cobots that can service multiple interaction points from a single base help maintain balance and reduce unnecessary handoffs.  p   h2 class  p2   b Protect cycle time and line rhythm  b   h2   div id  attachment_587122  style  width  1290px  class  wp-caption aligncenter   a href    loading  lazy  decoding  async  aria-describedby  caption-attachment-587122  class  wp-image-587122 size-full  src    alt  A person fist bumping a robot and a diagram of a collaborative robot.   width  1280  height  720  srcset    1280w,   300w,   1024w,   150w,   768w,   368w  sizes  auto,  max-width  1280px  100vw, 1280px      a  p id  caption-attachment-587122  class  wp-caption-text  Kassow cobots have sensors that detect overload, ensuring that they can operate safely in shared workspaces.   Source  Kassow Robots  p   div   p class  p1  Cycle time alignment is another common challenge. When a robot performs its task reliably, it must operate at a pace that matches the station it supports. Production lines often run at a defined tempo, and introducing a robot that operates faster or slower than surrounding processes can create new bottlenecks.  p   p class  p1  Reviewing the manual process before programming often shows that a cobot does not need to complete an entire task to add value. Automating the most repetitive or time-sensitive portion of the work is often enough to improve overall station performance.  p   p class  p1  How the cobot moves is equally important. Smooth, predictable movement helps operators understand what the robot will do next and reduces hesitation when working nearby. This also applies to how cobots resume operations after a stoppage. Operators should be able to resume production quickly after interruptions without navigating complex reset sequences or relying on specialized support.  p   h2 class  p2   b Design for collaborative change over time  b   h2   p class  p1  Cobot integration decisions should also account for how the production line may evolve. Product mixes shift, volumes fluctuate, and stations change over time.  p   p class  p1  Mounting approaches and programming strategies that allow a robot to be adjusted or redeployed provide a stronger return on investment beyond the initial application. Systems that allow a cobot to support multiple positions from a single base can provide flexibility when requirements change without requiring a full reinstallation.  p   p class  p1  Collaborative robots tend to deliver the most value when they are treated as part of the existing production system rather than an add-on. Integrations that respect operator routines, physical constraints, and line rhythm are more likely to improve consistency without disruption.  p   p class  p1  As manufacturers continue to balance productivity demands with limited space and aging infrastructure, cobots will remain a practical tool, not because they replace people, but because they are designed to work alongside them.  p   h3  a href    loading  lazy  decoding  async  class  alignleft wp-image-587125 size-medium  src    alt  Dieter Pletscher.  width  300  height  300  srcset    300w,   150w,   768w,   238w,   800w  sizes  auto,  max-width  300px  100vw, 300px      a About the author  h3   p  a href    target  _blank  rel  noopener  Dieter Pletscher  a  is the global sales manager at  a href    target  _blank  rel  noopener  Kassow Robots  a . He has over a decade of experience selling robotics, and previously worked for  a href    target  _blank  rel  noopener  Universal Robots  a .  p   p The post  a href    to integrate collaborative robots into existing production lines without disruption  a  appeared first on  a href    Robot Report  a .  p",
+  "metadata": {
+    "pubDate": "Fri, 27 Feb 2026 22:21:45 +0000",
+    "author": "Dieter Pletscher",
+    "guid": "https://www.therobotreport.com/?p=587119",
+    "feedTitle": "The Robot Report",
+    "categories": [
+      "Artificial Intelligence",
+      "Artificial Intelligence / Cognition",
+      "Cobot Arms",
+      "Collaborative Robots",
+      "Manufacturing",
+      "News",
+      "Opinion",
+      "Robots / Platforms",
+      "cobot",
+      "Kassow Robots"
+    ],
+    "summary": "div id  attachment_587120  style  width  1010px  class  wp-caption aligncenter   a href    loading  lazy  decoding  async  aria-describedby  caption-attachment-587120  class  wp-image-587120 size-f...",
+    "keywords": [
+      "class",
+      "robot",
+      "href",
+      "collaborative",
+      "robots",
+      "production",
+      "when",
+      "width",
+      "cobots",
+      "task",
+      "kassow",
+      "time",
+      "without",
+      "operators",
+      "work",
+      "loading",
+      "existing",
+      "station",
+      "often",
+      "cobot"
+    ],
+    "readability": {
+      "wordCount": 1421,
+      "sentenceCount": 59,
+      "avgWordsPerSentence": 24.084745762711865,
+      "readingTime": 8
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.therobotreport.com/how-to-integrate-collaborative-robots-existing-production-lines-without-disruption/",
+    "processedAt": "2026-03-03T09:17:57.999Z"
+  },
+  "source": "https://www.therobotreport.com/how-to-integrate-collaborative-robots-existing-production-lines-without-disruption/",
+  "timestamp": "2026-03-03T09:17:58.088Z",
+  "category": "news",
+  "tags": [
+    "class",
+    "robot",
+    "href",
+    "collaborative",
+    "robots"
+  ]
+}

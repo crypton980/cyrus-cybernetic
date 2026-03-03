@@ -1,0 +1,68 @@
+{
+  "id": "b28c4929-f914-43c7-b345-cb616c130459",
+  "content": "img src    Friday is your weekly selection of awesome robotics videos, collected by your friends at   span  em IEEE Spectrum  em  span  robotics. We also post a weekly calendar of upcoming robotics events for the next few months. Please   span  a   us your events  a  span  for inclusion.  span   p  h5  a href    2026  a   1 5 June 2026, VIENNA  h5  p Enjoy this week s videos!  p  div class  horizontal-rule    div  div style  page-break-after  always   span style  display none     span   div  blockquote class  rm-anchors  id  xpc3kfygwis   em Westwood Robotics is proud to announce a major update  THEMIS Gen2.5, the world s first commercial full-size humanoid robot capable of manipulation on the move!  em   blockquote  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  46fb0888f9e5404f861e060bdf4c4f09  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p Now that you mention it, the bit at the end where the robot picks up a can while walking? I haven t seen a lot of that.  p  p    a href    Robotics  a      p  div class  horizontal-rule    div  blockquote class  rm-anchors  id  lqsvtrrtbrs   em Last year, Helix showed that a single neural network could control a humanoid s upper body from pixels. Today, Helix 02 extends that control to the entire robot walking, manipulating, and balancing as one continuous system.  em   blockquote  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  b9f90c12f941a85805a47437a690097e  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p Why, yes, I am a normal human, and this is very similar to the default state of my kitchen.  p  p    a href       p  div class  horizontal-rule    div  blockquote class  rm-anchors  id  npovmr80scc   em  a data-linked-post     href    target  _blank  Harry Goldstein  a , our editor in chief, went to meet Sprout from Fauna Robotics. He was skeptical at first, but Sprout won him over with its robotic charm.  em   blockquote  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  7bb8e2c7af09fe415bee2fac1f94523b  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href    Robotics  a     p  div class  horizontal-rule    div  blockquote class  rm-anchors  id  ta_ttogdmfa   em Kimberly Elenberg is showing how the data collected by  a data-linked-post     href    target  _blank  robotic responders   a can save lives in mass casualty events.  em   blockquote  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  845574b48804af21ea93e39ca82a9128  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href    Mellon University  a     p  div class  horizontal-rule    div  p class  rm-anchors  id  ttey2j1jnyy  The educational robotics market is tough, but you ve got to hand it to  a data-linked-post     href    target  _blank  Sphero  a  going strong since 2011, which is pretty incredible.  p  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  7b05c6aef6b6bb1b81072f7e54e3b5ba  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href       p  div class  horizontal-rule    div  blockquote class  rm-anchors  id  4fljuahsmgi   em If you want to fly in crazy conditions, you have to  a data-linked-post     href    target  _blank  flight test  a  in those conditions. Here s how and why we do it!  em   blockquote  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  d7507888d3974c47b60be85458b94690  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href       p  div class  horizontal-rule    div  p class  rm-anchors  id  09lbks8zplo  I want to be impressed more by the idea of 3D-printing skin and skeleton at the same time, but come on, animals have been doing that for literally hundreds of years without even trying.  p  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  fb34b8a eb5b0bfba0  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href    Lab, University of Tokyo  a     p  div class  horizontal-rule    div  p class  rm-anchors  id  uaba2po-i5g  If there is a market for small bipedal robots that can both ski and be dinosaurs, LimX has it covered.  p  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  058c2dbd8dbef66320764f7cb3a51abe  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href       p  div class  horizontal-rule    div  blockquote class  rm-anchors  id  u-yly7nghsq   em How do you remotely control robots that change shape? We introduce a method for user-guided control of  a data-linked-post     href    target  _blank  modular robots  a  using reconfigurable joint-space joysticks  JoJo  and real-time optimization. We demonstrate this system on two different robots, Mori3 and Roombots. The video shows examples of these robots performing object manipulation, locomotion, human-assistance, and reconfiguration, controlled by our system.  em   blockquote  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  bebd7cd6c2f469e1a8a0a2315d9eb7d4  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href    Reconfigurable Robotics Lab  a    via    a href    target  _blank  Nature Communications  a     p  div class  horizontal-rule    div  blockquote class  rm-anchors  id  xoheteywrcs   em Quadrotor Biplane Tailsitter  QBiT  UAVs at four different sizes  4, 12, 25, and 50 lbs  developed at Texas A M University. QBiT combines the mechanical simplicity of a quadrotor drone with the cruise efficiency of a fixed-wing aircraft.  em   blockquote  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  138ec66a4f3e7c9a6e7cae4953cd0d18  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href    A M University  a     p  div class  horizontal-rule    div  p class  rm-anchors  id  7b1obxjj75q  There s a new DARPA challenge for  novel drone designs that can carry payloads more than four times their weight, which would revolutionize the way we use drones across all sectors.   p  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  52742a3076f4e48a06e74730790b75b7  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p    a href       p  div class  horizontal-rule    div  p class  rm-anchors  id  -znp4jrfu8i  Here are a couple of plenary and keynote talks from IROS 2025, from  a data-linked-post     href    target  _blank  Marco Hutter  a  and  a data-linked-post     href    target  _blank  Karinne Ramirez Amaro  a .  p  p class  shortcode-media shortcode-media-youtube   span class  rm-shortcode  data-rm-shortcode-id  a4ce79733f9d1aba13f6eced3995901b  style  display block position relative padding-top 56.25     iframe frameborder  0  height  auto  lazy-loadable  true  scrolling  no  src    style  position absolute top 0 left 0 width 100  height 100    width  100     iframe   span   p  p  span     span  a href    2025  a  span     span   p  div class  horizontal-rule    div",
+  "metadata": {
+    "pubDate": "Fri, 30 Jan 2026 18:30:02 +0000",
+    "author": "Evan Ackerman",
+    "guid": "https://spectrum.ieee.org/multitasking-robot",
+    "feedTitle": "IEEE Spectrum",
+    "categories": [
+      "Humanoid-robots",
+      "Video-friday",
+      "Commercial-robots",
+      "Drones",
+      "Educational-robots",
+      "Bipedal-robots"
+    ],
+    "summary": "img src    Friday is your weekly selection of awesome robotics videos, collected by your friends at   span  em IEEE Spectrum  em  span  robotics",
+    "keywords": [
+      "class",
+      "span",
+      "style",
+      "position",
+      "iframe",
+      "height",
+      "width",
+      "href",
+      "blockquote",
+      "horizontalrule",
+      "display",
+      "5625",
+      "rmanchors",
+      "shortcodemedia",
+      "shortcodemediayoutube",
+      "rmshortcode",
+      "datarmshortcodeid",
+      "block",
+      "relative",
+      "paddingtop"
+    ],
+    "readability": {
+      "wordCount": 1248,
+      "sentenceCount": 40,
+      "avgWordsPerSentence": 31.2,
+      "readingTime": 7
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://spectrum.ieee.org/multitasking-robot",
+    "processedAt": "2026-03-03T10:32:26.790Z"
+  },
+  "source": "https://spectrum.ieee.org/multitasking-robot",
+  "timestamp": "2026-03-03T10:32:26.862Z",
+  "category": "news",
+  "tags": [
+    "class",
+    "span",
+    "style",
+    "position",
+    "iframe"
+  ]
+}

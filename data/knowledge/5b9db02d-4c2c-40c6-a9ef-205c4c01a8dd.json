@@ -1,0 +1,64 @@
+{
+  "id": "5b9db02d-4c2c-40c6-a9ef-205c4c01a8dd",
+  "content": "arXiv 2603.00513v1 Announce Type  new Abstract  Precise motion control of underactuated surface vessels is a crucial task in various maritime applications. In this work, we develop a nonlinear motion control strategy for surface vessels inspired by the pursuit guidance philosophy. Any sufficiently smooth path can be seen as a continuum of virtual targets moving along a specified path, which the pursuer is trying to catch. Contrary to the traditional path-following methods, this work develops an integrated guidance and control approach capable of following any smooth path  unlike the ones composed of a finite number of straight lines and circles . The approach relies on steering the vehicle such that its velocity vector aligns with the line-of-sight  the line joining the moving virtual target and the surface vessel , resulting in a tail-chase scenario. This leads to a path-following behavior. This integrated approach also overcomes the disadvantages inherent in the traditional two-loop-based approaches. Additionally, the proposed work takes into account the asymmetric actuator constraints in the design, which makes the design close to realistic scenarios. Furthermore, the control law has been derived within a nonlinear framework using sliding mode, and thus remains applicable for a wider envelope. The stability of the proposed control strategy is formally proven. Numerical simulations for various specified paths validate the controller's accurate path-following performance.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Ram Milan Kumar Verma, Shashi Ranjan Kumar, Hemendra Arya",
+    "guid": "oai:arXiv.org:2603.00513v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY"
+    ],
+    "summary": "00513v1 Announce Type  new Abstract  Precise motion control of underactuated surface vessels is a crucial task in various maritime applications",
+    "keywords": [
+      "control",
+      "surface",
+      "work",
+      "path",
+      "pathfollowing",
+      "approach",
+      "motion",
+      "vessels",
+      "various",
+      "nonlinear",
+      "strategy",
+      "guidance",
+      "smooth",
+      "virtual",
+      "moving",
+      "specified",
+      "which",
+      "traditional",
+      "integrated",
+      "proposed"
+    ],
+    "readability": {
+      "wordCount": 218,
+      "sentenceCount": 12,
+      "avgWordsPerSentence": 18.166666666666668,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00513",
+    "processedAt": "2026-03-03T09:38:12.543Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00513",
+  "timestamp": "2026-03-03T09:38:12.646Z",
+  "category": "news",
+  "tags": [
+    "control",
+    "surface",
+    "work",
+    "path",
+    "pathfollowing"
+  ]
+}

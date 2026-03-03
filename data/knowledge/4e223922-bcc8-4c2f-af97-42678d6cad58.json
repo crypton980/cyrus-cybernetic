@@ -1,0 +1,65 @@
+{
+  "id": "4e223922-bcc8-4c2f-af97-42678d6cad58",
+  "content": "arXiv 2603.00103v1 Announce Type  new Abstract  This paper presents an autonomous control framework for articulated boom cranes performing prefabricated block assembly in construction environments. The key challenge addressed is precise placement control under passive joint dynamics that cause pendulum-like sway, complicating the accurate positioning of building components. Our integrated approach combines real-time vision-based pose estimation of building blocks, collision-aware B-spline path planning, and nonlinear model predictive control  NMPC  to achieve autonomous pickup, placement, and obstacle-avoidance assembly operations. The framework is validated on a laboratory-scale testbed that emulates crane kinematics and passive dynamics while enabling rapid experimentation. The collision-aware planner generates feasible B-spline references in real-time on CPU hardware with anytime performance, while the NMPC controller actively suppresses passive joint sway and tracks the planned trajectory under continuous vision feedback. Experimental results demonstrate autonomous block stacking and obstacle-avoidance assembly, with sway damping reducing settling times by more than an order of magnitude compared to uncontrolled passive dynamics, confirming the real-time feasibility of the integrated approach for construction automation.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Gerald Ebmer, Minh Nhat Vu, Tobias Gl\\\"uck, Wolfgang Kemmetm\\\"uller",
+    "guid": "oai:arXiv.org:2603.00103v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO",
+      "cs.SY",
+      "eess.SY"
+    ],
+    "summary": "00103v1 Announce Type  new Abstract  This paper presents an autonomous control framework for articulated boom cranes performing prefabricated block assembly in construction environments",
+    "keywords": [
+      "passive",
+      "autonomous",
+      "control",
+      "assembly",
+      "dynamics",
+      "sway",
+      "realtime",
+      "framework",
+      "block",
+      "construction",
+      "placement",
+      "under",
+      "joint",
+      "building",
+      "integrated",
+      "approach",
+      "collisionaware",
+      "bspline",
+      "nmpc",
+      "obstacleavoidance"
+    ],
+    "readability": {
+      "wordCount": 167,
+      "sentenceCount": 7,
+      "avgWordsPerSentence": 23.857142857142858,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00103",
+    "processedAt": "2026-03-03T11:02:18.830Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00103",
+  "timestamp": "2026-03-03T11:02:18.938Z",
+  "category": "news",
+  "tags": [
+    "passive",
+    "autonomous",
+    "control",
+    "assembly",
+    "dynamics"
+  ]
+}

@@ -48,6 +48,8 @@ let experienceMemory: any;
 let adaptiveLearning: any;
 let registerAdvancedUpgradeRoutes: any;
 let moduleOrchestrator: any;
+let autonomyRoutes: any;
+let dataCollectionRoutes: any;
 let registerInteractiveRoutes: any;
 let quantumBridge: any;
 let quantumResponseFormatter: any;
@@ -58,6 +60,7 @@ let generateImage: any;
 let systemRefinementEngine: any;
 let emotionFusion: any;
 let voiceProsody: any;
+let brainRoutes: any;
 
 const tick = (ms = 10): Promise<void> => new Promise((r) => setTimeout(r, ms));
 let depsLoaded = false;
@@ -163,6 +166,19 @@ async function loadDependencies() {
   registerInteractiveRoutes = irM.registerInteractiveRoutes;
   await tick();
 
+  autonomyRoutes = null;
+  try {
+    const autoM = await import("./autonomy/routes");
+    autonomyRoutes = autoM.default;
+  } catch (error) {
+    console.warn("[Routes] Failed to load autonomy routes:", error.message);
+  }
+  await tick();
+
+  const dcM = await import("./data-collection/routes");
+  dataCollectionRoutes = dcM.default;
+  await tick();
+
   const qbM = await import("./ai/quantum-bridge-client");
   quantumBridge = qbM.quantumBridge;
   const qrfM = await import("./ai/quantum-response-formatter");
@@ -186,6 +202,10 @@ async function loadDependencies() {
   emotionFusion = efM.emotionFusion;
   const vpM = await import("./humanoid/voice-prosody");
   voiceProsody = vpM.voiceProsody;
+  await tick();
+
+  const brainModule = await import("./ai/brain-routes");
+  brainRoutes = brainModule.default;
   await tick();
 
   depsLoaded = true;
@@ -364,6 +384,14 @@ export async function registerRoutes(
   registerCommsRoutes(app);
   registerAdvancedUpgradeRoutes(app);
   registerInteractiveRoutes(app);
+
+  // Autonomy Agent System
+  if (autonomyRoutes) {
+    app.use('/api/autonomy', autonomyRoutes);
+  }
+
+  // CYRUS Brain API
+  app.use('/api/brain', brainRoutes);
 
   // Health Device Integration Routes
   app.get("/api/health/providers", async (req, res) => {
@@ -1548,24 +1576,45 @@ Format your response in a clear, structured manner.`
     return AGENT_COMMAND_PATTERNS.some(pattern => pattern.test(message));
   };
   
-  // Placeholder for shared agent execution core - will be set after agent routes are defined
-  let executeAgentCore: ((command: string) => Promise<any>) | null = null;
+  // Agent execution core using autonomy system
+  let executeAgentCore = async (command: string): Promise<any> => {
+    const { runAutonomy } = await import("./autonomy/run");
+
+    const result = await runAutonomy({
+      goal: command,
+      context: "Executed via chat interface",
+      modality: ["text"]
+    }, {
+      allowLiveTrading: false, // Safe default for chat commands
+      hasBrokerKeys: false,
+      hasVectorStore: true
+    });
+
+    return {
+      id: `task_${Date.now()}`,
+      description: result.summary,
+      steps: result.execution.map((exec, i) => ({
+        id: exec.stepId,
+        feedback: exec.detail,
+        status: exec.status
+      })),
+      startTime,
+      endTime: Date.now(),
+      result
+    };
+  };
   
   // Execute agent task from chat - bridges to real agent execution system
   const executeAgentTask = async (command: string): Promise<{ response: string; agentResult: any }> => {
     const startTime = Date.now();
-    
+
     try {
-      if (!executeAgentCore) {
-        throw new Error("Agent system not yet initialized");
-      }
-      
       // Call the real agent execution core
       const task = await executeAgentCore(command);
-      
+
       // Format response for chat display
       const stepsReport = (task.steps || []).map((s: any, i: number) => `${i + 1}. ${s.feedback}`).join("\n");
-      
+
       return {
         response: `**[AUTONOMOUS EXECUTION COMPLETE]**\n\n${task.description}\n\n**Execution Steps:**\n${stepsReport}\n\n*Task ID: ${task.id} | Duration: ${task.endTime - task.startTime}ms*`,
         agentResult: task
@@ -3196,6 +3245,13 @@ Return ONLY valid JSON.`
       res.status(500).json({ error: e instanceof Error ? e.message : "Failed" });
     }
   });
+
+  // ===============================================
+  // DATA COLLECTION API
+  // ===============================================
+
+  // Use data collection routes
+  app.use("/api/data-collection", dataCollectionRoutes);
 
   return httpServer;
 }

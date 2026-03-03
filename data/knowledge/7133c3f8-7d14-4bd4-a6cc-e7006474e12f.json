@@ -1,0 +1,63 @@
+{
+  "id": "7133c3f8-7d14-4bd4-a6cc-e7006474e12f",
+  "content": "arXiv 2603.00110v1 Announce Type  new Abstract  The scarcity of large-scale robotic data has motivated the repurposing of foundation models from other modalities for policy learning. In this work, we introduce PhysGen  Learning Physics from Pretrained Video Generation Models , a scalable continuous and sequential world interaction framework that leverages autoregressive video generation to solve robotic manipulation tasks. By treating the pretrained video model as a proxy for a physics simulator, PhysGen models the dynamic interplay between the external environment and robot actions. We introduce a multimodal continuous representation that unifies video and action into shared physical tokens, bridging the gap between discrete video generation and continuous robotic control. This approach enables the seamless transfer of implicit physical knowledge-such as object permanence and dynamics-from video pretraining to downstream manipulation.To ensure efficient convergence, we incorporate causal masking, inverse kinematics, Lookahead Multi-Token Prediction  L-MTP , and key-value  KV  caching. Experimental results on the Libero and ManiSkill benchmarks demonstrate that PhysGen consistently outperforms robust baselines, surpassing OpenVLA and WorldVLA by margins of 13.8  and 8.8 , respectively. Notably, in real-world scenarios, PhysGen matches the performance of large-scale action-pretrained models like   pi_0  without requiring prior action-specific pretraining, demonstrating superior capability in physically complex tasks such as grasping transparent objects. These findings validate the potential of extracting physical intuition from pretrained video generators to facilitate generalizable robotic manipulation.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Zijian Song, Qichang Li, Sihan Qin, Yuhao Chen, Tianshui Chen, Liang Lin, Guangrun Wang",
+    "guid": "oai:arXiv.org:2603.00110v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO"
+    ],
+    "summary": "00110v1 Announce Type  new Abstract  The scarcity of large-scale robotic data has motivated the repurposing of foundation models from other modalities for policy learning",
+    "keywords": [
+      "video",
+      "robotic",
+      "models",
+      "physgen",
+      "from",
+      "pretrained",
+      "generation",
+      "continuous",
+      "physical",
+      "largescale",
+      "learning",
+      "introduce",
+      "physics",
+      "manipulation",
+      "tasks",
+      "between",
+      "pretraining",
+      "138",
+      "arxiv",
+      "260300110v1"
+    ],
+    "readability": {
+      "wordCount": 222,
+      "sentenceCount": 12,
+      "avgWordsPerSentence": 18.5,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00110",
+    "processedAt": "2026-03-03T11:02:19.114Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00110",
+  "timestamp": "2026-03-03T11:02:19.213Z",
+  "category": "news",
+  "tags": [
+    "video",
+    "robotic",
+    "models",
+    "physgen",
+    "from"
+  ]
+}

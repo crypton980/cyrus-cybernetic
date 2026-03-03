@@ -1,0 +1,61 @@
+{
+  "id": "83d85454-55ad-42d6-8af4-e56cea220867",
+  "content": "Toggle the table of contents Pneumatic actuator 11 languages        Catal        Espa olSuomi   JawaPolski       T rk e           Edit links ArticleTalk English ReadEditView history Tools Tools move to sidebar hide Actions ReadEditView history General What links hereRelated changesUpload filePermanent linkPage informationCite this pageGet shortened URLDownload QR code Print export Download as PDFPrintable version In other projects Wikidata item Appearance move to sidebar hide From Wikipedia, the free encyclopedia Converts energy  typically in the form of compressed air  into mechanical motion .mw-parser-output .ambox border 1px solid  a2a9b1 border-left 10px solid  36c background-color  fbfbfb box-sizing border-box .mw-parser-output .ambox link .ambox,.mw-parser-output .ambox link style .ambox,.mw-parser-output .ambox link link .ambox,.mw-parser-output .ambox .mw-empty-elt link .ambox,.mw-parser-output .ambox .mw-empty-elt link style .ambox,.mw-parser-output .ambox .mw-empty-elt link link .ambox margin-top -1px html body.mediawiki .mw-parser-output .ambox.mbox-small-left margin 4px 1em 4px 0 overflow hidden width 238px border-collapse collapse font-size 88  line-height 1.25em .mw-parser-output .ambox-speedy border-left 10px solid  b32424 background-color  fee7e6 .mw-parser-output .ambox-delete border-left 10px solid  b32424 .mw-parser-output .ambox-content border-left 10px solid  f28500 .mw-parser-output .ambox-style border-left 10px solid  fc3 .mw-parser-output .ambox-move border-left 10px solid  9932cc .mw-parser-output .ambox-protection border-left 10px solid  a2a9b1 .mw-parser-output .ambox .mbox-text border none padding 0.25em 0.5em width 100  .mw-parser-output .ambox .mbox-image border none padding 2px 0 2px 0.5em text-align center .mw-parser-output .ambox .mbox-imageright border none padding 2px 0.5em 2px 0 text-align center .mw-parser-output .ambox .mbox-empty-cell border none padding 0 width 1px .mw-parser-output .ambox   .ambox margin 0 10    media print body.ns-0 .mw-parser-output .ambox display none!important  This article needs additional citations for verification. Please help improve this article by adding citations to reliable sources. Unsourced material may be challenged and removed.Find sources   Pneumatic actuator    news   newspapers   books   scholar   JSTOR  July 2025   Learn how and when to remove this message  A pneumatic control valve actuator converts energy  typically in the form of compressed air  into mechanical motion. The motion can be rotary or linear, depending on the type of actuator. Principle of operation edit  valve with pneumatic diaphragm actuator and  smart  positioner which will also feed back to the controller the actual valve position Pneumatic rack and pinion actuators for valve controls of water pipes A pneumatic actuator mainly consists of a piston or a diaphragm which develops the motive power. It keeps the air in the upper portion of the cylinder, allowing air pressure to force the diaphragm or piston to move the valve stem or rotate the valve control element. Valves require little pressure to operate and usually double or triple the input force. The larger the size of the piston, the larger the output pressure can be. Having a larger piston can also be good if the air supply is low, allowing the same forces with less input. These pressures are large enough to crush objects in the pipe. On 100 kPa input, you could lift a small car  upwards of 1,000 lbs  easily, and this is only a basic, small pneumatic valve. However, the resulting forces required of the stem would be too great and cause the valve stem to fail. This pressure is transferred to the valve stem, which is connected to either the valve plug  see plug valve , butterfly valve etc. Larger forces are required in high pressure or high flow pipelines to allow the valve to overcome these forces, and allow it to move the valves moving parts to control the material flowing inside. The valve's input is the  control signal.  This can come from a variety of measuring devices, and each different pressure is a different set point for a valve. A typical standard signal is 20 100 kPa. For example, a valve could be controlling the pressure in a vessel that has a constant out-flow, and a varied in-flow  varied by the actuator and valve . A pressure transmitter will monitor the pressure in the vessel and transmit a signal from 20 100 kPa. 20 kPa means there is no pressure, 100 kPa means there is full range pressure  can be varied by the transmitters calibration points . As the pressure rises in the vessel, the output of the transmitter rises, this increase in pressure is sent to the valve, which causes the valve to stroke downward, and start closing the valve, decreasing flow into the vessel, reducing the pressure in the vessel as excess pressure is evacuated through the outflow. This is called a direct-acting process. Types edit  Some types of pneumatic actuators include  Tie-rod cylinders Rotary actuators Grippers Rodless actuators with a magnetic linkage or rotary cylinders Rodless actuators with mechanical linkage Pneumatic artificial muscles Vane Motors pneumatic actuator 1  Pneumatic motors Speciality actuators that combine rotary and linear motion frequently used for clamping operations Vacuum generators See also edit  Pneumatic cylinder Pneumatics References edit  .mw-parser-output .reflist-columns-2 column-width 30em .mw-parser-output .reflist-columns-3 column-width 25em body.skin-vector-2022 .mw-parser-output .reflist-columns-2 column-width 27em body.skin-vector-2022 .mw-parser-output .reflist-columns-3 column-width 22.5em .mw-parser-output .references data-mw-group upper-alpha  list-style-type upper-alpha .mw-parser-output .references data-mw-group upper-roman  list-style-type upper-roman .mw-parser-output .references data-mw-group lower-alpha  list-style-type lower-alpha .mw-parser-output .references data-mw-group lower-greek  list-style-type lower-greek .mw-parser-output .references data-mw-group lower-roman  list-style-type lower-roman .mw-parser-output div.reflist-liststyle-upper-alpha .references list-style-type upper-alpha .mw-parser-output div.reflist-liststyle-upper-roman .references list-style-type upper-roman .mw-parser-output div.reflist-liststyle-lower-alpha .references list-style-type lower-alpha .mw-parser-output div.reflist-liststyle-lower-greek .references list-style-type lower-greek .mw-parser-output div.reflist-liststyle-lower-roman .references list-style-type lower-roman    .mw-parser-output cite.citation font-style inherit word-wrap break-word .mw-parser-output .citation q quotes          '  '  .mw-parser-output .citation target background-color rgba 0,127,255,0.133  .mw-parser-output .id-lock-free.id-lock-free a background url    upload.wikimedia.org wikipedia commons 6 65 Lock-green.svg  right 0.1em center 9px no-repeat .mw-parser-output .id-lock-limited.id-lock-limited a,.mw-parser-output .id-lock-registration.id-lock-registration a background url    upload.wikimedia.org wikipedia commons d d6 Lock-gray-alt-2.svg  right 0.1em center 9px no-repeat .mw-parser-output .id-lock-subscription.id-lock-subscription a background url    upload.wikimedia.org wikipedia commons a aa Lock-red-alt-2.svg  right 0.1em center 9px no-repeat .mw-parser-output .cs1-ws-icon a background url    upload.wikimedia.org wikipedia commons 4 4c Wikisource-logo.svg  right 0.1em center 12px no-repeat body not .skin-timeless  not .skin-minerva  .mw-parser-output .id-lock-free a,body not .skin-timeless  not .skin-minerva  .mw-parser-output .id-lock-limited a,body not .skin-timeless  not .skin-minerva  .mw-parser-output .id-lock-registration a,body not .skin-timeless  not .skin-minerva  .mw-parser-output .id-lock-subscription a,body not .skin-timeless  not .skin-minerva  .mw-parser-output .cs1-ws-icon a background-size contain padding 0 1em 0 0 .mw-parser-output .cs1-code color inherit background inherit border none padding inherit .mw-parser-output .cs1-hidden-error display none color var --color-error, bf3c2c  .mw-parser-output .cs1-visible-error color var --color-error, bf3c2c  .mw-parser-output .cs1-maint display none color  085 margin-left 0.3em .mw-parser-output .cs1-kern-left padding-left 0.2em .mw-parser-output .cs1-kern-right padding-right 0.2em .mw-parser-output .citation .mw-selflink font-weight inherit  media screen .mw-parser-output .cs1-format font-size 95  html.skin-theme-clientpref-night .mw-parser-output .cs1-maint color  18911f   media screen and  prefers-color-scheme dark  html.skin-theme-clientpref-os .mw-parser-output .cs1-maint color  18911f   pneumatic actuator   PDF . xm-valveactuator.com. Retrieved 17 July 2024.  img src    type 1x1 usesul3 1  alt    width  1  height  1  style  border  none  position  absolute    Retrieved from    Category  ActuatorsHidden categories  Articles with short descriptionShort description matches WikidataArticles needing additional references from July 2025All articles needing additional references",
+  "metadata": {
+    "keywords": [
+      "mwparseroutput",
+      "valve",
+      "ambox",
+      "pressure",
+      "pneumatic",
+      "references",
+      "liststyletype",
+      "actuator",
+      "solid",
+      "link",
+      "none",
+      "border",
+      "borderleft",
+      "10px",
+      "padding",
+      "center",
+      "actuators",
+      "color",
+      "edit",
+      "from"
+    ],
+    "language": "en",
+    "wordCount": 786,
+    "readingTime": 4,
+    "summary": "Toggle the table of contents Pneumatic actuator 11 languages        Catal        Espa olSuomi   JawaPolski       T rk e           Edit links ArticleTalk English ReadEditView history Tools Tools mov...",
+    "readability": {
+      "wordCount": 1086,
+      "sentenceCount": 210,
+      "avgWordsPerSentence": 5.171428571428572,
+      "readingTime": 6
+    },
+    "quality": {
+      "score": 85,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "High quality content"
+      ]
+    },
+    "originalUrl": "https://en.wikipedia.org/wiki/Pneumatic_actuator",
+    "processedAt": "2026-03-03T09:13:52.499Z"
+  },
+  "source": "https://en.wikipedia.org/wiki/Pneumatic_actuator",
+  "timestamp": "2026-03-03T09:13:52.499Z",
+  "category": "news",
+  "tags": [
+    "mwparseroutput",
+    "valve",
+    "ambox",
+    "pressure",
+    "pneumatic"
+  ]
+}

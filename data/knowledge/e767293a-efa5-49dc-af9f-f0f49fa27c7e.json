@@ -1,0 +1,69 @@
+{
+  "id": "e767293a-efa5-49dc-af9f-f0f49fa27c7e",
+  "content": "p Google on Friday unveiled its plan for its Chrome browser to secure HTTPS certificates against quantum computer attacks without breaking the Internet.  p   p The objective is a tall order. The quantum-resistant cryptographic data needed to transparently publish TLS certificates is roughly 40 times bigger than the classical cryptographic material used today. A typical  a href    certificate  a  chain used today comprises six elliptic curve signatures and two EC public keys, each of them only 64 bytes. This material can be cracked through the quantum-enabled  a href    algorithm  a . The full chain is roughly 4 kilobytes. All this data must be transmitted when a browser connects to a site.  p   h2 The bigger they come, the slower they move  h2   p  The bigger you make the certificate, the slower the handshake and the more people you leave behind,  said Bas Westerbaan, principal research engineer at Cloudflare, which is partnering with Google on the transition.  Our problem is we don t want to leave people behind in this transition.  Speaking to Ars, he said that people will likely disable the new encryption if it slows their browsing. He added that the massive size increase can also degrade  middle boxes,  which sit between browsers and the final site.  p  p  a href    full article  a   p   p  a href",
+  "metadata": {
+    "pubDate": "Sat, 28 Feb 2026 01:26:41 +0000",
+    "author": "Dan Goodin",
+    "guid": "https://arstechnica.com/security/2026/02/google-is-using-clever-math-to-quantum-proof-https-certificates/",
+    "feedTitle": "Ars Technica - All content",
+    "categories": [
+      "Biz & IT",
+      "Google",
+      "Security",
+      "certificate transparency",
+      "HTTPS",
+      "merkle trees",
+      "shor's algorithm"
+    ],
+    "summary": "p Google on Friday unveiled its plan for its Chrome browser to secure HTTPS certificates against quantum computer attacks without breaking the Internet. p  p  a href    full article  a   p   p  a href",
+    "keywords": [
+      "href",
+      "bigger",
+      "people",
+      "google",
+      "browser",
+      "certificates",
+      "cryptographic",
+      "data",
+      "roughly",
+      "material",
+      "used",
+      "today",
+      "certificate",
+      "chain",
+      "full",
+      "site",
+      "slower",
+      "leave",
+      "behind",
+      "said"
+    ],
+    "readability": {
+      "wordCount": 219,
+      "sentenceCount": 12,
+      "avgWordsPerSentence": 18.25,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arstechnica.com/security/2026/02/google-is-using-clever-math-to-quantum-proof-https-certificates/",
+    "processedAt": "2026-03-03T09:00:29.466Z"
+  },
+  "source": "https://arstechnica.com/security/2026/02/google-is-using-clever-math-to-quantum-proof-https-certificates/",
+  "timestamp": "2026-03-03T09:00:29.480Z",
+  "category": "news",
+  "tags": [
+    "href",
+    "bigger",
+    "people",
+    "google",
+    "browser"
+  ]
+}

@@ -1,20 +1,28 @@
 import fs from "node:fs";
 import path from "node:path";
-import OpenAI, { toFile } from "openai";
 import { Buffer } from "node:buffer";
+import { localImageGen } from "./local-image-client";
 
 const getApiKey = () => process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 
-export const openai = new OpenAI({
-  apiKey: getApiKey(),
-});
+// Use local image generation as primary, OpenAI as fallback
+const useLocalImageGen = process.env.USE_LOCAL_IMAGE_GEN !== 'false';
 
-function getClient(): OpenAI {
+export const openai = useLocalImageGen ? null : (getApiKey() ? new (await import("openai")).default({
+  apiKey: getApiKey(),
+}) : null);
+
+async function getClient() {
+  if (useLocalImageGen) {
+    return null; // Will use localImageGen instead
+  }
+
   const key = getApiKey();
   if (!key) {
-    throw new Error("OpenAI API key not configured. Set OPENAI_API_KEY or AI_INTEGRATIONS_OPENAI_API_KEY.");
+    throw new Error("OpenAI API key not configured and local image generation disabled. Set OPENAI_API_KEY or AI_INTEGRATIONS_OPENAI_API_KEY, or set USE_LOCAL_IMAGE_GEN=true.");
   }
-  return new OpenAI({
+  const openai = await import("openai");
+  return new openai.default({
     apiKey: key,
   });
 }
@@ -58,7 +66,50 @@ export interface ImageVariationOptions {
 }
 
 export async function generateImage(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
-  const client = getClient();
+  // Try local image generation first
+  if (useLocalImageGen) {
+    try {
+      console.log(`[Local Image Gen] Generating image with prompt: ${options.prompt}`);
+
+      const localResult = await localImageGen.generate({
+        prompt: options.prompt,
+        width: options.size ? parseInt(options.size.split('x')[0]) : 512,
+        height: options.size ? parseInt(options.size.split('x')[1]) : 512,
+        steps: 20,
+        guidance: 7.5,
+        outputPath: options.savePath
+      });
+
+      if (localResult.success && localResult.imagePath) {
+        // Read the generated image and convert to base64
+        const imageBuffer = fs.readFileSync(localResult.imagePath);
+        const b64_json = imageBuffer.toString('base64');
+
+        return {
+          success: true,
+          model: "stable-diffusion-v1-5",
+          prompt: options.prompt,
+          size: `${localResult.metadata?.width || 512}x${localResult.metadata?.height || 512}`,
+          quality: "standard",
+          style: "natural",
+          images: [{
+            b64_json,
+            savedPath: options.savePath ? `/uploads/generated/${path.basename(localResult.imagePath)}` : undefined
+          }],
+          timestamp: new Date().toISOString(),
+        };
+      }
+    } catch (error) {
+      console.warn("[LocalImageGen] Failed, falling back to OpenAI:", error);
+    }
+  }
+
+  // Fallback to OpenAI
+  const client = await getClient();
+  if (!client) {
+    throw new Error("No image generation service available. Configure OpenAI or enable local image generation.");
+  }
+
   const model = options.model || "dall-e-3";
   const size = options.size || "1024x1024";
   const quality = options.quality || "standard";
@@ -125,7 +176,7 @@ export async function generateImageBuffer(
   prompt: string,
   size: ImageSize = "1024x1024"
 ): Promise<Buffer> {
-  const client = getClient();
+  const client = await getClient();
   const response = await client.images.generate({
     model: "dall-e-3",
     prompt,
@@ -143,7 +194,7 @@ export async function editImages(
   prompt: string,
   outputPath?: string
 ): Promise<Buffer> {
-  const client = getClient();
+  const client = await getClient();
   const images = await Promise.all(
     imageFiles.map((file) =>
       toFile(fs.createReadStream(file), file, {
@@ -175,7 +226,7 @@ export async function editImages(
 }
 
 export async function generateImageVariation(options: ImageVariationOptions): Promise<ImageGenerationResult> {
-  const client = getClient();
+  const client = await getClient();
   const size = options.size || "1024x1024";
   const n = options.n || 1;
 

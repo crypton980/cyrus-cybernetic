@@ -1,0 +1,64 @@
+{
+  "id": "9bdd7807-0d84-4b8f-9daa-146d8294c7ed",
+  "content": "arXiv 2603.01248v1 Announce Type  new Abstract  The increasing penetration of photovoltaic  PV  generation in low-voltage distribution networks presents operational challenges, with overvoltages being among the most critical. This study introduces a tool based on Unbalanced Optimal Power Flow  UBOPF  to assess cost-effective local inverter control strategies specifically aimed at mitigating overvoltage issues. Two approaches are examined  dynamic active power curtailment and combined active and reactive power control. These strategies are tested on a residential low-voltage network with high PV penetration, where the UBOPF model with voltage-magnitude constraints was implemented in Julia using the JuMP optimization package. The results demonstrate that both methods are effective in maintaining voltage levels within regulatory limits, with the latter leading to lower PV curtailment. The analysis highlights the need to consider these control actions as ancillary services to the grid, which should be properly compensated given their effect on generator revenues.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Andrea Espinosa del Pozo, Araceli Hernandez, Luis Badesa",
+    "guid": "oai:arXiv.org:2603.01248v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY"
+    ],
+    "summary": "01248v1 Announce Type  new Abstract  The increasing penetration of photovoltaic  PV  generation in low-voltage distribution networks presents operational challenges, with overvoltages being among t...",
+    "keywords": [
+      "power",
+      "control",
+      "penetration",
+      "lowvoltage",
+      "ubopf",
+      "strategies",
+      "active",
+      "curtailment",
+      "arxiv",
+      "260301248v1",
+      "announce",
+      "type",
+      "abstract",
+      "increasing",
+      "photovoltaic",
+      "generation",
+      "distribution",
+      "networks",
+      "presents",
+      "operational"
+    ],
+    "readability": {
+      "wordCount": 146,
+      "sentenceCount": 7,
+      "avgWordsPerSentence": 20.857142857142858,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.01248",
+    "processedAt": "2026-03-03T09:40:43.808Z"
+  },
+  "source": "https://arxiv.org/abs/2603.01248",
+  "timestamp": "2026-03-03T09:40:43.901Z",
+  "category": "news",
+  "tags": [
+    "power",
+    "control",
+    "penetration",
+    "lowvoltage",
+    "ubopf"
+  ]
+}

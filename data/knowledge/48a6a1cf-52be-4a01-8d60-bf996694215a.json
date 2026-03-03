@@ -1,0 +1,62 @@
+{
+  "id": "48a6a1cf-52be-4a01-8d60-bf996694215a",
+  "content": "Advertisement AC Circuits Tutorials about AC Circuit Theory and RLC Resonance networks Basic Electronics Tutorials Amplifier Category Page Basic Electronics Tutorials Attenuators Category Page Tutorials about Binary Numbers and Binary Conversion Electronics Tutorials about Boolean Algebra and Laws Capacitor Tutorials about Capacitors and Capacitive Reactance Combination Logic Tutorials about Combinational Logic Circuits Connectivity Tutorials about the Connection of Circuits Counter Tutorials about Logic Counters and Frequency Division DC Circuits Tutorials about DC Circuit Theory and Ohms Law Diode Tutorials about Semiconductor Diodes and Rectifiers Tutorials about Electromagnetism and Electromagnetic Induction Filter Tutorials about Passive and Active RC Op-amp Filters Inductor Tutorials about Inductors, Inductance and Inductive Reactance IO Tutorials about Input Sensors and Output Actuators Tutorials about Logic Gates and their Truth Tables Blog Miscellaneous Electronics Tutorials and Circuits Op Amp Tutorials about Operational Amplifiers and their Configurations Oscillator Tutorials about Oscillators and LC Tank Circuits Power Electronics Tutorials about Power Electronic Devices Supplies Tutorials about Power Supply Design and Selection RC Tutorials about RC Networks, RC Charging and Discharging Circuits Resistor Tutorials about resistor types and connecting them together Resources Collection of Schematics, Electronics Online Tools and Circuit Simulators Sequential Logic Tutorials about Sequential Logic Timing Circuits Tutorials about Electronic Process Control Systems A collection of online electronics tools and calculators to help you understand more Transformer Tutorials about Power Transformers and their Operation Transistor Tutorials about Bipolar and FET Transistors Waveforms Tutorials about Waveform Generators and Multivibrators Advertisement Voltage Biased Clamping Circuits A Biased Clamper Circuit allows for an input waveform to be shifted above or below a DC reference level other than 0V without distorting the waveform. We saw previously in our Diode Clamping Circuit tutorial that a diode clamper is basically a wav... What Is A Clamping Diode And How Does It Work? A Diode Clamping Circuit is an electronic circuit configuration which can be used to change the DC voltage level of an input waveform. Unlike diode clipper circuits, or voltage limiter circuits, a clamping circuit does not change the... Creating Logic Gates using Transistors Building logic gates using transistors is extremely easy to understand and a great way for the electronics beginner to learn more about logical switching functions. There are, of course, many different ways we can create individual logic gat... Introduction to the Instrumentation Amplifier The instrumentation amplifier,  INA  is another type of operational amplifier circuit consisting of two or more op-amps connected together to provide a very high impedance at both of its two input terminals. Electrical output signals ... What is the Identity Law in Boolean Algebra? The identity law in mathematics states that special numbers such as  Zero,  0  and One,  1  do not change the value of another number when combined with it using specific mathematical operations. These special  identities  act like neu... What is a Phototransistor The Phototransistor is another light-sensitive optoelectronic semiconductor device that conducts current when exposed to light. The phototransistor functions just like a standard bipolar transistor, but instead of using a base current, it uses incident l... What is Negative Temperature Coefficient? Negative Temperature Coefficient, or NTC for short, plays an important role in determining the thermal behaviour of various electrical and electronic components. Such as thermistors, amplifiers and semiconductors. There are multiple types... Optoelectronic Devices The Photodiode uses a pn-semiconductor junction to convert surrounding light energy into an electrical signal which can then be processed and used to monitor some physical condition. As such, photodiodes are a fundamental component in the branch of electron... Advertisement Advertisement",
+  "metadata": {
+    "description": "Basic Electronics Tutorials and Revision Helps Beginners and Beyond Learn Basic Electronic Circuits, Engineering, and More. Visit Today!",
+    "keywords": [
+      "tutorials",
+      "about",
+      "circuits",
+      "circuit",
+      "logic",
+      "electronics",
+      "diode",
+      "clamping",
+      "advertisement",
+      "amplifier",
+      "input",
+      "power",
+      "electronic",
+      "waveform",
+      "what",
+      "using",
+      "gates",
+      "their",
+      "more",
+      "transistors"
+    ],
+    "language": "en",
+    "wordCount": 585,
+    "readingTime": 3,
+    "summary": "Advertisement AC Circuits Tutorials about AC Circuit Theory and RLC Resonance networks Basic Electronics Tutorials Amplifier Category Page Basic Electronics Tutorials Attenuators Category Page Tuto...",
+    "readability": {
+      "wordCount": 584,
+      "sentenceCount": 21,
+      "avgWordsPerSentence": 27.80952380952381,
+      "readingTime": 3
+    },
+    "quality": {
+      "score": 85,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "High quality content"
+      ]
+    },
+    "originalUrl": "https://www.electronics-tutorials.ws/",
+    "processedAt": "2026-03-03T09:19:19.945Z"
+  },
+  "source": "https://www.electronics-tutorials.ws/",
+  "timestamp": "2026-03-03T09:19:19.945Z",
+  "category": "general",
+  "tags": [
+    "tutorials",
+    "about",
+    "circuits",
+    "circuit",
+    "logic"
+  ]
+}

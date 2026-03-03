@@ -1,0 +1,72 @@
+{
+  "id": "42c1bfd6-865a-4edb-9dc0-41d3242e2d59",
+  "content": "div id  attachment_587108  style  width  1550px  class  wp-caption aligncenter   a href    loading  lazy  decoding  async  aria-describedby  caption-attachment-587108  class  wp-image-587108 size-full  src    alt  ALLEX robot developed by RLWRLD and WIRobotics.   width  1540  height  1000  srcset    1540w,   300w,   1024w,   150w,   768w,   1536w,   368w  sizes  auto,  max-width  1540px  100vw, 1540px      a  p id  caption-attachment-587108  class  wp-caption-text  RLWRLD worked with WIRobotics to develop ALLEX, which it uses to test its AI models.   Source  RLWRLD  p   div   p RLWRLD, a physical AI startup developing robot foundation models for industrial environments, today said it has raised  26 million in Seed 2 funding.  p   p This latest round brings the Seoul-based  a href    target  _blank  rel  noopener  company  a  s total seed capital to  42 million, following its  14.8 million  a href    target  _blank  rel  noopener  Seed 1 round  a  in April 2025.  p   p  Our Seed 2 round brings RLWRLD closer to partners who are actively deploying physical AI in industrial environments,  said Junghee Ryu, CEO of RLWRLD.  Physical AI only matters if it works on real job sites. By testing our models in some of the toughest industrial environments, we re building systems meant for real operations first before they ever make sense elsewhere.   p   h2 RLWRLD uses unpredictability to train its models  h2   p Unlike robotics systems trained primarily in clean, controlled lab settings, RLWRLD s models are trained using high-precision, multimodal data collected directly inside real factories,  a href    target  _blank  rel  noopener  warehouses  a , and service environments.  p   p The company said its approach exposes the models to the unpredictability of live operations crowded spaces, variable lighting, human interaction, and imperfect conditions that are difficult to replicate in simulations.  p   p RLWRLD said it plans to use large-scale multimodal data, advanced  a href    target  _blank  rel  noopener  AI  a  architecture, and global partnerships to create a core intelligence layer for robotics. It said its scalable, multi- a href    target  _blank  rel  noopener  sensor  a  system captures complex demonstrations from diverse industrial settings, generating rich data for robust, adaptable models.  p   p  iframe loading  lazy  title  Pick and Place Humanoid Hand AI  width  740  height  416  src    frameborder  0  allow  accelerometer  autoplay  clipboard-write  encrypted-media  gyroscope  picture-in-picture  web-share  referrerpolicy  strict-origin-when-cross-origin  allowfullscreen   iframe   p   h2 Projects progress from MOUs to validation  h2   p RLWRLD said it is executing proof-of-concept and robotics transformation projects with enterprise partners across logistics,  a href    target  _blank  rel  noopener  retail  a , and service environments in Japan and South Korea. Several initiatives with major companies, including CJ Logistics and Lotte, have progressed from memoranda of understanding  MOUs  into joint industrial validation phases.  p   p As part of these collaborations, RLWRLD is actively working with multiple strategic investors on joint projects that include using real-world operational data to train and validate its models.  p   p  The future of logistics competitiveness depends not on basic automation, but on AI systems that can understand and reason about complex physical environments,  said a representative from CJ Logistics.  Through our collaboration with RLWRLD, we are working to deploy robot foundation models that can be applied directly to live warehouse operations and accelerate the transition toward AI-driven autonomous logistics.   p   p RLWRLD said it structured its Seed 2 round to expand its investor alliance in response to growing demand from enterprise partners seeking on-site validation and long-term collaboration. Participants included global venture firm Headline Asia and Z Ventures, the corporate venture capital arm of Z Holdings, and Yahoo Japan LINE.  p   p In addition, strategic investors such as CJ Logistics, Kakao Investment, Lotte Ventures, Hanwha Asset Management, and Mirae Asset Emart Investment Fund participated.  p   hr     div style  text-align  center    a href     img loading  lazy  decoding  async  class  aligncenter size-full wp-image-568305  src    alt  SITE AD for the 2026 Robotics Summit save the date.  width  728  height  90      a   div   hr     p The post  a href    AI startup RLWRLD raises  26M  a  appeared first on  a href    Robot Report  a .  p",
+  "metadata": {
+    "pubDate": "Thu, 26 Feb 2026 00:05:42 +0000",
+    "author": "The Robot Report Staff",
+    "guid": "https://www.therobotreport.com/?p=587103",
+    "feedTitle": "The Robot Report",
+    "categories": [
+      "Artificial Intelligence",
+      "Artificial Intelligence / Cognition",
+      "Design / Development",
+      "Financial",
+      "Investments",
+      "Logistics",
+      "News",
+      "Retail / Wholesale",
+      "RLWRLD",
+      "service robots"
+    ],
+    "summary": "div id  attachment_587108  style  width  1550px  class  wp-caption aligncenter   a href    loading  lazy  decoding  async  aria-describedby  caption-attachment-587108  class  wp-image-587108 size-f...",
+    "keywords": [
+      "rlwrld",
+      "href",
+      "models",
+      "said",
+      "environments",
+      "target",
+      "_blank",
+      "noopener",
+      "logistics",
+      "industrial",
+      "seed",
+      "from",
+      "width",
+      "class",
+      "robot",
+      "physical",
+      "round",
+      "robotics",
+      "data",
+      "loading"
+    ],
+    "readability": {
+      "wordCount": 656,
+      "sentenceCount": 23,
+      "avgWordsPerSentence": 28.52173913043478,
+      "readingTime": 4
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.therobotreport.com/physical-ai-startup-rlwrld-raises-26m/",
+    "processedAt": "2026-03-03T11:02:19.822Z"
+  },
+  "source": "https://www.therobotreport.com/physical-ai-startup-rlwrld-raises-26m/",
+  "timestamp": "2026-03-03T11:02:19.888Z",
+  "category": "news",
+  "tags": [
+    "rlwrld",
+    "href",
+    "models",
+    "said",
+    "environments"
+  ]
+}

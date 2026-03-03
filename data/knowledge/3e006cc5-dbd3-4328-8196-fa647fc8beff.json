@@ -1,0 +1,52 @@
+{
+  "id": "3e006cc5-dbd3-4328-8196-fa647fc8beff",
+  "content": "The Robust Optical Clock Network  ROCkN  program enables precision timekeeping, even in contested and or GPS-denied environments.",
+  "metadata": {
+    "pubDate": "Wed, 25 Feb 2026 20:28:02 +0000",
+    "author": "outreach@darpa.mil",
+    "guid": "4653 at https://www.darpa.mil",
+    "feedTitle": "DARPA - Defense Advanced Research Projects Agency",
+    "summary": "The Robust Optical Clock Network  ROCkN  program enables precision timekeeping, even in contested and or GPS-denied environments",
+    "keywords": [
+      "robust",
+      "optical",
+      "clock",
+      "network",
+      "rockn",
+      "program",
+      "enables",
+      "precision",
+      "timekeeping",
+      "even",
+      "contested",
+      "gpsdenied",
+      "environments"
+    ],
+    "readability": {
+      "wordCount": 17,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 17,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations",
+    "processedAt": "2026-03-03T10:32:26.790Z"
+  },
+  "source": "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations",
+  "timestamp": "2026-03-03T10:32:26.905Z",
+  "category": "news",
+  "tags": [
+    "robust",
+    "optical",
+    "clock",
+    "network",
+    "rockn"
+  ]
+}

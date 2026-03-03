@@ -1,0 +1,60 @@
+{
+  "id": "f9db5d0c-e1f0-47d9-8676-0ff5a515fc47",
+  "content": "span property  schema name  class  field field--string field--title  Secretary Federico Pe a  March 1997-June 1998   span   span rel  schema author  class  field field--author field--uid   span lang about    typeof  schema Person  property  schema name  datatype    span property  schema dateCreated  content   T20 44 41 00 00  class  field field--timestamp field--created   time datetime   T15 44 41-05 00  title  Monday, February 5, 2018 - 15 44  February 5, 2018  time    span   section class  layout blade-section--boxed    div class  grid-container    div class  blade-color     div class  grid-row    div class  grid-col    div class  block block-layout-builder block-inline-blockbasic     div   div class  block block-layout-builder block-inline-blockmedia    div class  field field--entity_reference_entity_view field--field_media field field--name-field-media field--type-entity-reference field--label-hidden field__item    div   div class  timeline  id  timeline-embed--232269    div    div    div    div    div    div    div    div    section",
+  "metadata": {
+    "pubDate": "Mon, 05 Feb 2018 20:44:41 +0000",
+    "author": "renee.saunders@em.doe.gov",
+    "guid": "3281139 at https://www.energy.gov",
+    "feedTitle": "Department of Energy",
+    "summary": "span property  schema name  class  field field--string field--title  Secretary Federico Pe a  March 1997-June 1998   span   span rel  schema author  class  field field--author field--uid   span lan...",
+    "keywords": [
+      "class",
+      "span",
+      "schema",
+      "field",
+      "property",
+      "2018",
+      "name",
+      "time",
+      "february",
+      "section",
+      "block",
+      "blocklayoutbuilder",
+      "1998",
+      "4105",
+      "fieldstring",
+      "fieldtitle",
+      "secretary",
+      "federico",
+      "march",
+      "1997june"
+    ],
+    "readability": {
+      "wordCount": 119,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 119,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.energy.gov/em/secretary-federico-pena-march-1997-june-1998",
+    "processedAt": "2026-03-03T11:02:19.367Z"
+  },
+  "source": "https://www.energy.gov/em/secretary-federico-pena-march-1997-june-1998",
+  "timestamp": "2026-03-03T11:02:19.479Z",
+  "category": "news",
+  "tags": [
+    "class",
+    "span",
+    "schema",
+    "field",
+    "property"
+  ]
+}

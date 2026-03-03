@@ -1,0 +1,20 @@
+{
+  "title": "CYRUS Robotics Content Generation Report",
+  "timestamp": "2026-03-03T12:40:34.056724",
+  "query": "Design a robotic arm",
+  "summary": {
+    "total_files": 0,
+    "designs_generated": 1,
+    "images_generated": 0,
+    "component_types": [
+      "robotic_arm"
+    ]
+  },
+  "files": [],
+  "usage_instructions": [
+    "Design files (.step, .stl) can be imported into CAD software",
+    "Image files (.png, .svg, .pdf) can be viewed or embedded in documentation",
+    "Documentation files (.json) contain technical specifications and metadata",
+    "All files are generated with both online and offline capabilities"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "b91762a3-e977-4ada-82c5-0f1f21aa6c1a",
+  "content": "arXiv 2603.01831v1 Announce Type  new Abstract  With the increasing penetration of renewable energy sources, grid-forming  GFM  inverters are becoming essential for voltage and frequency regulation. However, the transient stability of GFM inverter is critically affected by the current limiters that are embedded with the standard control schemes. This paper proposes a novel adaptive function to enhance the transient stability of droop-controlled GFM inverters. The proposed method autonomously adjusts the active power reference and the droop gain based on the terminal voltage of the inverter. Also, the acceleration of the phase angle is prevented, leading to the maximization of critical clearing time  CCT . The proposed method is benchmarked against two state-of-the-art GFM inverter CCT enhancement methods. Effectiveness of the proposed method is validated through electromagnetic transient  EMT  simulations in MATLAB Simulink textsuperscript  textregistered .",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Dewan Mahnaaz Mahmud, Vinu Thomas, Bogdan Marinescu, Micka\\\"el Hilairet",
+    "guid": "oai:arXiv.org:2603.01831v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY"
+    ],
+    "summary": "01831v1 Announce Type  new Abstract  With the increasing penetration of renewable energy sources, grid-forming  GFM  inverters are becoming essential for voltage and frequency regulation",
+    "keywords": [
+      "transient",
+      "inverter",
+      "proposed",
+      "method",
+      "inverters",
+      "voltage",
+      "stability",
+      "arxiv",
+      "260301831v1",
+      "announce",
+      "type",
+      "abstract",
+      "increasing",
+      "penetration",
+      "renewable",
+      "energy",
+      "sources",
+      "gridforming",
+      "becoming",
+      "essential"
+    ],
+    "readability": {
+      "wordCount": 134,
+      "sentenceCount": 8,
+      "avgWordsPerSentence": 16.75,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.01831",
+    "processedAt": "2026-03-03T09:35:31.661Z"
+  },
+  "source": "https://arxiv.org/abs/2603.01831",
+  "timestamp": "2026-03-03T09:35:31.746Z",
+  "category": "news",
+  "tags": [
+    "transient",
+    "inverter",
+    "proposed",
+    "method",
+    "inverters"
+  ]
+}

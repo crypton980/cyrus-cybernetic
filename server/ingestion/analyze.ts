@@ -1,12 +1,14 @@
-import OpenAI from "openai";
+import { localLLM } from "../ai/local-llm-client";
 import { ExtractionResult } from "./extract";
 
 const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 
+// Use local LLM as primary, OpenAI as fallback
+const useLocalLLM = process.env.USE_LOCAL_LLM !== 'false';
 const openaiClient =
-  openaiApiKey
-    ? new OpenAI({ apiKey: openaiApiKey, baseURL: openaiBaseUrl })
+  (!useLocalLLM && openaiApiKey)
+    ? new (await import("openai")).default({ apiKey: openaiApiKey, baseURL: openaiBaseUrl })
     : null;
 
 export interface AnalysisResult {
@@ -27,15 +29,31 @@ export async function analyzeExtraction(ext: ExtractionResult): Promise<Analysis
   ].filter(Boolean);
   const aggregateText = contentPieces.join("\n").slice(0, 8000); // cap to avoid long prompts
 
-  if (!openaiClient) {
+  if (!openaiClient && !useLocalLLM) {
     return {
       summary: aggregateText ? aggregateText.slice(0, 300) : "No extracted text",
       findings: [],
-      issues: ["LLM analysis unavailable (no OpenAI config)."],
-      interpretation: "Minimal analysis due to missing LLM configuration.",
-      recommendations: ["Configure OpenAI credentials for full analysis."],
+      issues: ["AI analysis unavailable (no OpenAI config and local LLM disabled)."],
+      interpretation: "Minimal analysis due to missing AI configuration.",
+      recommendations: ["Configure OpenAI credentials or enable local LLM for full analysis."],
       confidence: aggregateText ? "Low" : "Low",
     };
+  }
+
+  // Try local LLM first
+  if (useLocalLLM) {
+    try {
+      const localPrompt = `${prompt}\n\nContent to analyze:\n${aggregateText || "No content extracted."}`;
+      const localResponse = await localLLM.chat([
+        { role: "system", content: "You are a professional analyst providing concise, factual analysis." },
+        { role: "user", content: localPrompt }
+      ], { temperature: 0.3, max_tokens: 600 });
+
+      return parseLLMReport(localResponse);
+    } catch (error) {
+      console.warn("[LocalLLM] Analysis failed, falling back to OpenAI:", error);
+      // Continue to OpenAI fallback
+    }
   }
 
   const prompt = `

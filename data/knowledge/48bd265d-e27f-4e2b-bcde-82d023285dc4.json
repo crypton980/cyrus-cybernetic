@@ -1,0 +1,64 @@
+{
+  "id": "48bd265d-e27f-4e2b-bcde-82d023285dc4",
+  "content": "arXiv 2603.00446v1 Announce Type  new Abstract  In this paper, we address the problem of tactile sim-to-real policy transfer for contact-rich tasks. Existing methods primarily focus on vision-based sensors and emphasize image rendering quality while providing overly simplistic models of force and shear. Consequently, these models exhibit a large sim-to-real gap for many dexterous tasks. Here, we present HydroShear, a non-holonomic hydroelastic tactile simulator that advances the state-of-the-art by modeling  a  stick-slip transitions, b  path-dependent force and shear build up, and c  full SE 3  object-sensor interactions. HydroShear extends hydroelastic contact models using Signed Distance Functions  SDFs  to track the displacements of the on-surface points of an indenter during physical interaction with the sensor membrane. Our approach generates physics-based, computationally efficient force fields from arbitrary watertight geometries while remaining agnostic to the underlying physics engine. In experiments with GelSight Minis, HydroShear more faithfully reproduces real tactile shear compared to existing methods. This fidelity enables zero-shot sim-to-real transfer of reinforcement learning policies across four tasks  peg insertion, bin packing, book shelving for insertion, and drawer pulling for fine gripper control under slip. Our method achieves a 93  average success rate, outperforming policies trained on tactile images  34   and alternative shear simulation methods  58 -61  .",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "An Dang, Jayjun Lee, Mustafa Mukadam, X. Alice Wu, Bernadette Bucher, Manikantan Nambi, Nima Fazeli",
+    "guid": "oai:arXiv.org:2603.00446v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO",
+      "cs.AI"
+    ],
+    "summary": "00446v1 Announce Type  new Abstract  In this paper, we address the problem of tactile sim-to-real policy transfer for contact-rich tasks",
+    "keywords": [
+      "tactile",
+      "shear",
+      "simtoreal",
+      "tasks",
+      "methods",
+      "models",
+      "force",
+      "hydroshear",
+      "transfer",
+      "existing",
+      "while",
+      "hydroelastic",
+      "policies",
+      "insertion",
+      "arxiv",
+      "260300446v1",
+      "announce",
+      "type",
+      "abstract",
+      "paper"
+    ],
+    "readability": {
+      "wordCount": 203,
+      "sentenceCount": 10,
+      "avgWordsPerSentence": 20.3,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00446",
+    "processedAt": "2026-03-03T11:02:19.822Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00446",
+  "timestamp": "2026-03-03T11:02:19.894Z",
+  "category": "news",
+  "tags": [
+    "tactile",
+    "shear",
+    "simtoreal",
+    "tasks",
+    "methods"
+  ]
+}

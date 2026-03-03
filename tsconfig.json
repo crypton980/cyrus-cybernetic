@@ -2,9 +2,9 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
+    "module": "ES2022",
     "skipLibCheck": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -16,7 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "allowJs": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {

@@ -1,13 +1,19 @@
 import { Router, Request, Response } from "express";
-import OpenAI from "openai";
+import { localVision } from "../scan/local-vision-client";
 
 const router = Router();
 
-function getOpenAIClient(): OpenAI | null {
-  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
-  if (!apiKey) return null;
-  return new OpenAI({ apiKey, baseURL });
+const useLocalVision = process.env.USE_LOCAL_VISION !== 'false';
+
+async function getOpenAIClient(): Promise<any | null> {
+  if (!useLocalVision) {
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+    if (!apiKey) return null;
+    const openai = await import("openai");
+    return new openai.default({ apiKey, baseURL });
+  }
+  return null;
 }
 
 interface PersonAnalysis {
@@ -45,7 +51,7 @@ router.post("/analyze-people", async (req: Request, res: Response) => {
       return res.status(413).json({ error: "Image too large" });
     }
 
-    const client = getOpenAIClient();
+    const client = await getOpenAIClient();
     if (!client) {
       return res.status(500).json({ error: "Vision API not configured" });
     }

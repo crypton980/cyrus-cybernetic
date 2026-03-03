@@ -1,0 +1,48 @@
+{
+  "id": "849878bb-a4af-4dac-9ebf-566e60fbb3c5",
+  "content": "The papers are dominated by conflict across the Middle East for the third day in a row.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 05:40:13 GMT",
+    "author": "",
+    "guid": "https://www.bbc.com/news/articles/crm8lvdw297o#3",
+    "feedTitle": "BBC News",
+    "summary": "The papers are dominated by conflict across the Middle East for the third day in a row",
+    "keywords": [
+      "papers",
+      "dominated",
+      "conflict",
+      "across",
+      "middle",
+      "east",
+      "third",
+      "row"
+    ],
+    "readability": {
+      "wordCount": 17,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 17,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.bbc.com/news/articles/crm8lvdw297o?at_medium=RSS&at_campaign=rss",
+    "processedAt": "2026-03-03T09:15:38.112Z"
+  },
+  "source": "https://www.bbc.com/news/articles/crm8lvdw297o?at_medium=RSS&at_campaign=rss",
+  "timestamp": "2026-03-03T09:15:38.116Z",
+  "category": "news",
+  "tags": [
+    "papers",
+    "dominated",
+    "conflict",
+    "across",
+    "middle"
+  ]
+}

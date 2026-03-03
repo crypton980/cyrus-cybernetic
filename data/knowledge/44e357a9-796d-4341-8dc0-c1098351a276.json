@@ -1,0 +1,33 @@
+{
+  "id": "44e357a9-796d-4341-8dc0-c1098351a276",
+  "content": "",
+  "metadata": {
+    "keywords": [],
+    "language": "en",
+    "wordCount": 1,
+    "readingTime": 1,
+    "summary": "",
+    "readability": {
+      "wordCount": 0,
+      "sentenceCount": 0,
+      "avgWordsPerSentence": 0,
+      "readingTime": 0
+    },
+    "quality": {
+      "score": 50,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://scholar.google.com/scholar?q=robotics",
+    "processedAt": "2026-03-03T09:26:25.518Z"
+  },
+  "source": "https://scholar.google.com/scholar?q=robotics",
+  "timestamp": "2026-03-03T09:26:25.518Z",
+  "category": "general",
+  "tags": []
+}

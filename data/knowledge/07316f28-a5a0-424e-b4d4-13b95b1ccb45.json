@@ -1,0 +1,67 @@
+{
+  "id": "07316f28-a5a0-424e-b4d4-13b95b1ccb45",
+  "content": "arXiv 2603.00182v1 Announce Type  new Abstract  Cross-robot policy learning -- training a single policy to perform well across multiple embodiments -- remains a central challenge in robot learning. Transformer-based policies, such as vision-language-action  VLA  models, are typically embodiment-agnostic and must infer kinematic structure purely from observations, which can reduce robustness across embodiments and even limit performance within a single embodiment. We propose an embodiment-aware transformer policy that injects morphology via three mechanisms   1  kinematic tokens that factorize actions across joints and compress time through per-joint temporal chunking   2  a topology-aware attention bias that encodes kinematic topology as an inductive bias in self-attention, encouraging message passing along kinematic edges  and  3  joint-attribute conditioning that augments topology with per-joint descriptors to capture semantics beyond connectivity. Across a range of embodiments, this structured integration consistently improves performance over a vanilla pi0.5 VLA baseline, indicating improved robustness both within an embodiment and across embodiments.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Kei Suzuki, Jing Liu, Ye Wang, Chiori Hori, Matthew Brand, Diego Romeres, Toshiaki Koike-Akino",
+    "guid": "oai:arXiv.org:2603.00182v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO",
+      "cs.AI",
+      "cs.LG",
+      "cs.SY",
+      "eess.SY"
+    ],
+    "summary": "00182v1 Announce Type  new Abstract  Cross-robot policy learning -- training a single policy to perform well across multiple embodiments -- remains a central challenge in robot learning",
+    "keywords": [
+      "across",
+      "embodiments",
+      "kinematic",
+      "policy",
+      "learning",
+      "single",
+      "robustness",
+      "performance",
+      "within",
+      "embodiment",
+      "perjoint",
+      "bias",
+      "topology",
+      "arxiv",
+      "260300182v1",
+      "announce",
+      "type",
+      "abstract",
+      "crossrobot",
+      "training"
+    ],
+    "readability": {
+      "wordCount": 150,
+      "sentenceCount": 6,
+      "avgWordsPerSentence": 25,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00182",
+    "processedAt": "2026-03-03T09:35:32.011Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00182",
+  "timestamp": "2026-03-03T09:35:32.088Z",
+  "category": "news",
+  "tags": [
+    "across",
+    "embodiments",
+    "kinematic",
+    "policy",
+    "learning"
+  ]
+}

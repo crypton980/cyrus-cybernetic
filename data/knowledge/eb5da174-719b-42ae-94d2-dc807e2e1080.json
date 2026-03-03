@@ -1,0 +1,66 @@
+{
+  "id": "eb5da174-719b-42ae-94d2-dc807e2e1080",
+  "content": "arXiv 2603.00420v1 Announce Type  new Abstract  In-vivo environments, magnetically actuated soft robots offer advantages such as wireless operation and precise control, showing promising potential for painless detection and therapeutic procedures. We developed a trileg magnetically driven soft robot  TMR  whose multi-legged design enables more flexible gaits and diverse motion patterns. For the silicone made of reconfigurable soft robots, its navigation ability can be separated into sequential motions, namely squatting, rotation, lifting a leg, walking and so on. Its motion and behavior depend on its bending shapes. To bridge motion type description and specific low-level voltage control, we introduced TMR-VLA, an end-to-end multi-modal system for a trileg magnetic soft robot capable of performing hybrid motion types, which is promising for developing a navigation ability by adapting its shape to language-constrained motion types. The TMR-VLA deploys embodied endoluminal localization ability from EndoVLA, and fuses sequential frames and natural language commands as input. Low-level voltage output is generated based on the current observation state and specific motion type description. The result shows the TMR-VLA can predict how the voltage applied to TMR will change the dynamics of a silicon-made soft robot. The TMR-VLA reached a 74  average success rate.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Ruijie Tang, Chi Kit Ng, Kaixuan Wu, Long Bai, Guankun Wang, Yiming Huang, Yupeng Wang, Hongliang Ren",
+    "guid": "oai:arXiv.org:2603.00420v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO",
+      "cs.AI",
+      "cs.SY",
+      "eess.SY"
+    ],
+    "summary": "00420v1 Announce Type  new Abstract  In-vivo environments, magnetically actuated soft robots offer advantages such as wireless operation and precise control, showing promising potential for painles...",
+    "keywords": [
+      "motion",
+      "soft",
+      "tmrvla",
+      "type",
+      "robot",
+      "ability",
+      "voltage",
+      "magnetically",
+      "robots",
+      "control",
+      "promising",
+      "trileg",
+      "navigation",
+      "sequential",
+      "description",
+      "specific",
+      "lowlevel",
+      "types",
+      "arxiv",
+      "260300420v1"
+    ],
+    "readability": {
+      "wordCount": 196,
+      "sentenceCount": 10,
+      "avgWordsPerSentence": 19.6,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00420",
+    "processedAt": "2026-03-03T09:39:27.983Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00420",
+  "timestamp": "2026-03-03T09:39:28.173Z",
+  "category": "news",
+  "tags": [
+    "motion",
+    "soft",
+    "tmrvla",
+    "type",
+    "robot"
+  ]
+}

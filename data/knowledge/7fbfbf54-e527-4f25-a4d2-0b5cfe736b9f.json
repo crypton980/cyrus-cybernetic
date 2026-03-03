@@ -1,0 +1,64 @@
+{
+  "id": "7fbfbf54-e527-4f25-a4d2-0b5cfe736b9f",
+  "content": "arXiv 2603.00407v1 Announce Type  new Abstract  Reconfigurable intelligent surface  RIS  constitutes a disruptive technology for enhancing vehicular communication performance through reconfigurable propagation environments. In this paper, we propose an adaptive channel estimation framework and hybrid beamforming optimization strategy for RIS-aided vehicular multiple-input multiple-output  MIMO  systems operating in high-mobility scenarios. To address severe Doppler effects and rapid channel variations, we design a velocity-aware pilot scheme that progressively estimates cascaded channels across two timescales, leveraging tensor decomposition and adaptive grouping of passive elements. This framework dynamically balances channel estimation accuracy and spectral efficiency, significantly reducing training overhead. Furthermore, we develop a low-complexity hybrid beamforming algorithm for both narrowband single vehicle user equipment  VUE  and broadband multi-VUE systems. For single-VUE scenarios, we derive closed-form active beamforming solutions and optimize passive beamforming via alternating optimization. For multi-VUE broadband systems, we jointly optimize subcarrier allocation, power distribution, and beamforming to maximize system throughput while mitigating inter-carrier interference  ICI  caused by Doppler spread, subject to quality-of-service  QoS  constraints and RIS hardware limitations. Our simulation results demonstrate that the proposed methods achieve substantial performance gains in channel estimation efficiency, beamforming robustness, and system throughput compared to conventional schemes, particularly under high mobility conditions.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Tianyou Li, Haifeng Hu, Dapeng Li",
+    "guid": "oai:arXiv.org:2603.00407v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY"
+    ],
+    "summary": "00407v1 Announce Type  new Abstract  Reconfigurable intelligent surface  RIS  constitutes a disruptive technology for enhancing vehicular communication performance through reconfigurable propagatio...",
+    "keywords": [
+      "beamforming",
+      "channel",
+      "estimation",
+      "systems",
+      "reconfigurable",
+      "vehicular",
+      "performance",
+      "adaptive",
+      "framework",
+      "hybrid",
+      "optimization",
+      "scenarios",
+      "doppler",
+      "passive",
+      "efficiency",
+      "broadband",
+      "multivue",
+      "optimize",
+      "system",
+      "throughput"
+    ],
+    "readability": {
+      "wordCount": 196,
+      "sentenceCount": 9,
+      "avgWordsPerSentence": 21.77777777777778,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00407",
+    "processedAt": "2026-03-03T10:35:44.741Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00407",
+  "timestamp": "2026-03-03T10:35:44.863Z",
+  "category": "news",
+  "tags": [
+    "beamforming",
+    "channel",
+    "estimation",
+    "systems",
+    "reconfigurable"
+  ]
+}

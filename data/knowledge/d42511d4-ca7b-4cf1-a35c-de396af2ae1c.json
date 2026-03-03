@@ -1,0 +1,41 @@
+{
+  "id": "d42511d4-ca7b-4cf1-a35c-de396af2ae1c",
+  "content": "Home Products",
+  "metadata": {
+    "description": "Find products to meet your needs and solve your engineering challenges at Analog Devices.",
+    "keywords": [
+      "home",
+      "products"
+    ],
+    "language": "en",
+    "wordCount": 2,
+    "readingTime": 1,
+    "summary": "Home Products",
+    "readability": {
+      "wordCount": 2,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 2,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 55,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.analog.com/en/products.html",
+    "processedAt": "2026-03-03T09:19:47.589Z"
+  },
+  "source": "https://www.analog.com/en/products.html",
+  "timestamp": "2026-03-03T09:19:47.589Z",
+  "category": "general",
+  "tags": [
+    "home",
+    "products"
+  ]
+}

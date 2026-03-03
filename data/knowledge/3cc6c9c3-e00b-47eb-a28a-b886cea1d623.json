@@ -1,0 +1,60 @@
+{
+  "id": "3cc6c9c3-e00b-47eb-a28a-b886cea1d623",
+  "content": "span property  schema name  class  field field--string field--title  Solar Achievements Timeline  span   span rel  schema author  class  field field--author field--uid   span lang about    typeof  schema Person  property  schema name  datatype    span property  schema dateCreated  content   T14 34 23 00 00  class  field field--timestamp field--created   time datetime   T10 34 23-04 00  title  Wednesday, June 10, 2020 - 10 34  June 10, 2020  time    span   section class  layout blade-section--boxed    div class  grid-container    div class  blade-color     div class  grid-row    div class  grid-col    div class  block block-layout-builder block-inline-blockbasic    div class  field field--text_default field--body field field--name-body field--type-text-with-summary field--label-hidden field__item   p In 2011, the U.S. Department of Energy's  DOE  Solar Energy Technologies Office  SETO  was tasked with achieving the goals of the SunShot Initiative  to drive down the cost of solar electricity to be fully cost-competitive with traditional energy sources by the end of the decade.  p  p SunShot builds on a tradition of steady collaboration between DOE's Energy Efficiency and Renewable Energy program and solar industry pioneers. More than half of all solar cell efficiency records have been directly funded by SETO and 30  of all patents in the solar energy field are linked to patents attributable to the DOE. In fact, without the Energy Department's involvement, the average solar photovoltaic  PV  module production cost per watt would have been  5.27 in 2008 rather than  1.92. DOE research and development efforts have  a href    solar industry progress by an estimated 12 years  a .  p  p This timeline features the key innovations that have advanced the solar industry in the United States. Learn more about these key events from 1955 to present.    p   div    div   div class  block block-layout-builder block-inline-blockmedia    div class  field field--entity_reference_entity_view field--field_media field field--name-field-media field--type-entity-reference field--label-hidden field__item    div   div class  timeline  id  timeline-embed--232273    div    div    div    div    div    div    div    div    section",
+  "metadata": {
+    "pubDate": "Wed, 10 Jun 2020 14:34:23 +0000",
+    "author": "jason.kardell@hq.doe.gov",
+    "guid": "4451780 at https://www.energy.gov",
+    "feedTitle": "Department of Energy",
+    "summary": "span property  schema name  class  field field--string field--title  Solar Achievements Timeline  span   span rel  schema author  class  field field--author field--uid   span lang about    typeof  ...",
+    "keywords": [
+      "class",
+      "solar",
+      "field",
+      "span",
+      "energy",
+      "schema",
+      "property",
+      "timeline",
+      "industry",
+      "2020",
+      "name",
+      "about",
+      "time",
+      "june",
+      "section",
+      "block",
+      "blocklayoutbuilder",
+      "fieldlabelhidden",
+      "field__item",
+      "seto"
+    ],
+    "readability": {
+      "wordCount": 300,
+      "sentenceCount": 12,
+      "avgWordsPerSentence": 25,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.energy.gov/eere/solar/solar-achievements-timeline",
+    "processedAt": "2026-03-03T10:32:25.961Z"
+  },
+  "source": "https://www.energy.gov/eere/solar/solar-achievements-timeline",
+  "timestamp": "2026-03-03T10:32:26.020Z",
+  "category": "news",
+  "tags": [
+    "class",
+    "solar",
+    "field",
+    "span",
+    "energy"
+  ]
+}

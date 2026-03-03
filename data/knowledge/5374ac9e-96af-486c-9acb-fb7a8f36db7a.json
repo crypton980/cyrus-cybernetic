@@ -1,0 +1,49 @@
+{
+  "id": "5374ac9e-96af-486c-9acb-fb7a8f36db7a",
+  "content": "The prime minister told MPs that the government  does not believe in regime change from the skies .",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 04:59:39 GMT",
+    "author": "",
+    "guid": "https://www.bbc.com/news/articles/cy4wgpdllleo#1",
+    "feedTitle": "BBC News",
+    "summary": "The prime minister told MPs that the government  does not believe in regime change from the skies",
+    "keywords": [
+      "prime",
+      "minister",
+      "told",
+      "government",
+      "believe",
+      "regime",
+      "change",
+      "from",
+      "skies"
+    ],
+    "readability": {
+      "wordCount": 18,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 18,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.bbc.com/news/articles/cy4wgpdllleo?at_medium=RSS&at_campaign=rss",
+    "processedAt": "2026-03-03T10:35:45.246Z"
+  },
+  "source": "https://www.bbc.com/news/articles/cy4wgpdllleo?at_medium=RSS&at_campaign=rss",
+  "timestamp": "2026-03-03T10:35:45.246Z",
+  "category": "news",
+  "tags": [
+    "prime",
+    "minister",
+    "told",
+    "government",
+    "believe"
+  ]
+}

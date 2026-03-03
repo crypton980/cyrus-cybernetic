@@ -1,0 +1,64 @@
+{
+  "id": "ce4911f6-7d1c-4ccd-911f-3f6f72471901",
+  "content": "arXiv 2603.00108v1 Announce Type  new Abstract  Robotic-assisted surgery  RAS  is established in clinical practice, and automated surgical skill assessment utilizing multimodal data offers transformative potential for surgical analytics and education. However, developing effective multimodal methods remains challenging due to the task complexity, limited annotated datasets and insufficient techniques for cross-modal information fusion. Existing state-of-the-art relies exclusively on RGB video and only applies on dry-lab settings, failing to address the significant domain gap between controlled simulation and real clinical cases, where the surgical environment together with camera and tissue motion introduce substantial complexities. This work introduces SurgFusion-Net and Divergence Regulated Attention  DRA , an innovative fusion strategy for multimodal surgical skill assessment. We contribute two first-of-their-kind clinical datasets  the RAH-skill dataset containing 279,691 RGB frames from 37 videos of Robot-assisted Hysterectomy  RAH , and the RARP-skill dataset containing 70,661 RGB frames from 33 videos of Robot-Assisted Radical Prostatectomy  RARP . Both datasets include M-GEARS skill annotations, corresponding optical flow and tool segmentation masks. DRA incorporates adaptive dual attention and diversity-promoting multi-head attention to fuse multimodal information, from three modalities, based on surgical context, enhancing assessment accuracy and reliability. Validated on the JIGSAWS benchmark, RAH-skill, and RARP-skill datasets, our approach outperforms recent baselines with SCC improvements of 0.02 in LOSO, 0.04 in LOUO across JIGSAWS tasks, and 0.0538 and 0.0493 gains on RAH-skill and RARP-skill, respectively.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Runlong He, Freweini M. Tesfai, Matthew W. E. Boal, Nazir Sirajudeen, Dimitrios Anastasiou, Jialang Xu, Mobarak I. Hoque, Philip J. Edwards, John D. Kelly, Ashwin Sridhar, Abdolrahim Kadkhodamohammadi, Dhivya Chandrasekaran, Matthew J. Clarkson, Danail Stoyanov, Nader Francis, Evangelos B. Mazomenos",
+    "guid": "oai:arXiv.org:2603.00108v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO",
+      "cs.AI"
+    ],
+    "summary": "00108v1 Announce Type  new Abstract  Robotic-assisted surgery  RAS  is established in clinical practice, and automated surgical skill assessment utilizing multimodal data offers transformative pote...",
+    "keywords": [
+      "surgical",
+      "multimodal",
+      "datasets",
+      "clinical",
+      "skill",
+      "assessment",
+      "attention",
+      "rahskill",
+      "from",
+      "rarpskill",
+      "information",
+      "fusion",
+      "dataset",
+      "containing",
+      "frames",
+      "videos",
+      "robotassisted",
+      "jigsaws",
+      "70661",
+      "279691"
+    ],
+    "readability": {
+      "wordCount": 224,
+      "sentenceCount": 13,
+      "avgWordsPerSentence": 17.23076923076923,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00108",
+    "processedAt": "2026-03-03T09:35:32.392Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00108",
+  "timestamp": "2026-03-03T09:35:32.471Z",
+  "category": "news",
+  "tags": [
+    "surgical",
+    "multimodal",
+    "datasets",
+    "clinical",
+    "skill"
+  ]
+}

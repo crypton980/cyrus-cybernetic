@@ -1,0 +1,63 @@
+{
+  "id": "0414beb3-0ae0-4a08-9b71-718d1b3e06a8",
+  "content": "arXiv 2603.00981v1 Announce Type  new Abstract  This paper is concerned with fault disturbance compensation control for fully actuated systems. In particular, we explore observer-based control, incorporating an active compensation mechanism. First, we propose a novel observer with enhanced design flexibility for the fully actuated system model, enabling simultaneous estimation of system states and exogenous unknown signals, such as faults or disturbances. Then, a nonlinear controller is developed with an active fault or disturbance compensation term, leveraging the fully actuated system approach. The asymptotic stability of both the state estimation error and the closed-loop control system is systematically established. Finally, the feasibility and merits of the proposed method are validated through comparative simulations and experiments.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Weijie Ren, Guang-Ren Duan, Ping Li, He Kong",
+    "guid": "oai:arXiv.org:2603.00981v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY"
+    ],
+    "summary": "00981v1 Announce Type  new Abstract  This paper is concerned with fault disturbance compensation control for fully actuated systems",
+    "keywords": [
+      "system",
+      "compensation",
+      "control",
+      "fully",
+      "actuated",
+      "fault",
+      "disturbance",
+      "active",
+      "estimation",
+      "arxiv",
+      "260300981v1",
+      "announce",
+      "type",
+      "abstract",
+      "paper",
+      "concerned",
+      "systems",
+      "particular",
+      "explore",
+      "observerbased"
+    ],
+    "readability": {
+      "wordCount": 114,
+      "sentenceCount": 7,
+      "avgWordsPerSentence": 16.285714285714285,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00981",
+    "processedAt": "2026-03-03T09:35:32.185Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00981",
+  "timestamp": "2026-03-03T09:35:32.268Z",
+  "category": "news",
+  "tags": [
+    "system",
+    "compensation",
+    "control",
+    "fully",
+    "actuated"
+  ]
+}

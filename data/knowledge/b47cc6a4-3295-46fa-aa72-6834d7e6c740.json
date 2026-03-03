@@ -1,0 +1,33 @@
+{
+  "id": "b47cc6a4-3295-46fa-aa72-6834d7e6c740",
+  "content": "",
+  "metadata": {
+    "keywords": [],
+    "language": "en",
+    "wordCount": 1,
+    "readingTime": 1,
+    "summary": "",
+    "readability": {
+      "wordCount": 0,
+      "sentenceCount": 0,
+      "avgWordsPerSentence": 0,
+      "readingTime": 0
+    },
+    "quality": {
+      "score": 50,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Contains images",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.sae.org/learn/content-types/automated-driving",
+    "processedAt": "2026-03-03T09:09:14.624Z"
+  },
+  "source": "https://www.sae.org/learn/content-types/automated-driving",
+  "timestamp": "2026-03-03T09:09:14.624Z",
+  "category": "general",
+  "tags": []
+}

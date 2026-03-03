@@ -1,0 +1,62 @@
+{
+  "id": "6f7d42bb-57af-48ca-b163-753493f055b0",
+  "content": "Reference number ISO IEC 24769-5 2012   ISO 2026 International Standard ISO IEC 24769-5 2012 Information technology   Automatic identification and data capture techniques   Real time locating systems  RTLS  device conformance test methods   Part 5  Test methods for chirp spread spectrum  CSS  at 2,4 GHz air interface Edition 12012-12 Read sample ISO IEC 24769-5   ISO IEC 24769-5 2012 Information technology   Automatic identification and data capture techniques   Real time locating systems  RTLS  device conformance test methodsPart 5  Test methods for chirp spread spectrum  CSS  at 2,4 GHz air interface Published  Edition 1, 2012  This publication was last reviewed and confirmed in 2023. Therefore this version remains current. ISO IEC 24769-5 2012 ISO IEC 24769-5   Language English Format PDF Paper CHF 159 Add to cart   Shipping costs not included Convert Swiss francs  CHF  to your currency Abstract ISO IEC 24769-5 2012 defines the test methods for determining the conformance of real time locating systems  RTLS  tags and readers with the specifications given in the corresponding parts of ISO IEC 24730-5. ISO IEC 24769-5 2012 does not include the testing of conformity with regulatory requirements. The test methods require only that the mandatory functions, and any optional functions which are implemented, be verified. The conformance parameters described in ISO IEC 24769-5 2012 include the radio frequency air interface and packet exchange required to perform the locating of the RTLS tag. It includes the mandatory 2-ary orthogonal chirp spread spectrum  CSS  modulation and the optional differential quadrature phase shift keying  DQPSK  CSS. ISO IEC 24769-5 2012 also includes the ranging packet exchanges, the commands and the reports defined in ISO IEC 24730-5. Unless otherwise specified, the tests in ISO IEC 24769-5 2012 shall be applied exclusively to RTLS tags and readers defined in ISO IEC 24730-5. General information Status   Published Publication date   2012-12 Corrected version  en    2012-12 Stage   International Standard confirmed  90.93  Edition   1 Number of pages   30 Technical Committee   ISO IEC JTC 1 SC 31 ICS   35.040.50 RSS updates Life cycle Previously Withdrawn ISO IEC TR 24769 2008 Now Published ISO IEC 24769-5 2012 A standard is reviewed every 5 yearsStage  90.93  Confirmed  00 Preliminary 10 Proposal 10.  New project approved 20 Preparatory 30 Committee 30.  CD approved for registration as DIS 40 Enquiry 40.  DIS registered 40.  DIS ballot initiated  12 weeks 40.  Close of voting 40.  Full report circulated  DIS approved for registration as FDIS 50 Approval 50.  Final text received or FDIS registered for formal approval 50.  Proof sent to secretariat or FDIS ballot initiated  8 weeks 50.  Close of voting. Proof returned by secretariat 60 Publication 60.  International Standard under publication 60.  International Standard published 90 Review 90.  International Standard under systematic review 90.  Close of review 90.  International Standard confirmed 90.  International Standard under systematic review 90.  Close of review 90.  International Standard confirmed 90.20 International Standard under systematic review 90.60 Close of review 90.99 Withdrawal of International Standard proposed by TC or SC 95 Withdrawal 95.99 Withdrawal of International Standard This standard contributes to the following Sustainable Development Goal 9 Industry, Innovation and Infrastructure Got a question? Check out our Help and Support Store Store ICS 35 35.040 35.040.50ISO IEC 24769-5 2012 Sitemap StandardsBenefitsPopular standardsConformity assessmentSDGsSectorsHealthIT   related technologiesManagement   servicesSecurity, safety   riskTransportEnergyEnvironmental sustainabilityMaterialsAbout ISOWhat we doStructureMembersEventsStrategyInsights   newsInsightsAll insightsHealthcareArtificial intelligenceClimate changeTransportNewsExpert talkStandards worldMedia kitResourcesISO 22000 explainedISO 9001 explainedISO 14001 explainedISO 42001 explainedISO 45001 explainedTaking partWho develops standardsDeliverablesGet involvedCollaborating to accelerate effective climate actionResourcesDrafting standardsStoreStorePublications and products",
+  "metadata": {
+    "description": "Information technology — Automatic identification and data capture techniques — Real time locating systems (RTLS) device conformance test methods — Part 5: Test methods for chirp spread spectrum (CSS) at 2,4 GHz air interface",
+    "keywords": [
+      "247695",
+      "standard",
+      "2012",
+      "international",
+      "review",
+      "test",
+      "rtls",
+      "methods",
+      "confirmed",
+      "close",
+      "locating",
+      "conformance",
+      "published",
+      "publication",
+      "under",
+      "explainediso",
+      "247305",
+      "information",
+      "real",
+      "time"
+    ],
+    "language": "en",
+    "wordCount": 572,
+    "readingTime": 3,
+    "summary": "Reference number ISO IEC 24769-5 2012   ISO 2026 International Standard ISO IEC 24769-5 2012 Information technology   Automatic identification and data capture techniques   Real time locating syste...",
+    "readability": {
+      "wordCount": 565,
+      "sentenceCount": 40,
+      "avgWordsPerSentence": 14.125,
+      "readingTime": 3
+    },
+    "quality": {
+      "score": 85,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "High quality content"
+      ]
+    },
+    "originalUrl": "https://www.iso.org/standard/55895.html",
+    "processedAt": "2026-03-03T09:25:52.109Z"
+  },
+  "source": "https://www.iso.org/standard/55895.html",
+  "timestamp": "2026-03-03T09:25:52.109Z",
+  "category": "news",
+  "tags": [
+    "247695",
+    "standard",
+    "2012",
+    "international",
+    "review"
+  ]
+}

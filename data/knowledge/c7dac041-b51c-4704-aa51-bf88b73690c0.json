@@ -1,0 +1,61 @@
+{
+  "id": "c7dac041-b51c-4704-aa51-bf88b73690c0",
+  "content": "Anthropic's AI chatbot Claude experienced widespread service disruptions on Monday morning, with thousands of users reporting issues accessing the bot.",
+  "metadata": {
+    "pubDate": "Mon, 02 Mar 2026 13:31:49 +0000",
+    "author": "Ram Iyer",
+    "guid": "https://techcrunch.com/?p=3098361",
+    "feedTitle": "TechCrunch",
+    "categories": [
+      "AI",
+      "Outage",
+      "Anthropic",
+      "Claude",
+      "In Brief"
+    ],
+    "summary": "Anthropic's AI chatbot Claude experienced widespread service disruptions on Monday morning, with thousands of users reporting issues accessing the bot",
+    "keywords": [
+      "anthropics",
+      "chatbot",
+      "claude",
+      "experienced",
+      "widespread",
+      "service",
+      "disruptions",
+      "monday",
+      "morning",
+      "thousands",
+      "users",
+      "reporting",
+      "issues",
+      "accessing",
+      "bot"
+    ],
+    "readability": {
+      "wordCount": 20,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 20,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://techcrunch.com/2026/03/02/anthropics-claude-reports-widespread-outage/",
+    "processedAt": "2026-03-03T09:39:27.983Z"
+  },
+  "source": "https://techcrunch.com/2026/03/02/anthropics-claude-reports-widespread-outage/",
+  "timestamp": "2026-03-03T09:39:28.122Z",
+  "category": "news",
+  "tags": [
+    "anthropics",
+    "chatbot",
+    "claude",
+    "experienced",
+    "widespread"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "95395bef-db26-44b7-97c7-b6040796ab42",
+  "content": "span property  schema name  class  field field--string field--title  Weatherization Assistance Program Timeline  span   span rel  schema author  class  field field--author field--uid   span lang about    typeof  schema Person  property  schema name  datatype    span property  schema dateCreated  content   T17 36 23 00 00  class  field field--timestamp field--created   time datetime   T13 36 23-04 00  title  Tuesday, August 6, 2019 - 13 36  August 6, 2019  time    span   section class  layout blade-section--boxed    div class  grid-container    div class  blade-color blade-section--white  style   div class  grid-row    div class  grid-col    div class  block block-layout-builder block-inline-blockbasic    div class  field field--text_default field--body field field--name-body field--type-text-with-summary field--label-hidden field__item   p Read history and background on the U.S. Department of Energy's  DOE  Weatherization Assistance Program  WAP .  p   div    div   div class  block block-layout-builder block-inline-blockmedia    div class  field field--entity_reference_entity_view field--field_media field field--name-field-media field--type-entity-reference field--label-hidden field__item    div   div class  timeline  id  timeline-embed--232274    div    div    div    div    div    div    div    div    section",
+  "metadata": {
+    "pubDate": "Tue, 06 Aug 2019 17:36:23 +0000",
+    "author": "monica.arevalo@nrel.gov",
+    "guid": "4281648 at https://www.energy.gov",
+    "feedTitle": "Department of Energy",
+    "summary": "span property  schema name  class  field field--string field--title  Weatherization Assistance Program Timeline  span   span rel  schema author  class  field field--author field--uid   span lang ab...",
+    "keywords": [
+      "class",
+      "field",
+      "span",
+      "schema",
+      "property",
+      "2019",
+      "name",
+      "weatherization",
+      "assistance",
+      "program",
+      "timeline",
+      "time",
+      "august",
+      "section",
+      "block",
+      "blocklayoutbuilder",
+      "fieldlabelhidden",
+      "field__item",
+      "2304",
+      "fieldstring"
+    ],
+    "readability": {
+      "wordCount": 147,
+      "sentenceCount": 4,
+      "avgWordsPerSentence": 36.75,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.energy.gov/scep/wap/weatherization-assistance-program-timeline",
+    "processedAt": "2026-03-03T09:35:32.824Z"
+  },
+  "source": "https://www.energy.gov/scep/wap/weatherization-assistance-program-timeline",
+  "timestamp": "2026-03-03T09:35:32.926Z",
+  "category": "news",
+  "tags": [
+    "class",
+    "field",
+    "span",
+    "schema",
+    "property"
+  ]
+}

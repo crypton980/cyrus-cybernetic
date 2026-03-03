@@ -1,0 +1,50 @@
+{
+  "id": "b639cd84-64dd-4c88-8796-bab400dc99d1",
+  "content": "The world premiere of Peaky Blinders  The Immortal Man took place in Birmingham to wild acclaim.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 07:27:36 GMT",
+    "author": "",
+    "guid": "https://www.bbc.com/news/articles/cx24kggpj55o#3",
+    "feedTitle": "BBC News",
+    "summary": "The world premiere of Peaky Blinders  The Immortal Man took place in Birmingham to wild acclaim",
+    "keywords": [
+      "world",
+      "premiere",
+      "peaky",
+      "blinders",
+      "immortal",
+      "took",
+      "place",
+      "birmingham",
+      "wild",
+      "acclaim"
+    ],
+    "readability": {
+      "wordCount": 16,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 16,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.bbc.com/news/articles/cx24kggpj55o?at_medium=RSS&at_campaign=rss",
+    "processedAt": "2026-03-03T09:40:43.584Z"
+  },
+  "source": "https://www.bbc.com/news/articles/cx24kggpj55o?at_medium=RSS&at_campaign=rss",
+  "timestamp": "2026-03-03T09:40:43.588Z",
+  "category": "news",
+  "tags": [
+    "world",
+    "premiere",
+    "peaky",
+    "blinders",
+    "immortal"
+  ]
+}

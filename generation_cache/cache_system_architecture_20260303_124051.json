@@ -1,0 +1,136 @@
+{
+  "package_id": "system_architecture_20260303_124051",
+  "component_type": "system_architecture",
+  "specifications": {
+    "image_type": "system_architecture",
+    "quality": "standard",
+    "output_dir": "generated_robotics_content"
+  },
+  "quality": "standard",
+  "timestamp": "2026-03-03T12:40:51.060048",
+  "generated_content": {
+    "documentation": {
+      "component_type": "system_architecture",
+      "timestamp": "2026-03-03T12:40:51.060406",
+      "specifications": {
+        "image_type": "system_architecture",
+        "quality": "standard",
+        "output_dir": "generated_robotics_content"
+      },
+      "components": [],
+      "standards": [],
+      "design_considerations": [
+        "General design considerations apply"
+      ],
+      "safety_requirements": [
+        "ISO 10218-1: Robots and robotic devices - Safety requirements",
+        "ISO 10218-2: Robots and robotic devices - Safety requirements for industrial robots",
+        "Risk assessment and hazard analysis",
+        "Emergency stop functionality",
+        "Protective guarding and barriers",
+        "Operator training requirements",
+        "Maintenance and inspection procedures"
+      ],
+      "performance_metrics": {
+        "accuracy": "\u00b10.1mm to \u00b11mm depending on application",
+        "repeatability": "\u00b10.05mm to \u00b10.5mm",
+        "speed": "0.1 m/s to 2.0 m/s depending on operation",
+        "payload_capacity": "1kg to 1000kg depending on design",
+        "operating_temperature": "-10\u00b0C to 50\u00b0C",
+        "reliability": "MTBF > 10,000 hours",
+        "power_efficiency": "70-90% depending on components"
+      },
+      "implementation_guide": {
+        "hardware_selection": "Choose components based on performance requirements and environmental conditions",
+        "software_architecture": "Modular design with clear separation of concerns",
+        "testing_procedures": "Unit testing, integration testing, and system validation",
+        "calibration_methods": "Factory calibration with field verification procedures",
+        "maintenance_schedule": "Regular inspection and preventive maintenance",
+        "troubleshooting_guide": "Common issues and resolution procedures"
+      },
+      "documentation_file": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/generated_robotics_designs/system_architecture_documentation_20260303_124051.json"
+    },
+    "images": {
+      "technical_diagram": {
+        "diagram_type": "system_architecture",
+        "style": "technical",
+        "timestamp": "2026-03-03T12:40:51.060337",
+        "specifications": {
+          "image_type": "system_architecture",
+          "quality": "standard",
+          "output_dir": "generated_robotics_content"
+        },
+        "generated_images": [
+          {
+            "type": "main_diagram",
+            "filename": "system_architecture_diagram_technical_20260303_124051.png",
+            "filepath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/generated_robotics_images/system_architecture_diagram_technical_20260303_124051.png",
+            "description": "Main system_architecture diagram (technical style)",
+            "generated": true,
+            "method": "offline_matplotlib"
+          },
+          {
+            "type": "component_detail",
+            "filename": "component_detail_1_detail_technical_20260303_124051.png",
+            "filepath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/generated_robotics_images/component_detail_1_detail_technical_20260303_124051.png",
+            "description": "Detailed view of component_detail_1",
+            "generated": true,
+            "method": "offline_pillow"
+          },
+          {
+            "type": "component_detail",
+            "filename": "component_detail_2_detail_technical_20260303_124051.png",
+            "filepath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/generated_robotics_images/component_detail_2_detail_technical_20260303_124051.png",
+            "description": "Detailed view of component_detail_2",
+            "generated": true,
+            "method": "offline_pillow"
+          }
+        ]
+      },
+      "system_architecture": {
+        "system_type": "system_architecture_system",
+        "timestamp": "2026-03-03T12:40:51.291127",
+        "components": [
+          "Controller",
+          "Sensors",
+          "Actuators",
+          "Power",
+          "Communication"
+        ],
+        "connections": [
+          [
+            "Controller",
+            "Sensors"
+          ],
+          [
+            "Controller",
+            "Actuators"
+          ],
+          [
+            "Power",
+            "Controller"
+          ]
+        ],
+        "generated_images": [
+          {
+            "type": "architecture_diagram",
+            "filename": "system_architecture_system_architecture_20260303_124051.png",
+            "filepath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/generated_robotics_images/system_architecture_system_architecture_20260303_124051.png",
+            "description": "Architecture diagram for system_architecture_system",
+            "generated": true,
+            "method": "offline_matplotlib"
+          }
+        ]
+      }
+    }
+  },
+  "status": "completed",
+  "performance_metrics": {},
+  "validation": {
+    "has_designs": false,
+    "has_images": true,
+    "has_documentation": true,
+    "total_files": 4,
+    "validation_passed": true
+  }
+}

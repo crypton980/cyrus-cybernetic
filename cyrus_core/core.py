@@ -42,6 +42,11 @@ class InteractionResult:
     processing_time: float
     confidence: float
     requires_followup: bool
+    attached_files: List[str] = None
+    
+    def __post_init__(self):
+        if self.attached_files is None:
+            self.attached_files = []
     
     def to_dict(self) -> Dict:
         return {
@@ -52,6 +57,7 @@ class InteractionResult:
             "confidence": self.confidence,
             "processing_time": self.processing_time,
             "requires_followup": self.requires_followup,
+            "attached_files": self.attached_files,
         }
 
 
@@ -183,6 +189,7 @@ class CYRUS:
             processing_time=processing_time,
             confidence=response.metadata.confidence,
             requires_followup=response.metadata.requires_followup,
+            attached_files=response.attached_files,
         )
         
         self._trigger_callbacks("on_response", result)

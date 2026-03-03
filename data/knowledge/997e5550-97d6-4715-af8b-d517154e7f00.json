@@ -1,0 +1,63 @@
+{
+  "id": "997e5550-97d6-4715-af8b-d517154e7f00",
+  "content": ".cls-structural-sim-1   fill   e9ecef    .cls-structural-sim-2, .cls-structural-sim-3, .cls-structural-sim-4, .cls-structural-sim-5, .cls-structural-sim-6, .cls-structural-sim-7, .cls-structural-sim-8, .cls-structural-sim-9, .cls-structural-sim-10   fill  none    .cls-structural-sim-2, .cls-structural-sim-4, .cls-structural-sim-5, .cls-structural-sim-6, .cls-structural-sim-7, .cls-structural-sim-8, .cls-structural-sim-9, .cls-structural-sim-10   stroke   e9ecef    .cls-structural-sim-2, .cls-structural-sim-4, .cls-structural-sim-5, .cls-structural-sim-6, .cls-structural-sim-8, .cls-structural-sim-9, .cls-structural-sim-10   stroke-width  .51px    .cls-structural-sim-2, .cls-structural-sim-4, .cls-structural-sim-5, .cls-structural-sim-8, .cls-structural-sim-9, .cls-structural-sim-10   stroke-miterlimit  10    .cls-structural-sim-4, .cls-structural-sim-5, .cls-structural-sim-8, .cls-structural-sim-9, .cls-structural-sim-10   stroke-dasharray  43.2 3.6 3.6 3.6    .cls-structural-sim-5   stroke-dashoffset  39.38px    .cls-structural-sim-6, .cls-structural-sim-7   stroke-linecap  round  stroke-linejoin  round    .cls-structural-sim-7   stroke-width  .71px    .cls-structural-sim-8   stroke-dashoffset  5.4px    .cls-structural-sim-9   stroke-dashoffset  39.38px    .cls-structural-sim-10   stroke-dashoffset  21.27px    .cls-structural-sim-11   clip-path  url  clippath     Structural Simulation Make informed design decisions with a comprehensive suite of structural analysis tools.Integrates seamlessly into your design process using Finite Element Analysis  FEA  to eliminate the uncertainty and potential setbacks of a wait-and-see approach.Whether you're analyzing single components or complex assemblies, you can optimize product quality and performance while staying on schedule and within budget.Cloud-enabled solutions, powered by Abaqus technology, ensure real-time updates and accuracy, using the same CAD data as your design teams. Everything happens inside SOLIDWORKS. You don t need to create something and move it into a different tool. You have everything inside. I think that s the main feature that makes SOLIDWORKS Simulation easier for the user.Marcus SobralTenaris Powerful Simulation for All   Expand Horizons Simulation is the best tool to make smart design decisions and ensure you re bringing high-quality products to market faster. Watch the video",
+  "metadata": {
+    "description": "Accelerate the process of evaluating the performance, reliability, and safety of materials and products before committing to prototypes.",
+    "keywords": [
+      "clsstructuralsim5",
+      "clsstructuralsim8",
+      "clsstructuralsim9",
+      "clsstructuralsim10",
+      "clsstructuralsim4",
+      "clsstructuralsim2",
+      "clsstructuralsim6",
+      "clsstructuralsim7",
+      "strokedashoffset",
+      "simulation",
+      "design",
+      "fill",
+      "e9ecef",
+      "strokewidth",
+      "3938px",
+      "round",
+      "clippath",
+      "structural",
+      "make",
+      "decisions"
+    ],
+    "published": "2021-03-29T15:08:13-0400",
+    "language": "en",
+    "wordCount": 241,
+    "readingTime": 2,
+    "summary": "cls-structural-sim-1   fill   e9ecef. Watch the video",
+    "readability": {
+      "wordCount": 218,
+      "sentenceCount": 63,
+      "avgWordsPerSentence": 3.4603174603174605,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 85,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "High quality content"
+      ]
+    },
+    "originalUrl": "https://www.solidworks.com/sw/products/simulation/robotics-design-automation.htm",
+    "processedAt": "2026-03-03T09:27:39.524Z"
+  },
+  "source": "https://www.solidworks.com/sw/products/simulation/robotics-design-automation.htm",
+  "timestamp": "2026-03-03T09:27:39.524Z",
+  "category": "technology",
+  "tags": [
+    "clsstructuralsim5",
+    "clsstructuralsim8",
+    "clsstructuralsim9",
+    "clsstructuralsim10",
+    "clsstructuralsim4"
+  ]
+}

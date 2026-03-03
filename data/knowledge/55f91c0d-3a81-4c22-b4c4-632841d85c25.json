@@ -1,0 +1,63 @@
+{
+  "id": "55f91c0d-3a81-4c22-b4c4-632841d85c25",
+  "content": "YOLOv3 Paper Walkthrough  Even Better, But Not That Much Artificial Intelligence A PyTorch implementation on the YOLOv3 architecture from scratch Muhammad Ardi Mar 2 24 min read The Machine Learning Lessons I ve Learned This Month Machine Learning February 2026  exchange with others, documentation, and MLOps Pascal Janetzky Mar 2 6 min read Latest Code Less, Ship Faster  Building APIs with FastAPI Programming Master path operations, Pydantic models, dependency injection, and automatic documentation. Thomas Reid Mar 2 10 min read Exciting Changes Are Coming to the TDS Author Payment Program Writing Authors can now benefit from updated earning tiers and a higher article cap TDS Editors Mar 2 2 min read Zero-Waste Agentic RAG  Designing Caching Architectures to Minimize Latency and LLM Costs at Scale Large Language Models Reducing LLM costs by 30  with validation-aware, multi-tier caching Partha Sarkar Mar 1 19 min read Context Engineering as Your Competitive Edge Large Language Models If you have both unique domain expertise and know how to make it usable to  Dr. Janna Lipenkova Mar 1 13 min read Claude Skills and Subagents  Escaping the Prompt Engineering Hamster Wheel Agentic AI How reusable, lazy-loaded instructions solve the context bloat problem in AI-assisted development. Ruben Broekx Feb 28 17 min read Scaling ML Inference on Databricks  Liquid or Partitioned? Salted or Not? Data Engineering A case study on techniques to maximize your clusters Hector Mejia Feb 28 11 min read Coding the Pong Game from Scratch in Python Programming Implementing the classic Pong game in Python using OOP and Turtle Mahnoor Javed Feb 27 18 min read Stop Asking if a Model Is Interpretable Artificial Intelligence Start asking what question the explanation should answer. Manuel Franco de la Pe a Feb 27 6 min read Generative AI, Discriminative Human Artificial Intelligence How to think critically about AI in an ocean of hype Jason Tamara Widjaja Feb 27 14 min read See all of the latest Editor s Picks A Generalizable MARL-LP Approach for Scheduling in Logistics Machine Learning Part 1. Hybrid Solution for Dynamic Vehicle Routing   Context and Architecture Alexander Levin Feb 26 17 min read Breaking the Host Memory Bottleneck  How Peer Direct Transformed Gaudi s Cloud Performance Artificial Intelligence Engineering RDMA-like performance over cloud host NICs using libfabric, DMA-BUF, and HCCL to restore distributed  Maria Piterberg Feb 25 9 min read Decisioning at the Edge  Policy Matching at Scale Data Science Policy-to-Agency Optimization with PuLP Erika Gomes-Gon alves Feb 24 13 min read AI Bots Formed a Cartel. No One Told Them To. Agentic AI Inside the research that shows algorithmic price-fixing isn t a bug in the code. It s a  Kaushik Rajan Feb 24 11 min read The Reality of Vibe Coding  AI Agents and the Security Debt Crisis LLM Applications Why optimizing for speed over safety is leaving applications vulnerable, and how to fix it. Reya Vir Feb 22 6 min read Donkeys, Not Unicorns Artificial Intelligence The New Rules of Entrepreneurship in the Era of Commoditized Magic Yariv Adan Feb 20 8 min read Code Smells  Essential Concepts For Data Scientists in the Age of AI Coding Agents Programming AI can write the code, but you have to steer the ship. Master the knowledge  Benjamin Lee Feb 19 13 min read AlpamayoR1  Large Causal Reasoning Models for Autonomous Driving Artificial Intelligence All you need to know about Chain of Causation reasoning and the current state of  Ryan P goud Feb 19 9 min read Building Cost-Efficient Agentic RAG on Long-Text Documents in SQL Tables Large Language Models Designing a hybrid SQL   vector retrieval system without schema changes, data migration, or performance  Partha Sarkar Feb 18 13 min read The Variable Newsletter TDS Newsletter  Vibe Coding Is Great. Until It s Not. The Variable Sorting through the good, bad, and ambiguous aspects of vibe coding TDS Editors Feb 5 4 min read TDS Newsletter  January Must-Reads on Data Platforms, Infinite Context, and More The Variable Don t miss our most-read and -shared stories of the past month TDS Editors Jan 29 3 min read Deep Dives Detecting and Editing Visual Objects with Gemini LLM Applications A practical guide to identifying, restoring, and transforming elements within your images Laurent Picard Feb 26 34 min read Take a Deep Dive into Filtering in DAX Data analysis Have you ever wondered what happens when you apply a filter in a DAX expression?  Salvatore Cagliari Feb 26 13 min read Scaling Feature Engineering Pipelines with Feast and Ray Machine Learning Utilizing feature stores like Feast and distributed compute frameworks like Ray in production machine learning systems Kenneth Leung Feb 25 11 min read Aliasing in Audio, Easily Explained  From Wagon Wheels to Waveforms Machine Learning Understanding the foundational distortion of digital audio from first principles, with worked examples and visual  Aman Agrawal Feb 25 21 min read Optimizing Token Generation in PyTorch Decoder Models Artificial Intelligence Hiding host-device synchronization via CUDA stream interleaving Chaim Rand Feb 24 17 min read Optimizing Deep Learning Models with SAM Deep Learning A deep dive into the Sharpness-Aware-Minimization  SAM  algorithm and how it improves the generalizability of  Anindya Dey Feb 24 16 min read",
+  "metadata": {
+    "description": "Your home for data science and AI. The world’s leading publication for data science, data analytics, data engineering, machine learning, and artificial intelligence professionals.",
+    "keywords": [
+      "read",
+      "learning",
+      "artificial",
+      "intelligence",
+      "models",
+      "machine",
+      "data",
+      "from",
+      "engineering",
+      "coding",
+      "deep",
+      "code",
+      "agentic",
+      "large",
+      "context",
+      "programming",
+      "editors",
+      "language",
+      "your",
+      "performance"
+    ],
+    "published": "2026-03-02T17:30:00-05:00",
+    "language": "en-US",
+    "wordCount": 849,
+    "readingTime": 5,
+    "summary": "YOLOv3 Paper Walkthrough  Even Better, But Not That Much Artificial Intelligence A PyTorch implementation on the YOLOv3 architecture from scratch Muhammad Ardi Mar 2 24 min read The Machine Learnin...",
+    "readability": {
+      "wordCount": 857,
+      "sentenceCount": 16,
+      "avgWordsPerSentence": 53.5625,
+      "readingTime": 5
+    },
+    "quality": {
+      "score": 85,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "High quality content"
+      ]
+    },
+    "originalUrl": "https://towardsdatascience.com/",
+    "processedAt": "2026-03-03T10:36:05.814Z"
+  },
+  "source": "https://towardsdatascience.com/",
+  "timestamp": "2026-03-03T10:36:05.814Z",
+  "category": "news",
+  "tags": [
+    "read",
+    "learning",
+    "artificial",
+    "intelligence",
+    "models"
+  ]
+}

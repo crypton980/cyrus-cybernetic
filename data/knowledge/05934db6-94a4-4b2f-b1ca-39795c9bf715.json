@@ -1,0 +1,33 @@
+{
+  "id": "05934db6-94a4-4b2f-b1ca-39795c9bf715",
+  "content": "",
+  "metadata": {
+    "description": "Search and read the full text of patents from around the world with Google Patents, and find prior art in our index of non-patent literature.",
+    "keywords": [],
+    "language": "en",
+    "wordCount": 1,
+    "readingTime": 1,
+    "summary": "",
+    "readability": {
+      "wordCount": 0,
+      "sentenceCount": 0,
+      "avgWordsPerSentence": 0,
+      "readingTime": 0
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://patents.google.com/?q=robotic+actuator",
+    "processedAt": "2026-03-03T09:27:57.341Z"
+  },
+  "source": "https://patents.google.com/?q=robotic+actuator",
+  "timestamp": "2026-03-03T09:27:57.342Z",
+  "category": "general",
+  "tags": []
+}

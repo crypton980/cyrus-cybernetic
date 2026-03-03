@@ -1,0 +1,62 @@
+{
+  "id": "2e070610-9951-495a-a7c4-e1d8d34e31af",
+  "content": "media  max-width 991.98px     localnav .nav-item not  first-child  .nav-link   padding-left 24px !important     localnav .dropdown-menu .dropdown-item   padding-left calc var --bs-dropdown-item-padding-x    3        media  max-width  991.98px     localnav_actuator   width auto !important  padding-left 10px !important  display  flex !important  align-items center !important  flex-direction  row-reverse !important  justify-content center !important     localnav_actuator after   padding-right 5px  content  Resources   font-size 14px  white-space nowrap     localnav_actuator .icon-kebab   position relative  top -1px     localnav_actuator .icon-kebab before   content    e60f  !important  font-size 16px      Robotics System ToolboxDesign, simulate, test, and deploy robotics applicationsRelease Notes PDF Documentation PDF Documentation Release Notes PDF Documentation PDF Documentation Robotics System Toolbox  provides tools and algorithms for designing, simulating, testing, and deploying manipulator and mobile robot applications. For manipulators, the toolbox includes algorithms for collision checking, path planning, trajectory generation, forward and inverse kinematics, and dynamics using a rigid body tree representation. For mobile robots, it includes algorithms for mapping, localization, path planning, path following, and motion control. The toolbox lets you build test scenarios and use the provided reference examples to validate common industrial robotic applications. It also includes a library of commercially available industrial robot models that you can import, visualize, simulate, and use with the reference applications.You can develop a functional robot prototype by combining the kinematic and dynamic models provided. The toolbox lets you co-simulate your robot applications by connecting directly to the Gazebo robotics simulator. To verify your design on hardware, you can connect to robotics platforms such as Kinova Gen3 and Universal Robots UR series robots and generate and deploy code  with MATLAB  Coder  or Simulink  Coder .Get Started Learn the basics of Robotics System ToolboxRobot ModelingRobot models, kinematics, dynamicsInverse KinematicsManipulator inverse kinematics, kinematic constraintsMotion and Path PlanningManipulator planning, mobile robot planning, trajectory generationRobot SimulationCuboid simulation, co-simulation, example templatesCollision DetectionCollision geometry meshes, collision avoidance and clearanceCoordinate TransformationsQuaternions, rotation matrices, transformationsCode GenerationGenerate C C   code and MEX functions for algorithm accelerationOffroad Autonomy for Heavy MachineryAutonomy for offroad vehicles and machinery in construction, agriculture, and mining applicationsRobotics System Toolbox Supported HardwareSupport for third-party hardware loadSurveyHidden    initDocSurvey    MATLAB Command You clicked a link that corresponds to this MATLAB command  Run the command by entering it in the MATLAB Command Window. Web browsers do not support MATLAB commands. Close Select a Web Site Choose a web site to get translated content where available and see local events and offers. Based on your location, we recommend that you select  .  English   Deutsch   Fran ais          English  You can also select a web site from the following list How to Get Best Site Performance Select the China site  in Chinese or English  for best site performance. Other MathWorks country sites are not optimized for visits from your location. Americas Am rica Latina  Espa ol  Canada  English  United States  English  Europe Belgium  English  Denmark  English  Deutschland  Deutsch  Espa a  Espa ol  Finland  English  France  Fran ais  Ireland  English  Italia  Italiano  Luxembourg  English  Netherlands  English  Norway  English   sterreich  Deutsch  Portugal  English  Sweden  English  Switzerland Deutsch English Fran ais United Kingdom  English  Asia Pacific Australia  English  India  English  New Zealand  English          English                   Contact your local office",
+  "metadata": {
+    "description": "Robotics System Toolbox provides tools and algorithms for designing, simulating, testing, and deploying manipulator and mobile robot applications.",
+    "keywords": [
+      "english",
+      "important",
+      "robotics",
+      "site",
+      "toolbox",
+      "robot",
+      "your",
+      "matlab",
+      "localnav_actuator",
+      "system",
+      "documentation",
+      "path",
+      "planning",
+      "command",
+      "select",
+      "deutsch",
+      "paddingleft",
+      "content",
+      "algorithms",
+      "mobile"
+    ],
+    "language": "en",
+    "wordCount": 493,
+    "readingTime": 3,
+    "summary": "media  max-width 991",
+    "readability": {
+      "wordCount": 498,
+      "sentenceCount": 31,
+      "avgWordsPerSentence": 16.06451612903226,
+      "readingTime": 3
+    },
+    "quality": {
+      "score": 85,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "High quality content"
+      ]
+    },
+    "originalUrl": "https://www.mathworks.com/help/robotics/",
+    "processedAt": "2026-03-03T09:27:39.520Z"
+  },
+  "source": "https://www.mathworks.com/help/robotics/",
+  "timestamp": "2026-03-03T09:27:39.520Z",
+  "category": "general",
+  "tags": [
+    "english",
+    "important",
+    "robotics",
+    "site",
+    "toolbox"
+  ]
+}

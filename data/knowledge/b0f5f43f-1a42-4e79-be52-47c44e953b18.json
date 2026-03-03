@@ -1,0 +1,62 @@
+{
+  "id": "b0f5f43f-1a42-4e79-be52-47c44e953b18",
+  "content": "To operate fusion systems safely and reliably, scientists need to monitor plasma fuel conditions and measure properties like temperature and density that can affect fusion reactions. Making these measurements requires specialized sensors known as diagnostics.",
+  "metadata": {
+    "pubDate": "Mon, 02 Mar 2026 22:40:02 EST",
+    "author": "",
+    "guid": "news691686101",
+    "feedTitle": "Phys.org - latest science and technology news stories",
+    "categories": [
+      "Plasma Physics"
+    ],
+    "summary": "To operate fusion systems safely and reliably, scientists need to monitor plasma fuel conditions and measure properties like temperature and density that can affect fusion reactions",
+    "keywords": [
+      "fusion",
+      "operate",
+      "systems",
+      "safely",
+      "reliably",
+      "scientists",
+      "need",
+      "monitor",
+      "plasma",
+      "fuel",
+      "conditions",
+      "measure",
+      "properties",
+      "like",
+      "temperature",
+      "density",
+      "affect",
+      "reactions",
+      "making",
+      "measurements"
+    ],
+    "readability": {
+      "wordCount": 35,
+      "sentenceCount": 2,
+      "avgWordsPerSentence": 17.5,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://phys.org/news/2026-03-national-aid-commercial-fusion-energy.html",
+    "processedAt": "2026-03-03T09:08:20.491Z"
+  },
+  "source": "https://phys.org/news/2026-03-national-aid-commercial-fusion-energy.html",
+  "timestamp": "2026-03-03T09:08:20.544Z",
+  "category": "news",
+  "tags": [
+    "fusion",
+    "operate",
+    "systems",
+    "safely",
+    "reliably"
+  ]
+}

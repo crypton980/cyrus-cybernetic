@@ -1,0 +1,67 @@
+{
+  "id": "9623b37c-91fa-4812-95e7-f3d8f1532a67",
+  "content": "img src    I start off these annual highlights posts by saying that it was the best year ever for robotics. But this year, I m not so sure.  a href    target  _self  At the end of 2024  a , it really seemed like AI and humanoid robots were poised to make a transformative amount of progress toward some sort of practicality. While it s certainly true that progress has been made, it s hard to rationalize what s actually happened in 2025 with the amount of money and hype that has suffused robotics over the course of the year. And for better or worse, humanoids are overshadowing everything else, raising questions about what will happen if the companies building them ultimately do not succeed.  p  p We ll be going into 2026 with both optimism and skepticism, and we ll keep doing what we always do  talking to the experts, asking as many hard questions as we can, and making sure to share  em  em all   em   em the cool robots, even  or especially  the ones that you won t see anywhere else.  p  p So thanks for reading, and to all you awesome robotics folks out there, thanks for sharing your work with us!  em IEEE Spectrum  em  has a bunch of exciting new stuff planned for 2026, and as we close out 2025, here s a quick look back at some of our best robotics stories of the year.  p  h2 1.  a href    target  _blank  Reality Is Ruining the Humanoid Robot Hype  a  br    h2  p class  shortcode-media shortcode-media-rebelmouse-image rm-float-left rm-resized-container rm-resized-container-25  data-rm-resized-container  25   style  float  left     img alt  Robots with shovels stand in a container, ready for deployment on a pallet.  class  rm-shortcode  data-rm-shortcode-id  a97cef0ddf476cc451c549e0fe51b53a  data-rm-shortcode-name  rebelmouse-image  id  36655  loading  lazy  src     small class  image-media media-photo-credit  placeholder  Add Photo Credit...   Eddie Guy   small    p  p Humanoid robots are hard, and they re hard in lots of different ways. For some of those ways, we at least understand the problems and what the solutions will likely involve. But there are other problems that have no clear solutions, and most humanoid companies, especially the well-funded ones, seem  a href    target  _blank  quite happy to wave those problems away  a  while continuing to raise extraordinary amounts of money. We re going to keep calling this out whenever we see it, and expect even more skepticism in 2026.  p  h2 2.  a href    target  _blank  Exploit Allows for Takeover of Fleets of Unitree Robots  a  br    h2  p class  shortcode-media shortcode-media-rebelmouse-image rm-float-left rm-resized-container rm-resized-container-25  data-rm-resized-container  25   style  float  left     img alt  The Unitree humanoid robot with sleek design, dual-arm, and sensor-equipped head.  class  rm-shortcode  data-rm-shortcode-id  79e42d02f5e68b5ed97d68da1286fa69  data-rm-shortcode-name  rebelmouse-image  id  6b892  loading  lazy  src     small class  image-media media-photo-credit  placeholder  Add Photo Credit...   CFOTO Future Publishing Getty Images   small    p  p Security is one of those pesky little things that is super important in robotics but that early-stage robotics companies typically treat as an afterthought because it doesn t drive investment. Chinese manufacturer  a href    target  _blank  Unitree  a  is really the one company with humanoid robots that are available enough and affordable enough for clever people to perform a security audit on them. And to the surprise of no one,  a href    target  _blank  Unitree s robots had serious vulnerabilities  a , which as of yet have not all been fixed.  p  h2 3.  a href    target  _blank   strong Amazon s Vulcan Robots Now Stow Items Faster Than Humans  strong   a   h2  p class  shortcode-media shortcode-media-rebelmouse-image rm-float-left rm-resized-container rm-resized-container-25  data-rm-resized-container  25   style  float  left     img alt  Robotic arm sorting yellow storage bins in a warehouse aisle.  class  rm-shortcode  data-rm-shortcode-id  907a653190a2a80338f9121dff182000  data-rm-shortcode-name  rebelmouse-image  id  cf84c  loading  lazy  src     small class  image-media media-photo-credit  placeholder  Add Photo Credit...   Amazon   small    p  p The thing I appreciate about the folks at  a href    target  _blank  Amazon Robotics  a  is how relentless they are in finding creative solutions for  a href    target  _blank  problems at scale  a . Amazon simply doesn t have time to mess around, and they re designing robots to do what robots do best   a href    target  _blank  specific repetitive tasks in structured environments  a . In the current climate of robotics hype, it s refreshing, honestly.  p  h2 4.  a href    target  _blank  Large Behavior Models Are Helping Atlas Get to Work  a   h2  p class  shortcode-media shortcode-media-rebelmouse-image rm-float-left rm-resized-container rm-resized-container-25  data-rm-resized-container  25   style  float  left     img alt  Boston Dynamics robot operating autonomously near stacked robotic components on a shelf.  class  rm-shortcode  data-rm-shortcode-id  cec2e3de9fde7891c2ead95cc89d4bf1  data-rm-shortcode-name  rebelmouse-image  id  119b9  loading  lazy  src     small class  image-media media-photo-credit  placeholder  Add Photo Credit...   Boston Dynamics   small    p  p Did I mention that humanoid robots are hard? Whether or not anyone can deliver on the promises being made about them  and personally, I m leaning more and more strongly toward not , progress  em  em is  em   em  being made toward  a href    target  _blank  humanoids that are much more capable and versatile than they ever have been  a . The collaboration between  a href    target  _blank  Toyota Research  a  and  a href    target  _blank  Boston Dynamics  a  on large behavior models is just one example of  a href    target  _blank  how far we ve come  a , and how far we still have to go.  p  h2 5.  a href    target  _blank  iRobot s Cofounder Weighs In on Company s Bankruptcy  a   h2  p class  shortcode-media shortcode-media-rebelmouse-image rm-float-left rm-resized-container rm-resized-container-25  data-rm-resized-container  25   style  float  left     img alt  Many boxes of iRobot Roomba robot vacuums on display at a store  class  rm-shortcode  data-rm-shortcode-id  d8ed4d6c3ad8573f3a00112871fac5d4  data-rm-shortcode-name  rebelmouse-image  id  d591f  loading  lazy  src     small class  image-media media-photo-credit  placeholder  Add Photo Credit...   Lindsey Nicholson Universal Images Group Getty Images   small    p  p My least favorite story to write happened right at the end of the year  a href    target  _blank  iRobot filed for bankruptcy  a . This was not a total surprise  regulators shutting down an acquisition by Amazon in 2024 essentially gutted the company, and it s been limping along toward the inevitable since then. Right after the news was announced, we spoke with iRobot co-founder and ex-CEO Colin Angle, who had plenty to share about where things went wrong, and what we can learn from it.  p  h2 6.  a href    target  _blank  How Dairy Robots Are Changing Work for Cows  and Farmers   a   h2  p class  shortcode-media shortcode-media-rebelmouse-image rm-float-left rm-resized-container rm-resized-container-25  data-rm-resized-container  25   style  float  left     img alt  A large red robot moves down the aisle of a dairy barn, dispensing feed to cows lined up to eat.  class  rm-shortcode  data-rm-shortcode-id  1a3b497fb2112140cb8f7367e5a1d4eb  data-rm-shortcode-name  rebelmouse-image  id  6edcf  loading  lazy  src     small class  image-media media-photo-credit  placeholder  Add Photo Credit...   Evan Ackerman   small    p  p My favorite story of 2025 was as much about cows as it was about robots. I was astonished to learn just how many fully autonomous robots are hard at work  a href    target  _blank  on dairy farms around the world  a , and utterly delighted to also learn that these robots are actively improving the lives of both dairy farmers and the dairy cows themselves. Dairy farming is endless hard work, but thanks to these robots, small family farms are able to keep themselves sustainable  and sane . Everybody wins, thanks to the robots.  p",
+  "metadata": {
+    "pubDate": "Wed, 24 Dec 2025 14:00:02 +0000",
+    "author": "Evan Ackerman",
+    "guid": "https://spectrum.ieee.org/top-robotics-stories-2025",
+    "feedTitle": "IEEE Spectrum",
+    "categories": [
+      "Humanoids",
+      "Robotics",
+      "Unitree",
+      "Atlas",
+      "Amazon"
+    ],
+    "summary": "img src    I start off these annual highlights posts by saying that it was the best year ever for robotics. Everybody wins, thanks to the robots",
+    "keywords": [
+      "href",
+      "target",
+      "_blank",
+      "class",
+      "robots",
+      "small",
+      "robotics",
+      "humanoid",
+      "hard",
+      "what",
+      "about",
+      "shortcodemedia",
+      "shortcodemediarebelmouseimage",
+      "rmfloatleft",
+      "rmresizedcontainer",
+      "rmresizedcontainer25",
+      "datarmresizedcontainer",
+      "style",
+      "float",
+      "left"
+    ],
+    "readability": {
+      "wordCount": 1211,
+      "sentenceCount": 46,
+      "avgWordsPerSentence": 26.32608695652174,
+      "readingTime": 7
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://spectrum.ieee.org/top-robotics-stories-2025",
+    "processedAt": "2026-03-03T11:02:19.609Z"
+  },
+  "source": "https://spectrum.ieee.org/top-robotics-stories-2025",
+  "timestamp": "2026-03-03T11:02:19.668Z",
+  "category": "news",
+  "tags": [
+    "href",
+    "target",
+    "_blank",
+    "class",
+    "robots"
+  ]
+}

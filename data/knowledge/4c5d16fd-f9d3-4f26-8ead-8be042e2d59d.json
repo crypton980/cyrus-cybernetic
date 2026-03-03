@@ -1,0 +1,46 @@
+{
+  "id": "4c5d16fd-f9d3-4f26-8ead-8be042e2d59d",
+  "content": "It's hard to predict how the war will end - but those fighting know how they would like it to.",
+  "metadata": {
+    "pubDate": "Mon, 02 Mar 2026 18:48:02 GMT",
+    "author": "",
+    "guid": "https://www.bbc.com/news/articles/c178z0p902vo#1",
+    "feedTitle": "BBC News",
+    "summary": "It's hard to predict how the war will end - but those fighting know how they would like it to",
+    "keywords": [
+      "its",
+      "hard",
+      "predict",
+      "fighting",
+      "know",
+      "like"
+    ],
+    "readability": {
+      "wordCount": 20,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 20,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.bbc.com/news/articles/c178z0p902vo?at_medium=RSS&at_campaign=rss",
+    "processedAt": "2026-03-03T11:06:42.094Z"
+  },
+  "source": "https://www.bbc.com/news/articles/c178z0p902vo?at_medium=RSS&at_campaign=rss",
+  "timestamp": "2026-03-03T11:06:42.096Z",
+  "category": "news",
+  "tags": [
+    "its",
+    "hard",
+    "predict",
+    "fighting",
+    "know"
+  ]
+}

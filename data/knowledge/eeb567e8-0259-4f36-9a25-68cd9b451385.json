@@ -1,0 +1,65 @@
+{
+  "id": "eeb567e8-0259-4f36-9a25-68cd9b451385",
+  "content": "arXiv 2603.00325v1 Announce Type  new Abstract  This paper introduces inspection through GLASS, a Geometric Look-Angle Shaping Strategy for enclosed regions using unmanned aerial vehicles. In doing so, the vehicles guidance command is constructed through a bounded, geometry-consistent shaping of the look angle relative to a desired standoff path. By embedding a smooth, hyperbolic-tangent-type shaping function within a polar geometric framework, GLASS ensures global existence of the guidance dynamics. It avoids the far-field limitations inherent to conventional formulations. Lyapunov stability analysis establishes asymptotic convergence to a prescribed inspection standoff under explicit curvature feasibility conditions, along with analytical settling-time characteristics. The proposed strategy incorporates maximum turn-rate constraints without inducing singularities throughout the workspace. High-fidelity six-degree-of-freedom quadrotor simulations demonstrate the effectiveness of GLASS in representative enclosed inspection scenarios, highlighting a practically viable guidance framework for autonomous enclosed inspection missions.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Amit Shivam, Manuel C. R. M. Fernandes, Sergio Vinha, Fernando A. C. C. Fontes",
+    "guid": "oai:arXiv.org:2603.00325v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO",
+      "cs.SY",
+      "eess.SY"
+    ],
+    "summary": "00325v1 Announce Type  new Abstract  This paper introduces inspection through GLASS, a Geometric Look-Angle Shaping Strategy for enclosed regions using unmanned aerial vehicles",
+    "keywords": [
+      "inspection",
+      "glass",
+      "shaping",
+      "enclosed",
+      "guidance",
+      "through",
+      "geometric",
+      "strategy",
+      "vehicles",
+      "standoff",
+      "framework",
+      "arxiv",
+      "260300325v1",
+      "announce",
+      "type",
+      "abstract",
+      "paper",
+      "introduces",
+      "lookangle",
+      "regions"
+    ],
+    "readability": {
+      "wordCount": 136,
+      "sentenceCount": 8,
+      "avgWordsPerSentence": 17,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00325",
+    "processedAt": "2026-03-03T10:35:45.023Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00325",
+  "timestamp": "2026-03-03T10:35:45.106Z",
+  "category": "news",
+  "tags": [
+    "inspection",
+    "glass",
+    "shaping",
+    "enclosed",
+    "guidance"
+  ]
+}

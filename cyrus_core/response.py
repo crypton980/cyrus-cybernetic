@@ -9,10 +9,23 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 from enum import Enum
 import random
+import logging
 
 from .modes import Mode, BehaviorState
 from .intent import Intent, IntentClassification
 from .memory import MemorySystem, TopicCategory
+
+# Import robotics integration
+try:
+    import sys
+    from pathlib import Path
+    project_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(project_root))
+    from cyrus_robotics_integration import enhance_cyrus_response_with_robotics
+    ROBOTICS_INTEGRATION_AVAILABLE = True
+except ImportError as e:
+    ROBOTICS_INTEGRATION_AVAILABLE = False
+    logging.warning(f"Robotics integration not available: {e}")
 
 
 class ResponseType(Enum):
@@ -46,6 +59,11 @@ class GeneratedResponse:
     content: str
     metadata: ResponseMetadata
     alternatives: List[str]
+    attached_files: List[str] = None
+    
+    def __post_init__(self):
+        if self.attached_files is None:
+            self.attached_files = []
     
     def with_alternatives(self) -> str:
         """Return response with noted alternatives."""
@@ -357,6 +375,20 @@ class ResponseEngine:
             content = self._generate_contextual_response(user_input, mode, intent)
             response_type = ResponseType.CONVERSATIONAL
         
+        # Enhance response with robotics content if applicable
+        attached_files = []
+        if ROBOTICS_INTEGRATION_AVAILABLE:
+            try:
+                enhanced_content, robotics_attachments = enhance_cyrus_response_with_robotics(content, user_input)
+                if robotics_attachments:
+                    content = enhanced_content
+                    attached_files = robotics_attachments
+                    # Update response type if robotics content was added
+                    if response_type == ResponseType.CONVERSATIONAL:
+                        response_type = ResponseType.INFORMATIVE
+            except Exception as e:
+                logging.warning(f"Failed to enhance response with robotics content: {e}")
+        
         metadata = ResponseMetadata(
             response_type=response_type,
             confidence=intent.confidence,
@@ -370,6 +402,7 @@ class ResponseEngine:
             content=content,
             metadata=metadata,
             alternatives=[],
+            attached_files=attached_files,
         )
     
     def _handle_greeting(self, state: BehaviorState) -> str:
@@ -546,4 +579,5 @@ What aspect would you like to focus on first?"""
             content=content,
             metadata=metadata,
             alternatives=self.templates.FALLBACK_RESPONSES,
+            attached_files=[],
         )

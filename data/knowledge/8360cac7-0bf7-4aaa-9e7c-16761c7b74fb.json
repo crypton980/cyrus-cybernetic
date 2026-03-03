@@ -1,0 +1,65 @@
+{
+  "id": "8360cac7-0bf7-4aaa-9e7c-16761c7b74fb",
+  "content": "arXiv 2603.00016v1 Announce Type  new Abstract  Augmented Reality  AR  offers powerful visualization capabilities for industrial robot training, yet current interfaces remain predominantly static, failing to account for learners' diverse cognitive profiles. In this paper, we present an AR application for robot training and propose a multi-agent AI framework for future integration that bridges the gap between static visualization and pedagogical intelligence. We report on the evaluation of the baseline AR interface with 36 participants performing a robotic pick-and-place task. While overall usability was high, notable disparities in task duration and learner characteristics highlighted the necessity for dynamic adaptation. To address this, we propose a multi-agent framework that orchestrates multiple components to perform complex preprocessing of multimodal inputs  e.g., voice, physiology, robot data  and adapt the AR application to the learner's needs. By utilizing autonomous Large Language Model  LLM  agents, the proposed system would dynamically adapt the learning environment based on advanced LLM reasoning in real-time.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Nicolas Leins, Jana Gonnermann-M\\\"uller, Malte Teichmann, Sebastian Pokutta",
+    "guid": "oai:arXiv.org:2603.00016v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO",
+      "cs.AI",
+      "cs.HC"
+    ],
+    "summary": "00016v1 Announce Type  new Abstract  Augmented Reality  AR  offers powerful visualization capabilities for industrial robot training, yet current interfaces remain predominantly static, failing to ...",
+    "keywords": [
+      "robot",
+      "visualization",
+      "training",
+      "static",
+      "learners",
+      "application",
+      "propose",
+      "multiagent",
+      "framework",
+      "task",
+      "adapt",
+      "arxiv",
+      "260300016v1",
+      "announce",
+      "type",
+      "abstract",
+      "augmented",
+      "reality",
+      "offers",
+      "powerful"
+    ],
+    "readability": {
+      "wordCount": 155,
+      "sentenceCount": 9,
+      "avgWordsPerSentence": 17.22222222222222,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00016",
+    "processedAt": "2026-03-03T11:06:42.315Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00016",
+  "timestamp": "2026-03-03T11:06:42.393Z",
+  "category": "news",
+  "tags": [
+    "robot",
+    "visualization",
+    "training",
+    "static",
+    "learners"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "design_id": "robotic_arm_20260303_125036",
+  "component_type": "robotic_arm",
+  "items": [
+    {
+      "item": "Aluminum Link 1",
+      "quantity": 1,
+      "material": "Aluminum 6061",
+      "weight": 2.5,
+      "cost": 45.0,
+      "supplier": "McMaster-Carr"
+    },
+    {
+      "item": "Harmonic Drive Gear",
+      "quantity": 6,
+      "material": "Steel",
+      "weight": 0.8,
+      "cost": 1200.0,
+      "supplier": "Harmonic Drive"
+    },
+    {
+      "item": "Servo Motor",
+      "quantity": 6,
+      "material": "Various",
+      "weight": 1.2,
+      "cost": 850.0,
+      "supplier": "Yaskawa"
+    }
+  ],
+  "total_cost": 12345.0,
+  "total_weight": 14.5
+}

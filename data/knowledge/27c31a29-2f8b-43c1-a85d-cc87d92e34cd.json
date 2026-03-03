@@ -1,0 +1,68 @@
+{
+  "id": "27c31a29-2f8b-43c1-a85d-cc87d92e34cd",
+  "content": "div id  attachment_587084  style  width  780px  class  wp-caption aligncenter   img loading  lazy  decoding  async  aria-describedby  caption-attachment-587084  class  wp-image-587084 size-full  src    alt  camera on a tripod with image on a laptop. Teledyne FLIR OEM's Lepton XDS includes thermal and visible cameras.  width  770  height  500  srcset    770w,   300w,   150w,   768w,   368w  sizes  auto,  max-width  770px  100vw, 770px     p id  caption-attachment-587084  class  wp-caption-text  The Lepton XDS is a compact dual thermal and visible camera module.   Credit  Teledyne FLIR  p   div   p Teledyne FLIR OEM, a part of Teledyne Technologies Inc., yesterday launched the Lepton XDS, a compact dual thermal and visible camera module bringing its patented MSX, or Multi Spectral Dynamic Imaging, technology to a new class of space  and power constrained original equipment manufacturer products.  p   p The Lepton XDS is designed for rapid integration and can be sold under the International Traffic in Arms Regulations  ITAR . It can reduce development risk and accelerate time to market for embedded, mobile, and industrial applications, said Teledyne FLIR.  p   p The Wilsonville, Ore.-based  a href    target  _blank  rel  noopener  company  a  claimed that the new module is suitable for fire detection and prevention, electric vehicle battery monitoring, robotics navigation, unmanned platforms, smart infrastructure, and health and safety systems.  p   p  MSX technology has long been a defining advantage of Teledyne FLIR, and with Lepton XDS, we are making that capability accessible in a compact, OEM ready module,  said Mike Walters, vice president of product management at Teledyne FLIR OEM.  By combining a visible camera, a proven micro thermal sensor, onboard Prism ISP processing, and direct access to radiometric overlays including spot meters and regions of interest we re accelerating innovation and enabling OEMs to deliver clearer thermal imagery for faster user interpretation.   p   h2 Software eases integration and app development  h2   div id  attachment_587085  style  width  780px  class  wp-caption aligncenter   img loading  lazy  decoding  async  aria-describedby  caption-attachment-587085  class  wp-image-587085 size-full  src    alt  IR image of pipes.  width  770  height  577  srcset    770w,   300w,   150w,   768w,   318w  sizes  auto,  max-width  770px  100vw, 770px     p id  caption-attachment-587085  class  wp-caption-text  Lepton XDS is designed to be modular and easy to integrate, with onboard Prism ISP image signal processing software.   Credit  Teledyne FLIR  p   div   p Prism ISP software ensures real time image enhancement while providing a comprehensive out of the box suite of  a href    target  _blank  rel  noopener  imaging  a  features, said Teledyne FLIR. They include thermal visible fusion, advanced image processing, and radiometric JPEG  RJPEG  output.  p   p Teledyne FLIR claimed that its patented software delivers sharper detail, improved context, and a level of actionable thermal intelligence typically associated with more expensive, higher-resolution camera systems.  p   p Built in measurement and visualization tools include regions of interest  ROI , spot temperature measurements, isotherms, and customizable color palettes. The vision system is also compatible with the Teledyne FLIR OEM software ecosystem for analysis, post processing, and reporting.  p   h2 Teledyne FLIR designs Lepton XDS for scalable OEM deployment  h2   div id  attachment_587086  style  width  710px  class  wp-caption aligncenter   img loading  lazy  decoding  async  aria-describedby  caption-attachment-587086  class  wp-image-587086 size-full  src    alt  hero image of the teledyne FLIR camera module  width  700  height  700  srcset    700w,   300w,   150w,   238w  sizes  auto,  max-width  700px  100vw, 700px     p id  caption-attachment-587086  class  wp-caption-text  The Lepton XDS pairs a 160   120 radiometric Lepton 3.5 micro thermal camera with a 5 megapixel visible sensor, featuring MSX that enhances thermal imagery in real time by embossing visible image edges directly onto the thermal scene.   Credit  Teledyne FLIR  p   div   p The Lepton XDS is a size, weight, and power  SWaP  optimized module, and an industry standard USB output makes it well-suited for battery powered and always on systems, said Teledyne. It is also ITAR free and classified under ECCN 6A003.b.4.b, enabling broadly available for commercial applications worldwide.  p   p The module is  a href    target  _blank  rel  noopener  available in a variety of configurations  a , priced from  109 to  239.  p   p The Lepton XDS is a radiometric-capable longwave infrared  LWIR  OEM camera module that is smaller than a dime, fits inside a smartphone, and is one-tenth the cost of traditional IR cameras. Using focal plane arrays of either 160 120 or 80 60 active pixels, the system can easily integrate into native mobile devices and other electronics as an infrared  IR  sensor or thermal imager, said Teledyne FLIR. The radiometric Lepton captures accurate, calibrated, and noncontact temperature data in every pixel of each image.  p   p Teledyne FLIR OEM said its global technical services organization and high volume manufacturing systems have delivered more than 4 million Leptons, supporting scalable production while minimizing supply chain risk.  p   hr     div style  text-align  center    a href     img loading  lazy  decoding  async  class  aligncenter size-full wp-image-568305  src    alt  SITE AD for the 2026 Robotics Summit save the date.  width  728  height  90      a   div   hr     p The post  a href    FLIR launches Lepton XDS thermal visual camera module  a  appeared first on  a href    Robot Report  a .  p",
+  "metadata": {
+    "pubDate": "Wed, 25 Feb 2026 21:28:31 +0000",
+    "author": "The Robot Report Staff",
+    "guid": "https://www.therobotreport.com/?p=587083",
+    "feedTitle": "The Robot Report",
+    "categories": [
+      "Cameras / Imaging / Vision",
+      "News",
+      "Press Release",
+      "Sensors / Sensing Systems",
+      "FLIR Systems",
+      "teledyne"
+    ],
+    "summary": "div id  attachment_587084  style  width  780px  class  wp-caption aligncenter   img loading  lazy  decoding  async  aria-describedby  caption-attachment-587084  class  wp-image-587084 size-full  sr...",
+    "keywords": [
+      "teledyne",
+      "flir",
+      "lepton",
+      "thermal",
+      "class",
+      "camera",
+      "module",
+      "image",
+      "width",
+      "visible",
+      "said",
+      "href",
+      "software",
+      "style",
+      "aligncenter",
+      "loading",
+      "lazy",
+      "decoding",
+      "async",
+      "sizefull"
+    ],
+    "readability": {
+      "wordCount": 835,
+      "sentenceCount": 33,
+      "avgWordsPerSentence": 25.303030303030305,
+      "readingTime": 5
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.therobotreport.com/teledyne-flir-launches-lepton-xds-thermal-visual-camera-module/",
+    "processedAt": "2026-03-03T09:35:31.836Z"
+  },
+  "source": "https://www.therobotreport.com/teledyne-flir-launches-lepton-xds-thermal-visual-camera-module/",
+  "timestamp": "2026-03-03T09:35:31.910Z",
+  "category": "news",
+  "tags": [
+    "teledyne",
+    "flir",
+    "lepton",
+    "thermal",
+    "class"
+  ]
+}

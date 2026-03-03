@@ -1,0 +1,65 @@
+{
+  "id": "2d1053c5-e139-4b75-8bed-05a57c8c4631",
+  "content": "arXiv 2603.01359v1 Announce Type  new Abstract  Over the last decades, progress in modal analysis has enabled increasingly routine use of modal parameters, including those extracted from in-situ measurements, for applications such as structural health monitoring and finite element model updating. For output-only identification, or Operational Modal Analysis  OMA , widely adopted approaches include Stochastic Subspace Identification  SSI  methods and the Natural Excitation Technique combined with the Eigensystem Realization Algorithm  NExT-ERA . Nevertheless, SSI-based techniques may become cumbersome on large systems, while NExT-ERA fitting can struggle when measurements are contaminated by noise. To alleviate these, this work investigates an OMA frequency-domain formulation for aeronautical structures by coupling the Loewner Framework  LF  with NExT, yielding the proposed NExT-LF method. The method exploits the computational efficiency of LF together with the impulse response function retrieval enabled by NExT. NExT-LF is assessed on two experimental benchmarks  the eXperimental BeaRDS 2 high-aspect-ratio wing main spar and an Airbus Helicopters H135 bearingless main rotor blade. The identified modal parameters are compared against available experimental references and results obtained via SSI with Canonical Variate Analysis and NExT-ERA. The results show that the modes identified by NExT-LF correlate well with benchmark data, particularly for high-amplitude tests and in the low-frequency range.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Gabriele Dessena, Marco Civera, Oscar E. Bonilla-Manrique",
+    "guid": "oai:arXiv.org:2603.01359v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY",
+      "eess.SP"
+    ],
+    "summary": "01359v1 Announce Type  new Abstract  Over the last decades, progress in modal analysis has enabled increasingly routine use of modal parameters, including those extracted from in-situ measurements,...",
+    "keywords": [
+      "modal",
+      "analysis",
+      "nextera",
+      "nextlf",
+      "experimental",
+      "enabled",
+      "parameters",
+      "measurements",
+      "identification",
+      "next",
+      "method",
+      "main",
+      "identified",
+      "results",
+      "arxiv",
+      "260301359v1",
+      "announce",
+      "type",
+      "abstract",
+      "over"
+    ],
+    "readability": {
+      "wordCount": 203,
+      "sentenceCount": 9,
+      "avgWordsPerSentence": 22.555555555555557,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.01359",
+    "processedAt": "2026-03-03T09:35:31.488Z"
+  },
+  "source": "https://arxiv.org/abs/2603.01359",
+  "timestamp": "2026-03-03T09:35:31.573Z",
+  "category": "news",
+  "tags": [
+    "modal",
+    "analysis",
+    "nextera",
+    "nextlf",
+    "experimental"
+  ]
+}

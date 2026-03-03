@@ -1,0 +1,66 @@
+{
+  "id": "ad8da9ce-71ad-4639-987e-9e1813a81970",
+  "content": "p Despite the headline, this isn't really a story about superconductivity at least not the superconductivity that people care about, the stuff that doesn't require exotic refrigeration to work. Instead, it's a story about how superconductivity can be used as a test of some of the weirder consequences of quantum mechanics, one that involves non-existent particles of light that still act as if they exist.  p   p Researchers have found a way to get these virtual photons to influence the behavior of a superconductor, ultimately making it worse. That may, in the end, tell us something useful about superconductivity, but it'll probably take a little while.  p   h2 Virtual reality  h2   p The story starts with quantum field theory, which is incredibly complex, but the simplified version is that even empty space is filled with fields that could govern the interactions of any quantum objects in or near that space. You can think of different particles as energetic excitements of these fields so a photon is simply an energetic state of the quantum field.  p  p  a href    full article  a   p   p  a href",
+  "metadata": {
+    "pubDate": "Fri, 27 Feb 2026 21:27:33 +0000",
+    "author": "John Timmer",
+    "guid": "https://arstechnica.com/science/2026/02/photons-that-arent-actually-there-influence-superconductivity/",
+    "feedTitle": "Ars Technica - All content",
+    "categories": [
+      "Science",
+      "Physics",
+      "superconductivity",
+      "virtual particles"
+    ],
+    "summary": "p Despite the headline, this isn't really a story about superconductivity at least not the superconductivity that people care about, the stuff that doesn't require exotic refrigeration to work",
+    "keywords": [
+      "about",
+      "superconductivity",
+      "quantum",
+      "story",
+      "particles",
+      "virtual",
+      "field",
+      "space",
+      "fields",
+      "energetic",
+      "href",
+      "despite",
+      "headline",
+      "isnt",
+      "really",
+      "least",
+      "people",
+      "care",
+      "stuff",
+      "doesnt"
+    ],
+    "readability": {
+      "wordCount": 185,
+      "sentenceCount": 7,
+      "avgWordsPerSentence": 26.428571428571427,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arstechnica.com/science/2026/02/photons-that-arent-actually-there-influence-superconductivity/",
+    "processedAt": "2026-03-03T09:17:57.999Z"
+  },
+  "source": "https://arstechnica.com/science/2026/02/photons-that-arent-actually-there-influence-superconductivity/",
+  "timestamp": "2026-03-03T09:17:58.013Z",
+  "category": "news",
+  "tags": [
+    "about",
+    "superconductivity",
+    "quantum",
+    "story",
+    "particles"
+  ]
+}

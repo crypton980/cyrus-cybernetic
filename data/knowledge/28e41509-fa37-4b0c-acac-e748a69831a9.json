@@ -1,0 +1,67 @@
+{
+  "id": "28e41509-fa37-4b0c-acac-e748a69831a9",
+  "content": "figure   img alt  Anthropic on a black and orange background.  data-caption    data-portal-copyright  Cathryn Hutton   The Verge  data-has-syndication-rights  1  src    strip all crop 0,0,100,100      figcaption    figcaption    figure   p class  has-text-align-none  Anthropic is making it easier to switch to its Claude AI from other chatbots with an update that brings Claude's memory feature to users on the free plan, along with a  a href    prompt and dedicated tool  a  for importing data from other chatbots. These upgrades could allow users who have been using rivals like OpenAI's ChatGPT or Google's Gemini to quickly copy the data their preferred AI has collected on them and bring it over to Anthropic's chatbot. That way, they don't have to  start over  teaching Claude the context and history their previous chatbot already knows.   p   p class  has-text-align-none  The option to import and export memories from Claude has been available since O    p   p  a href    the full story at The Verge.  a   p",
+  "metadata": {
+    "pubDate": "2026-03-02T17:29:46-05:00",
+    "author": "[object Object]",
+    "guid": "https://www.theverge.com/?p=887885",
+    "feedTitle": "The Verge",
+    "categories": [
+      "[object Object]",
+      "[object Object]",
+      "[object Object]",
+      "[object Object]"
+    ],
+    "summary": "figure   img alt  Anthropic on a black and orange background",
+    "keywords": [
+      "claude",
+      "from",
+      "figure",
+      "anthropic",
+      "verge",
+      "figcaption",
+      "class",
+      "hastextalignnone",
+      "other",
+      "chatbots",
+      "users",
+      "href",
+      "data",
+      "their",
+      "over",
+      "chatbot",
+      "black",
+      "orange",
+      "background",
+      "datacaption"
+    ],
+    "readability": {
+      "wordCount": 157,
+      "sentenceCount": 6,
+      "avgWordsPerSentence": 26.166666666666668,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains boilerplate content",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.theverge.com/ai-artificial-intelligence/887885/anthropic-claude-memory-upgrades-importing",
+    "processedAt": "2026-03-03T09:05:38.444Z"
+  },
+  "source": "https://www.theverge.com/ai-artificial-intelligence/887885/anthropic-claude-memory-upgrades-importing",
+  "timestamp": "2026-03-03T09:05:38.460Z",
+  "category": "news",
+  "tags": [
+    "claude",
+    "from",
+    "figure",
+    "anthropic",
+    "verge"
+  ]
+}

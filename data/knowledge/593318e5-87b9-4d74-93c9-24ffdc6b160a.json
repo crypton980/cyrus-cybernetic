@@ -1,0 +1,68 @@
+{
+  "id": "593318e5-87b9-4d74-93c9-24ffdc6b160a",
+  "content": "figure   img alt  Photo illustration of the Supreme Court building with pixelated sky.  data-caption    data-portal-copyright  Illustration by Cath Virginia   The Verge   Photos via Getty Images  data-has-syndication-rights  1  src    strip all crop 0,0,100,100      figcaption    figcaption    figure   p class  has-text-align-none  The US Supreme Court has declined to hear a case over whether AI-generated art can obtain a copyright,  a href    reported earlier by  em Reuters  em   a . The Monday decision comes after Stephen Thaler, a computer scientist from Missouri, appealed a court's decision to uphold a ruling that found AI-generated art can't be copyrighted.  p   p class  has-text-align-none  In 2019, the US Copyright Office rejected Thaler's request to copyright an image, called  em A Recent Entrance to Paradise  em , on behalf of an algorithm he created. The Copyright Office  a href    the decision in 2022  a  and determined that the image doesn't include  human authorship,  disqualifying it from copyright protection.   p   img src    strip all crop 0,0,100,100  alt    title    data-has-syndication-rights  1  data-caption  A Recent Entrance to Paradise.   Image  Stephen Thaler   Creativity Machine  data-portal-copyright  Image  Stephen Thaler   Creativity Machine    p class  has-text-align-none  After Thale    p   p  a href    the full story at The Verge.  a   p",
+  "metadata": {
+    "pubDate": "2026-03-02T12:58:05-05:00",
+    "author": "[object Object]",
+    "guid": "https://www.theverge.com/?p=887678",
+    "feedTitle": "The Verge",
+    "categories": [
+      "[object Object]",
+      "[object Object]",
+      "[object Object]",
+      "[object Object]",
+      "[object Object]"
+    ],
+    "summary": "figure   img alt  Photo illustration of the Supreme Court building with pixelated sky",
+    "keywords": [
+      "copyright",
+      "image",
+      "class",
+      "hastextalignnone",
+      "href",
+      "decision",
+      "stephen",
+      "thaler",
+      "figure",
+      "illustration",
+      "supreme",
+      "court",
+      "datacaption",
+      "dataportalcopyright",
+      "verge",
+      "datahassyndicationrights",
+      "strip",
+      "crop",
+      "00100100",
+      "figcaption"
+    ],
+    "readability": {
+      "wordCount": 195,
+      "sentenceCount": 8,
+      "avgWordsPerSentence": 24.375,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains boilerplate content",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.theverge.com/policy/887678/supreme-court-ai-art-copyright",
+    "processedAt": "2026-03-03T09:08:20.642Z"
+  },
+  "source": "https://www.theverge.com/policy/887678/supreme-court-ai-art-copyright",
+  "timestamp": "2026-03-03T09:08:20.661Z",
+  "category": "news",
+  "tags": [
+    "copyright",
+    "image",
+    "class",
+    "hastextalignnone",
+    "href"
+  ]
+}

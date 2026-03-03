@@ -1,0 +1,52 @@
+{
+  "id": "c7ebd774-db52-41a8-b14c-71e83f05a100",
+  "content": "SIMA 2 An agent that plays, reasons, and learns with you in virtual 3D worlds. Learn more",
+  "metadata": {
+    "description": "Explore our research on some of the most complex and interesting challenges in AI.",
+    "keywords": [
+      "sima",
+      "agent",
+      "plays",
+      "reasons",
+      "learns",
+      "virtual",
+      "worlds",
+      "learn",
+      "more"
+    ],
+    "published": "February 2026",
+    "language": "en",
+    "wordCount": 17,
+    "readingTime": 1,
+    "summary": "SIMA 2 An agent that plays, reasons, and learns with you in virtual 3D worlds",
+    "readability": {
+      "wordCount": 17,
+      "sentenceCount": 2,
+      "avgWordsPerSentence": 8.5,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 55,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.deepmind.com/research",
+    "processedAt": "2026-03-03T10:35:58.021Z"
+  },
+  "source": "https://www.deepmind.com/research",
+  "timestamp": "2026-03-03T10:35:58.021Z",
+  "category": "general",
+  "tags": [
+    "sima",
+    "agent",
+    "plays",
+    "reasons",
+    "learns"
+  ]
+}

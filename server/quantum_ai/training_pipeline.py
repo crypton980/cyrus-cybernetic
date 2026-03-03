@@ -286,6 +286,113 @@ KNOWLEDGE_DOMAINS = {
             'human rights law fundamental freedoms protections',
         ],
         'weight': 0.6
+    },
+    'robotics_mechatronics': {
+        'concepts': [
+            # Core Robotics Concepts
+            'industrial robotics automation assembly manufacturing',
+            'service robotics domestic healthcare elderly assistance',
+            'mobile robotics autonomous vehicles AGVs navigation',
+            'humanoid robotics bipedal locomotion human interaction',
+            'medical robotics surgical systems minimally invasive',
+            'aerospace robotics UAVs drones satellite servicing',
+            'underwater robotics ROVs AUVs ocean exploration',
+            'micro nano robotics MEMS NEMS microfluidic systems',
+            'soft robotics flexible actuators pneumatic muscles',
+            'swarm robotics multi agent coordination collective intelligence',
+
+            # Mechatronics Fundamentals
+            'mechatronics systems integration sensors actuators controllers',
+            'control theory PID feedback stability analysis transfer functions',
+            'signal processing Fourier transform filtering digital analog',
+            'embedded systems microcontrollers RTOS real time programming',
+            'power electronics motor drives inverters converters',
+            'sensor fusion Kalman filtering data integration multiple sources',
+            'motion control servo stepper DC AC motor systems',
+            'pneumatic hydraulic systems valves actuators fluid power',
+            'PLC programming ladder logic structured text industrial automation',
+
+            # Advanced Components
+            'actuators linear rotary hydraulic pneumatic piezoelectric',
+            'sensors proximity force torque vision LIDAR radar IMU',
+            'microcontrollers Arduino Raspberry Pi embedded processors',
+            'single board computers SBCs Jetson Nano BeagleBone',
+            'printed circuit boards PCB design fabrication assembly',
+            'electronic components transistors resistors capacitors inductors',
+            'integrated circuits ICs microprocessors DSPs FPGAs',
+            'MEMS NEMS microelectromechanical nanoelectromechanical systems',
+            'smart materials shape memory alloys piezoelectric electroactive',
+            'composite materials carbon fiber Kevlar advanced polymers',
+
+            # Robotics Software & AI
+            'robot operating system ROS navigation planning simulation',
+            'computer vision OpenCV object detection segmentation tracking',
+            'machine learning robotics reinforcement learning path planning',
+            'SLAM simultaneous localization mapping LiDAR odometry',
+            'motion planning A star RRT probabilistic roadmaps',
+            'inverse kinematics forward kinematics Jacobian matrices',
+            'dynamics rigid body Euler Lagrange Newton Euler',
+            'control architectures hierarchical behavior based hybrid',
+            'human robot interaction HRI gesture speech emotion recognition',
+            'safety systems collision detection emergency stop ISO 10218',
+
+            # Industrial Applications
+            'automotive robotics welding painting assembly quality control',
+            'electronics manufacturing pick place soldering inspection',
+            'pharmaceutical robotics sterile environments dispensing',
+            'food processing robotics packaging labeling quality assurance',
+            'logistics robotics warehouse automation picking sorting',
+            'construction robotics bricklaying demolition hazardous tasks',
+            'agriculture robotics harvesting planting monitoring drones',
+            'mining robotics exploration drilling hazardous environment',
+            'nuclear robotics inspection maintenance decontamination',
+
+            # Standards & Regulations
+            'ISO 10218 industrial robot safety requirements',
+            'ISO 15066 collaborative robot safety guidelines',
+            'IEEE robotics standards autonomous systems ethics',
+            'ANSI robotics safety standards risk assessment',
+            'OSHA robotics workplace safety regulations',
+            'FDA medical robotics regulatory requirements',
+            'FAA unmanned aerial systems UAS regulations',
+            'NIST robotics performance metrics standards',
+
+            # Research & Development
+            'reinforcement learning robotics policy gradients Q learning',
+            'deep learning robotics CNN RNN transformer architectures',
+            'transfer learning robotics domain adaptation fine tuning',
+            'multi agent systems coordination communication consensus',
+            'bio inspired robotics evolutionary algorithms swarm intelligence',
+            'soft robotics continuum manipulators flexible structures',
+            'underactuated robotics passive dynamics energy efficiency',
+            'modular robotics self reconfigurable self assembly',
+            'micro robotics cellular transport targeted drug delivery',
+            'nano robotics molecular assembly precision manufacturing',
+
+            # Technical Skills
+            'CAD CAM robotics SolidWorks Creo Fusion 360',
+            'simulation robotics Gazebo V-REP Webots simulation',
+            'programming robotics Python C++ MATLAB ROS',
+            'electronics design Altium KiCad PCB layout',
+            'control systems MATLAB Simulink control design',
+            'machine vision HALCON Cognex vision systems',
+            'PLC programming Siemens Allen Bradley ladder logic',
+            'industrial networks EtherCAT Profinet DeviceNet CAN',
+            'cyber physical systems CPS IoT industrial internet',
+
+            # Emerging Technologies
+            'cobots collaborative robots human robot collaboration',
+            'exoskeletons wearable robotics rehabilitation assistance',
+            'prosthetics advanced prosthetics neural interfaces',
+            'brain computer interfaces BCI robotics control',
+            'haptic feedback force feedback tactile sensing',
+            'variable impedance actuators compliant control',
+            'energy harvesting robotics piezoelectric thermoelectric',
+            'wireless power transfer inductive resonant charging',
+            'edge computing robotics onboard processing latency',
+            '5G 6G robotics high bandwidth low latency communication'
+        ],
+        'weight': 1.3
     }
 }
 

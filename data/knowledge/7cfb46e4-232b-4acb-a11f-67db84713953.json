@@ -1,0 +1,64 @@
+{
+  "id": "7cfb46e4-232b-4acb-a11f-67db84713953",
+  "content": "arXiv 2603.01587v1 Announce Type  new Abstract  The growing integration of electric vehicle  EV  fleets into transportation services and energy systems requires accurate modeling of battery discharge and state-of-charge  SoC  evolution to ensure reliable vehicle operation and grid coordination. Existing approaches face a trade-off between interpretable but simplified physics-based models and data-driven methods that demand large datasets and may lack physical consistency. In this paper, we propose a hybrid physics-based residual learning framework for EV battery discharge modeling. A vehicle dynamics model based on force-balance equations provides an interpretable baseline estimate of energy consumption and SoC evolution, capturing aerodynamic drag, rolling resistance, and regenerative braking. A neural network residual learner then corrects discrepancies caused by complex factors such as traffic conditions and driver behavior. Experimental results on  1,500  trip scenarios demonstrate that the proposed approach reduces the mean absolute percentage error to approximately  0.8   , significantly outperforming physics-only models while preserving physical interpretability and computational efficiency.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Praharshitha Aryasomayajula, Ting Bai, Andreas A. Malikopoulos",
+    "guid": "oai:arXiv.org:2603.01587v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY"
+    ],
+    "summary": "01587v1 Announce Type  new Abstract  The growing integration of electric vehicle  EV  fleets into transportation services and energy systems requires accurate modeling of battery discharge and stat...",
+    "keywords": [
+      "vehicle",
+      "energy",
+      "modeling",
+      "battery",
+      "discharge",
+      "evolution",
+      "interpretable",
+      "physicsbased",
+      "models",
+      "physical",
+      "residual",
+      "1500",
+      "arxiv",
+      "260301587v1",
+      "announce",
+      "type",
+      "abstract",
+      "growing",
+      "integration",
+      "electric"
+    ],
+    "readability": {
+      "wordCount": 155,
+      "sentenceCount": 8,
+      "avgWordsPerSentence": 19.375,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.01587",
+    "processedAt": "2026-03-03T11:02:20.123Z"
+  },
+  "source": "https://arxiv.org/abs/2603.01587",
+  "timestamp": "2026-03-03T11:02:20.228Z",
+  "category": "news",
+  "tags": [
+    "vehicle",
+    "energy",
+    "modeling",
+    "battery",
+    "discharge"
+  ]
+}

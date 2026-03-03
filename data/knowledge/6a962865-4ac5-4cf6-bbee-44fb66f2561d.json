@@ -1,0 +1,64 @@
+{
+  "id": "6a962865-4ac5-4cf6-bbee-44fb66f2561d",
+  "content": "arXiv 2603.00283v1 Announce Type  new Abstract  This paper introduces an uncertainty compensation-based robust adaptive model predictive control  MPC  framework for linear systems with nonlinear time-varying uncertainties. The framework integrates an L1 adaptive controller to compensate for the matched uncertainty and a robust feedback controller, designed using linear matrix inequalities, to mitigate the effect of unmatched uncertainty on target output channels. Uniform bounds on the errors between the system's states and control inputs and those of a nominal  i.e., uncertainty-free  system are derived. These error bounds are then used to tighten the actual system's state and input constraints, enabling the design of an MPC for the nominal system under these tightened constraints. Referred to as uncertainty compensation-based MPC  UC-MPC , this approach ensures constraint satisfaction while delivering enhanced performance compared to existing methods. Simulation results for a flight control example and a spacecraft landing on an asteroid demonstrate the effectiveness of the proposed framework.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Ran Tao, Pan Zhao, Ilya Kolmanovsky, Naira Hovakimyan",
+    "guid": "oai:arXiv.org:2603.00283v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY"
+    ],
+    "summary": "00283v1 Announce Type  new Abstract  This paper introduces an uncertainty compensation-based robust adaptive model predictive control  MPC  framework for linear systems with nonlinear time-varying ...",
+    "keywords": [
+      "uncertainty",
+      "control",
+      "framework",
+      "systems",
+      "compensationbased",
+      "robust",
+      "adaptive",
+      "linear",
+      "controller",
+      "bounds",
+      "nominal",
+      "system",
+      "constraints",
+      "arxiv",
+      "260300283v1",
+      "announce",
+      "type",
+      "abstract",
+      "paper",
+      "introduces"
+    ],
+    "readability": {
+      "wordCount": 153,
+      "sentenceCount": 9,
+      "avgWordsPerSentence": 17,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00283",
+    "processedAt": "2026-03-03T09:39:27.499Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00283",
+  "timestamp": "2026-03-03T09:39:27.596Z",
+  "category": "news",
+  "tags": [
+    "uncertainty",
+    "control",
+    "framework",
+    "systems",
+    "compensationbased"
+  ]
+}

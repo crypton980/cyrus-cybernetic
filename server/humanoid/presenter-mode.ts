@@ -1,23 +1,33 @@
-import OpenAI from "openai";
+import { localLLM } from "../ai/local-llm-client";
 
-function getOpenAIClient(): OpenAI | null {
-  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
-  if (!apiKey) {
-    console.warn("[Presenter Mode] OpenAI API key not configured");
-    return null;
+const useLocalLLM = process.env.USE_LOCAL_LLM !== 'false';
+
+async function getOpenAIClient(): Promise<any | null> {
+  if (!useLocalLLM) {
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+    if (!apiKey) {
+      console.warn("[Presenter Mode] OpenAI API key not configured");
+      return null;
+    }
+    const openai = await import("openai");
+    return new openai.default({ apiKey, baseURL });
   }
-  return new OpenAI({ apiKey, baseURL });
+  return null;
 }
 
-let openaiClient: OpenAI | null = null;
+let openaiClient: any | null = null;
 
-function getClient(): OpenAI {
+async function getClient(): Promise<any> {
+  if (useLocalLLM) {
+    return localLLM;
+  }
+
   if (!openaiClient) {
-    openaiClient = getOpenAIClient();
+    openaiClient = await getOpenAIClient();
   }
   if (!openaiClient) {
-    throw new Error("OpenAI API key not configured. Please add OPENAI_API_KEY to your environment.");
+    throw new Error("OpenAI API key not configured and local LLM disabled. Please add OPENAI_API_KEY to your environment or set USE_LOCAL_LLM=true.");
   }
   return openaiClient;
 }

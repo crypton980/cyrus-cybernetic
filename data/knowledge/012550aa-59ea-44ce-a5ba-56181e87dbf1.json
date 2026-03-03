@@ -1,0 +1,43 @@
+{
+  "id": "012550aa-59ea-44ce-a5ba-56181e87dbf1",
+  "content": "The billionaire says  anti-semitism is always in the air .",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 06:14:09 GMT",
+    "author": "",
+    "guid": "https://www.bbc.com/news/articles/c4g2jp6y630o#2",
+    "feedTitle": "BBC News",
+    "summary": "The billionaire says  anti-semitism is always in the air",
+    "keywords": [
+      "billionaire",
+      "says",
+      "antisemitism",
+      "always"
+    ],
+    "readability": {
+      "wordCount": 10,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 10,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.bbc.com/news/articles/c4g2jp6y630o?at_medium=RSS&at_campaign=rss",
+    "processedAt": "2026-03-03T09:01:59.960Z"
+  },
+  "source": "https://www.bbc.com/news/articles/c4g2jp6y630o?at_medium=RSS&at_campaign=rss",
+  "timestamp": "2026-03-03T09:01:59.964Z",
+  "category": "news",
+  "tags": [
+    "billionaire",
+    "says",
+    "antisemitism",
+    "always"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "4a36fee3-cc1c-42c8-a13a-e226592bbb9e",
+  "content": "Microsoft Research Forum",
+  "metadata": {
+    "description": "Microsoft AI Research is creating artificial intelligence machines that complement human reasoning to augment and enrich our experience and competencies.",
+    "keywords": [
+      "microsoft",
+      "research",
+      "forum"
+    ],
+    "published": "2026-04-23",
+    "language": "en-US",
+    "wordCount": 3,
+    "readingTime": 1,
+    "summary": "Microsoft Research Forum",
+    "readability": {
+      "wordCount": 3,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 3,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 55,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "Contains images",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.microsoft.com/en-us/research/research-area/artificial-intelligence/",
+    "processedAt": "2026-03-03T09:02:38.496Z"
+  },
+  "source": "https://www.microsoft.com/en-us/research/research-area/artificial-intelligence/",
+  "timestamp": "2026-03-03T09:02:38.496Z",
+  "category": "research",
+  "tags": [
+    "microsoft",
+    "research",
+    "forum"
+  ]
+}

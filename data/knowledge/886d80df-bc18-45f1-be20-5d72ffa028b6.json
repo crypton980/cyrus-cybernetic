@@ -1,0 +1,63 @@
+{
+  "id": "886d80df-bc18-45f1-be20-5d72ffa028b6",
+  "content": "arXiv 2603.00338v1 Announce Type  new Abstract  This paper presents a general end-to-end framework for constructing robust and reliable layered safety filters that can be leveraged to perform dynamic collision avoidance over a broad range of applications using only local perception data. Given a robot-centric point cloud, we begin by constructing an occupancy map which is used to synthesize a Poisson safety function  PSF . The resultant PSF is employed as a control barrier function  CBF  within two distinct safety filtering stages. In the first stage, we propose a predictive safety filter to compute optimal safe trajectories based on nominal potentially-unsafe commands. The resultant short-term plans are constrained to satisfy the CBF condition along a finite prediction horizon. In the second stage, instantaneous velocity commands are further refined by a real-time CBF-based safety filter and tracked by the full-order low-level robot controller. Assuming accurate tracking of velocity commands, we obtain formal guarantees of safety for the full-order system. We validate the optimality and robustness of our multistage architecture, in comparison to traditional single-stage safety filters, via a detailed Pareto analysis. We further demonstrate the effectiveness and generality of our collision avoidance methodology on multiple legged robot platforms across a variety of real-world dynamic scenarios.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Erina Yamaguchi, Ryan M. Bena, Gilbert Bahati, Aaron D. Ames",
+    "guid": "oai:arXiv.org:2603.00338v1",
+    "feedTitle": "cs.RO updates on arXiv.org",
+    "categories": [
+      "cs.RO"
+    ],
+    "summary": "00338v1 Announce Type  new Abstract  This paper presents a general end-to-end framework for constructing robust and reliable layered safety filters that can be leveraged to perform dynamic collisio...",
+    "keywords": [
+      "safety",
+      "commands",
+      "constructing",
+      "filters",
+      "dynamic",
+      "collision",
+      "avoidance",
+      "function",
+      "resultant",
+      "stage",
+      "filter",
+      "velocity",
+      "further",
+      "fullorder",
+      "robot",
+      "arxiv",
+      "260300338v1",
+      "announce",
+      "type",
+      "abstract"
+    ],
+    "readability": {
+      "wordCount": 203,
+      "sentenceCount": 10,
+      "avgWordsPerSentence": 20.3,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00338",
+    "processedAt": "2026-03-03T09:39:27.499Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00338",
+  "timestamp": "2026-03-03T09:39:27.593Z",
+  "category": "news",
+  "tags": [
+    "safety",
+    "commands",
+    "constructing",
+    "filters",
+    "dynamic"
+  ]
+}

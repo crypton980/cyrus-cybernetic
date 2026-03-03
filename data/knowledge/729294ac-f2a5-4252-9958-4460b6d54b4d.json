@@ -1,0 +1,67 @@
+{
+  "id": "729294ac-f2a5-4252-9958-4460b6d54b4d",
+  "content": "figure   img alt  Donut Lab solid state battery  data-caption    data-portal-copyright  Image  Tim Stevens   The Verge  data-has-syndication-rights  1  src    strip all crop 0,0,100,100      figcaption    figcaption    figure   p class  has-text-align-none  Finnish startup Donut Lab is out to prove that  a href    solid-state battery is all that it claims to be  a . Last week,  a href    test was about fast charging  a . This week is where things get hot.   p   p class  has-text-align-none  Like the first test,  a href    one was also conducted by state-owned VTT Technical Research Centre of Finland  a . The team set out to determine how well Donut Lab's cells held up under extreme heat, which has been known to adversely affect traditional lithium-ion batteries. The results show that not only can the Finnish startup's solid-state battery still discharge energy under conditions of up to 100 degrees Celsius  212 degrees Fahrenheit , it actually gains capacity.   p     p  a href    the full story at The Verge.  a   p",
+  "metadata": {
+    "pubDate": "2026-03-02T13:00:18-05:00",
+    "author": "[object Object]",
+    "guid": "https://www.theverge.com/?p=887552",
+    "feedTitle": "The Verge",
+    "categories": [
+      "[object Object]",
+      "[object Object]",
+      "[object Object]",
+      "[object Object]"
+    ],
+    "summary": "figure   img alt  Donut Lab solid state battery  data-caption    data-portal-copyright  Image  Tim Stevens   The Verge  data-has-syndication-rights  1  src    strip all crop 0,0,100,100      figcap...",
+    "keywords": [
+      "href",
+      "donut",
+      "battery",
+      "figure",
+      "verge",
+      "figcaption",
+      "class",
+      "hastextalignnone",
+      "finnish",
+      "solidstate",
+      "week",
+      "test",
+      "under",
+      "degrees",
+      "solid",
+      "state",
+      "datacaption",
+      "dataportalcopyright",
+      "image",
+      "stevens"
+    ],
+    "readability": {
+      "wordCount": 161,
+      "sentenceCount": 8,
+      "avgWordsPerSentence": 20.125,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains boilerplate content",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://www.theverge.com/transportation/887552/donut-lab-solid-state-battery-extreme-heat-test",
+    "processedAt": "2026-03-03T09:35:31.661Z"
+  },
+  "source": "https://www.theverge.com/transportation/887552/donut-lab-solid-state-battery-extreme-heat-test",
+  "timestamp": "2026-03-03T09:35:31.678Z",
+  "category": "news",
+  "tags": [
+    "href",
+    "donut",
+    "battery",
+    "figure",
+    "verge"
+  ]
+}

@@ -175,11 +175,6 @@ export class CommsIntelligenceEngine {
       await db.insert(commsInteractionEvents).values({
         userId,
         eventType,
-        targetUserId: targetUserId || null,
-        metadata: metadata || {},
-        sentimentScore,
-        featureVector,
-        sessionId: `session_${Date.now()}`,
       });
 
       const currentCount = (this.interactionCounters.get(userId) || 0) + 1;
@@ -313,7 +308,14 @@ export class CommsIntelligenceEngine {
 
       if (existing.length > 0) {
         await db.update(commsUserProfiles)
-          .set(profileData)
+          .set({
+            communicationPatterns: profileData.communicationPatterns,
+            sentimentProfile: profileData.sentimentProfile,
+            interactionEmbeddings: profileData.interactionEmbeddings,
+            totalInteractions: profileData.totalInteractions,
+            lastAnalyzedAt: profileData.lastAnalyzedAt,
+            updatedAt: profileData.updatedAt,
+          })
           .where(eq(commsUserProfiles.userId, userId));
       } else {
         await db.insert(commsUserProfiles).values({

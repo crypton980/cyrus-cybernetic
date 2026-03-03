@@ -1,0 +1,48 @@
+{
+  "id": "8d6600cc-34bd-48a1-a537-dd0da2c12b79",
+  "content": "The US defence secretary confirms a US military base was hit by an Iranian missile on Sunday.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 09:57:59 GMT",
+    "author": "",
+    "guid": "https://www.bbc.com/news/articles/c4gq33ynl07o#4",
+    "feedTitle": "BBC News",
+    "summary": "The US defence secretary confirms a US military base was hit by an Iranian missile on Sunday",
+    "keywords": [
+      "defence",
+      "secretary",
+      "confirms",
+      "military",
+      "base",
+      "iranian",
+      "missile",
+      "sunday"
+    ],
+    "readability": {
+      "wordCount": 17,
+      "sentenceCount": 1,
+      "avgWordsPerSentence": 17,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 45,
+      "reasons": [
+        "Content too short",
+        "Has title",
+        "Rich metadata",
+        "Low quality content"
+      ]
+    },
+    "originalUrl": "https://www.bbc.com/news/articles/c4gq33ynl07o?at_medium=RSS&at_campaign=rss",
+    "processedAt": "2026-03-03T10:33:58.421Z"
+  },
+  "source": "https://www.bbc.com/news/articles/c4gq33ynl07o?at_medium=RSS&at_campaign=rss",
+  "timestamp": "2026-03-03T10:33:58.426Z",
+  "category": "news",
+  "tags": [
+    "defence",
+    "secretary",
+    "confirms",
+    "military",
+    "base"
+  ]
+}

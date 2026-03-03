@@ -1,0 +1,60 @@
+{
+  "id": "de385943-c03f-49c1-a6ec-4b79aee320a7",
+  "content": "All DocsenendeptLanguage ReferenceFunctionsVariablesStructureHome   Programming   Language Reference Language ReferenceArduino programming language can be divided in three main parts  functions, values  variables and constants , and structure.FunctionsVariablesStructureFor controlling the Arduino board and performing computations.Digital I OdigitalRead  digitalWrite  pinMode  Mathabs  constrain  map  max  min  pow  sq  sqrt  Bits and Bytesbit  bitClear  bitRead  bitSet  bitWrite  highByte  lowByte  Analog I OanalogRead  analogReadResolution  analogReference  analogWrite  analogWriteResolution  Trigonometrycos  sin  tan  External InterruptsattachInterrupt  detachInterrupt  digitalPinToInterrupt  Advanced I OnoTone  pulseIn  pulseInLong  shiftIn  shiftOut  tone  CharactersisAlpha  isAlphaNumeric  isAscii  isControl  isDigit  isGraph  isHexadecimalDigit  isLowerCase  isPrintable  isPunct  isSpace  isUpperCase  isWhitespace  Interruptsinterrupts  noInterrupts  Timedelay  delayMicroseconds  micros  millis  Random Numbersrandom  randomSeed  CommunicationSPIPrintSerialStreamWireUSBKeyboardMouseWi-FiWi-Fi OverviewWiFi NetworkIPAddressWiFiClientWiFiServerWiFiUDPConnect and ContributeProject HubGitHub RepositoryForumProduct ComplianceHelp CenterTrademarks   Licensing",
+  "metadata": {
+    "keywords": [
+      "language",
+      "programming",
+      "docsenendeptlanguage",
+      "referencefunctionsvariablesstructurehome",
+      "reference",
+      "referencearduino",
+      "divided",
+      "three",
+      "main",
+      "parts",
+      "functions",
+      "values",
+      "variables",
+      "constants",
+      "structurefunctionsvariablesstructurefor",
+      "controlling",
+      "arduino",
+      "board",
+      "performing",
+      "computationsdigital"
+    ],
+    "language": "en",
+    "wordCount": 50,
+    "readingTime": 1,
+    "summary": "All DocsenendeptLanguage ReferenceFunctionsVariablesStructureHome   Programming   Language Reference Language ReferenceArduino programming language can be divided in three main parts  functions, va...",
+    "readability": {
+      "wordCount": 107,
+      "sentenceCount": 3,
+      "avgWordsPerSentence": 35.666666666666664,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 80,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Contains useful links",
+        "High quality content"
+      ]
+    },
+    "originalUrl": "https://www.arduino.cc/reference/en/",
+    "processedAt": "2026-03-03T09:27:39.528Z"
+  },
+  "source": "https://www.arduino.cc/reference/en/",
+  "timestamp": "2026-03-03T09:27:39.528Z",
+  "category": "general",
+  "tags": [
+    "language",
+    "programming",
+    "docsenendeptlanguage",
+    "referencefunctionsvariablesstructurehome",
+    "reference"
+  ]
+}

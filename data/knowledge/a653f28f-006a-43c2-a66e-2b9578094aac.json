@@ -1,0 +1,63 @@
+{
+  "id": "a653f28f-006a-43c2-a66e-2b9578094aac",
+  "content": "arXiv 2603.00438v1 Announce Type  new Abstract  This paper considers the flexibility degradation problem caused by excessive flexible ramping product  FRP  requirements with high variable energy resource  VER  penetration . Based on the rolling-window co-optimization model of energy and FRP, theoretical analysis of this paper reveals a unit dispatch transfer effect, in which high FRP requirements under forecast-based dispatch  FBD  constrain real-time flexibility and distort economic efficiency. To alleviate this effect, a regulated forecast-based dispatch  RFBD  approach is proposed, which moderately caps VER outputs and enhances system flexibility. Simulation results demonstrate that the proposed approach effectively lowers FRP requirements and reduces operating cost compared with FBD.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Zhiyi Zhao, Ye Guo, Zhenjia Lin, Yinliang Xu",
+    "guid": "oai:arXiv.org:2603.00438v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY"
+    ],
+    "summary": "00438v1 Announce Type  new Abstract  This paper considers the flexibility degradation problem caused by excessive flexible ramping product  FRP  requirements with high variable energy resource  VER...",
+    "keywords": [
+      "flexibility",
+      "requirements",
+      "dispatch",
+      "paper",
+      "high",
+      "energy",
+      "effect",
+      "which",
+      "forecastbased",
+      "approach",
+      "proposed",
+      "arxiv",
+      "260300438v1",
+      "announce",
+      "type",
+      "abstract",
+      "considers",
+      "degradation",
+      "problem",
+      "caused"
+    ],
+    "readability": {
+      "wordCount": 105,
+      "sentenceCount": 5,
+      "avgWordsPerSentence": 21,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00438",
+    "processedAt": "2026-03-03T11:02:19.114Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00438",
+  "timestamp": "2026-03-03T11:02:19.220Z",
+  "category": "news",
+  "tags": [
+    "flexibility",
+    "requirements",
+    "dispatch",
+    "paper",
+    "high"
+  ]
+}

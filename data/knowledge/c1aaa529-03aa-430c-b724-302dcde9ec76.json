@@ -1,0 +1,64 @@
+{
+  "id": "c1aaa529-03aa-430c-b724-302dcde9ec76",
+  "content": "arXiv 2603.00169v1 Announce Type  new Abstract  Micro-milling spindles require high rotational speeds where conventional rolling element bearings face limitations such as friction and thermal expansion. Active magnetic bearings  AMBs  address these challenges by providing non-contact and lubrication-free operation at ultra-high speeds with the ability to actively regulate spindle dynamics. The existing literature on AMB spindles has mainly reported specific prototype realizations or control system implementations for specific spindle dynamics. Consequently, design knowledge remains fragmented across isolated successful studies. This paper addresses this gap by presenting a systematic and iterative framework to design and manufacture a micro-milling AMB spindle. The process involves a multidisciplinary design flow with a focus on critical practical aspects of manufacturing. The realized spindle is reported as a case study.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Kazi Sher Ahmed, Bekir Bediz",
+    "guid": "oai:arXiv.org:2603.00169v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.RO",
+      "cs.SY"
+    ],
+    "summary": "00169v1 Announce Type  new Abstract  Micro-milling spindles require high rotational speeds where conventional rolling element bearings face limitations such as friction and thermal expansion",
+    "keywords": [
+      "spindle",
+      "design",
+      "micromilling",
+      "spindles",
+      "speeds",
+      "bearings",
+      "dynamics",
+      "reported",
+      "specific",
+      "arxiv",
+      "260300169v1",
+      "announce",
+      "type",
+      "abstract",
+      "require",
+      "high",
+      "rotational",
+      "where",
+      "conventional",
+      "rolling"
+    ],
+    "readability": {
+      "wordCount": 123,
+      "sentenceCount": 8,
+      "avgWordsPerSentence": 15.375,
+      "readingTime": 1
+    },
+    "quality": {
+      "score": 65,
+      "reasons": [
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.00169",
+    "processedAt": "2026-03-03T09:38:13.685Z"
+  },
+  "source": "https://arxiv.org/abs/2603.00169",
+  "timestamp": "2026-03-03T09:38:13.842Z",
+  "category": "news",
+  "tags": [
+    "spindle",
+    "design",
+    "micromilling",
+    "spindles",
+    "speeds"
+  ]
+}
