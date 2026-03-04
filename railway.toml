@@ -1,5 +1,5 @@
 [build]
-builder = "NIXPACKS"
+buildCommand = "npm run build"
 
 [deploy]
 startCommand = "npm start"
@@ -10,12 +10,7 @@ restartPolicyMaxRetries = 10
 
 [build.env]
 NODE_ENV = "production"
+NPM_CONFIG_PRODUCTION = "false"
 
-[build.nixpacksPlan.phases.setup]
-nixPkgs = ["nodejs", "python3", "pip", "gcc", "gfortran", "blas", "lapack"]
-
-[build.nixpacksPlan.phases.install]
-cmds = [
-  "npm ci --only=production",
-  "pip install -r requirements.txt"
-]
+# If Railpack fails, Railway will automatically try Docker
+# The Dockerfile is provided as a fallback
