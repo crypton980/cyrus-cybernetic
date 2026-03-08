@@ -10,14 +10,17 @@ import sys
 import logging
 from pathlib import Path
 from datetime import datetime
+from typing import Optional, Dict, Any, Union
 
 # Add server path for imports
 sys.path.append(str(Path(__file__).parent / 'server'))
 
 try:
-    from quantum_ai.training_pipeline import training_pipeline
+    from quantum_ai.training_pipeline import training_pipeline, CYRUSTrainingPipeline
     QUANTUM_CORE_AVAILABLE = True
 except ImportError:
+    training_pipeline = None
+    CYRUSTrainingPipeline = type(None)  # type: ignore
     QUANTUM_CORE_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -27,7 +30,7 @@ class RoboticsModelIntegrator:
     def __init__(self):
         self.workspace_path = Path(__file__).parent
         self.training_results_path = self.workspace_path / 'robotics_training_results.json'
-        self.quantum_core = training_pipeline if QUANTUM_CORE_AVAILABLE else None
+        self.quantum_core: Optional[Any] = training_pipeline if QUANTUM_CORE_AVAILABLE else None
 
     def load_training_results(self):
         """Load the robotics training results"""
@@ -52,7 +55,7 @@ class RoboticsModelIntegrator:
 
         try:
             # Get current model info
-            model_info = self.quantum_core.get_model_info()
+            model_info = self.quantum_core.get_model_info()  # type: ignore
 
             # Add robotics domain metrics
             robotics_metrics = {
@@ -74,7 +77,7 @@ class RoboticsModelIntegrator:
             logger.info("Integrating robotics capabilities with quantum AI core...")
 
             # Add robotics knowledge to the system
-            self.quantum_core.add_domain_knowledge('robotics_mechatronics', robotics_metrics)
+            self.quantum_core.add_domain_knowledge('robotics_mechatronics', robotics_metrics)  # type: ignore
 
             # Update training history
             training_history_entry = {
@@ -138,7 +141,7 @@ class RoboticsModelIntegrator:
         # Check if capabilities are accessible
         if integration_result['integration_type'] == 'quantum_core':
             try:
-                model_info = self.quantum_core.get_model_info()
+                model_info = self.quantum_core.get_model_info()  # type: ignore
                 return 'robotics_mechatronics' in str(model_info)
             except:
                 return False

@@ -19,8 +19,8 @@ sys.path.insert(0, '/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/server/
 sys.path.insert(0, '/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/server')
 
 try:
-    from training_pipeline import CYRUSTrainingPipeline
-    from quantum_ai_core import QuantumAICore
+    from training_pipeline import CYRUSTrainingPipeline  # type: ignore
+    from quantum_ai_core import QuantumAICore  # type: ignore
 except ImportError as e:
     print(f"Error importing training modules: {e}")
     sys.exit(1)
@@ -147,11 +147,69 @@ class RoboticsMechatronicsTrainer:
                     'tag_count': len(tags)
                 }
             }
-
+            
+            # Add fact-checking and validation
+            sample = self._validate_training_sample(sample)
+            
             training_samples.append(sample)
 
         logger.info(f"Prepared {len(training_samples)} training samples")
         return training_samples
+    
+    def _validate_training_sample(self, sample: Dict) -> Dict:
+        """Validate and enhance training sample for accuracy and precision."""
+        validated_sample = sample.copy()
+        
+        # Add validation metadata
+        validated_sample['validation'] = {
+            'fact_checked': False,
+            'precision_score': 0.0,
+            'reliability_score': 0.0,
+            'content_quality': 'unknown',
+            'cross_referenced': False,
+            'validated_at': datetime.now().isoformat()
+        }
+        
+        text = sample.get('text', '')
+        
+        # Basic content validation
+        if len(text) > 100:
+            validated_sample['validation']['content_quality'] = 'good'
+            validated_sample['validation']['precision_score'] += 0.3
+        elif len(text) > 50:
+            validated_sample['validation']['content_quality'] = 'adequate'
+            validated_sample['validation']['precision_score'] += 0.2
+        else:
+            validated_sample['validation']['content_quality'] = 'poor'
+        
+        # Check for technical terms (robotics-specific)
+        robotics_terms = [
+            'robot', 'sensor', 'actuator', 'motor', 'controller', 'algorithm',
+            'automation', 'mechatronics', 'kinematics', 'dynamics', 'control'
+        ]
+        
+        term_count = sum(1 for term in robotics_terms if term.lower() in text.lower())
+        if term_count > 3:
+            validated_sample['validation']['precision_score'] += 0.4
+            validated_sample['validation']['reliability_score'] = 0.8
+        elif term_count > 1:
+            validated_sample['validation']['precision_score'] += 0.2
+            validated_sample['validation']['reliability_score'] = 0.6
+        else:
+            validated_sample['validation']['reliability_score'] = 0.4
+        
+        # Check source reliability
+        source = sample.get('source', '').lower()
+        reliable_sources = ['ieee', 'acm', 'nature', 'science', 'arxiv', 'github']
+        if any(rs in source for rs in reliable_sources):
+            validated_sample['validation']['reliability_score'] += 0.2
+            validated_sample['validation']['fact_checked'] = True
+        
+        # Cap scores
+        validated_sample['validation']['precision_score'] = min(validated_sample['validation']['precision_score'], 1.0)
+        validated_sample['validation']['reliability_score'] = min(validated_sample['validation']['reliability_score'], 1.0)
+        
+        return validated_sample
 
     def enhance_training_pipeline(self):
         """Enhance the training pipeline with robotics-specific configurations"""

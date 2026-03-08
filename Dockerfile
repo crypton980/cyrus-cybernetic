@@ -1,34 +1,25 @@
-# Use Node.js 22 Alpine for smaller image size
-FROM node:22-alpine
+FROM python:3.12-slim
 
-# Install Python, pip, and curl for the quantum AI components and health checks
-RUN apk add --no-cache python3 py3-pip gcc g++ make curl
-
-# Set working directory
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY package*.json ./
-COPY requirements.txt ./
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js dependencies
-RUN npm ci --only=production
-
-# Install Python dependencies
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
+# Copy application code
 COPY . .
 
-# Build the application
-RUN npm run build
-
 # Expose port
-EXPOSE 5000
+EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/health/live || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["python", "simple_flask_server.py"]

@@ -1,16 +1,13 @@
 [build]
-buildCommand = "npm run build"
+builder = "python"
+buildCommand = "pip install -r requirements.txt"
 
 [deploy]
-startCommand = "npm start"
-healthcheckPath = "/health/live"
+startCommand = "python simple_flask_server.py"
+healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 [build.env]
-NODE_ENV = "production"
-NPM_CONFIG_PRODUCTION = "false"
-
-# If Railpack fails, Railway will automatically try Docker
-# The Dockerfile is provided as a fallback
+PYTHON_VERSION = "3.12"

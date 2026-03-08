@@ -30,7 +30,7 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 service = QiskitRuntimeService.save_account(
     channel="ibm_quantum",
     instance="hub/group/project",
-    token="YOUR_TOKEN"
+    token=os.getenv('IBM_QUANTUM_TOKEN', 'YOUR_TOKEN_REPLACE_WITH_ENV_VAR')
 )
 """)
 print()
@@ -133,7 +133,7 @@ print("""
    service = QiskitRuntimeService.save_account(
        channel="ibm_quantum",
        instance="hub/group/project",
-       token="YOUR_TOKEN"
+       token=os.getenv('IBM_QUANTUM_TOKEN', 'YOUR_TOKEN_REPLACE_WITH_ENV_VAR')
    )
 
 3. Configure in Nexus:
