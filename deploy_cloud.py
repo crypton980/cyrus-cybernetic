@@ -134,7 +134,7 @@ gunicorn==21.2.0
                 return None
 
             # Initialize project
-            subprocess.run(["railway", "init", "cyrus-ai-system", "--yes"], check=True)
+            subprocess.run(["railway", "init", "cyrus-cybernetic", "--yes"], check=True)
 
             # Deploy
             result = subprocess.run(["railway", "up"], capture_output=True, text=True)

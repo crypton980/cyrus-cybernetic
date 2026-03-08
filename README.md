@@ -2,13 +2,13 @@
 
 **Super-Intelligence AI with Advanced Capabilities**
 
-[![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/new?template=https://github.com/cronet/cyrus-ai-system)
-[![Open in Replit](https://replit.com/badge/github/cronet/cyrus-ai-system)](https://replit.com/new/github/cronet/cyrus-ai-system)
-[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-blue)](https://cronet.github.io/cyrus-ai-system)
+[![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/new?template=https://github.com/cronet/cyrus-cybernetic)
+[![Open in Replit](https://replit.com/badge/github/cronet/cyrus-cybernetic)](https://replit.com/new/github/cronet/cyrus-cybernetic)
+[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-blue)](https://cronet.github.io/cyrus-cybernetic)
 
 ## 🌟 Live Demos
 
-- **🌐 GitHub Pages Interface**: [cronet.github.io/cyrus-ai-system](https://cronet.github.io/cyrus-ai-system)
+- **🌐 GitHub Pages Interface**: [cronet.github.io/cyrus-cybernetic](https://cronet.github.io/cyrus-cybernetic)
 - **🚀 Full AI Deployment**: [Railway/Vercel/Replit deployments available](#deployment)
 
 ## 🚀 Quick Deploy
@@ -17,16 +17,16 @@
 
 | Platform | Status | Link |
 |----------|--------|------|
-| **Railway** | ✅ Ready | [Deploy](https://railway.app/new?template=https://github.com/cronet/cyrus-ai-system) |
-| **Replit** | ✅ Ready | [Open](https://replit.com/new/github/cronet/cyrus-ai-system) |
-| **Vercel** | ✅ Ready | [Deploy](https://vercel.com/new/clone?repository-url=https://github.com/cronet/cyrus-ai-system) |
+| **Railway** | ✅ Ready | [Deploy](https://railway.app/new?template=https://github.com/cronet/cyrus-cybernetic) |
+| **Replit** | ✅ Ready | [Open](https://replit.com/new/github/cronet/cyrus-cybernetic) |
+| **Vercel** | ✅ Ready | [Deploy](https://vercel.com/new/clone?repository-url=https://github.com/cronet/cyrus-cybernetic) |
 
 ### Manual Deployment
 
 ```bash
 # Clone the repository
-git clone https://github.com/cronet/cyrus-ai-system.git
-cd cyrus-ai-system
+git clone https://github.com/cronet/cyrus-cybernetic.git
+cd cyrus-cybernetic
 
 # Install dependencies
 pip install flask flask-cors requests

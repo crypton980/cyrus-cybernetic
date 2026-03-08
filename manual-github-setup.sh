@@ -26,7 +26,7 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-echo "Manual setup for GitHub repository: cybercrypton/cyrus-ai-system"
+echo "Manual setup for GitHub repository: cronet/cyrus-cybernetic"
 echo ""
 
 # Check current git status
@@ -52,7 +52,7 @@ echo "Now run these commands manually:"
 echo ""
 
 echo "1. Add GitHub remote:"
-echo -e "${BLUE}git remote add origin https://github.com/cybercrypton/cyrus-ai-system.git${NC}"
+echo -e "${BLUE}git remote add origin https://github.com/cronet/cyrus-cybernetic.git${NC}"
 echo ""
 
 echo "2. Push to GitHub:"
@@ -67,7 +67,7 @@ echo ""
 print_success "After pushing, go to Railway.app to deploy!"
 echo ""
 echo "Railway will give you a public URL like:"
-echo "https://cyrus-ai-system.up.railway.app"
+echo "https://cyrus-cybernetic.up.railway.app"
 echo ""
 echo "Then generate QR codes with:"
 echo -e "${BLUE}npm install -g qrcode-terminal${NC}"

@@ -15,7 +15,7 @@ class CYRUSGitHubDeployer:
     def __init__(self):
         self.project_root = Path(__file__).parent
         self.github_username = "cronet"  # Default, can be changed
-        self.repo_name = "cyrus-ai-system"
+        self.repo_name = "cyrus-cybernetic"
         self.github_url = f"https://github.com/{self.github_username}/{self.repo_name}"
 
     def create_github_pages_static_site(self):
@@ -109,7 +109,7 @@ class CYRUSGitHubDeployer:
                 <div class="option-icon">🌐</div>
                 <div class="option-title">Web Interface</div>
                 <p>Access CYRUS through our modern chat interface</p>
-                <a href="https://cronet.github.io/cyrus-ai-system" class="launch-btn" target="_blank">Launch Web UI</a>
+                <a href="https://cronet.github.io/cyrus-cybernetic" class="launch-btn" target="_blank">Launch Web UI</a>
             </div>
 
             <div class="option-card">
@@ -131,7 +131,7 @@ class CYRUSGitHubDeployer:
                 <div class="option-icon">📚</div>
                 <div class="option-title">Source Code</div>
                 <p>Explore and contribute to CYRUS</p>
-                <a href="https://github.com/cronet/cyrus-ai-system" class="launch-btn" target="_blank">View on GitHub</a>
+                <a href="https://github.com/cronet/cyrus-cybernetic" class="launch-btn" target="_blank">View on GitHub</a>
             </div>
         </div>
 
@@ -148,8 +148,8 @@ class CYRUSGitHubDeployer:
 
         <div style="margin-top: 40px; opacity: 0.8;">
             <p>🔗 <a href="https://github.com/cronet/cyrus-ai-system" style="color: #4CAF50;">View Source Code</a> |
-            📖 <a href="https://github.com/cronet/cyrus-ai-system/blob/main/README.md" style="color: #4CAF50;">Documentation</a> |
-            🚀 <a href="https://github.com/cronet/cyrus-ai-system/blob/main/REPLIT_DEPLOYMENT_SUMMARY.md" style="color: #4CAF50;">Quick Deploy</a></p>
+            📖 <a href="https://github.com/cronet/cyrus-cybernetic/blob/main/README.md" style="color: #4CAF50;">Documentation</a> |
+            🚀 <a href="https://github.com/cronet/cyrus-cybernetic/blob/main/REPLIT_DEPLOYMENT_SUMMARY.md" style="color: #4CAF50;">Quick Deploy</a></p>
         </div>
     </div>
 
@@ -157,7 +157,7 @@ class CYRUSGitHubDeployer:
         // Auto-refresh status check
         async function checkStatus() {
             try {
-                const response = await fetch('https://cyrus-ai-system.up.railway.app/health');
+                const response = await fetch('https://cyrus-cybernetic.up.railway.app/health');
                 if (response.ok) {
                     document.querySelector('.status').innerHTML = `
                         <h3>✅ System Status: Live & Operational</h3>
@@ -308,7 +308,7 @@ echo "To push your code to GitHub, run:"
 echo "  git push -u origin main"
 echo ""
 echo "After pushing, GitHub Pages will be available at:"
-echo "  https://cronet.github.io/cyrus-ai-system"
+echo "  https://cronet.github.io/cyrus-cybernetic"
 echo ""
 echo "For full AI functionality, deploy to:"
 echo "  - Railway: https://railway.app"
@@ -332,11 +332,11 @@ echo "  - Replit: https://replit.com"
 
 [![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/new?template=https://github.com/{self.github_username}/{self.repo_name})
 [![Open in Replit](https://replit.com/badge/github/{self.github_username}/{self.repo_name})](https://replit.com/new/github/{self.github_username}/{self.repo_name})
-[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-blue)](https://cronet.github.io/cyrus-ai-system)
+[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-blue)](https://cronet.github.io/cyrus-cybernetic)
 
 ## 🌟 Live Demos
 
-- **🌐 GitHub Pages Interface**: [cronet.github.io/cyrus-ai-system](https://cronet.github.io/cyrus-ai-system)
+- **🌐 GitHub Pages Interface**: [cronet.github.io/cyrus-cybernetic](https://cronet.github.io/cyrus-cybernetic)
 - **🚀 Full AI Deployment**: [Railway/Vercel/Replit deployments available](#deployment)
 
 ## 🚀 Quick Deploy
@@ -533,7 +533,7 @@ MIT License - see LICENSE file for details.
 - **Branch**: main
 
 ### 🌐 GitHub Pages
-- **URL**: https://cronet.github.io/cyrus-ai-system
+- **URL**: https://cronet.github.io/cyrus-cybernetic
 - **Content**: Static interface with deployment links
 - **Auto-deploy**: Via GitHub Actions
 
@@ -563,8 +563,8 @@ git push -u origin main
 4. Save
 
 ### Step 3: Access CYRUS
-- **GitHub Pages**: https://cronet.github.io/cyrus-ai-system
-- **Repository**: https://github.com/cronet/cyrus-ai-system
+- **GitHub Pages**: https://cronet.github.io/cyrus-cybernetic
+- **Repository**: https://github.com/cronet/cyrus-cybernetic
 - **Deploy Buttons**: Available in README
 
 ## 🎯 CYRUS Features on GitHub:
@@ -617,7 +617,7 @@ git add .
 git commit -m "Launch CYRUS AI v3.0"
 git push -u origin main
 
-# Then visit: https://cronet.github.io/cyrus-ai-system
+# Then visit: https://cronet.github.io/cyrus-cybernetic
 ```
 '''
 
@@ -664,12 +664,12 @@ def main():
     print("\n🚀 Next Steps:")
     print("   1. Push to GitHub: git push -u origin main")
     print("   2. Enable GitHub Pages in repository settings")
-    print("   3. Access at: https://cronet.github.io/cyrus-ai-system")
+    print("   3. Access at: https://cronet.github.io/cyrus-cybernetic")
     print("   4. Use deploy buttons for full AI functionality")
 
     print("\n🔗 Deployment URLs:")
-    print("   📄 GitHub Pages: https://cronet.github.io/cyrus-ai-system")
-    print("   📚 Repository: https://github.com/cronet/cyrus-ai-system")
+    print("   📄 GitHub Pages: https://cronet.github.io/cyrus-cybernetic")
+    print("   📚 Repository: https://github.com/cronet/cyrus-cybernetic")
     print("   🚀 Railway: One-click deploy button in README")
     print("   🔧 Replit: Direct import with AI integrations")
 
