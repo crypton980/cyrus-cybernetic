@@ -26,7 +26,7 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-echo "Manual setup for GitHub repository: cronet/cyrus-cybernetic"
+echo "Manual setup for GitHub repository: crypton980/cyrus-cybernetic"
 echo ""
 
 # Check current git status
@@ -52,7 +52,7 @@ echo "Now run these commands manually:"
 echo ""
 
 echo "1. Add GitHub remote:"
-echo -e "${BLUE}git remote add origin https://github.com/cronet/cyrus-cybernetic.git${NC}"
+echo -e "${BLUE}git remote add origin https://github.com/crypton980/cyrus-cybernetic.git${NC}"
 echo ""
 
 echo "2. Push to GitHub:"

@@ -2,13 +2,13 @@
 
 **Super-Intelligence AI with Advanced Capabilities**
 
-[![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/new?template=https://github.com/cronet/cyrus-cybernetic)
-[![Open in Replit](https://replit.com/badge/github/cronet/cyrus-cybernetic)](https://replit.com/new/github/cronet/cyrus-cybernetic)
-[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-blue)](https://cronet.github.io/cyrus-cybernetic)
+[![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/new?template=https://github.com/crypton980/cyrus-cybernetic)
+[![Open in Replit](https://replit.com/badge/github/crypton980/cyrus-cybernetic)](https://replit.com/new/github/crypton980/cyrus-cybernetic)
+[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-blue)](https://crypton980.github.io/cyrus-cybernetic)
 
 ## 🌟 Live Demos
 
-- **🌐 GitHub Pages Interface**: [cronet.github.io/cyrus-cybernetic](https://cronet.github.io/cyrus-cybernetic)
+- **🌐 GitHub Pages Interface**: [crypton980.github.io/cyrus-cybernetic](https://crypton980.github.io/cyrus-cybernetic)
 - **🚀 Full AI Deployment**: [Railway/Vercel/Replit deployments available](#deployment)
 
 ## 🚀 Quick Deploy
@@ -17,15 +17,15 @@
 
 | Platform | Status | Link |
 |----------|--------|------|
-| **Railway** | ✅ Ready | [Deploy](https://railway.app/new?template=https://github.com/cronet/cyrus-cybernetic) |
-| **Replit** | ✅ Ready | [Open](https://replit.com/new/github/cronet/cyrus-cybernetic) |
-| **Vercel** | ✅ Ready | [Deploy](https://vercel.com/new/clone?repository-url=https://github.com/cronet/cyrus-cybernetic) |
+| **Railway** | ✅ Ready | [Deploy](https://railway.app/new?template=https://github.com/crypton980/cyrus-cybernetic) |
+| **Replit** | ✅ Ready | [Open](https://replit.com/new/github/crypton980/cyrus-cybernetic) |
+| **Vercel** | ✅ Ready | [Deploy](https://vercel.com/new/clone?repository-url=https://github.com/crypton980/cyrus-cybernetic) |
 
 ### Manual Deployment
 
 ```bash
 # Clone the repository
-git clone https://github.com/cronet/cyrus-cybernetic.git
+git clone https://github.com/crypton980/cyrus-cybernetic.git
 cd cyrus-cybernetic
 
 # Install dependencies
@@ -147,4 +147,3 @@ MIT License - see LICENSE file for details.
 ---
 
 **🚀 Ready to experience super-intelligence? Deploy CYRUS today!**
-# cyrus-cybernetics

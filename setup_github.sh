@@ -14,7 +14,7 @@ fi
 
 # Set up GitHub remote
 echo "🔗 Setting up GitHub remote..."
-git remote add origin https://github.com/cronet/cyrus-cybernetic.git 2>/dev/null || git remote set-url origin https://github.com/cronet/cyrus-cybernetic.git
+git remote add origin https://github.com/crypton980/cyrus-cybernetic.git 2>/dev/null || git remote set-url origin https://github.com/crypton980/cyrus-cybernetic.git
 
 # Create main branch if needed
 git branch -M main
@@ -25,7 +25,7 @@ echo "To push your code to GitHub, run:"
 echo "  git push -u origin main"
 echo ""
 echo "After pushing, GitHub Pages will be available at:"
-echo "  https://cronet.github.io/cyrus-cybernetic"
+echo "  https://crypton980.github.io/cyrus-cybernetic"
 echo ""
 echo "For full AI functionality, deploy to:"
 echo "  - Railway: https://railway.app"
