@@ -3,12 +3,12 @@
 ## ✅ What's Been Set Up:
 
 ### 📁 GitHub Repository
-- **URL**: https://github.com/cronet/cyrus-ai-system
+- **URL**: https://github.com/cronet/cyrus-cybernetic
 - **Status**: Ready for push
 - **Branch**: main
 
 ### 🌐 GitHub Pages
-- **URL**: https://cronet.github.io/cyrus-ai-system
+- **URL**: https://cronet.github.io/cyrus-cybernetic
 - **Content**: Static interface with deployment links
 - **Auto-deploy**: Via GitHub Actions
 
@@ -38,8 +38,8 @@ git push -u origin main
 4. Save
 
 ### Step 3: Access CYRUS
-- **GitHub Pages**: https://cronet.github.io/cyrus-ai-system
-- **Repository**: https://github.com/cronet/cyrus-ai-system
+- **GitHub Pages**: https://cronet.github.io/cyrus-cybernetic
+- **Repository**: https://github.com/cronet/cyrus-cybernetic
 - **Deploy Buttons**: Available in README
 
 ## 🎯 CYRUS Features on GitHub:
@@ -92,5 +92,5 @@ git add .
 git commit -m "Launch CYRUS AI v3.0"
 git push -u origin main
 
-# Then visit: https://cronet.github.io/cyrus-ai-system
+# Then visit: https://cronet.github.io/cyrus-cybernetic
 ```
