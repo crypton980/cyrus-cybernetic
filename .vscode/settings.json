@@ -1,9 +1,9 @@
 {
-    "python.defaultInterpreterPath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/.venv/bin/python",
+    "python.defaultInterpreterPath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/server",
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/server/quantum_ai"
+        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/server",
+        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/server/quantum_ai"
     ],
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
@@ -46,5 +46,6 @@
         "reportUnknownArgumentType": "none",
         "reportUnknownLambdaType": "none",
         "reportMissingTypeStubs": "none"
-    }
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }

@@ -10,11 +10,22 @@ import time
 import threading
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, TypedDict
 from collections import defaultdict, deque
 import numpy as np
 import sys
 import os
+
+# Type definitions
+class UserPattern(TypedDict):
+    message_count: int
+    last_activity: datetime
+    sentiment_history: List[float]
+    topics: Dict[str, int]  # Changed from set to dict for update() method
+    network_patterns: Dict[str, List[Dict[str, Any]]]
+    international_communication: List[Dict[str, Any]]
+    communication_times: List[datetime]
+    network_performance: List[float]
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -87,15 +98,16 @@ class EnhancedMLService:
 
         # Data storage for analysis
         self.message_history = deque(maxlen=10000)
-        self.user_patterns = defaultdict(lambda: {
-            'message_count': 0,
-            'sentiment_history': [],
-            'topics': set(),
-            'communication_style': {},
-            'network_patterns': {},
-            'international_communication': [],
-            'last_activity': None
-        })
+        self.user_patterns: Dict[str, UserPattern] = defaultdict(lambda: UserPattern(
+            message_count=0,
+            last_activity=datetime.now(),
+            sentiment_history=[],
+            topics={},
+            network_patterns={},
+            international_communication=[],
+            communication_times=[],
+            network_performance=[]
+        ))
 
         self.network_analysis = defaultdict(lambda: {
             'quality_metrics': [],
@@ -293,7 +305,7 @@ class EnhancedMLService:
                 logger.error(f"Global intelligence error: {e}")
                 return jsonify({'error': str(e)}), 500
 
-    def analyze_sentiment_enhanced(self, text: str, context: Dict = None, international: bool = False) -> Dict[str, Any]:
+    def analyze_sentiment_enhanced(self, text: str, context: Optional[Dict] = None, international: bool = False) -> Dict[str, Any]:
         """Enhanced sentiment analysis with context and international support"""
         try:
             # Basic VADER sentiment
@@ -362,7 +374,7 @@ class EnhancedMLService:
                 'confidence': 0.0
             }
 
-    def analyze_communication_patterns(self, messages: List[Dict], user_id: str, network_info: Dict = None) -> Dict[str, Any]:
+    def analyze_communication_patterns(self, messages: List[Dict], user_id: str, network_info: Optional[Dict] = None) -> Dict[str, Any]:
         """Analyze communication patterns for a user"""
         try:
             if not messages:
@@ -375,7 +387,7 @@ class EnhancedMLService:
 
             # Extract features
             sentiments = []
-            topics = set()
+            topics: Dict[str, int] = {}
             message_lengths = []
             timestamps = []
 
@@ -389,7 +401,8 @@ class EnhancedMLService:
 
                 # Topic extraction (simplified)
                 words = text.lower().split()
-                topics.update(words[:5])  # First 5 words as topics
+                for word in words[:5]:  # First 5 words as topics
+                    topics[word] = topics.get(word, 0) + 1
 
                 message_lengths.append(len(text))
                 timestamps.append(timestamp)
@@ -413,7 +426,8 @@ class EnhancedMLService:
 
             # Update user pattern
             user_pattern['sentiment_history'].extend(sentiments)
-            user_pattern['topics'].update(topics)
+            for topic, count in topics.items():
+                user_pattern['topics'][topic] = user_pattern['topics'].get(topic, 0) + count
 
             # Network pattern analysis
             if network_info:
@@ -689,7 +703,7 @@ class EnhancedMLService:
                     'communication_style': user_pattern['communication_style'],
                     'preferred_networks': list(user_pattern['network_patterns'].keys()),
                     'active_hours': self.analyze_active_hours(user_pattern),
-                    'topic_interests': list(user_pattern['topics'])[:20]
+                    'topic_interests': list(user_pattern['topics'].keys())[:20]
                 },
                 'behavioral_patterns': {
                     'consistency_score': self.calculate_consistency_score(user_pattern),
