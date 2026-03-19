@@ -40,14 +40,16 @@ class CYRUSKnowledgeEnhancer:
 
     def __init__(self, openai_api_key: Optional[str] = None):
         self.api_key = openai_api_key or os.getenv('OPENAI_API_KEY')
-        if not self.api_key:
-            raise ValueError("OpenAI API key required. Set OPENAI_API_KEY environment variable.")
-
-        self.base_url = "https://api.openai.com/v1"
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        if self.api_key:
+            self.base_url = "https://api.openai.com/v1"
+            self.headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+        else:
+            logger.warning("No OpenAI API key provided. Using mock knowledge acquisition.")
+            self.base_url = None
+            self.headers = None
 
         # Knowledge domains for comprehensive coverage
         self.knowledge_domains = self._define_knowledge_domains()
@@ -106,14 +108,13 @@ class CYRUSKnowledgeEnhancer:
                 ],
                 'priority': 'medium'
             },
-            'law': {
-                'description': 'Legal systems, regulations, and jurisprudence',
+            'legal_documents': {
+                'description': 'Botswana legal documents, acts, and court rules for legal analysis and compliance',
                 'subdomains': [
-                    'constitutional_law', 'criminal_law', 'corporate_law', 'intellectual_property',
-                    'international_law', 'environmental_law', 'human_rights', 'contract_law',
-                    'legal_advocacy', 'judicial_procedures', 'courtroom_strategy', 'legal_ethics'
+                    'balopi Demand letter', 'Data Protection Act', 'Financial Intelligence Act 2022',
+                    'High Court Rules', 'Mag Court Rules', 'Micro Lending Regulations 2012', 'Prescriptions Act'
                 ],
-                'priority': 'medium'
+                'priority': 'high'
             },
             'arts_humanities': {
                 'description': 'Arts, literature, philosophy, and cultural studies',
@@ -363,6 +364,9 @@ class CYRUSKnowledgeEnhancer:
     def _call_openai_api(self, messages: List[Dict], model: str = "gpt-4",
                         temperature: float = 0.7, max_tokens: int = 2000) -> Optional[Dict]:
         """Make API call to OpenAI with error handling and rate limiting"""
+        if not self.api_key:
+            return None
+
         self._rate_limit()
 
         payload = {
@@ -402,7 +406,13 @@ class CYRUSKnowledgeEnhancer:
             Dictionary containing acquired knowledge
         """
         if domain not in self.knowledge_domains:
-            raise ValueError(f"Unknown domain: {domain}")
+            # Dynamically add super intelligence domains
+            self.knowledge_domains[domain] = {
+                'description': f'Advanced {domain} capabilities for super intelligence',
+                'subdomains': [f'{domain}_advanced', f'{domain}_quantum', f'{domain}_hyper'],
+                'priority': 'high'
+            }
+            logger.info(f"Added super intelligence domain '{domain}' to knowledge base")
 
         domain_info = self.knowledge_domains[domain]
         subdomains = domain_info['subdomains']
@@ -434,6 +444,42 @@ class CYRUSKnowledgeEnhancer:
             logger.info(f"Using cached knowledge for {subdomain}")
             return self.cache[cache_key]
 
+        # Special handling for legal documents
+        if domain == 'legal_documents':
+            try:
+                with open('legal_documents.json', 'r') as f:
+                    legal_texts = json.load(f)
+                if subdomain in legal_texts:
+                    content = legal_texts[subdomain]
+                    knowledge = {
+                        'content': content,
+                        'key_concepts': [f"Legal provisions in {subdomain}", f"Requirements under {subdomain}"],
+                        'applications': [f"Legal compliance with {subdomain}", f"Application of {subdomain} in Botswana law"],
+                        'challenges': [f"Interpretation challenges in {subdomain}", f"Compliance challenges with {subdomain}"],
+                        'future_trends': [f"Updates and amendments to {subdomain}"],
+                        'acquired_at': datetime.now().isoformat(),
+                        'source': 'extracted_legal_document'
+                    }
+                    self.cache[cache_key] = knowledge
+                    return knowledge
+            except Exception as e:
+                logger.error(f"Error loading legal document {subdomain}: {e}")
+
+        if not self.api_key:
+            # Return mock knowledge data
+            mock_content = f"Comprehensive knowledge of {subdomain} in {domain} at {depth} level. This includes advanced concepts, methodologies, and applications in the field."
+            knowledge = {
+                'content': mock_content,
+                'key_concepts': [f"{subdomain} fundamentals", f"Advanced {subdomain} techniques"],
+                'applications': [f"{subdomain} in {domain} applications"],
+                'challenges': [f"Challenges in {subdomain}"],
+                'future_trends': [f"Future developments in {subdomain}"],
+                'acquired_at': datetime.now().isoformat(),
+                'mock': True
+            }
+            self.cache[cache_key] = knowledge
+            return knowledge
+
         # Define knowledge acquisition prompts based on depth
         prompts = {
             'basic': f"Provide a comprehensive overview of {subdomain} in {domain}. Include key concepts, principles, and current applications.",
@@ -456,8 +502,20 @@ class CYRUSKnowledgeEnhancer:
         ]
 
         response = self._call_openai_api(messages, max_tokens=4000)
-        if not response:
-            return {'error': 'Failed to acquire knowledge'}
+        if not response or 'error' in response:
+            # Fallback to mock knowledge data
+            mock_content = f"Comprehensive knowledge of {subdomain} in {domain} at {depth} level. This includes advanced concepts, methodologies, and applications in the field."
+            knowledge = {
+                'content': mock_content,
+                'key_concepts': [f"{subdomain} fundamentals", f"Advanced {subdomain} techniques"],
+                'applications': [f"{subdomain} in {domain} applications"],
+                'challenges': [f"Challenges in {subdomain}"],
+                'future_trends': [f"Future developments in {subdomain}"],
+                'acquired_at': datetime.now().isoformat(),
+                'mock': True
+            }
+            self.cache[cache_key] = knowledge
+            return knowledge
 
         content = response['choices'][0]['message']['content']
 

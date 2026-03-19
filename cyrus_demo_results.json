@@ -1,0 +1,529 @@
+{
+  "timestamp": "2026-03-20T00:05:01.887684",
+  "final_knowledge_stats": {
+    "total_entries": 4981,
+    "average_confidence": 0.9095462758482232,
+    "domains_covered": 85,
+    "domain_breakdown": [
+      {
+        "domain": "medicine",
+        "entries": 916,
+        "avg_confidence": 0.9114082969432314,
+        "last_updated": "2026-03-19 22:04:53"
+      },
+      {
+        "domain": "science",
+        "entries": 114,
+        "avg_confidence": 0.9017543859649123,
+        "last_updated": "2026-03-19 22:03:19"
+      },
+      {
+        "domain": "technology",
+        "entries": 113,
+        "avg_confidence": 0.9008849557522124,
+        "last_updated": "2026-03-19 22:03:29"
+      },
+      {
+        "domain": "adaptive_execution_frameworks",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:22"
+      },
+      {
+        "domain": "adaptive_execution_frameworks_dynamic_planning",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:25"
+      },
+      {
+        "domain": "adaptive_execution_frameworks_failure_recovery",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:41"
+      },
+      {
+        "domain": "adaptive_execution_frameworks_real_time_adaptation",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:32"
+      },
+      {
+        "domain": "adaptive_execution_frameworks_resource_optimization",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:34"
+      },
+      {
+        "domain": "adaptive_learning_systems",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:31"
+      },
+      {
+        "domain": "advanced_data_collection",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:02:39"
+      },
+      {
+        "domain": "advanced_data_collection_api_integration",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:02:49"
+      },
+      {
+        "domain": "advanced_data_collection_iot_data_streams",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:03"
+      },
+      {
+        "domain": "advanced_data_collection_satellite_data",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:11"
+      },
+      {
+        "domain": "advanced_data_collection_sensor_networks",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:02:42"
+      },
+      {
+        "domain": "advanced_data_collection_web_scraping",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:00"
+      },
+      {
+        "domain": "causal_inference_networks",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:49"
+      },
+      {
+        "domain": "causal_inference_networks_bayesian_networks",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:02"
+      },
+      {
+        "domain": "causal_inference_networks_causal_modeling",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:52"
+      },
+      {
+        "domain": "causal_inference_networks_counterfactual_analysis",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:56"
+      },
+      {
+        "domain": "causal_inference_networks_probabilistic_logic",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:05"
+      },
+      {
+        "domain": "cognitive_architectures",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:51"
+      },
+      {
+        "domain": "cognitive_architectures_attention_mechanisms",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:00"
+      },
+      {
+        "domain": "cognitive_architectures_cognitive_modeling",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:54"
+      },
+      {
+        "domain": "cognitive_architectures_decision_architectures",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:03"
+      },
+      {
+        "domain": "cognitive_architectures_memory_systems",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:57"
+      },
+      {
+        "domain": "data_driven_decision_making",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:18"
+      },
+      {
+        "domain": "hyper_dimensional_reasoning",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:24"
+      },
+      {
+        "domain": "hyper_dimensional_reasoning_chaos_theory",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:40"
+      },
+      {
+        "domain": "hyper_dimensional_reasoning_complex_systems",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:47"
+      },
+      {
+        "domain": "hyper_dimensional_reasoning_dimensional_logic",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:27"
+      },
+      {
+        "domain": "hyper_dimensional_reasoning_fractal_reasoning",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:30"
+      },
+      {
+        "domain": "meta_learning_systems",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:33"
+      },
+      {
+        "domain": "meta_learning_systems_algorithm_discovery",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:42"
+      },
+      {
+        "domain": "meta_learning_systems_automated_ml",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:46"
+      },
+      {
+        "domain": "meta_learning_systems_meta_learning",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:38"
+      },
+      {
+        "domain": "meta_learning_systems_self_improving_systems",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:48"
+      },
+      {
+        "domain": "multi_paradigm_reasoning",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:25"
+      },
+      {
+        "domain": "precision_execution_frameworks",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:34"
+      },
+      {
+        "domain": "precision_problem_solving",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:08"
+      },
+      {
+        "domain": "precision_problem_solving_algorithm_optimization",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:11"
+      },
+      {
+        "domain": "precision_problem_solving_constraint_solving",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:16"
+      },
+      {
+        "domain": "precision_problem_solving_multi_objective_optimization",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:19"
+      },
+      {
+        "domain": "predictive_data_analysis",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:44"
+      },
+      {
+        "domain": "predictive_data_analysis_deep_learning",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:50"
+      },
+      {
+        "domain": "predictive_data_analysis_machine_learning",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:47"
+      },
+      {
+        "domain": "predictive_data_analysis_statistical_modeling",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:53"
+      },
+      {
+        "domain": "predictive_data_analysis_time_series_analysis",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:56"
+      },
+      {
+        "domain": "quantum_accelerated_problem_solving",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:21"
+      },
+      {
+        "domain": "quantum_data_processing",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:17"
+      },
+      {
+        "domain": "quantum_data_processing_distributed_systems",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:38"
+      },
+      {
+        "domain": "quantum_data_processing_edge_computing",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:41"
+      },
+      {
+        "domain": "quantum_data_processing_parallel_processing",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:36"
+      },
+      {
+        "domain": "quantum_data_processing_quantum_computing",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:03:24"
+      },
+      {
+        "domain": "quantum_logic_systems",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:01"
+      },
+      {
+        "domain": "quantum_logic_systems_entanglement_inference",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:10"
+      },
+      {
+        "domain": "quantum_logic_systems_parallel_reasoning",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:07"
+      },
+      {
+        "domain": "quantum_logic_systems_quantum_logic",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:04"
+      },
+      {
+        "domain": "quantum_logic_systems_superposition_logic",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:04:18"
+      },
+      {
+        "domain": "swarm_intelligence",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:06"
+      },
+      {
+        "domain": "swarm_intelligence_collective_intelligence",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:09"
+      },
+      {
+        "domain": "swarm_intelligence_distributed_problem_solving",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:15"
+      },
+      {
+        "domain": "swarm_intelligence_emergent_behavior",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:07:12"
+      },
+      {
+        "domain": "validation_verification_systems",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:48"
+      },
+      {
+        "domain": "validation_verification_systems_cross_validation",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:22"
+      },
+      {
+        "domain": "validation_verification_systems_formal_verification",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:05:55"
+      },
+      {
+        "domain": "validation_verification_systems_statistical_validation",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:01"
+      },
+      {
+        "domain": "validation_verification_systems_uncertainty_quantification",
+        "entries": 57,
+        "avg_confidence": 0.9078947368421053,
+        "last_updated": "2026-03-19 21:06:29"
+      },
+      {
+        "domain": "engineering",
+        "entries": 33,
+        "avg_confidence": 0.9045454545454545,
+        "last_updated": "2026-03-08 21:34:45"
+      },
+      {
+        "domain": "arts_humanities",
+        "entries": 10,
+        "avg_confidence": 0.95,
+        "last_updated": "2026-03-08 21:32:49"
+      },
+      {
+        "domain": "botswana_law",
+        "entries": 10,
+        "avg_confidence": 0.95,
+        "last_updated": "2026-03-08 21:47:28"
+      },
+      {
+        "domain": "business",
+        "entries": 10,
+        "avg_confidence": 0.95,
+        "last_updated": "2026-03-08 21:32:40"
+      },
+      {
+        "domain": "human_rights",
+        "entries": 10,
+        "avg_confidence": 0.95,
+        "last_updated": "2026-03-08 21:47:08"
+      },
+      {
+        "domain": "international_law",
+        "entries": 10,
+        "avg_confidence": 0.95,
+        "last_updated": "2026-03-08 21:47:18"
+      },
+      {
+        "domain": "combat_tactics",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:46:04"
+      },
+      {
+        "domain": "corruption_investigation",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:46:22"
+      },
+      {
+        "domain": "criminal_investigation",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:46:13"
+      },
+      {
+        "domain": "economic_crime",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:46:58"
+      },
+      {
+        "domain": "financial_intelligence",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:46:40"
+      },
+      {
+        "domain": "fraud_investigation",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:46:31"
+      },
+      {
+        "domain": "indemnity_law",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:47:46"
+      },
+      {
+        "domain": "legal_advocacy",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:46:49"
+      },
+      {
+        "domain": "living_means_assessment",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:47:37"
+      },
+      {
+        "domain": "military_intelligence",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:45:55"
+      },
+      {
+        "domain": "social_sciences",
+        "entries": 9,
+        "avg_confidence": 0.9499999999999998,
+        "last_updated": "2026-03-08 21:32:50"
+      },
+      {
+        "domain": "law",
+        "entries": 8,
+        "avg_confidence": 0.95,
+        "last_updated": "2026-03-08 21:32:38"
+      }
+    ],
+    "query_statistics": {
+      "total_queries": 21,
+      "avg_query_confidence": 0,
+      "avg_response_time": 1.359091429483323
+    }
+  },
+  "queries_tested": 4,
+  "queries_successful": 0,
+  "knowledge_acquired": 0,
+  "system_status": "operational"
+}

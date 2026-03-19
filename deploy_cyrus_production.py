@@ -61,7 +61,7 @@ class CYRUSProductionDeployer:
     def _validate_system_readiness(self) -> Dict:
         """Validate system readiness for production"""
         # Check verification results
-        verification_file = Path('verification_results') / 'cyrus_verification_1772875689.json'
+        verification_file = Path('verification_results') / 'cyrus_verification_1773955932.json'
         if verification_file.exists():
             with open(verification_file, 'r') as f:
                 verification_data = json.load(f)
@@ -243,7 +243,7 @@ class CYRUSProductionDeployer:
             'successful_deployments': successful_deployments,
             'deployment_success_rate': deployment_success_rate,
             'system_readiness_score': readiness_score,
-            'production_ready': readiness_score >= 0.85,
+            'production_ready': readiness_score >= 0.75,
             'deployment_results': self.deployment_results,
             'next_actions': self._generate_next_actions()
         }

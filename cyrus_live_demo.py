@@ -17,7 +17,7 @@ sys.path.insert(0, _this_dir)
 sys.path.insert(0, _parent_dir)
 sys.path.insert(0, _root_dir)
 
-from cyrus_openai_enhancer import CYRUSOpenAIKnowledgeEnhancer
+from server.quantum_ai.cyrus_openai_enhancer import CYRUSKnowledgeEnhancer
 
 def print_header(title):
     """Print a formatted header"""
@@ -50,7 +50,7 @@ def main():
 
     try:
         # Initialize the knowledge enhancer
-        enhancer = CYRUSOpenAIKnowledgeEnhancer()
+        enhancer = CYRUSKnowledgeEnhancer()
         print("✅ Knowledge enhancement system online")
 
         # Phase 1: System Status

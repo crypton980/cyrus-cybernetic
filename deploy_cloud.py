@@ -9,6 +9,7 @@ import sys
 import json
 import subprocess
 import requests
+import time
 from pathlib import Path
 from datetime import datetime
 
@@ -16,6 +17,10 @@ class CYRUSDeployer:
     def __init__(self):
         self.project_root = Path(__file__).parent
         self.local_url = "http://localhost:3000"
+        self.ngrok_api_urls = [
+            "http://127.0.0.1:4040/api/tunnels",
+            "http://localhost:4040/api/tunnels",
+        ]
 
     def check_local_server(self):
         """Check if local server is running"""
@@ -24,6 +29,41 @@ class CYRUSDeployer:
             return response.status_code == 200
         except:
             return False
+
+    def _start_local_server(self):
+        """Start the local Flask server from the project root"""
+        subprocess.Popen(
+            [sys.executable, str(self.project_root / "simple_flask_server.py")],
+            cwd=self.project_root,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+    def _get_ngrok_public_url(self, retries=10, delay_seconds=1):
+        """Fetch the public ngrok URL from the local inspect API"""
+        for _ in range(retries):
+            for api_url in self.ngrok_api_urls:
+                try:
+                    response = requests.get(api_url, timeout=5)
+                    response.raise_for_status()
+                    tunnels = response.json().get("tunnels", [])
+                    if not tunnels:
+                        continue
+
+                    https_tunnel = next(
+                        (tunnel for tunnel in tunnels if tunnel.get("public_url", "").startswith("https://")),
+                        None,
+                    )
+                    selected_tunnel = https_tunnel or tunnels[0]
+                    public_url = selected_tunnel.get("public_url")
+                    if public_url:
+                        return public_url
+                except (requests.RequestException, ValueError, TypeError):
+                    continue
+
+            time.sleep(delay_seconds)
+
+        return None
 
     def create_vercel_config(self):
         """Create Vercel configuration"""
@@ -228,12 +268,15 @@ yarn-error.log
 
         if not self.check_local_server():
             print("❌ Local server not running. Starting server...")
-            # Start the server in background
-            subprocess.Popen(["python3", "simple_flask_server.py"])
+            self._start_local_server()
 
-            # Wait a bit for server to start
-            import time
-            time.sleep(3)
+            for _ in range(10):
+                if self.check_local_server():
+                    break
+                time.sleep(1)
+            else:
+                print("❌ Local server did not become ready on port 3000")
+                return None
 
         # Check if ngrok is available
         try:
@@ -248,27 +291,25 @@ yarn-error.log
             print("🌐 Starting ngrok tunnel...")
             ngrok_process = subprocess.Popen(
                 ["ngrok", "http", "3000"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True,
             )
 
-            # Wait for ngrok to start and get URL
-            time.sleep(3)
+            url = self._get_ngrok_public_url(retries=15, delay_seconds=1)
+            if url:
+                print(f"✅ Local deployment available at: {url}")
+                print("📱 This URL is temporary and will change when ngrok restarts")
+                return url
 
-            # Get ngrok URL
-            try:
-                response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
-                if response.status_code == 200:
-                    tunnels = response.json()['tunnels']
-                    if tunnels:
-                        url = tunnels[0]['public_url']
-                        print(f"✅ Local deployment available at: {url}")
-                        print("📱 This URL is temporary and will change when ngrok restarts")
-                        return url
-            except:
-                pass
+            if ngrok_process.poll() is not None:
+                error_output = ngrok_process.stderr.read().strip() if ngrok_process.stderr else ""
+                if error_output:
+                    print("❌ ngrok exited before the tunnel was ready")
+                    print(f"Error: {error_output}")
+                    return None
 
-            print("❌ Could not get ngrok URL. Check ngrok status manually.")
+            print("❌ Could not get ngrok URL from the inspect API. Check ngrok status manually.")
 
         except Exception as e:
             print(f"❌ ngrok deployment error: {e}")

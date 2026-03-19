@@ -1,0 +1,65 @@
+{
+  "id": "33bfe6bb-9c96-4376-8ecf-d78b334c2370",
+  "content": "arXiv 2603.01198v1 Announce Type  new Abstract  Data center cooling systems consume significant auxiliary energy, yet optimization studies rarely quantify the gap between theoretically optimal and operationally deployable control strategies. This paper develops a digital twin of the liquid cooling infrastructure at the Frontier exascale supercomputer, in which a hot-temperature water system comprises three parallel subloops, each serving dedicated coolant distribution unit clusters through plate heat exchangers and variable-speed pumps. The surrogate model is built based on Modelica and validated through one full calendar year of 10-minute operational data following ASHRAE Guideline 14. The model achieves a subloop coefficient of variation of the root mean square error below 2.7  and a normalized mean bias error within 2.5 . Using this validated surrogate model, a layered optimization framework evaluates three progressively constrained strategies  an analytical flow-only optimization achieves 20.4  total energy saving, unconstrained joint optimization of flow rate and supply temperature demonstrates 30.1  total energy saving, and ramp-constrained optimization of flow rate and supply temperature, enforcing actuator rate limits, can reach total energy saving of 27.8 . The analysis reveals that the baseline system operates at 2.9 times the minimum thermally safe flow rate, and the co-optimizing supply temperature with flow rate nearly doubles the savings achievable by flow reduction alone.",
+  "metadata": {
+    "pubDate": "Tue, 03 Mar 2026 00:00:00 -0500",
+    "author": "Shrenik Amol Jadhav, Zheng Liu",
+    "guid": "oai:arXiv.org:2603.01198v1",
+    "feedTitle": "cs.SY updates on arXiv.org",
+    "categories": [
+      "eess.SY",
+      "cs.SY",
+      "stat.AP"
+    ],
+    "summary": "01198v1 Announce Type  new Abstract  Data center cooling systems consume significant auxiliary energy, yet optimization studies rarely quantify the gap between theoretically optimal and operational...",
+    "keywords": [
+      "optimization",
+      "flow",
+      "rate",
+      "energy",
+      "model",
+      "total",
+      "saving",
+      "supply",
+      "temperature",
+      "data",
+      "cooling",
+      "strategies",
+      "system",
+      "three",
+      "through",
+      "surrogate",
+      "validated",
+      "achieves",
+      "mean",
+      "error"
+    ],
+    "readability": {
+      "wordCount": 209,
+      "sentenceCount": 13,
+      "avgWordsPerSentence": 16.076923076923077,
+      "readingTime": 2
+    },
+    "quality": {
+      "score": 75,
+      "reasons": [
+        "Good content length",
+        "Has title",
+        "Rich metadata",
+        "Medium quality content"
+      ]
+    },
+    "originalUrl": "https://arxiv.org/abs/2603.01198",
+    "processedAt": "2026-03-03T11:06:42.315Z"
+  },
+  "source": "https://arxiv.org/abs/2603.01198",
+  "timestamp": "2026-03-03T11:06:42.406Z",
+  "category": "news",
+  "tags": [
+    "optimization",
+    "flow",
+    "rate",
+    "energy",
+    "model"
+  ]
+}
