@@ -58,11 +58,11 @@ export class WebScraper {
 
       if (!content) {
         // Fallback: get all paragraph text
-        content = $('p').map((_, el) => $(el).text().trim()).get().join('\n\n');
+        content = $('p').map((_: number, el: any) => $(el).text().trim()).get().join('\n\n');
       }
 
       // Extract links
-      const links = $('a[href]').map((_, el) => {
+      const links = $('a[href]').map((_: number, el: any) => {
         try {
           return new URL($(el).attr('href')!, url).href;
         } catch {
@@ -71,7 +71,7 @@ export class WebScraper {
       }).get().filter(Boolean) as string[];
 
       // Extract images
-      const images = $('img[src]').map((_, el) => {
+      const images = $('img[src]').map((_: number, el: any) => {
         try {
           return new URL($(el).attr('src')!, url).href;
         } catch {
@@ -133,7 +133,7 @@ export class WebScraper {
   async saveToFile(data: ScrapedData, outputDir: string = './data'): Promise<string> {
     await fs.mkdir(outputDir, { recursive: true });
 
-    const filename = `${data.hash.substring(0, 8)}_${Date.now()}.json`;
+    const filename = `${(data.hash ?? Date.now().toString()).substring(0, 8)}_${Date.now()}.json`;
     const filepath = path.join(outputDir, filename);
 
     await fs.writeFile(filepath, JSON.stringify(data, null, 2), 'utf-8');

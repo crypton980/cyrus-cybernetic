@@ -42,7 +42,7 @@ export interface AnalysisResult {
   chunksAnalyzed?: number;
 }
 
-export async function analyzeExtraction(ext: ExtractionResult, _options: AnalysisOptions = {}): Promise<AnalysisResult> {
+export async function analyzeExtraction(ext: ExtractionResult, options: AnalysisOptions = {}): Promise<AnalysisResult> {
   const contentPieces = [
     ext.text || "",
     ext.ocrText || "",
@@ -72,6 +72,8 @@ export async function analyzeExtraction(ext: ExtractionResult, _options: Analysi
   }
 
   // Try local LLM first
+  const jurisdictionNote = options.jurisdiction ? `\n- Apply ${options.jurisdiction} jurisdiction rules.` : '';
+  const legalNote = options.strictLegalReview ? '\n- Apply strict legal review standards.' : '';
   const prompt = `
 You are a professional analyst. Given extracted content from an uploaded file, produce a concise report:
 - Summary (2-4 sentences)
@@ -79,7 +81,7 @@ You are a professional analyst. Given extracted content from an uploaded file, p
 - Issues/Gaps (bullets)
 - Interpretation (1-2 sentences)
 - Recommendations (bullets)
-- Confidence (High/Medium/Low)
+- Confidence (High/Medium/Low)${jurisdictionNote}${legalNote}
 
 If content is minimal, explain that and keep confidence Low.
 `;
@@ -92,7 +94,7 @@ If content is minimal, explain that and keep confidence Low.
         { role: "user", content: localPrompt }
       ], { temperature: 0.3, max_tokens: 600 });
 
-      return parseLLMReport(localResponse);
+      return parseLLMReport(localResponse, options);
     } catch (error) {
       console.warn("[LocalLLM] Analysis failed, falling back to OpenAI:", error);
       // Continue to OpenAI fallback
@@ -100,6 +102,7 @@ If content is minimal, explain that and keep confidence Low.
   }
 
   try {
+    if (!openaiClient) throw new Error("OpenAI not configured");
     const resp = await openaiClient.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -109,7 +112,7 @@ If content is minimal, explain that and keep confidence Low.
       max_tokens: 600,
     });
     const text = resp.choices[0].message.content || "";
-    return parseLLMReport(text);
+    return parseLLMReport(text, options);
   } catch (err) {
     return {
       summary: aggregateText ? aggregateText.slice(0, 300) : "No extracted text",
@@ -131,7 +134,7 @@ If content is minimal, explain that and keep confidence Low.
   }
 }
 
-function parseLLMReport(text: string): AnalysisResult {
+function parseLLMReport(text: string, options: AnalysisOptions = {}): AnalysisResult {
   // Very light parser: split by lines; not strict.
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
   const findings: string[] = [];
@@ -179,8 +182,8 @@ function parseLLMReport(text: string): AnalysisResult {
     executiveBrief: summary || "Summary unavailable",
     knowledgeApplied: [],
     capabilitySummary: "",
-    jurisdictionApplied: "",
-    strictLegalReview: false,
+    jurisdictionApplied: options.jurisdiction || "",
+    strictLegalReview: options.strictLegalReview || false,
     citationAnchors: [],
   };
 }

@@ -188,7 +188,7 @@ Response:`;
       console.log('📚 Adding new knowledge to CYRUS brain...');
 
       // Add to both systems
-      await dataIngestionPipeline.ingestContent(content, metadata);
+      await dataIngestionPipeline.ingestFromInteraction(content, '', { metadata });
 
       if (this.useAdvancedIntelligence) {
         try {
@@ -201,7 +201,7 @@ Response:`;
   }
 
   getStatus(): any {
-    const basicStatus = {
+    const basicStatus: Record<string, any> = {
       initialized: this.isInitialized,
       advancedIntelligence: this.useAdvancedIntelligence,
       visionProcessor: this.visionProcessor !== null,
@@ -272,8 +272,8 @@ Response:`;
       const result = await this.visionProcessor.processImage(image, analysisType);
 
       // Integrate vision results with intelligence system
-      if (this.useAdvancedIntelligence && result.object_detection?.objects?.length > 0) {
-        const visionContext = `Visual analysis detected: ${result.object_detection.objects.map((obj: any) => obj.label).join(', ')}`;
+      if (this.useAdvancedIntelligence && (result.object_detection?.objects?.length ?? 0) > 0) {
+        const visionContext = `Visual analysis detected: ${result.object_detection!.objects!.map((obj: any) => obj.label).join(', ')}`;
         await this.addKnowledge(visionContext, {
           type: 'vision_analysis',
           timestamp: new Date(),
@@ -288,7 +288,7 @@ Response:`;
     }
   }
 
-  async processLiveFeed(videoSource: any, duration?: number, callback?: Function): Promise<any> {
+  async processLiveFeed(videoSource: any, duration?: number, callback?: (result: any, frame: any) => void): Promise<any> {
     if (!this.visionProcessor) {
       throw new Error('Vision processor not available');
     }
@@ -343,7 +343,7 @@ Response:`;
     return {
       available: true,
       processing_stats: this.visionProcessor.getProcessingStats(),
-      config: this.visionProcessor.config
+      config: this.visionProcessor.getConfig()
     };
   }
 

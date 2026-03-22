@@ -121,6 +121,7 @@ async function runDocgenJob(id: string): Promise<void> {
   updateJob(id, { status: "running", progress: 8, stage: "Preparing generation" });
 
   try {
+    // generateDocument accepts a single input parameter; progress tracking is handled via job polling
     const result = await generateDocument(job.input);
 
     const current = jobs.get(id);

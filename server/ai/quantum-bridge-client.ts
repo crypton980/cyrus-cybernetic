@@ -116,7 +116,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(2000)
       });
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as any;
         this.isAvailable = true;
         this.nexusAvailable = data.nexus_available || false;
         this.nexusActive = data.nexus_active || false;

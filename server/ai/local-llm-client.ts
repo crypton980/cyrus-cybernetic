@@ -39,7 +39,7 @@ export class LocalLLMClient {
       }
 
       const data = await response.json();
-      return data.response || '';
+      return (data as any).response || '';
     } catch (error) {
       console.warn('[LocalLLM] Chat failed, using fallback:', error);
       return this.fallbackResponse(messages);
@@ -64,7 +64,7 @@ export class LocalLLMClient {
       }
 
       const data = await response.json();
-      return data.response || '';
+      return (data as any).response || '';
     } catch (error) {
       console.warn('[LocalLLM] Generate failed, using fallback:', error);
       return this.fallbackResponse([{ role: 'user', content: prompt }]);

@@ -85,8 +85,8 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
         modules,
         health,
         totalModules: modules.length,
-        coreModules: modules.filter(m => m.category === "core").length,
-        advancedModules: modules.filter(m => m.category === "advanced").length,
+        coreModules: modules.filter((m: any) => m.category === "core").length,
+        advancedModules: modules.filter((m: any) => m.category === "advanced").length,
         timestamp: new Date().toISOString()
       });
     } catch (error: any) {
@@ -142,7 +142,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       res.json({
         success: true,
         query,
-        results: results.map(r => ({
+        results: results.map((r: any) => ({
           content: r.document.content,
           similarity: r.similarity,
           relevance: r.relevanceScore,
@@ -565,7 +565,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       res.json({
         success: true,
         status,
-        circuits: circuits.map(c => ({ id: c.id, name: c.name, qubits: c.qubits.length, gates: c.gates.length }))
+        circuits: circuits.map((c: any) => ({ id: c.id, name: c.name, qubits: c.qubits.length, gates: c.gates.length }))
       });
     } catch (error: any) {
       res.status(500).json({ error: "Failed to fetch quantum status" });
@@ -597,7 +597,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
         probabilities: result.probabilities,
         coherenceScore: result.coherenceScore,
         executionTime: result.executionTime,
-        measurementCounts: result.measurements.reduce((acc: Record<number, number>, m) => {
+        measurementCounts: result.measurements.reduce((acc: Record<number, number>, m: any) => {
           acc[m] = (acc[m] || 0) + 1;
           return acc;
         }, {})
@@ -627,7 +627,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       res.json({
         success: true,
         status,
-        environments: environments.map(e => ({ id: e.id, name: e.name, type: e.type, bodies: e.bodies.length, agents: e.agents.length }))
+        environments: environments.map((e: any) => ({ id: e.id, name: e.name, type: e.type, bodies: e.bodies.length, agents: e.agents.length }))
       });
     } catch (error: any) {
       res.status(500).json({ error: "Failed to fetch simulation status" });
@@ -680,7 +680,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       res.json({
         success: true,
         status,
-        tensors: tensors.map(t => ({ id: t.id, shape: t.shape, dtype: t.dtype }))
+        tensors: tensors.map((t: any) => ({ id: t.id, shape: t.shape, dtype: t.dtype }))
       });
     } catch (error: any) {
       res.status(500).json({ error: "Failed to fetch dimensional status" });
@@ -756,7 +756,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       res.json({
         success: true,
         status,
-        structures: structures.map(s => ({ id: s.id, name: s.name, type: s.type, atoms: s.atoms.length, properties: s.properties }))
+        structures: structures.map((s: any) => ({ id: s.id, name: s.name, type: s.type, atoms: s.atoms.length, properties: s.properties }))
       });
     } catch (error: any) {
       res.status(500).json({ error: "Failed to fetch nanotech status" });
@@ -833,7 +833,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       res.json({
         success: true,
         status,
-        scenes: scenes.map(s => ({ id: s.id, name: s.name, objects: s.objects.length })),
+        scenes: scenes.map((s: any) => ({ id: s.id, name: s.name, objects: s.objects.length })),
         webxrConfig: config
       });
     } catch (error: any) {
@@ -910,7 +910,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       res.json({
         success: true,
         status,
-        channels: channels.map(c => ({ id: c.id, name: c.name, signalQuality: c.signalQuality }))
+        channels: channels.map((c: any) => ({ id: c.id, name: c.name, signalQuality: c.signalQuality }))
       });
     } catch (error: any) {
       res.status(500).json({ error: "Failed to fetch BCI status" });
@@ -976,7 +976,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       res.json({
         success: true,
         status,
-        devices: devices.map(d => ({ id: d.id, name: d.name, type: d.type, status: d.status }))
+        devices: devices.map((d: any) => ({ id: d.id, name: d.name, type: d.type, status: d.status }))
       });
     } catch (error: any) {
       res.status(500).json({ error: "Failed to fetch hardware status" });
@@ -988,7 +988,7 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
       const arms = adaptiveHardwareController.getRoboticArms();
       res.json({
         success: true,
-        arms: arms.map(a => ({ id: a.id, name: a.name, mode: a.mode, position: a.position, endEffector: a.endEffector }))
+        arms: arms.map((a: any) => ({ id: a.id, name: a.name, mode: a.mode, position: a.position, endEffector: a.endEffector }))
       });
     } catch (error: any) {
       res.status(500).json({ error: "Failed to fetch robotic arms" });

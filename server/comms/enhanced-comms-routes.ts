@@ -467,7 +467,7 @@ router.put("/users/:userId/status", assessNetworkQuality, async (req, res) => {
       .set({
         lastSeen: new Date(),
       })
-      .where(eq(onlineUsers.id, userId));
+      .where(eq(onlineUsers.id, userId as string));
 
     res.json({
       success: true,

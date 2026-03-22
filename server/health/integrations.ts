@@ -264,7 +264,7 @@ export class HealthIntegrationsService {
         return null;
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       return {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
@@ -310,7 +310,7 @@ export class HealthIntegrationsService {
         return null;
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       return {
         accessToken: data.access_token,
         refreshToken: data.refresh_token || refreshToken,

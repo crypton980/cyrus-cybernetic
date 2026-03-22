@@ -78,7 +78,7 @@ class CommsMLClient {
       const timeout = setTimeout(() => controller.abort(), 3000);
       const res = await fetch(`${ML_SERVICE_URL}/health`, { signal: controller.signal });
       clearTimeout(timeout);
-      const data = await res.json();
+      const data = await res.json() as any;
       const wasAvailable = this.available;
       this.available = data.status === 'operational';
       if (this.available && !wasAvailable) {

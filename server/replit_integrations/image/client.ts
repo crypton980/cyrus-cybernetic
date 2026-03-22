@@ -178,6 +178,7 @@ export async function generateImageBuffer(
   size: ImageSize = "1024x1024"
 ): Promise<Buffer> {
   const client = await getClient();
+  if (!client) throw new Error("OpenAI client not available");
   const response = await client.images.generate({
     model: "dall-e-3",
     prompt,
@@ -196,6 +197,7 @@ export async function editImages(
   outputPath?: string
 ): Promise<Buffer> {
   const client = await getClient();
+  if (!client) throw new Error("OpenAI client not available");
   const images = await Promise.all(
     imageFiles.map((file) =>
       toFile(fs.createReadStream(file), file, {
@@ -228,6 +230,7 @@ export async function editImages(
 
 export async function generateImageVariation(options: ImageVariationOptions): Promise<ImageGenerationResult> {
   const client = await getClient();
+  if (!client) throw new Error("OpenAI client not available");
   const size = options.size || "1024x1024";
   const n = options.n || 1;
 

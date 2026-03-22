@@ -31,10 +31,10 @@ interface ConnectedUser {
 
 interface SignalingMessage {
   type: string;
-  from: string;
+  from?: string;
   to?: string;
   room?: string;
-  data: any;
+  data?: any;
   timestamp: number;
   international?: boolean;
   networkInfo?: any;

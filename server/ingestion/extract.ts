@@ -1,7 +1,8 @@
 import { detectFile } from "./detect";
 import { ensureCompatibleFormat, speechToText } from "../replit_integrations/audio/client";
 import { Buffer } from "node:buffer";
-import pdfParse from "pdf-parse";
+import * as pdfParseModule from "pdf-parse";
+const pdfParse: (buffer: Buffer) => Promise<{ text: string }> = (pdfParseModule as any).default ?? pdfParseModule;
 import mammoth from "mammoth";
 import fs from "fs/promises";
 import os from "os";
@@ -27,6 +28,8 @@ export interface ExtractionResult {
   frames?: Array<{ index: number; ocrText?: string; visionNotes?: string }>;
   warnings: string[];
   attempted: string[];
+  pageCount?: number;
+  textLength?: number;
 }
 
 async function extractTextDocument(buffer: Buffer, detectedMime?: string): Promise<string> {
