@@ -1,12 +1,27 @@
-import OpenAI from "openai";
+import OpenAI, { AzureOpenAI } from 'openai';
+import { DocumentAnalysisClient, AzureKeyCredential } from '@azure/ai-form-recognizer';
+import { DefaultAzureCredential } from '@azure/identity';
 import { Audience, DocType, templates, toneByAudience, defaultDocType } from "./templates";
 
 const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 
 const llmClient =
-  openaiApiKey
-    ? new OpenAI({ apiKey: openaiApiKey, baseURL: openaiBaseUrl })
+  openaiApiKey && openaiBaseUrl
+    ? new AzureOpenAI({ endpoint: openaiBaseUrl, apiKey: openaiApiKey })
+    : openaiBaseUrl
+      ? new AzureOpenAI({ endpoint: openaiBaseUrl, credential: new DefaultAzureCredential() })
+      : null;
+
+const documentIntelligenceKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY;
+const documentIntelligenceEndpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT;
+
+// Use managed identity if no API key provided
+const documentClient =
+  documentIntelligenceEndpoint
+    ? documentIntelligenceKey
+      ? new DocumentAnalysisClient(documentIntelligenceEndpoint, new AzureKeyCredential(documentIntelligenceKey))
+      : new DocumentAnalysisClient(documentIntelligenceEndpoint, new DefaultAzureCredential())
     : null;
 
 export interface SectionContent {
@@ -29,6 +44,33 @@ export interface DocGenInput {
   topic?: string;
   rawText?: string;
   data?: string;
+}
+
+async function extractDocumentText(data: string): Promise<string> {
+  if (!documentClient) return data; // fallback to raw data
+
+  try {
+    // Assume data is base64 encoded file
+    const buffer = Buffer.from(data, 'base64');
+    const poller = await documentClient.beginAnalyzeDocument("prebuilt-read", buffer);
+    const result = await poller.pollUntilDone();
+
+    let extractedText = '';
+    if (result.content) {
+      extractedText = result.content;
+    } else {
+      // Fallback to pages
+      for (const page of result.pages || []) {
+        for (const line of page.lines || []) {
+          extractedText += line.content + '\n';
+        }
+      }
+    }
+    return extractedText || data;
+  } catch (error) {
+    console.error('Document Intelligence error:', error);
+    return data; // fallback
+  }
 }
 
 function fallbackContent(template: DocType, payload: DocGenInput): AnalysisOutput {
@@ -55,6 +97,12 @@ export async function analyzeDocument(payload: DocGenInput): Promise<AnalysisOut
   const template = templates[docType] || templates[defaultDocType];
   if (!llmClient) return fallbackContent(docType, payload);
 
+  // Extract text from document if data is provided
+  let rawText = payload.rawText;
+  if (payload.data && !rawText) {
+    rawText = await extractDocumentText(payload.data);
+  }
+
   const tone = toneByAudience[payload.audience || "official"] || toneByAudience.official;
   const sectionTitles = template.map((s) => s.title);
 
@@ -75,7 +123,7 @@ Return JSON with: sections (array of {title, content}), confidence (High/Medium/
     docType,
     purpose: payload.purpose,
     topic: payload.topic,
-    rawText: payload.rawText,
+    rawText,
     data: payload.data,
     sections: sectionTitles,
   };

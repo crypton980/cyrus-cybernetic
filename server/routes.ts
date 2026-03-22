@@ -5,7 +5,8 @@ import multer, { type StorageEngine } from "multer";
 type MulterFile = Express.Multer.File;
 import path from "path";
 import { randomUUID } from "crypto";
-import OpenAI from "openai";
+import OpenAI, { AzureOpenAI } from "openai";
+import { DefaultAzureCredential } from "@azure/identity";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import fetch from "node-fetch";
@@ -121,6 +122,10 @@ async function loadDependencies() {
   analyzeExtraction = anM.analyzeExtraction;
   const rpM = await import("./ingestion/report");
   buildReport = rpM.buildReport;
+  const jobsM = await import("./ingestion/jobs");
+  const createAnalysisJob = jobsM.createAnalysisJob;
+  const getAnalysisJob = jobsM.getAnalysisJob;
+  const listAnalysisReports = jobsM.listAnalysisReports;
   const dgM = await import("./docgen/generate");
   generateDocument = dgM.generateDocument;
   await tick();
@@ -283,7 +288,7 @@ const callOpenAIWithTimeout = async (
 ): Promise<any> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  
+
   try {
     const result = await fn(controller.signal);
     clearTimeout(timeoutId);
@@ -301,12 +306,12 @@ const callOpenAIWithTimeout = async (
 const normalizeActionType = (type: string): string => {
   // Convert to lowercase, trim, and replace hyphens with underscores
   const normalized = type.toLowerCase().trim().replace(/-/g, '_');
-  
+
   // Check if already a valid action type
   if (ALLOWED_ACTION_TYPES.includes(normalized as any)) {
     return normalized;
   }
-  
+
   // Handle common aliases and variations
   const aliases: Record<string, string> = {
     'doubleclick': 'double_click',
@@ -331,11 +336,11 @@ const normalizeActionType = (type: string): string => {
     'launch': 'open',
     'start': 'open'
   };
-  
+
   if (aliases[normalized]) {
     return aliases[normalized];
   }
-  
+
   // Map by keyword matching
   if (normalized.includes('double') && normalized.includes('click')) return 'double_click';
   if (normalized.includes('right') && normalized.includes('click')) return 'right_click';
@@ -351,15 +356,29 @@ const normalizeActionType = (type: string): string => {
   if (normalized.includes('wait') || normalized.includes('pause') || normalized.includes('delay')) return 'wait';
   if (normalized.includes('screenshot') || normalized.includes('capture')) return 'screenshot';
   if (normalized.includes('open') || normalized.includes('launch')) return 'open';
-  
+
   // Default fallback
   return 'click';
 };
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+
+const openai = openaiApiKey && openaiBaseUrl
+  ? new AzureOpenAI({
+    endpoint: openaiBaseUrl,
+    apiKey: openaiApiKey,
+  })
+  : openaiApiKey
+    ? new OpenAI({
+      apiKey: openaiApiKey,
+    })
+    : openaiBaseUrl
+      ? new AzureOpenAI({
+        endpoint: openaiBaseUrl,
+        credential: new DefaultAzureCredential(),
+      })
+      : null;
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -422,7 +441,7 @@ export async function registerRoutes(
       }
       const authUrl = healthIntegrations.getOAuthUrl(provider as HealthProvider, userId as string);
       if (!authUrl) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: `OAuth not configured for ${provider}`,
           message: `Please add ${provider.toUpperCase()}_CLIENT_ID and ${provider.toUpperCase()}_CLIENT_SECRET to your secrets`
         });
@@ -556,7 +575,7 @@ export async function registerRoutes(
               temperature: 0.5,
               max_tokens: 300,
             }, { signal })
-          , 15000);
+            , 15000);
           const imagePrompt = promptResponse.choices[0]?.message?.content || message;
 
           const imageResult = await generateImage({
@@ -592,7 +611,7 @@ export async function registerRoutes(
       // Use CyrusSoul for reasoning and prompt generation
       const thought = await cyrusSoul.processThought(message);
       const systemPrompt = cyrusSoul.getSystemPrompt();
-      
+
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -605,14 +624,14 @@ export async function registerRoutes(
 
       const rawResponse = response.choices[0].message.content || "";
       const aiResponse = stripEmojis(rawResponse);
-      
+
       const enhancement = await quantumBridge.enhanceResponse(message);
-      
+
       const formattedResponse = await quantumResponseFormatter.formatResponse(aiResponse, enhancement);
-      
+
       console.log(`[Inference] Response format: ${formattedResponse.format}`);
-      
-      res.json({ 
+
+      res.json({
         message: formattedResponse.content,
         enhancement,
         format: formattedResponse.format,
@@ -763,6 +782,69 @@ export async function registerRoutes(
     }
   });
 
+  // Async file analysis (job-based)
+  app.post("/api/files/full-analysis-async", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const jurisdiction = req.body.jurisdiction as string || "Botswana";
+      const strictLegalReview = req.body.strictLegalReview === "true";
+
+      const job = await createAnalysisJob({
+        userId: null, // TODO: get from auth
+        fileId: null,
+        originalName: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        filePath: req.file.path,
+        options: {
+          jurisdiction,
+          strictLegalReview
+        }
+      });
+
+      res.json({ job });
+    } catch (err: any) {
+      console.error("Async file analysis failed:", err);
+      return res.status(500).json({
+        error: "Failed to start file analysis",
+        details: err?.message || String(err),
+      });
+    }
+  });
+
+  app.get("/api/files/analysis-jobs/:jobId", async (req, res) => {
+    try {
+      const jobId = req.params.jobId;
+      const job = await getAnalysisJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      res.json(job);
+    } catch (err: any) {
+      console.error("Get analysis job failed:", err);
+      return res.status(500).json({
+        error: "Failed to get analysis job",
+        details: err?.message || String(err),
+      });
+    }
+  });
+
+  app.get("/api/files/analysis-reports", async (_req, res) => {
+    try {
+      const reports = await listAnalysisReports();
+      res.json({ reports });
+    } catch (err: any) {
+      console.error("List analysis reports failed:", err);
+      return res.status(500).json({
+        error: "Failed to list analysis reports",
+        details: err?.message || String(err),
+      });
+    }
+  });
+
   // Messaging (offline queue)
   app.post("/api/comms/message", (req, res) => {
     const { to, from, text } = req.body || {};
@@ -887,7 +969,7 @@ export async function registerRoutes(
       if (!image) {
         return res.status(400).json({ success: false, error: "No image data provided" });
       }
-      
+
       // Use OpenAI Vision for OCR
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -912,7 +994,7 @@ export async function registerRoutes(
       });
 
       const extractedText = response.choices[0]?.message?.content || "No text detected";
-      
+
       res.json({
         success: true,
         text: extractedText,
@@ -932,7 +1014,7 @@ export async function registerRoutes(
       if (!image) {
         return res.status(400).json({ success: false, error: "No image data provided" });
       }
-      
+
       // Use OpenAI Vision for comprehensive image analysis
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -965,7 +1047,7 @@ Format your response in a clear, structured manner.`
       });
 
       const analysis = response.choices[0]?.message?.content || "Unable to analyze image";
-      
+
       res.json({
         success: true,
         text: analysis,
@@ -986,16 +1068,16 @@ Format your response in a clear, structured manner.`
       if (!text) {
         return res.status(400).json({ success: false, error: "No text provided for translation" });
       }
-      
+
       const languageNames: Record<string, string> = {
         en: "English", es: "Spanish", fr: "French", de: "German",
         zh: "Chinese", ja: "Japanese", ko: "Korean", ar: "Arabic",
         pt: "Portuguese", ru: "Russian", hi: "Hindi", sw: "Swahili",
         zu: "Zulu", tn: "Setswana"
       };
-      
+
       const targetLangName = languageNames[targetLanguage] || targetLanguage;
-      
+
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -1021,7 +1103,7 @@ Format your response in a clear, structured manner.`
           translatedText: response.choices[0]?.message?.content || text
         };
       }
-      
+
       res.json({
         originalText: text,
         detectedLanguage: result.detectedLanguage,
@@ -1083,7 +1165,7 @@ Format your response in a clear, structured manner.`
               temperature: 0.5,
               max_tokens: 300,
             }, { signal })
-          , 15000);
+            , 15000);
           const imagePrompt = promptResponse.choices[0]?.message?.content || message;
 
           const imageResult = await generateImage({
@@ -1144,7 +1226,7 @@ Format your response in a clear, structured manner.`
       } catch (historyError) {
         console.warn('[CYRUS] Conversation history unavailable, continuing without persisted memory:', historyError);
       }
-      
+
       let quantumEnhancement: any = null;
       try {
         quantumEnhancement = await withTimeout(
@@ -1159,7 +1241,7 @@ Format your response in a clear, structured manner.`
       } catch (quantumError) {
         console.warn('[CYRUS] Quantum enhancement unavailable, using base inference path:', quantumError);
       }
-      
+
       let orchestratorContext: any = { activeModules: [], moduleData: {} };
       try {
         orchestratorContext = await withTimeout(
@@ -1174,7 +1256,7 @@ Format your response in a clear, structured manner.`
       } catch (orchestratorError) {
         console.warn('[CYRUS] Module orchestrator context unavailable, continuing with minimal context:', orchestratorError);
       }
-      
+
       // Merge orchestrator context with existing module context and quantum enhancement
       const nexusIntel = quantumEnhancement?.nexus_intelligence;
       const enhancedModuleContext = {
@@ -1203,12 +1285,12 @@ Format your response in a clear, structured manner.`
           precisionMode: nexusIntel?.enhancement_signals?.precision_mode || false
         } : null
       };
-      
+
       // Build quantum enhancement prompt if available
-      const quantumPromptEnhancement = quantumEnhancement 
+      const quantumPromptEnhancement = quantumEnhancement
         ? quantumBridge.buildSystemPromptEnhancement(quantumEnhancement)
         : '';
-      
+
       const result = await withTimeout(
         neuralFusionEngine.processInference({
           message,
@@ -1231,11 +1313,11 @@ Format your response in a clear, structured manner.`
           agiReasoning: true,
         }
       );
-      
+
       // Apply quantum formatting to transform response presentation
       let formattedResponse = stripEmojis(result.response);
       let responseFormat = 'standard';
-      
+
       if (quantumEnhancement) {
         try {
           const formatted = await quantumResponseFormatter.formatResponse(
@@ -1249,7 +1331,7 @@ Format your response in a clear, structured manner.`
           console.error('[Quantum Formatter] Error:', formatError);
         }
       }
-      
+
       let visualData: Record<string, any> | null = null;
       try {
         const visualDetection = await quantumBridge.visualDetect(message);
@@ -1425,7 +1507,7 @@ Format your response in a clear, structured manner.`
     try {
       const learningStats = await experienceMemory.getLearningStats();
       const evolutionHistory = await experienceMemory.getEvolutionHistory(10);
-      
+
       res.json({
         stats: learningStats,
         evolution: evolutionHistory,
@@ -1448,7 +1530,7 @@ Format your response in a clear, structured manner.`
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       const evolutionHistory = await experienceMemory.getEvolutionHistory(limit);
-      
+
       res.json({
         ...evolutionHistory,
         timestamp: new Date().toISOString()
@@ -1464,11 +1546,11 @@ Format your response in a clear, structured manner.`
     try {
       const concept = req.query.concept as string;
       const domain = req.query.domain as string | undefined;
-      
+
       if (!concept) {
         return res.status(400).json({ error: "Concept parameter required" });
       }
-      
+
       const knowledge = await experienceMemory.queryKnowledge(concept, domain);
       res.json(knowledge);
     } catch (error) {
@@ -1523,9 +1605,9 @@ Format your response in a clear, structured manner.`
       if (urgency) {
         cyrusSoul.setUrgencyLevel(urgency);
       }
-      res.json({ 
-        success: true, 
-        context: cyrusSoul.getOperationalContext() 
+      res.json({
+        success: true,
+        context: cyrusSoul.getOperationalContext()
       });
     } catch (error) {
       console.error("Error setting mode:", error);
@@ -1546,9 +1628,9 @@ Format your response in a clear, structured manner.`
     try {
       const { visual, audio, location } = req.body;
       cyrusSoul.updateSensorStatus({ visual, audio, location });
-      res.json({ 
-        success: true, 
-        context: cyrusSoul.getOperationalContext() 
+      res.json({
+        success: true,
+        context: cyrusSoul.getOperationalContext()
       });
     } catch (error) {
       console.error("Error updating sensors:", error);
@@ -1570,12 +1652,12 @@ Format your response in a clear, structured manner.`
     /\b(automate|automatically)\b/i,
     /\b(device|system)\b.*\b(control|command)\b/i
   ];
-  
+
   // Check if message requires agent/device control
   const isAgentCommand = (message: string): boolean => {
     return AGENT_COMMAND_PATTERNS.some(pattern => pattern.test(message));
   };
-  
+
   // Agent execution core using autonomy system
   let executeAgentCore = async (command: string): Promise<any> => {
     const { runAutonomy } = await import("./autonomy/run");
@@ -1603,7 +1685,7 @@ Format your response in a clear, structured manner.`
       result
     };
   };
-  
+
   // Execute agent task from chat - bridges to real agent execution system
   const executeAgentTask = async (command: string): Promise<{ response: string; agentResult: any }> => {
     const startTime = Date.now();
@@ -1633,24 +1715,24 @@ Format your response in a clear, structured manner.`
   app.post("/api/cyrus/infer", async (req, res) => {
     try {
       const { message, conversationHistory, context, imageData } = req.body;
-      
+
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
 
       // AUTONOMOUS AGENT DETECTION - Check if this command requires agent execution
       const requiresAgentExecution = isAgentCommand(message);
-      
+
       // If it's an agent command, execute it autonomously
       if (requiresAgentExecution && !imageData) {
         console.log("[CYRUS] Autonomous agent activated for command:", message);
         const { response, agentResult } = await executeAgentTask(message);
-        
+
         // Process thought through CYRUS Soul
         cyrusSoul.processThought(message, "agent_execution");
-        
+
         const identity = cyrusSoul.getIdentity();
-        return res.json({ 
+        return res.json({
           response,
           identity: {
             name: identity.name,
@@ -1664,7 +1746,7 @@ Format your response in a clear, structured manner.`
       // Standard CYRUS response path
       const systemPrompt = cyrusSoul.getSystemPrompt();
       const identity = cyrusSoul.getIdentity();
-      
+
       // Build conversation messages with agent awareness
       const agentCapabilities = `
 You have AUTONOMOUS AGENT capabilities. When the operator gives commands like:
@@ -1681,7 +1763,7 @@ If you detect a command that requires physical device interaction, inform the op
       const chatMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt + "\n\n" + agentCapabilities }
       ];
-      
+
       // Add conversation history if provided
       if (conversationHistory && Array.isArray(conversationHistory)) {
         for (const msg of conversationHistory.slice(-10)) {
@@ -1691,7 +1773,7 @@ If you detect a command that requires physical device interaction, inform the op
           });
         }
       }
-      
+
       // Add context information if available
       let contextInfo = '';
       if (context) {
@@ -1706,12 +1788,12 @@ If you detect a command that requires physical device interaction, inform the op
           contextInfo += `\n[SENSOR STATUS] Camera is active`;
         }
       }
-      
+
       // Build the user message content
-      const fullMessage = contextInfo 
+      const fullMessage = contextInfo
         ? `${message}\n\n[CONTEXT]${contextInfo}`
         : message;
-      
+
       // Check if we have image data for vision analysis
       if (imageData && typeof imageData === 'string' && imageData.startsWith('data:image')) {
         // Use vision capability with image
@@ -1740,12 +1822,12 @@ If you detect a command that requires physical device interaction, inform the op
       });
 
       const response = completion.choices[0]?.message?.content;
-      
+
       if (!response) {
         console.error("Empty response from OpenAI:", JSON.stringify(completion));
         throw new Error("Empty response from AI model");
       }
-      
+
       // Store analysis as memory if image was analyzed
       if (imageData) {
         await storage.createMemory({
@@ -1754,11 +1836,11 @@ If you detect a command that requires physical device interaction, inform the op
           description: `Image Analysis: ${response.substring(0, 500)}`
         });
       }
-      
+
       // Process thought through CYRUS Soul for learning
       cyrusSoul.processThought(message, context?.summary);
 
-      res.json({ 
+      res.json({
         response,
         identity: {
           name: identity.name,
@@ -1768,7 +1850,7 @@ If you detect a command that requires physical device interaction, inform the op
       });
     } catch (error) {
       console.error("Error in CYRUS inference:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to generate response",
         response: "I apologize, I encountered an error processing your request. Systems are recalibrating."
       });
@@ -1779,7 +1861,7 @@ If you detect a command that requires physical device interaction, inform the op
   app.post("/api/cyrus/speak", async (req, res) => {
     try {
       const { text, voice = "rachel", emotion } = req.body;
-      
+
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text is required" });
       }
@@ -1801,7 +1883,7 @@ If you detect a command that requires physical device interaction, inform the op
   app.post("/api/cyrus/speak/stream", async (req, res) => {
     try {
       const { text, voice = "rachel", emotion } = req.body;
-      
+
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text is required" });
       }
@@ -1836,7 +1918,7 @@ If you detect a command that requires physical device interaction, inform the op
   app.post("/api/cyrus/upgrade", async (req, res) => {
     try {
       const { upgradeType = "full" } = req.body;
-      
+
       // Simulate system upgrade phases
       const upgradePhases = [
         { phase: "initialization", message: "Initializing upgrade sequence...", progress: 10 },
@@ -1848,10 +1930,10 @@ If you detect a command that requires physical device interaction, inform the op
         { phase: "verification", message: "Verifying system integrity...", progress: 90 },
         { phase: "complete", message: "Upgrade complete. All systems operational.", progress: 100 }
       ];
-      
+
       // Apply the upgrade and get new stats
       const upgradeResult = cyrusSoul.applyUpgrade();
-      
+
       res.json({
         success: true,
         upgradeType,
@@ -1873,7 +1955,7 @@ If you detect a command that requires physical device interaction, inform the op
   // ============================================
   // DEVICE CONTROL ROUTES
   // ============================================
-  
+
   // Device state tracking - shared across all execution paths
   const deviceState = {
     pointer: { x: 960, y: 540, isPressed: false, button: null as string | null },
@@ -1881,24 +1963,24 @@ If you detect a command that requires physical device interaction, inform the op
     clipboard: { currentContent: null as string | null, format: null as string | null },
     screen: { width: 1920, height: 1080, activeWindow: null as string | null }
   };
-  
+
   const commandHistory: any[] = [];
   const commandQueue: any[] = [];
-  
+
   // Shared device action executor - used by both device API and agent core
   // Handles all action types from ALLOWED_ACTION_TYPES and deviceActionSchema
   const executeDeviceAction = (action: any): { executed: boolean; result: string; stateChange?: any } => {
     let executed = false;
     let result = "";
     let stateChange: any = {};
-    
+
     // Extract text from multiple possible fields
     const actionText = action.text || action.details || action.content || "";
-    const targetCoords = { 
+    const targetCoords = {
       x: action.x ?? action.targetX ?? deviceState.pointer.x,
       y: action.y ?? action.targetY ?? deviceState.pointer.y
     };
-    
+
     switch (action.type) {
       case "click":
         deviceState.pointer.x = targetCoords.x;
@@ -1906,33 +1988,33 @@ If you detect a command that requires physical device interaction, inform the op
         deviceState.pointer.isPressed = true;
         deviceState.pointer.button = action.button || "left";
         stateChange = { pointer: { x: targetCoords.x, y: targetCoords.y, button: "left" } };
-        result = action.target 
-          ? `Clicked on "${action.target}"` 
+        result = action.target
+          ? `Clicked on "${action.target}"`
           : `Clicked at (${targetCoords.x}, ${targetCoords.y})`;
         executed = true;
         break;
-        
+
       case "double_click":
         deviceState.pointer.x = targetCoords.x;
         deviceState.pointer.y = targetCoords.y;
         stateChange = { pointer: { x: targetCoords.x, y: targetCoords.y, action: "double_click" } };
-        result = action.target 
+        result = action.target
           ? `Double-clicked on "${action.target}"`
           : `Double-clicked at (${targetCoords.x}, ${targetCoords.y})`;
         executed = true;
         break;
-        
+
       case "right_click":
         deviceState.pointer.x = targetCoords.x;
         deviceState.pointer.y = targetCoords.y;
         deviceState.pointer.button = "right";
         stateChange = { pointer: { x: targetCoords.x, y: targetCoords.y, button: "right" } };
-        result = action.target 
+        result = action.target
           ? `Right-clicked on "${action.target}"`
           : `Right-clicked at (${targetCoords.x}, ${targetCoords.y})`;
         executed = true;
         break;
-        
+
       case "drag":
         const startX = action.x ?? deviceState.pointer.x;
         const startY = action.y ?? deviceState.pointer.y;
@@ -1944,7 +2026,7 @@ If you detect a command that requires physical device interaction, inform the op
         result = `Dragged from (${startX}, ${startY}) to (${endX}, ${endY})`;
         executed = true;
         break;
-        
+
       case "type":
         if (actionText) {
           deviceState.keyboard.lastKey = actionText.slice(-1) || null;
@@ -1955,7 +2037,7 @@ If you detect a command that requires physical device interaction, inform the op
           result = "Type action requires text";
         }
         break;
-        
+
       case "press":
         const key = action.key || action.text;
         if (key) {
@@ -1967,12 +2049,12 @@ If you detect a command that requires physical device interaction, inform the op
           result = "Press action requires a key";
         }
         break;
-        
+
       case "hotkey":
         const keys = action.keys || action.key || action.text;
         if (keys) {
           const keyList = Array.isArray(keys) ? keys : keys.split('+').map((k: string) => k.trim());
-          deviceState.keyboard.activeModifiers = keyList.filter((k: string) => 
+          deviceState.keyboard.activeModifiers = keyList.filter((k: string) =>
             ['ctrl', 'alt', 'shift', 'meta', 'cmd', 'command'].includes(k.toLowerCase())
           );
           stateChange = { keyboard: { hotkey: keyList } };
@@ -1982,7 +2064,7 @@ If you detect a command that requires physical device interaction, inform the op
           result = "Hotkey action requires keys";
         }
         break;
-        
+
       case "hold":
         const holdKey = action.key || action.text;
         if (holdKey) {
@@ -1994,7 +2076,7 @@ If you detect a command that requires physical device interaction, inform the op
           executed = true;
         }
         break;
-        
+
       case "release":
         const releaseKey = action.key || action.text;
         if (releaseKey) {
@@ -2012,7 +2094,7 @@ If you detect a command that requires physical device interaction, inform the op
           executed = true;
         }
         break;
-        
+
       case "scroll":
         const scrollDir = action.direction || (action.y && action.y < 0 ? "up" : "down");
         const scrollAmount = action.amount || Math.abs(action.y || 100);
@@ -2020,7 +2102,7 @@ If you detect a command that requires physical device interaction, inform the op
         result = `Scrolled ${scrollDir} by ${scrollAmount}px`;
         executed = true;
         break;
-        
+
       case "navigate":
         const url = action.url || action.target || actionText;
         if (url) {
@@ -2032,7 +2114,7 @@ If you detect a command that requires physical device interaction, inform the op
           result = "Navigate action requires a URL";
         }
         break;
-        
+
       case "copy":
         const copyText = actionText || action.target;
         if (copyText) {
@@ -2048,7 +2130,7 @@ If you detect a command that requires physical device interaction, inform the op
           executed = true;
         }
         break;
-        
+
       case "paste":
         if (deviceState.clipboard.currentContent) {
           stateChange = { clipboard: { pasted: deviceState.clipboard.currentContent } };
@@ -2058,20 +2140,20 @@ If you detect a command that requires physical device interaction, inform the op
           result = "Clipboard is empty";
         }
         break;
-        
+
       case "wait":
         const waitDuration = action.duration || action.ms || action.time || 1000;
         stateChange = { wait: { duration: waitDuration } };
         result = `Waited ${waitDuration}ms`;
         executed = true;
         break;
-        
+
       case "analyze":
         stateChange = { analyze: { target: action.target || action.details || "context" } };
         result = `Analyzed: ${action.target || action.details || "context"}`;
         executed = true;
         break;
-        
+
       case "search":
         const query = action.query || actionText || action.target;
         if (query) {
@@ -2082,13 +2164,13 @@ If you detect a command that requires physical device interaction, inform the op
           result = "Search action requires a query";
         }
         break;
-        
+
       case "screenshot":
         stateChange = { screenshot: { captured: true, timestamp: Date.now() } };
         result = "Captured screenshot";
         executed = true;
         break;
-        
+
       case "open":
         const target = action.target || action.url || actionText;
         if (target) {
@@ -2098,14 +2180,14 @@ If you detect a command that requires physical device interaction, inform the op
           executed = true;
         }
         break;
-        
+
       default:
         // Handle unknown action types gracefully
         stateChange = { generic: { action: action.type, target: action.target, details: action.details } };
         result = `Executed ${action.type}${action.target ? ` on "${action.target}"` : ''}${action.details ? `: ${action.details}` : ''}`;
         executed = true;
     }
-    
+
     return { executed, result, stateChange };
   };
   const clipboardHistory: any[] = [];
@@ -2116,42 +2198,42 @@ If you detect a command that requires physical device interaction, inform the op
     "copy", "paste", "navigate", "search", "wait",
     "analyze", "screenshot", "open"
   ];
-  
+
   app.get("/api/cyrus/device/state", async (req, res) => {
     res.json(deviceState);
   });
-  
+
   app.get("/api/cyrus/device/commands", async (req, res) => {
     res.json(supportedCommands);
   });
-  
+
   app.get("/api/cyrus/device/queue", async (req, res) => {
     res.json(commandQueue);
   });
-  
+
   app.get("/api/cyrus/device/history", async (req, res) => {
     res.json(commandHistory.slice(-20));
   });
-  
+
   app.get("/api/cyrus/device/clipboard/history", async (req, res) => {
     res.json(clipboardHistory.slice(-10));
   });
-  
+
   app.post("/api/cyrus/device/execute", async (req, res) => {
     try {
       const { command } = req.body;
       if (!command || typeof command !== 'string') {
         return res.status(400).json({ error: "Command is required" });
       }
-      
+
       const commandId = `cmd_${Date.now()}`;
       const startTime = Date.now();
-      
+
       // Use AI to parse natural language commands into structured actions
       let parsedActions: any[] = [];
       let intent = "execute_command";
       let confidence = 0.95;
-      
+
       try {
         const aiResponse = await callOpenAIWithTimeout((signal) =>
           openai.chat.completions.create({
@@ -2191,7 +2273,7 @@ Return ONLY valid JSON.`
           }, { signal }),
           10000 // 10 second timeout
         );
-        
+
         let parsed: any = {};
         try {
           parsed = JSON.parse(aiResponse.choices[0]?.message?.content || "{}");
@@ -2199,7 +2281,7 @@ Return ONLY valid JSON.`
           console.error("JSON parse error in device command:", parseErr);
           parsed = {};
         }
-        
+
         if (parsed.intent) intent = parsed.intent;
         if (typeof parsed.confidence === "number") confidence = parsed.confidence;
         if (parsed.actions && Array.isArray(parsed.actions)) {
@@ -2212,16 +2294,16 @@ Return ONLY valid JSON.`
               return { id: `action_${commandId}_${idx}`, ...validated.data };
             }
             // Fallback to basic action structure with normalized type
-            return { 
-              id: `action_${commandId}_${idx}`, 
-              type: normalizedType, 
-              x: action.x || 0, 
+            return {
+              id: `action_${commandId}_${idx}`,
+              type: normalizedType,
+              x: action.x || 0,
               y: action.y || 0,
-              status: "completed" 
+              status: "completed"
             };
           });
         }
-        
+
         // Execute device actions using shared executor
         for (let i = 0; i < parsedActions.length; i++) {
           const action = parsedActions[i];
@@ -2236,15 +2318,15 @@ Return ONLY valid JSON.`
       } catch (aiError) {
         console.error("AI command parsing error:", aiError);
         // Fallback to basic pattern matching with valid action type
-        parsedActions = [{ 
-          id: `action_${commandId}_0`, 
-          type: "click", 
-          x: deviceState.pointer.x, 
-          y: deviceState.pointer.y, 
-          status: "completed" 
+        parsedActions = [{
+          id: `action_${commandId}_0`,
+          type: "click",
+          x: deviceState.pointer.x,
+          y: deviceState.pointer.y,
+          status: "completed"
         }];
       }
-      
+
       const result = {
         id: commandId,
         naturalLanguage: command,
@@ -2255,7 +2337,7 @@ Return ONLY valid JSON.`
         status: "completed",
         executionTime: Date.now() - startTime
       };
-      
+
       commandHistory.push(result);
       res.json(result);
     } catch (error) {
@@ -2263,28 +2345,28 @@ Return ONLY valid JSON.`
       res.status(500).json({ error: "Failed to execute command" });
     }
   });
-  
+
   app.post("/api/cyrus/device/queue", async (req, res) => {
     try {
       const { command } = req.body;
       if (!command) {
         return res.status(400).json({ error: "Command is required" });
       }
-      
+
       const queuedCommand = {
         id: `queue_${Date.now()}`,
         naturalLanguage: command,
         status: "queued",
         timestamp: Date.now()
       };
-      
+
       commandQueue.push(queuedCommand);
       res.json(queuedCommand);
     } catch (error) {
       res.status(500).json({ error: "Failed to queue command" });
     }
   });
-  
+
   app.post("/api/cyrus/device/process-queue", async (req, res) => {
     try {
       while (commandQueue.length > 0) {
@@ -2297,12 +2379,12 @@ Return ONLY valid JSON.`
       res.status(500).json({ error: "Failed to process queue" });
     }
   });
-  
+
   app.post("/api/cyrus/device/clear-queue", async (req, res) => {
     commandQueue.length = 0;
     res.json({ success: true });
   });
-  
+
   app.post("/api/cyrus/device/clipboard", async (req, res) => {
     try {
       const { content } = req.body;
@@ -2314,11 +2396,11 @@ Return ONLY valid JSON.`
       res.status(500).json({ error: "Failed to set clipboard" });
     }
   });
-  
+
   // ============================================
   // AGENT CONTROL ROUTES
   // ============================================
-  
+
   const agentState = {
     isExecuting: false,
     currentTask: null as any,
@@ -2334,37 +2416,37 @@ Return ONLY valid JSON.`
       thinkingPauses: true
     }
   };
-  
+
   const agentHistory: any[] = [];
   const agentFeedbackClients: any[] = [];
-  
+
   // Helper function to send feedback to all connected clients
   const sendAgentFeedback = (feedback: { type: string; message: string; timestamp?: number; progress?: number }) => {
     const data = { ...feedback, timestamp: feedback.timestamp || Date.now() };
     for (const client of agentFeedbackClients) {
       try {
         client.res.write(`data: ${JSON.stringify(data)}\n\n`);
-      } catch (e) {}
+      } catch (e) { }
     }
   };
-  
+
   // Core agent execution logic - used by both API endpoint and chat fusion
   const agentExecuteCore = async (command: string): Promise<any> => {
     agentState.isExecuting = true;
     agentState.mode = "executing";
-    
+
     const taskId = `task_${Date.now()}`;
     const startTime = Date.now();
-    
+
     // Send initial thinking feedback
     sendAgentFeedback({ type: "thinking", message: `Analyzing task: "${command}"` });
-    
+
     // Use OpenAI to intelligently parse the command and generate execution plan
     let taskDescription = command;
     let steps: any[] = [];
-    
+
     try {
-      const aiResponse = await callOpenAIWithTimeout((signal) => 
+      const aiResponse = await callOpenAIWithTimeout((signal) =>
         openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
@@ -2421,7 +2503,7 @@ Return ONLY valid JSON.`
         }, { signal }),
         15000
       );
-      
+
       let parsed: any = {};
       try {
         parsed = JSON.parse(aiResponse.choices[0]?.message?.content || "{}");
@@ -2429,11 +2511,11 @@ Return ONLY valid JSON.`
         console.error("JSON parse error:", parseErr);
         parsed = {};
       }
-      
+
       if (parsed.description) {
         taskDescription = parsed.description;
       }
-      
+
       if (parsed.steps && Array.isArray(parsed.steps)) {
         steps = parsed.steps.map((step: any, idx: number) => ({
           id: `step_${Date.now()}_${idx + 1}`,
@@ -2479,7 +2561,7 @@ Return ONLY valid JSON.`
         }
       ];
     }
-    
+
     // If no steps were generated, create default ones
     if (steps.length === 0) {
       steps = [
@@ -2499,12 +2581,12 @@ Return ONLY valid JSON.`
         }
       ];
     }
-    
+
     // Execute each step through the real device execution system
     const executedSteps: any[] = [];
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
-      
+
       // Execute the device action with all available fields
       const execution = executeDeviceAction({
         type: step.action,
@@ -2525,7 +2607,7 @@ Return ONLY valid JSON.`
         duration: step.duration,
         button: step.button
       });
-      
+
       // Update step with execution results
       const executedStep = {
         ...step,
@@ -2535,7 +2617,7 @@ Return ONLY valid JSON.`
         feedback: execution.executed ? execution.result : step.feedback
       };
       executedSteps.push(executedStep);
-      
+
       // Send progress feedback with actual execution result
       sendAgentFeedback({
         type: "action",
@@ -2543,7 +2625,7 @@ Return ONLY valid JSON.`
         progress: Math.round(((i + 1) / steps.length) * 100)
       });
     }
-    
+
     const task = {
       id: taskId,
       command,
@@ -2559,29 +2641,29 @@ Return ONLY valid JSON.`
         screen: { ...deviceState.screen }
       }
     };
-    
+
     agentHistory.push(task);
     agentState.tasksCompleted++;
     agentState.isExecuting = false;
     agentState.mode = "idle";
     agentState.currentTask = null;
-    
+
     // Send completion feedback
     sendAgentFeedback({ type: "success", message: `Completed: ${taskDescription}` });
-    
+
     // Store in memory for future reference
     await storage.createMemory({
       userId: null,
       type: "conversation",
       description: `Agent Task: ${command} - ${taskDescription}`
     });
-    
+
     return task;
   };
-  
+
   // Initialize shared reference for chat fusion to use the same execution core
   executeAgentCore = agentExecuteCore;
-  
+
   app.get("/api/cyrus/agent/status", async (req, res) => {
     res.json({
       isExecuting: agentState.isExecuting,
@@ -2591,33 +2673,33 @@ Return ONLY valid JSON.`
       behaviorConfig: agentState.behaviorConfig
     });
   });
-  
+
   app.get("/api/cyrus/agent/history", async (req, res) => {
     res.json(agentHistory.slice(-20));
   });
-  
+
   app.get("/api/cyrus/agent/stream", async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.write(`data: ${JSON.stringify({ type: "connected" })}\n\n`);
-    
+
     const clientId = Date.now();
     agentFeedbackClients.push({ id: clientId, res });
-    
+
     req.on('close', () => {
       const index = agentFeedbackClients.findIndex(c => c.id === clientId);
       if (index > -1) agentFeedbackClients.splice(index, 1);
     });
   });
-  
+
   app.post("/api/cyrus/agent/execute", async (req, res) => {
     try {
       const { command } = req.body;
       if (!command || typeof command !== 'string') {
         return res.status(400).json({ error: "Command is required" });
       }
-      
+
       // Use the shared execution core
       const task = await agentExecuteCore(command);
       res.json(task);
@@ -2626,15 +2708,15 @@ Return ONLY valid JSON.`
       agentState.isExecuting = false;
       agentState.mode = "idle";
       agentState.currentTask = null;
-      
+
       const errorMsg = formatError(error);
       sendAgentFeedback({ type: "error", message: `Task failed: ${errorMsg}` });
-      
+
       console.error("Error executing agent command:", error);
       res.status(500).json({ error: `Failed to execute agent command: ${errorMsg}` });
     }
   });
-  
+
   app.get("/api/cyrus/agent/config", async (_req, res) => {
     try {
       res.json({ success: true, config: agentState.behaviorConfig });
@@ -2647,33 +2729,33 @@ Return ONLY valid JSON.`
     try {
       const validationResult = agentConfigSchema.safeParse(req.body);
       if (!validationResult.success) {
-        return res.status(400).json({ 
-          error: "Invalid configuration", 
-          details: validationResult.error.issues 
+        return res.status(400).json({
+          error: "Invalid configuration",
+          details: validationResult.error.issues
         });
       }
-      
+
       Object.assign(agentState.behaviorConfig, validationResult.data);
       res.json({ success: true, config: agentState.behaviorConfig });
     } catch (error) {
       res.status(500).json({ error: `Failed to update config: ${formatError(error)}` });
     }
   });
-  
+
   // ============================================
   // FILE ANALYSIS ROUTES
   // ============================================
-  
+
   app.post("/api/files/analyze", async (req, res) => {
     try {
       const { fileId, fileUrl, mimeType } = req.body;
-      
+
       if (!fileUrl) {
         return res.status(400).json({ error: "File URL is required" });
       }
-      
+
       let analysis = "";
-      
+
       // Image analysis using OpenAI Vision
       if (mimeType?.startsWith("image/")) {
         const response = await openai.chat.completions.create({
@@ -2695,7 +2777,7 @@ Return ONLY valid JSON.`
           ],
           max_tokens: 1000
         });
-        
+
         analysis = response.choices[0]?.message?.content || "Unable to analyze image";
       }
       // Audio/Voice analysis using Whisper
@@ -2705,11 +2787,11 @@ Return ONLY valid JSON.`
           const audioResponse = await fetch(fileUrl);
           const audioArrayBuffer = await audioResponse.arrayBuffer();
           const audioBuffer = Buffer.from(audioArrayBuffer);
-          
+
           // Ensure compatible format and transcribe
           const { buffer: compatibleBuffer, format } = await ensureCompatibleFormat(audioBuffer);
           const transcription = await speechToText(compatibleBuffer, format);
-          
+
           analysis = `Voice Note Transcription:\n\n"${transcription}"`;
         } catch (transcribeError) {
           console.error("Error transcribing audio:", transcribeError);
@@ -2724,7 +2806,7 @@ Return ONLY valid JSON.`
       else {
         analysis = `File of type ${mimeType} received. The file has been stored. Please describe what analysis you need.`;
       }
-      
+
       // Store the analysis as a memory
       if (fileId) {
         await storage.createMemory({
@@ -2733,7 +2815,7 @@ Return ONLY valid JSON.`
           description: `File Analysis (${mimeType}): ${analysis.substring(0, 500)}`
         });
       }
-      
+
       res.json({
         success: true,
         fileId,
@@ -2750,28 +2832,28 @@ Return ONLY valid JSON.`
   app.post("/api/files/transcribe", async (req, res) => {
     try {
       const { audioData, mimeType } = req.body;
-      
+
       if (!audioData) {
         return res.status(400).json({ error: "Audio data is required" });
       }
-      
+
       // Convert base64 to buffer
       const base64Data = audioData.replace(/^data:audio\/[^;]+;base64,/, '');
       const audioBuffer = Buffer.from(base64Data, 'base64');
-      
+
       // Ensure compatible format for transcription
       const { buffer: compatibleBuffer, format } = await ensureCompatibleFormat(audioBuffer);
-      
+
       // Transcribe using Whisper
       const transcription = await speechToText(compatibleBuffer, format);
-      
+
       // Store transcription as memory
       await storage.createMemory({
         userId: null,
         type: "conversation",
         description: `Voice Note Transcription: ${transcription.substring(0, 500)}`
       });
-      
+
       res.json({
         success: true,
         transcription,

@@ -1,13 +1,28 @@
-import OpenAI from 'openai';
+import OpenAI, { AzureOpenAI } from 'openai';
+import { DefaultAzureCredential } from '@azure/identity';
 import { db } from '../../db';
 import { knowledgeGraph } from '../../../shared/schema';
 import { eq, sql, desc, and } from 'drizzle-orm';
 import crypto from 'crypto';
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+
+const openai = openaiApiKey && openaiBaseUrl
+  ? new AzureOpenAI({
+    endpoint: openaiBaseUrl,
+    apiKey: openaiApiKey,
+  })
+  : openaiApiKey
+    ? new OpenAI({
+      apiKey: openaiApiKey,
+    })
+    : openaiBaseUrl
+      ? new AzureOpenAI({
+        endpoint: openaiBaseUrl,
+        credential: new DefaultAzureCredential(),
+      })
+      : null;
 
 export interface VectorDocument {
   id: string;
@@ -62,15 +77,15 @@ export class VectorKnowledgeBase {
         this.indexReady = true;
         return;
       }
-      
+
       const knowledge = await db.select().from(knowledgeGraph).limit(1000);
-      
+
       for (const item of knowledge) {
         const docId = `kg-${item.id}`;
         const content = `${item.concept}: ${JSON.stringify(item.properties || {})}`;
-        
+
         const embedding = await this.getEmbedding(content);
-        
+
         this.vectorStore.set(docId, {
           id: docId,
           content,
@@ -84,7 +99,7 @@ export class VectorKnowledgeBase {
           }
         });
       }
-      
+
       this.indexReady = true;
       console.log(`[Vector Knowledge Base] Loaded ${this.vectorStore.size} documents into semantic memory`);
     } catch (error) {
@@ -102,8 +117,12 @@ export class VectorKnowledgeBase {
       return this.generateSimpleEmbedding(text);
     }
 
+    if (!openai) {
+      return this.generateSimpleEmbedding(text);
+    }
+
     const cacheKey = crypto.createHash('md5').update(text).digest('hex');
-    
+
     if (this.embeddingCache.has(cacheKey)) {
       return this.embeddingCache.get(cacheKey)!;
     }
@@ -116,7 +135,7 @@ export class VectorKnowledgeBase {
 
       const embedding = response.data[0].embedding;
       this.embeddingCache.set(cacheKey, embedding);
-      
+
       if (this.embeddingCache.size > 10000) {
         const firstKey = this.embeddingCache.keys().next().value;
         if (firstKey) this.embeddingCache.delete(firstKey);
@@ -145,17 +164,17 @@ export class VectorKnowledgeBase {
 
   private cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length) return 0;
-    
+
     let dotProduct = 0;
     let normA = 0;
     let normB = 0;
-    
+
     for (let i = 0; i < a.length; i++) {
       dotProduct += a[i] * b[i];
       normA += a[i] * a[i];
       normB += b[i] * b[i];
     }
-    
+
     const denominator = Math.sqrt(normA) * Math.sqrt(normB);
     return denominator === 0 ? 0 : dotProduct / denominator;
   }
@@ -163,7 +182,7 @@ export class VectorKnowledgeBase {
   async addDocument(content: string, metadata: Partial<VectorDocument['metadata']>): Promise<string> {
     const id = crypto.randomUUID();
     const embedding = await this.getEmbedding(content);
-    
+
     const doc: VectorDocument = {
       id,
       content,
@@ -176,9 +195,9 @@ export class VectorKnowledgeBase {
         tags: metadata.tags || []
       }
     };
-    
+
     this.vectorStore.set(id, doc);
-    
+
     try {
       await db.insert(knowledgeGraph).values({
         concept: content.slice(0, 100),
@@ -190,19 +209,19 @@ export class VectorKnowledgeBase {
     } catch (error) {
       console.error('[Vector Knowledge Base] Failed to persist document:', error);
     }
-    
+
     console.log(`[Vector Knowledge Base] Added document: ${id}`);
     return id;
   }
 
   async addBulkDocuments(documents: Array<{ content: string; metadata?: Partial<VectorDocument['metadata']> }>): Promise<string[]> {
     const ids: string[] = [];
-    
+
     for (const doc of documents) {
       const id = await this.addDocument(doc.content, doc.metadata || {});
       ids.push(id);
     }
-    
+
     return ids;
   }
 
@@ -260,7 +279,7 @@ export class VectorKnowledgeBase {
 
   async augmentPrompt(userQuery: string, systemPrompt: string): Promise<string> {
     const context = await this.retrieveContext(userQuery);
-    
+
     if (context.retrievedDocuments.length === 0) {
       return systemPrompt;
     }
@@ -277,7 +296,7 @@ Use this retrieved knowledge to inform your response when relevant.`;
 
   async learnFromConversation(userMessage: string, aiResponse: string, metadata?: { domain?: string; importance?: number }): Promise<void> {
     const conversationContent = `Q: ${userMessage}\nA: ${aiResponse}`;
-    
+
     await this.addDocument(conversationContent, {
       source: 'conversation_learning',
       domain: metadata?.domain || 'conversation',

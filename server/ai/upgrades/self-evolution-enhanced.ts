@@ -1,4 +1,5 @@
-import OpenAI from 'openai';
+import OpenAI, { AzureOpenAI } from 'openai';
+import { DefaultAzureCredential } from '@azure/identity';
 import { experienceMemory, TaskExperience, KnowledgeConcept, EvolutionEvent } from '../experience-memory';
 import { vectorKnowledgeBase } from './vector-knowledge-base';
 import { quantumBridge } from '../quantum-bridge-client';
@@ -6,10 +7,24 @@ import { db } from '../../db';
 import { knowledgeGraph, performanceMetrics, evolutionLog } from '../../../shared/schema';
 import { desc, sql } from 'drizzle-orm';
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+
+const openai = openaiApiKey && openaiBaseUrl
+  ? new AzureOpenAI({
+    endpoint: openaiBaseUrl,
+    apiKey: openaiApiKey,
+  })
+  : openaiApiKey
+    ? new OpenAI({
+      apiKey: openaiApiKey,
+    })
+    : openaiBaseUrl
+      ? new AzureOpenAI({
+        endpoint: openaiBaseUrl,
+        credential: new DefaultAzureCredential(),
+      })
+      : null;
 
 export interface EvolutionMetrics {
   knowledgeGrowth: number;
@@ -52,7 +67,7 @@ export class SelfEvolutionEngine {
   private learningPatterns: Map<string, number> = new Map();
   private synthesizedKnowledge: KnowledgeSynthesis[] = [];
   private metaInsights: MetaLearningInsight[] = [];
-  
+
   private nexusSuccessfulSyncs: number = 0;
 
   private evolutionThresholds = {
@@ -99,11 +114,11 @@ export class SelfEvolutionEngine {
 
   private startEvolutionLoop(): void {
     setInterval(() => this.runEvolutionCycle(), 60000);
-    
+
     setInterval(() => this.consolidateKnowledge(), 300000);
-    
+
     setInterval(() => this.generateMetaInsights(), 600000);
-    
+
     setInterval(() => this.checkTrainingNeeded(), 1800000);
   }
 
@@ -111,7 +126,7 @@ export class SelfEvolutionEngine {
     try {
       const timeSinceLastTraining = Date.now() - this.lastTrainingTime;
       if (timeSinceLastTraining < 3600000) return;
-      
+
       const stats = await experienceMemory.getLearningStats();
       if (stats.totalExperiences > 0 && stats.totalExperiences % 50 === 0) {
         console.log('[Self-Evolution] Triggering periodic retraining based on accumulated experiences');
@@ -127,22 +142,22 @@ export class SelfEvolutionEngine {
 
   private async runEvolutionCycle(): Promise<void> {
     this.evolutionCycle++;
-    
+
     try {
       await this.analyzePerformanceTrends();
-      
+
       await this.extractNewPatterns();
-      
+
       await this.optimizeStrategies();
-      
+
       if (this.evolutionCycle % 10 === 0) {
         await this.synthesizeKnowledge();
       }
-      
+
       if (this.evolutionCycle % 5 === 0) {
         await this.nexusEvolutionSync();
       }
-      
+
       console.log(`[Self-Evolution] Cycle ${this.evolutionCycle} completed`);
     } catch (error) {
       console.error('[Self-Evolution] Cycle error:', error);
@@ -152,17 +167,17 @@ export class SelfEvolutionEngine {
   private async nexusEvolutionSync(): Promise<void> {
     try {
       if (!quantumBridge.isNexusOperational()) return;
-      
+
       const stats = await experienceMemory.getLearningStats();
       const evolutionHistory = await experienceMemory.getEvolutionHistory(10);
-      
+
       const nexusQuery = `Evolution analysis: ${stats.totalExperiences} experiences, ${stats.knowledgeConcepts} concepts, ${stats.averageSuccessRate}% success rate. Recent evolution events: ${evolutionHistory.recentEvents.map(e => e.description).join('; ')}`;
-      
+
       const nexusResult = await quantumBridge.queryNexus(nexusQuery, true);
-      
+
       if (nexusResult && nexusResult.status === 'success') {
         this.nexusSuccessfulSyncs++;
-        
+
         const nexusEvolutionEvents = evolutionHistory.recentEvents.filter(
           e => e.improvements && (e.improvements as any).nexusImprovementPercent
         );
@@ -178,11 +193,11 @@ export class SelfEvolutionEngine {
           confidence: 0.85
         };
         this.metaInsights.unshift(insight);
-        
+
         if (this.metaInsights.length > 50) {
           this.metaInsights = this.metaInsights.slice(0, 50);
         }
-        
+
         await experienceMemory.logEvolution({
           type: 'strategy_improved',
           description: `Nexus quantum intelligence synchronized with evolution engine (cycle ${this.evolutionCycle}, sync #${this.nexusSuccessfulSyncs})`,
@@ -205,7 +220,7 @@ export class SelfEvolutionEngine {
         .limit(50);
 
       const improvements: Record<string, number> = {};
-      
+
       for (const metric of recentMetrics) {
         if (metric.improvementRate && metric.improvementRate > 5) {
           improvements[metric.taskCategory] = metric.improvementRate;
@@ -235,7 +250,7 @@ export class SelfEvolutionEngine {
         .limit(100);
 
       const domainPatterns: Map<string, string[]> = new Map();
-      
+
       for (const item of knowledge) {
         const domain = item.domain;
         if (!domainPatterns.has(domain)) {
@@ -271,9 +286,9 @@ export class SelfEvolutionEngine {
           improvement: 0.05,
           appliedAt: new Date()
         };
-        
+
         this.optimizationHistory.push(optimization);
-        
+
         if (this.optimizationHistory.length > 100) {
           this.optimizationHistory = this.optimizationHistory.slice(-50);
         }
@@ -301,10 +316,15 @@ export class SelfEvolutionEngine {
       for (const [domain, items] of domainGroups) {
         if (items.length >= 3) {
           const concepts = items.map(i => i.concept);
-          
+
+          if (!openai) {
+            console.log(`[Self-Evolution] OpenAI client not available for synthesis in domain: ${domain}`);
+            continue;
+          }
+
           try {
             const response = await openai.chat.completions.create({
-              model: 'gpt-4o',
+              model: 'gpt-4o-mini',
               messages: [
                 {
                   role: 'system',
@@ -399,20 +419,20 @@ Return only valid JSON.`
   private async consolidateKnowledge(): Promise<void> {
     try {
       const stats = await experienceMemory.getLearningStats();
-      
+
       if (stats.totalExperiences > this.evolutionThresholds.knowledgeConsolidationInterval) {
         console.log('[Self-Evolution] Running knowledge consolidation...');
-        
+
         await this.synthesizeKnowledge();
-        
+
         await experienceMemory.logEvolution({
           type: 'strategy_improved',
           description: 'Knowledge base consolidated and optimized',
           beforeState: { experiences: stats.totalExperiences, concepts: stats.knowledgeConcepts },
-          afterState: { 
-            experiences: stats.totalExperiences, 
+          afterState: {
+            experiences: stats.totalExperiences,
             concepts: stats.knowledgeConcepts,
-            synthesized: this.synthesizedKnowledge.length 
+            synthesized: this.synthesizedKnowledge.length
           },
           improvements: { consolidationComplete: 1 },
           trigger: 'scheduled_consolidation'
@@ -464,7 +484,7 @@ Return only valid JSON.`
       }
 
       this.metaInsights = [...insights, ...this.metaInsights].slice(0, 50);
-      
+
       console.log(`[Self-Evolution] Generated ${insights.length} new meta-insights`);
     } catch (error) {
       console.error('[Self-Evolution] Meta-insight generation error:', error);
@@ -534,9 +554,9 @@ Return only valid JSON.`
     const metrics = await this.getEvolutionMetrics();
     const nexusOperational = quantumBridge.isNexusOperational();
     const bridgeStatus = quantumBridge.getStatus();
-    
+
     const recommendations: string[] = [];
-    
+
     if (metrics.knowledgeGrowth < 0.5) {
       recommendations.push('Increase knowledge acquisition through more diverse interactions');
     }
