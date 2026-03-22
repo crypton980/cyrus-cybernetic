@@ -863,6 +863,7 @@ export class HumanLikeCommunicationSystem {
 
     return recommendations;
   }
+}
 
 // Export singleton instance
 export const humanLikeCommunicationSystem = new HumanLikeCommunicationSystem();
