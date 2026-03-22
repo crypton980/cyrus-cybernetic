@@ -1,6 +1,6 @@
 import OpenAI, { AzureOpenAI } from 'openai';
-import { DefaultAzureCredential } from '@azure/identity';
-import { experienceMemory, TaskExperience, KnowledgeConcept, EvolutionEvent } from '../experience-memory';
+import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
+import { experienceMemory } from '../experience-memory';
 import { vectorKnowledgeBase } from './vector-knowledge-base';
 import { quantumBridge } from '../quantum-bridge-client';
 import { db } from '../../db';
@@ -22,7 +22,7 @@ const openai = openaiApiKey && openaiBaseUrl
     : openaiBaseUrl
       ? new AzureOpenAI({
         endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
+        azureADTokenProvider: getBearerTokenProvider(new DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),
       })
       : null;
 

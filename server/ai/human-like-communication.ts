@@ -364,7 +364,7 @@ class NaturalLanguagePatterns {
     return variation;
   }
 
-  getConversationalElement(type: 'opening' | 'transition' | 'emphasis' | 'closing' | 'filler', context: HumanLikeContext): string {
+  getConversationalElement(type: 'opening' | 'transitions' | 'emphasis' | 'closings' | 'fillers', context: HumanLikeContext): string {
     const flow = this.conversationalFlows.get(context.conversationStyle);
     if (!flow) return '';
 
@@ -403,7 +403,7 @@ class NaturalLanguagePatterns {
 
     // Add filler words occasionally
     if (Math.random() > 0.8) {
-      const filler = this.getConversationalElement('filler', context);
+      const filler = this.getConversationalElement('fillers', context);
       if (filler) {
         enhanced = enhanced.replace(/^/, `${filler}, `);
       }
@@ -411,7 +411,7 @@ class NaturalLanguagePatterns {
 
     // Add transitions between ideas
     if (Math.random() > 0.7) {
-      const transition = this.getConversationalElement('transition', context);
+      const transition = this.getConversationalElement('transitions', context);
       if (transition && enhanced.includes('.')) {
         const parts = enhanced.split('. ');
         if (parts.length > 2) {
@@ -443,7 +443,7 @@ class NaturalLanguagePatterns {
       }
     }
 
-    if (context.emotionalState === 'happy') {
+    if (context.emotionalState === 'excited') {
       const enthusiasmPattern = this.getRandomPattern('enthusiasm', context);
       if (enthusiasmPattern && Math.random() > 0.8) {
         humanized = `${enthusiasmPattern} ${humanized}`;

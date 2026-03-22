@@ -95,7 +95,8 @@ class Thalamus implements BrainRegion {
     taste: 'VPM',
     smell: 'direct', // Bypasses thalamus
     interoception: 'posterior',
-    vestibular: 'vestibular_nuclei'
+    vestibular: 'vestibular_nuclei',
+    proprioception: 'VPLc'
   };
 
   private attentionGates: Record<string, number> = {};

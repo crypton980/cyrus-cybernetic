@@ -144,7 +144,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch {
       return null;
     }
@@ -162,7 +162,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(5000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch {
       return null;
     }
@@ -187,7 +187,7 @@ class QuantumBridgeClient {
         return null;
       }
 
-      return await response.json();
+      return await response.json() as any;
     } catch (error) {
       console.error('[Quantum Bridge] Enhancement error:', error);
       return null;
@@ -212,7 +212,7 @@ class QuantumBridgeClient {
         return null;
       }
 
-      return await response.json();
+      return await response.json() as any;
     } catch (error) {
       console.error('[Quantum Bridge] Style adaptation error:', error);
       return null;
@@ -237,7 +237,7 @@ class QuantumBridgeClient {
         return null;
       }
 
-      return await response.json();
+      return await response.json() as any;
     } catch (error) {
       console.error('[Quantum Bridge] Style analysis error:', error);
       return null;
@@ -320,7 +320,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(5000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -335,7 +335,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -350,7 +350,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(5000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -365,7 +365,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(15000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -380,7 +380,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -395,7 +395,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -408,7 +408,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -421,7 +421,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -434,7 +434,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -447,7 +447,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -462,7 +462,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -477,7 +477,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -492,7 +492,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(5000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -507,7 +507,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -520,7 +520,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -535,7 +535,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -550,7 +550,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(15000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -565,7 +565,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(5000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -580,7 +580,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(15000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -593,7 +593,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -608,7 +608,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -623,7 +623,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -636,7 +636,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -649,7 +649,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -664,7 +664,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(5000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -677,7 +677,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -700,7 +700,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(30000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -722,7 +722,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(60000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -735,7 +735,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -748,7 +748,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -761,7 +761,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -774,7 +774,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -787,7 +787,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 
@@ -800,7 +800,7 @@ class QuantumBridgeClient {
         signal: AbortSignal.timeout(3000)
       });
       if (!response.ok) return null;
-      return await response.json();
+      return await response.json() as any;
     } catch { return null; }
   }
 

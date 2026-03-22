@@ -1,5 +1,5 @@
 import OpenAI, { AzureOpenAI } from 'openai';
-import { DefaultAzureCredential } from '@azure/identity';
+import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 import { db } from '../../db';
 import { knowledgeGraph } from '../../../shared/schema';
 import { eq, sql, desc, and } from 'drizzle-orm';
@@ -20,7 +20,7 @@ const openai = openaiApiKey && openaiBaseUrl
     : openaiBaseUrl
       ? new AzureOpenAI({
         endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
+        azureADTokenProvider: getBearerTokenProvider(new DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),
       })
       : null;
 

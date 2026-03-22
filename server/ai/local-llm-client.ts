@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { OllamaConfig } from './ollama-config.json';
+import ollamaConfig from './ollama-config.json';
 
 export interface LocalLLMMessage {
   role: 'system' | 'user' | 'assistant';

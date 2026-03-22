@@ -1,6 +1,6 @@
 import OpenAI, { AzureOpenAI } from 'openai';
 import { DocumentAnalysisClient, AzureKeyCredential } from '@azure/ai-form-recognizer';
-import { DefaultAzureCredential } from '@azure/identity';
+import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 import { Audience, DocType, templates, toneByAudience, defaultDocType } from "./templates";
 
 const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
@@ -10,7 +10,7 @@ const llmClient =
   openaiApiKey && openaiBaseUrl
     ? new AzureOpenAI({ endpoint: openaiBaseUrl, apiKey: openaiApiKey })
     : openaiBaseUrl
-      ? new AzureOpenAI({ endpoint: openaiBaseUrl, credential: new DefaultAzureCredential() })
+      ? new AzureOpenAI({ endpoint: openaiBaseUrl, azureADTokenProvider: getBearerTokenProvider(new DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default") })
       : null;
 
 const documentIntelligenceKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY;

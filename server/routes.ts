@@ -1,12 +1,14 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import multer, { type StorageEngine } from "multer";
+import type { HealthProvider } from "./health/integrations";
+import type { ElevenLabsVoice } from "./elevenlabs/client";
 
 type MulterFile = Express.Multer.File;
 import path from "path";
 import { randomUUID } from "crypto";
 import OpenAI, { AzureOpenAI } from "openai";
-import { DefaultAzureCredential } from "@azure/identity";
+import { DefaultAzureCredential, getBearerTokenProvider } from "@azure/identity";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import fetch from "node-fetch";
@@ -55,6 +57,9 @@ let registerInteractiveRoutes: any;
 let quantumBridge: any;
 let quantumResponseFormatter: any;
 let healthIntegrations: any;
+let createAnalysisJob: any;
+let getAnalysisJob: any;
+let listAnalysisReports: any;
 let validateState: any;
 let registerImageRoutes: any;
 let generateImage: any;
@@ -123,9 +128,9 @@ async function loadDependencies() {
   const rpM = await import("./ingestion/report");
   buildReport = rpM.buildReport;
   const jobsM = await import("./ingestion/jobs");
-  const createAnalysisJob = jobsM.createAnalysisJob;
-  const getAnalysisJob = jobsM.getAnalysisJob;
-  const listAnalysisReports = jobsM.listAnalysisReports;
+  createAnalysisJob = jobsM.createAnalysisJob;
+  getAnalysisJob = jobsM.getAnalysisJob;
+  listAnalysisReports = jobsM.listAnalysisReports;
   const dgM = await import("./docgen/generate");
   generateDocument = dgM.generateDocument;
   await tick();
@@ -376,7 +381,7 @@ const openai = openaiApiKey && openaiBaseUrl
     : openaiBaseUrl
       ? new AzureOpenAI({
         endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
+        azureADTokenProvider: getBearerTokenProvider(new DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),
       })
       : null;
 
@@ -1567,7 +1572,7 @@ Format your response in a clear, structured manner.`
         totalBranches: allBranches.length,
         branchesByDomain: Object.entries(domainSummary).map(([name, info]) => ({
           name,
-          ...info
+          ...info as Record<string, unknown>
         }))
       });
     } catch (error) {
@@ -1660,6 +1665,7 @@ Format your response in a clear, structured manner.`
 
   // Agent execution core using autonomy system
   let executeAgentCore = async (command: string): Promise<any> => {
+    const startTime = Date.now();
     const { runAutonomy } = await import("./autonomy/run");
 
     const result = await runAutonomy({

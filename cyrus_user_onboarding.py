@@ -469,7 +469,7 @@ class UserOnboardingManager:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = f"cyrus_user_onboarding_report_{timestamp}.json"
 
-        with open(report_file, 'w') as f
+        with open(report_file, 'w') as f:
             json.dump(report, f, indent=2, default=str)
 
         self.log(f"📄 User onboarding report saved to {report_file}")
@@ -483,16 +483,16 @@ class UserOnboardingManager:
         print(f"Training Modules: {len(self.training_modules)}")
         print(f"Users Trained: {len(self.user_progress)}")
         print(f"Certifications Issued: {len(self.certifications)}")
-        print(f"Completion Rate: {len(self.certifications) / len(self.user_progress) * 100:.1f}%" if self.user_progress else 0")
+        print(f"Completion Rate: {len(self.certifications) / len(self.user_progress) * 100:.1f}%" if self.user_progress else "0%")
         print(f"Report Saved: {report_file}")
 
-        print("
-📊 Program Effectiveness:"        print(f"   User Satisfaction: {report['program_effectiveness']['user_satisfaction_score']}/5")
+        print("\n📊 Program Effectiveness:")
+        print(f"   User Satisfaction: {report['program_effectiveness']['user_satisfaction_score']}/5")
         print(f"   Knowledge Retention: {report['program_effectiveness']['knowledge_retention_rate']}%")
         print(f"   Skill Application: {report['program_effectiveness']['skill_application_rate']}%")
 
-        print("
-🎯 Key Achievements:"        print("   • Comprehensive training curriculum delivered")
+        print("\n🎯 Key Achievements:")
+        print("   • Comprehensive training curriculum delivered")
         print("   • Multi-role user training completed")
         print("   • Professional certifications issued")
         print("   • High user satisfaction and engagement")

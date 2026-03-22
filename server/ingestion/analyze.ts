@@ -11,6 +11,18 @@ const openaiClient =
     ? new (await import("openai")).default({ apiKey: openaiApiKey, baseURL: openaiBaseUrl })
     : null;
 
+export interface AnalysisCitation {
+  text: string;
+  page?: number;
+  location?: string;
+}
+
+export interface AnalysisOptions {
+  jurisdiction?: string;
+  strictLegalReview?: boolean;
+  [key: string]: unknown;
+}
+
 export interface AnalysisResult {
   summary: string;
   findings: string[];
@@ -18,9 +30,19 @@ export interface AnalysisResult {
   interpretation: string;
   recommendations: string[];
   confidence: "High" | "Medium" | "Low";
+  documentType: string;
+  documentTypeConfidence: "High" | "Medium" | "Low";
+  decisionActions: Array<{ action: string; owner: string; deadline: string; obligation: string }>;
+  executiveBrief: string;
+  knowledgeApplied: string[];
+  capabilitySummary: string;
+  jurisdictionApplied: string;
+  strictLegalReview: boolean;
+  citationAnchors: AnalysisCitation[];
+  chunksAnalyzed?: number;
 }
 
-export async function analyzeExtraction(ext: ExtractionResult): Promise<AnalysisResult> {
+export async function analyzeExtraction(ext: ExtractionResult, _options: AnalysisOptions = {}): Promise<AnalysisResult> {
   const contentPieces = [
     ext.text || "",
     ext.ocrText || "",
@@ -37,10 +59,31 @@ export async function analyzeExtraction(ext: ExtractionResult): Promise<Analysis
       interpretation: "Minimal analysis due to missing AI configuration.",
       recommendations: ["Configure OpenAI credentials or enable local LLM for full analysis."],
       confidence: aggregateText ? "Low" : "Low",
+      documentType: "Unknown",
+      documentTypeConfidence: "Low",
+      decisionActions: [],
+      executiveBrief: "",
+      knowledgeApplied: [],
+      capabilitySummary: "",
+      jurisdictionApplied: "",
+      strictLegalReview: false,
+      citationAnchors: [],
     };
   }
 
   // Try local LLM first
+  const prompt = `
+You are a professional analyst. Given extracted content from an uploaded file, produce a concise report:
+- Summary (2-4 sentences)
+- Key Findings (bullets)
+- Issues/Gaps (bullets)
+- Interpretation (1-2 sentences)
+- Recommendations (bullets)
+- Confidence (High/Medium/Low)
+
+If content is minimal, explain that and keep confidence Low.
+`;
+
   if (useLocalLLM) {
     try {
       const localPrompt = `${prompt}\n\nContent to analyze:\n${aggregateText || "No content extracted."}`;
@@ -55,18 +98,6 @@ export async function analyzeExtraction(ext: ExtractionResult): Promise<Analysis
       // Continue to OpenAI fallback
     }
   }
-
-  const prompt = `
-You are a professional analyst. Given extracted content from an uploaded file, produce a concise report:
-- Summary (2-4 sentences)
-- Key Findings (bullets)
-- Issues/Gaps (bullets)
-- Interpretation (1-2 sentences)
-- Recommendations (bullets)
-- Confidence (High/Medium/Low)
-
-If content is minimal, explain that and keep confidence Low.
-`;
 
   try {
     const resp = await openaiClient.chat.completions.create({
@@ -87,6 +118,15 @@ If content is minimal, explain that and keep confidence Low.
       interpretation: "Partial analysis; LLM call failed.",
       recommendations: ["Retry analysis later."],
       confidence: "Low",
+      documentType: "Unknown",
+      documentTypeConfidence: "Low",
+      decisionActions: [],
+      executiveBrief: "",
+      knowledgeApplied: [],
+      capabilitySummary: "",
+      jurisdictionApplied: "",
+      strictLegalReview: false,
+      citationAnchors: [],
     };
   }
 }
@@ -133,6 +173,15 @@ function parseLLMReport(text: string): AnalysisResult {
     interpretation: interpretation || "Interpretation unavailable",
     recommendations,
     confidence,
+    documentType: "Document",
+    documentTypeConfidence: "Low",
+    decisionActions: [],
+    executiveBrief: summary || "Summary unavailable",
+    knowledgeApplied: [],
+    capabilitySummary: "",
+    jurisdictionApplied: "",
+    strictLegalReview: false,
+    citationAnchors: [],
   };
 }
 

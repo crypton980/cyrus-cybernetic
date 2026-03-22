@@ -121,17 +121,7 @@ async function runDocgenJob(id: string): Promise<void> {
   updateJob(id, { status: "running", progress: 8, stage: "Preparing generation" });
 
   try {
-    const result = await generateDocument(job.input, {
-      onProgress: (progress, stage) => {
-        const current = jobs.get(id);
-        if (!current || current.status !== "running") return;
-        updateJob(id, { progress, stage });
-      },
-      shouldCancel: () => {
-        const current = jobs.get(id);
-        return Boolean(current?.cancelRequested);
-      },
-    });
+    const result = await generateDocument(job.input);
 
     const current = jobs.get(id);
     if (current?.cancelRequested) {

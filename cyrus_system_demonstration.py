@@ -431,7 +431,7 @@ class SystemDemonstrationManager:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = f"cyrus_system_demonstration_report_{timestamp}.json"
 
-        with open(report_file, 'w') as f
+        with open(report_file, 'w') as f:
             json.dump(report, f, indent=2, default=str)
 
         self.log(f"📄 System demonstration report saved to {report_file}")

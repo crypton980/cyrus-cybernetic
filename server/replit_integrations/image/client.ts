@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Buffer } from "node:buffer";
+import OpenAI, { toFile } from "openai";
 import { localImageGen } from "./local-image-client";
 
 const getApiKey = () => process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;

@@ -360,7 +360,7 @@ class ProductionGoLiveManager:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = f"cyrus_production_golive_report_{timestamp}.json"
 
-        with open(report_file, 'w') as f
+        with open(report_file, 'w') as f:
             json.dump(report, f, indent=2, default=str)
 
         self.log(f"📄 Production go-live report saved to {report_file}")
@@ -377,15 +377,15 @@ class ProductionGoLiveManager:
         print(f"Customer Satisfaction: {report['golive_summary']['customer_satisfaction']}")
         print(f"Report Saved: {report_file}")
 
-        print("
-🏆 Key Achievements:"        print("   • Perfect launch with zero incidents")
+        print("\n🏆 Key Achievements:")
+        print("   • Perfect launch with zero incidents")
         print("   • 97.1% user adoption rate exceeded targets")
         print("   • 99.95% uptime achieved")
         print("   • 4.9/5 customer satisfaction score")
         print("   • 1.45M peak concurrent users")
 
-        print("
-📊 Performance Metrics:"        for metric in self.monitoring_metrics[:3]:
+        print("\n📊 Performance Metrics:")
+        for metric in self.monitoring_metrics[:3]:
             print(f"   • {metric['metric']}: {metric['current']} ({metric['status']})")
 
 def main():

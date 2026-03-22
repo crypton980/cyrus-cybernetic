@@ -1,5 +1,5 @@
 import OpenAI, { AzureOpenAI } from 'openai';
-import { DefaultAzureCredential } from "@azure/identity";
+import { DefaultAzureCredential, getBearerTokenProvider } from "@azure/identity";
 import { z } from "zod";
 
 const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
@@ -14,7 +14,7 @@ const openaiClient =
     : openaiBaseUrl
       ? new AzureOpenAI({
         endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
+        azureADTokenProvider: getBearerTokenProvider(new DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),
       })
       : null;
 

@@ -92,7 +92,7 @@ class BloodSamplingSystem {
   private vacuumSystems: Map<string, VacuumSystem> = new Map();
   private sessions: Map<string, SamplingSession> = new Map();
   private samples: Map<string, BloodSample> = new Map();
-  private sterilization: SterilizationSystem;
+  private sterilization!: SterilizationSystem;
   private servoMotors: Map<string, ServoMotor> = new Map();
   private pressureSensors: Map<string, PressureSensor> = new Map();
   private emergencyStop: boolean = false;

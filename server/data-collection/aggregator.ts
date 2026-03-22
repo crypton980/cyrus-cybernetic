@@ -1,4 +1,5 @@
 import { WebScraper, ScrapedData } from "./web-scraper";
+export type { ScrapedData };
 import { RSSAggregator, RSSItem } from "./rss-parser";
 import { KnowledgeBase } from "./knowledge-base";
 import { DataProcessor } from "./data-processor";

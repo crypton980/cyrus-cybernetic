@@ -1,6 +1,5 @@
 import { localLLM } from "../ai/local-llm-client";
 import { cyrusBrain } from "../ai/cyrus-brain";
-import { cyrusBrain } from "../ai/cyrus-brain";
 import { voiceProsody } from "./voice-prosody";
 import { emotionFusion } from "./emotion-fusion";
 
