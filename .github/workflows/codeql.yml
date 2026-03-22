@@ -1,0 +1,72 @@
+name: "CodeQL Analysis"
+
+on:
+  push:
+    branches: [ "main", "copilot/**" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '30 14 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ javascript-typescript ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Only analyze the core application source — exclude generated data,
+          # large binaries, training artifacts, and third-party vendored code
+          # that were causing the "database too large" skip.
+          config: |
+            paths:
+              - server
+              - client
+              - shared
+              - standalone
+            paths-ignore:
+              - node_modules
+              - dist
+              - data
+              - checkpoints
+              - training_results
+              - training_cache
+              - quantum_nexus_part_aa
+              - quantum_nexus_part_ab
+              - quantum_nexus_part_ac
+              - quantum_nexus_smaller_aa
+              - quantum_nexus_smaller_ab
+              - quantum_nexus_smaller_ac
+              - quantum_nexus_smaller_ad
+              - quantum_nexus_smaller_ae
+              - cyrus_replit_upload
+              - migrated_workspaces
+              - session_imports
+              - generated_images
+              - generated_robotics_content
+              - generated_robotics_designs
+              - generated_robotics_images
+              - generation_cache
+              - '**/*.min.js'
+              - '**/vendor/**'
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
