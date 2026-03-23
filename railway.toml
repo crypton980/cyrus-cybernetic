@@ -1,13 +1,13 @@
 [build]
-builder = "python"
-buildCommand = "pip install -r requirements.txt"
+builder = "nixpacks"
+buildCommand = "npm ci && npm run build"
 
 [deploy]
-startCommand = "python simple_flask_server.py"
-healthcheckPath = "/health"
+startCommand = "node dist/server/index.js"
+healthcheckPath = "/__health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 [build.env]
-PYTHON_VERSION = "3.12"
+NODE_ENV = "production"
