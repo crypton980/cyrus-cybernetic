@@ -929,7 +929,7 @@ export async function registerRoutes(
   // Document generation (professional-grade)
   app.post("/api/doc/generate", async (req, res) => {
     try {
-      const { mode, docType, audience, purpose, topic, rawText, data } = req.body || {};
+      const { mode, docType, audience, purpose, topic, rawText, data, jurisdiction, parties } = req.body || {};
       if (!mode || !["full", "convert", "assist"].includes(mode)) {
         return res.status(400).json({ error: "mode must be full|convert|assist" });
       }
@@ -941,6 +941,8 @@ export async function registerRoutes(
         topic,
         rawText,
         data,
+        jurisdiction,
+        parties,
       });
       res.json(doc);
     } catch (err: any) {
