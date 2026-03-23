@@ -127,30 +127,30 @@ export async function deepSearch(opts: SearchOptions): Promise<SearchResult[]> {
 
   try {
     // ── Strategy 1: Full-Text Search ─────────────────────────────────────────
+    // Dynamically build WHERE clauses and push params in order so $N matches.
     try {
+      const ftsParams: unknown[] = [q];                 // $1 = query
+      const ftsWhere: string[] = ["is_deleted = 0"];
+      if (detectedType) { ftsParams.push(detectedType); ftsWhere.push(`record_type = $${ftsParams.length}`); }
+      if (sourceModule) { ftsParams.push(sourceModule); ftsWhere.push(`source_module = $${ftsParams.length}`); }
+      if (cursor)       { ftsParams.push(cursor);       ftsWhere.push(`created_at < $${ftsParams.length}`); }
+      ftsWhere.push(`to_tsvector('english', coalesce(label,'') || ' ' || coalesce(value,'') || ' ' || coalesce(tags,'')) @@ websearch_to_tsquery('english', $1)`);
+      ftsParams.push(cap * 2);                          // last param = LIMIT
+
       const ftsQuery = `
-        SELECT *, 
+        SELECT *,
           ts_rank(
             to_tsvector('english', coalesce(label,'') || ' ' || coalesce(value,'') || ' ' || coalesce(tags,'')),
             websearch_to_tsquery('english', $1)
           ) AS _fts_rank,
           'fts' AS _strategy
         FROM system_database
-        WHERE is_deleted = 0
-          ${detectedType ? `AND record_type = $3` : ""}
-          ${sourceModule ? `AND source_module = $4` : ""}
-          ${cursor ? `AND created_at < $5` : ""}
-          AND to_tsvector('english', coalesce(label,'') || ' ' || coalesce(value,'') || ' ' || coalesce(tags,''))
-              @@ websearch_to_tsquery('english', $1)
+        WHERE ${ftsWhere.join(" AND ")}
         ORDER BY _fts_rank DESC, created_at DESC
-        LIMIT $2
+        LIMIT $${ftsParams.length}
       `;
-      const params: unknown[] = [q, cap * 2];
-      if (detectedType) params.push(detectedType);
-      if (sourceModule) params.push(sourceModule);
-      if (cursor) params.push(cursor);
 
-      const { rows } = await client.query(ftsQuery, params);
+      const { rows } = await client.query(ftsQuery, ftsParams);
       rawRows.push(...rows);
     } catch {
       // pg_trgm or FTS not yet available (migration not run) — continue silently
@@ -160,8 +160,15 @@ export async function deepSearch(opts: SearchOptions): Promise<SearchResult[]> {
     try {
       const tokens = tokenise(q);
       if (tokens.length > 0) {
-        // Use the first significant token for fuzzy (pg_trgm works best on a single term)
         const term = tokens[0];
+        const fuzzyParams: unknown[] = [term, minSimilarity]; // $1=term, $2=threshold
+        const fuzzyWhere: string[] = ["is_deleted = 0"];
+        if (detectedType) { fuzzyParams.push(detectedType); fuzzyWhere.push(`record_type = $${fuzzyParams.length}`); }
+        if (sourceModule) { fuzzyParams.push(sourceModule); fuzzyWhere.push(`source_module = $${fuzzyParams.length}`); }
+        if (cursor)       { fuzzyParams.push(cursor);       fuzzyWhere.push(`created_at < $${fuzzyParams.length}`); }
+        fuzzyWhere.push(`(similarity(label, $1) >= $2 OR similarity(coalesce(value,''), $1) >= $2)`);
+        fuzzyParams.push(cap * 2);
+
         const fuzzyQuery = `
           SELECT *,
             GREATEST(
@@ -170,24 +177,12 @@ export async function deepSearch(opts: SearchOptions): Promise<SearchResult[]> {
             ) AS _fts_rank,
             'fuzzy' AS _strategy
           FROM system_database
-          WHERE is_deleted = 0
-            ${detectedType ? `AND record_type = $3` : ""}
-            ${sourceModule ? `AND source_module = $4` : ""}
-            ${cursor ? `AND created_at < $5` : ""}
-            AND (
-              similarity(label, $1) >= $2
-              OR similarity(coalesce(value,''), $1) >= $2
-            )
+          WHERE ${fuzzyWhere.join(" AND ")}
           ORDER BY _fts_rank DESC, created_at DESC
-          LIMIT $6
+          LIMIT $${fuzzyParams.length}
         `;
-        const params: unknown[] = [term, minSimilarity];
-        if (detectedType) params.push(detectedType);
-        if (sourceModule) params.push(sourceModule);
-        if (cursor) params.push(cursor);
-        params.push(cap * 2);
 
-        const { rows } = await client.query(fuzzyQuery, params);
+        const { rows } = await client.query(fuzzyQuery, fuzzyParams);
         rawRows.push(...rows);
       }
     } catch {
@@ -197,27 +192,22 @@ export async function deepSearch(opts: SearchOptions): Promise<SearchResult[]> {
     // ── Strategy 3: Exact / Prefix ILIKE ─────────────────────────────────────
     try {
       const pattern = `%${q}%`;
+      const exactParams: unknown[] = [pattern]; // $1=pattern
+      const exactWhere: string[] = ["is_deleted = 0", "(label ILIKE $1 OR value ILIKE $1 OR tags ILIKE $1)"];
+      if (detectedType) { exactParams.push(detectedType); exactWhere.push(`record_type = $${exactParams.length}`); }
+      if (sourceModule) { exactParams.push(sourceModule); exactWhere.push(`source_module = $${exactParams.length}`); }
+      if (cursor)       { exactParams.push(cursor);       exactWhere.push(`created_at < $${exactParams.length}`); }
+      exactParams.push(cap * 2);
+
       const exactQuery = `
         SELECT *, 0.5 AS _fts_rank, 'exact' AS _strategy
         FROM system_database
-        WHERE is_deleted = 0
-          ${detectedType ? `AND record_type = $3` : ""}
-          ${sourceModule ? `AND source_module = $4` : ""}
-          ${cursor ? `AND created_at < $5` : ""}
-          AND (
-            label ILIKE $1
-            OR value ILIKE $1
-            OR tags  ILIKE $1
-          )
+        WHERE ${exactWhere.join(" AND ")}
         ORDER BY created_at DESC
-        LIMIT $2
+        LIMIT $${exactParams.length}
       `;
-      const params: unknown[] = [pattern, cap * 2];
-      if (detectedType) params.push(detectedType);
-      if (sourceModule) params.push(sourceModule);
-      if (cursor) params.push(cursor);
 
-      const { rows } = await client.query(exactQuery, params);
+      const { rows } = await client.query(exactQuery, exactParams);
       rawRows.push(...rows);
     } catch {
       // fallback
