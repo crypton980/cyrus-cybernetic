@@ -158,7 +158,7 @@ export class EthicalGovernanceEngine {
         description: 'Prevent deceptive or misleading content',
         active: true,
         priority: 2,
-        checkFunction: async (content) => true
+        checkFunction: async (content) => !this.containsDeception(content)
       },
       {
         id: 'consent-required',
@@ -166,7 +166,7 @@ export class EthicalGovernanceEngine {
         description: 'Ensure appropriate consent for sensitive actions',
         active: true,
         priority: 3,
-        checkFunction: async (content) => true
+        checkFunction: async (content) => !this.requiresExplicitConsent(content)
       }
     ];
 
@@ -205,9 +205,25 @@ export class EthicalGovernanceEngine {
     return privacyPatterns.some(pattern => pattern.test(content));
   }
 
-  async assessEthics(
-    content: string,
-    context?: { userIntent?: string; conversationHistory?: string[] }
+  private containsDeception(content: string): boolean {
+    const deceptionPatterns = [
+      /\b(fake|fabricat|made.up|invent|falsif)\b.*\b(news|report|fact|statistic|data|study|research)\b/i,
+      /\b(pretend|impersonat|pose as)\b.*\b(official|authority|expert|doctor|lawyer|police)\b/i,
+      /\b(mislead|deceiv|trick|fool|manipulat)\b.*\b(into|people|user|them|someone)\b/i,
+    ];
+    return deceptionPatterns.some(pattern => pattern.test(content));
+  }
+
+  private requiresExplicitConsent(content: string): boolean {
+    const sensitiveActionPatterns = [
+      /\b(collect|harvest|scrape|gather)\b.*\b(personal|private|user).{0,20}\b(data|info|information)\b/i,
+      /\b(share|sell|distribute|disclose)\b.*\b(personal|private|user).{0,20}\b(data|info|information)\b/i,
+      /\b(track|monitor|surveil|spy)\b.*\b(location|movement|activity|behavior)\b/i,
+    ];
+    return sensitiveActionPatterns.some(pattern => pattern.test(content));
+  }
+
+
   ): Promise<EthicalAssessment> {
     const concerns: EthicalConcern[] = [];
     let score = 1.0;

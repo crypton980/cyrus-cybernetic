@@ -167,7 +167,7 @@ Return only valid JSON.`
 
       this.emotionHistory.push(state);
       if (this.emotionHistory.length > 100) {
-        this.emotionHistory = this.emotionHistory.slice(-50);
+        this.emotionHistory = this.emotionHistory.slice(-100);
       }
 
       return state;

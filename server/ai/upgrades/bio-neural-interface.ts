@@ -82,6 +82,7 @@ export class BioNeuralInterface {
   private brainwaveHistory: BrainWaveData[] = [];
   private cognitiveStates: CognitiveState[] = [];
   private activeSessions: Map<string, NeurofeedbackSession> = new Map();
+  private sessionIntervals: Map<string, NodeJS.Timeout> = new Map();
   private isConnected = false;
   private sampleRate = 256;
 
@@ -334,7 +335,7 @@ export class BioNeuralInterface {
     const updateInterval = setInterval(() => {
       const elapsed = Date.now() - session.startTime.getTime();
       if (elapsed >= session.duration) {
-        clearInterval(updateInterval);
+        this.stopNeurofeedbackSession(session.id);
         return;
       }
 
@@ -347,7 +348,18 @@ export class BioNeuralInterface {
       });
     }, 1000);
 
+    this.sessionIntervals.set(session.id, updateInterval);
+
     return session;
+  }
+
+  stopNeurofeedbackSession(sessionId: string): void {
+    const interval = this.sessionIntervals.get(sessionId);
+    if (interval) {
+      clearInterval(interval);
+      this.sessionIntervals.delete(sessionId);
+    }
+    this.activeSessions.delete(sessionId);
   }
 
   async interpretNeuralActivity(query?: string): Promise<{

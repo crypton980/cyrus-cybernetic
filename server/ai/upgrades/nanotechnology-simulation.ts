@@ -518,7 +518,9 @@ export class NanotechnologySimulation {
       ...structure.properties,
       atomCount: structure.atoms.length,
       bondCount: structure.bonds.length,
-      averageBondLength: structure.bonds.reduce((sum, b) => sum + b.length, 0) / structure.bonds.length,
+      averageBondLength: structure.bonds.length > 0
+        ? structure.bonds.reduce((sum, b) => sum + b.length, 0) / structure.bonds.length
+        : 0,
       composition: this.getComposition(structure)
     };
 

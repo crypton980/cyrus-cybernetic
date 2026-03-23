@@ -17,6 +17,7 @@ export interface TaskResult {
   result?: any;
   error?: string;
   processingTime: number;
+  completedAt: number;
   workerId: string;
 }
 
@@ -147,6 +148,7 @@ export class DecentralizedIntelligenceNetwork extends EventEmitter {
         success: true,
         result,
         processingTime,
+        completedAt: Date.now(),
         workerId: worker.id
       };
 
@@ -172,6 +174,7 @@ export class DecentralizedIntelligenceNetwork extends EventEmitter {
         success: false,
         error: error.message,
         processingTime: Date.now() - startTime,
+        completedAt: Date.now(),
         workerId: worker.id
       };
 
@@ -337,7 +340,7 @@ export class DecentralizedIntelligenceNetwork extends EventEmitter {
 
   private calculateThroughput(): number {
     const recentTasks = Array.from(this.completedTasks.values())
-      .filter(t => Date.now() - t.processingTime < 60000);
+      .filter(t => Date.now() - t.completedAt < 60000);
     return recentTasks.length;
   }
 
@@ -346,7 +349,7 @@ export class DecentralizedIntelligenceNetwork extends EventEmitter {
     const now = Date.now();
     
     for (const [id, result] of this.completedTasks) {
-      if (now - result.processingTime > maxAge) {
+      if (now - result.completedAt > maxAge) {
         this.completedTasks.delete(id);
       }
     }

@@ -396,12 +396,18 @@ export class QuantumNeuralNetworks {
     for (let shot = 0; shot < shots; shot++) {
       const rand = Math.random();
       let cumProb = 0;
+      let measured = false;
       for (let i = 0; i < size; i++) {
         cumProb += probabilities[i];
         if (rand <= cumProb) {
           measurements.push(i);
+          measured = true;
           break;
         }
+      }
+      // Fallback for floating-point rounding where probabilities sum to slightly < 1.0
+      if (!measured) {
+        measurements.push(size - 1);
       }
     }
 
