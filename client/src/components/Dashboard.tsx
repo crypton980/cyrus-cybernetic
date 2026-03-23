@@ -316,7 +316,7 @@ export function Dashboard() {
       addVisionEvent(
         "Burst Analysis Complete",
         `${frames.length} frames analysed. Safety: ${safety}. Scene: ${(payload.analysis as any)?.compositeScene?.slice(0, 80) || "N/A"}`,
-        safety === "alert" ? "alert" : safety === "caution" ? "warning" : "info",
+        safety === "alert" ? "alert" : "info",
       );
     } catch (err) {
       addVisionEvent("Burst Analysis Failed", String(err), "alert");
@@ -325,6 +325,8 @@ export function Dashboard() {
       setIsBurstCapturing(false);
     }
   }, [cameraActive, captureCurrentFrame, addVisionEvent]);
+
+  const handleFaceDatabaseUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!enrollName.trim()) {
