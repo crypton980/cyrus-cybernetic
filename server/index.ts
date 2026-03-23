@@ -154,6 +154,14 @@ async function initializeSystem() {
   } catch (e) {
     console.error("[Init] SysDB failed (non-fatal):", e);
   }
+
+  try {
+    const { default: queryRouter } = await import("./query/router");
+    app.use("/api/query", queryRouter);
+    log("[Query Router] Intelligent query router registered");
+  } catch (e) {
+    console.error("[Init] Query router failed (non-fatal):", e);
+  }
   await tick();
 
   try {

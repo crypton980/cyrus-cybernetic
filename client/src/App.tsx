@@ -41,6 +41,7 @@ import { QuantumPage } from "./pages/QuantumPage";
 import { SecurityPage } from "./pages/SecurityPage";
 import { BiologyPage } from "./pages/BiologyPage";
 import { BloodSamplingPage } from "./pages/BloodSamplingPage";
+import { UniversalQueryBar } from "./components/UniversalQueryBar";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
@@ -431,6 +432,8 @@ function AppContent({
             <Route path="/biology" component={BiologyPage} />
             <Route path="/blood" component={BloodSamplingPage} />
           </Switch>
+          {/* Universal intelligent search — available on every page */}
+          <UniversalQueryBar />
         </main>
       </div>
     </div>
