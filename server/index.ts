@@ -149,6 +149,8 @@ async function initializeSystem() {
     const { default: sysdbRoutes } = await import("./sysdb/routes");
     app.use("/api/sysdb", sysdbRoutes);
     log("[SysDB] System database routes registered");
+    // Run idempotent migration (adds indexes, triggers, extensions) — non-blocking
+    import("./sysdb/migrate").then(({ runSysdbMigration }) => runSysdbMigration()).catch(() => {});
   } catch (e) {
     console.error("[Init] SysDB failed (non-fatal):", e);
   }

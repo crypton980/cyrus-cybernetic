@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, jsonb, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -324,27 +324,51 @@ export const insertLocationRecordSchema = createInsertSchema(locationRecords).om
 
 // ─── System Database ──────────────────────────────────────────────────────────
 // Central searchable store for biometric and identifier records from any module.
-export const systemDatabase = pgTable("system_database", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  // Type of record: face | fingerprint | iris | barcode | qrcode | reference | document | image | text
-  recordType: text("record_type").notNull(),
-  // Human-readable label / name for this record
-  label: text("label").notNull(),
-  // The primary searchable text value (reference number, QR text, barcode value, description, etc.)
-  value: text("value").default(""),
-  // Raw image data stored as base64 for visual record types (face, iris, fingerprint, image)
-  imageData: text("image_data"),
-  // Structured metadata (JSON) — e.g., { age, gender, role, issuer, expiry, … }
-  metadata: jsonb("metadata"),
-  // Comma-separated tags for filtering
-  tags: text("tags").default(""),
-  // Which module uploaded this record
-  sourceModule: text("source_module").default("unknown"),
-  // User who uploaded (optional)
-  userId: varchar("user_id"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+// Designed for millions of records: every searchable column has a B-tree index;
+// a dedicated search_vector column holds a GIN-indexed tsvector for PostgreSQL
+// full-text search. The vector is automatically updated by a DB trigger via
+// the migration helper in server/sysdb/migrate.ts.
+export const systemDatabase = pgTable(
+  "system_database",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    // Type of record: face | fingerprint | iris | barcode | qrcode | reference | document | image | text
+    recordType: text("record_type").notNull(),
+    // Human-readable label / name for this record
+    label: text("label").notNull(),
+    // The primary searchable text value (reference number, QR text, barcode value, description, etc.)
+    value: text("value").default(""),
+    // Raw image data stored as base64 for visual record types (face, iris, fingerprint, image)
+    imageData: text("image_data"),
+    // Structured metadata (JSON) — e.g., { age, gender, role, issuer, expiry, … }
+    metadata: jsonb("metadata"),
+    // Comma-separated tags for filtering
+    tags: text("tags").default(""),
+    // Which module uploaded this record
+    sourceModule: text("source_module").default("unknown"),
+    // User who uploaded (optional)
+    userId: varchar("user_id"),
+    // Pre-computed full-text search vector (maintained by DB trigger or application layer)
+    searchVector: text("search_vector").default(""),
+    // Soft-delete: deleted records are hidden from search but preserved for audit
+    isDeleted: integer("is_deleted").default(0),
+    // Integrity checksum (sha256 of label+value+recordType) to detect corruption
+    checksum: text("checksum").default(""),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    // B-tree indexes for equality filtering and range scans
+    recordTypeIdx: index("sysdb_record_type_idx").on(table.recordType),
+    sourceModuleIdx: index("sysdb_source_module_idx").on(table.sourceModule),
+    userIdIdx: index("sysdb_user_id_idx").on(table.userId),
+    createdAtIdx: index("sysdb_created_at_idx").on(table.createdAt),
+    // Composite index for the most common list query (type + date)
+    typeCreatedIdx: index("sysdb_type_created_idx").on(table.recordType, table.createdAt),
+    // Partial index for non-deleted records (most queries exclude deleted rows)
+    isDeletedIdx: index("sysdb_is_deleted_idx").on(table.isDeleted),
+  }),
+);
 
 export const insertSystemDatabaseSchema = createInsertSchema(systemDatabase).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertSystemDatabase = z.infer<typeof insertSystemDatabaseSchema>;

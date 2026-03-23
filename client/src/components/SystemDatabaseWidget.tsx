@@ -3,13 +3,16 @@
  *
  * A reusable collapsible panel that can be placed in any module page.
  * Features:
- * - Upload records to the system database (facial, fingerprint, iris,
- *   barcode, QR code, reference numbers, documents, images, text)
- * - Search the database by text / reference / barcode / QR / face image
- * - Camera capture support for face enrollment
+ * - Upload records (facial, fingerprint, iris, barcode, QR code, reference, documents, images, text)
+ * - Deep multi-strategy search (FTS + fuzzy + exact + AI re-ranking)
+ * - Facial image matching via camera or file
+ * - Browse with cursor-based pagination
+ * - Stats banner showing record counts by type
+ * - Verify record integrity by ID
+ * - Bulk upload via JSON
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Database,
   Upload,
@@ -27,6 +30,10 @@ import {
   QrCode,
   FileText,
   Tag,
+  BarChart2,
+  ShieldCheck,
+  ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 
 type RecordType =
@@ -49,17 +56,34 @@ interface DBRecord {
   metadata?: Record<string, unknown> | null;
   tags?: string;
   sourceModule?: string;
+  isDeleted?: number;
   createdAt: string;
+  updatedAt?: string;
 }
 
-interface SearchMatch {
-  id: string;
-  recordType: string;
+/** Result from the deep-search engine (server returns `{ record, score, matchReason, strategy }`) */
+interface DeepSearchMatch {
+  record: DBRecord;
+  score: number;
+  matchReason: string;
+  strategy: "fts" | "fuzzy" | "exact" | "ai";
+}
+
+/** Result from face search (`{ knownFaceId, label, confidence, reason }`) */
+interface FaceMatch {
+  knownFaceId: string;
   label: string;
-  value: string;
-  confidence?: number;
+  confidence: number;
   reason?: string;
-  record?: DBRecord;
+}
+
+interface DBStats {
+  total: number;
+  active: number;
+  deleted: number;
+  byType: Record<string, number>;
+  byModule: Record<string, number>;
+  error?: string;
 }
 
 const RECORD_TYPE_LABELS: Record<RecordType, string> = {
@@ -89,15 +113,19 @@ const RECORD_TYPE_ICONS: Record<RecordType, React.ReactNode> = {
 interface SystemDatabaseWidgetProps {
   /** Which module is embedding this widget — used to tag uploads */
   sourceModule: string;
-  /** If false, the widget starts collapsed */
+  /** If true, the widget starts expanded */
   defaultOpen?: boolean;
 }
 
 export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: SystemDatabaseWidgetProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [activeTab, setActiveTab] = useState<"upload" | "search" | "browse">("upload");
+  const [activeTab, setActiveTab] = useState<"upload" | "search" | "browse" | "stats">("upload");
 
-  // Upload form state
+  // ── Stats ────────────────────────────────────────────────────────────────
+  const [stats, setStats] = useState<DBStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+  // ── Upload state ────────────────────────────────────────────────────────
   const [uploadType, setUploadType] = useState<RecordType>("face");
   const [uploadLabel, setUploadLabel] = useState("");
   const [uploadValue, setUploadValue] = useState("");
@@ -106,20 +134,28 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  // Search state
+  // ── Search state ────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"" | RecordType>("");
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<DBRecord[] | SearchMatch[]>([]);
+  const [searchResults, setSearchResults] = useState<DeepSearchMatch[] | FaceMatch[]>([]);
   const [searchMode, setSearchMode] = useState<"text" | "face">("text");
   const [faceSearchImage, setFaceSearchImage] = useState<string | null>(null);
+  const [searchDone, setSearchDone] = useState(false);
 
-  // Browse state
+  // ── Verify state ─────────────────────────────────────────────────────────
+  const [verifyId, setVerifyId] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<{ valid: boolean; integrityOk?: boolean; details: string } | null>(null);
+
+  // ── Browse state ────────────────────────────────────────────────────────
   const [browseRecords, setBrowseRecords] = useState<DBRecord[]>([]);
   const [isBrowsing, setIsBrowsing] = useState(false);
   const [browseFilter, setBrowseFilter] = useState<"" | RecordType>("");
+  const [browseCursor, setBrowseCursor] = useState<string | null>(null);
+  const [browseHasMore, setBrowseHasMore] = useState(false);
 
-  // Camera for face capture
+  // ── Camera ───────────────────────────────────────────────────────────────
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraMode, setCameraMode] = useState<"upload" | "search">("upload");
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -177,6 +213,24 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
       reader.readAsDataURL(file);
     });
 
+  // ── Stats ────────────────────────────────────────────────────────────────
+  const loadStats = useCallback(async () => {
+    setIsLoadingStats(true);
+    try {
+      const res = await fetch("/api/sysdb/stats");
+      if (!res.ok) throw new Error("Stats unavailable");
+      setStats(await res.json());
+    } catch {
+      setStats(null);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && activeTab === "stats" && !stats) void loadStats();
+  }, [isOpen, activeTab, stats, loadStats]);
+
   // ── Upload ────────────────────────────────────────────────────────────────
   const handleUpload = async () => {
     if (!uploadLabel.trim()) {
@@ -207,6 +261,8 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
       setUploadValue("");
       setUploadTags("");
       setUploadImage(null);
+      // Refresh stats if visible
+      if (activeTab === "stats") void loadStats();
     } catch (err: any) {
       setUploadResult({ ok: false, message: err?.message || "Upload failed" });
     } finally {
@@ -214,13 +270,14 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
     }
   };
 
-  // ── Text Search ───────────────────────────────────────────────────────────
+  // ── Deep Text Search ──────────────────────────────────────────────────────
   const handleTextSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     setSearchResults([]);
+    setSearchDone(false);
     try {
-      const params = new URLSearchParams({ q: searchQuery.trim() });
+      const params = new URLSearchParams({ q: searchQuery.trim(), limit: "20" });
       if (searchType) params.set("type", searchType);
       const res = await fetch(`/api/sysdb/search?${params}`);
       if (!res.ok) throw new Error("Search failed");
@@ -230,6 +287,7 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
       setSearchResults([]);
     } finally {
       setIsSearching(false);
+      setSearchDone(true);
     }
   };
 
@@ -238,6 +296,7 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
     if (!faceSearchImage) return;
     setIsSearching(true);
     setSearchResults([]);
+    setSearchDone(false);
     try {
       const res = await fetch("/api/sysdb/search/face", {
         method: "POST",
@@ -251,25 +310,46 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
       setSearchResults([]);
     } finally {
       setIsSearching(false);
+      setSearchDone(true);
     }
   };
 
-  // ── Browse ────────────────────────────────────────────────────────────────
-  const loadBrowse = async () => {
+  // ── Verify record ─────────────────────────────────────────────────────────
+  const handleVerify = async () => {
+    if (!verifyId.trim()) return;
+    setIsVerifying(true);
+    setVerifyResult(null);
+    try {
+      const res = await fetch(`/api/sysdb/verify/${encodeURIComponent(verifyId.trim())}`);
+      const data = await res.json();
+      setVerifyResult(data);
+    } catch {
+      setVerifyResult({ valid: false, details: "Verification request failed" });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // ── Browse (cursor-based pagination) ─────────────────────────────────────
+  const loadBrowse = useCallback(async (append = false) => {
     setIsBrowsing(true);
     try {
-      const params = new URLSearchParams({ limit: "30" });
+      const params = new URLSearchParams({ limit: "20" });
       if (browseFilter) params.set("type", browseFilter);
+      if (append && browseCursor) params.set("cursor", browseCursor);
       const res = await fetch(`/api/sysdb/records?${params}`);
       if (!res.ok) throw new Error("Browse failed");
       const data = await res.json();
-      setBrowseRecords(data.records || []);
+      const newRecords: DBRecord[] = data.records || [];
+      setBrowseRecords((prev) => append ? [...prev, ...newRecords] : newRecords);
+      setBrowseHasMore(data.pagination?.hasMore ?? false);
+      setBrowseCursor(data.pagination?.nextCursor ?? null);
     } catch {
-      setBrowseRecords([]);
+      if (!append) setBrowseRecords([]);
     } finally {
       setIsBrowsing(false);
     }
-  };
+  }, [browseFilter, browseCursor]);
 
   const deleteRecord = async (id: string) => {
     try {
@@ -292,7 +372,7 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
             <Database className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="text-sm font-semibold text-white">System Database</span>
-          <span className="text-xs text-gray-500 hidden sm:inline">· upload, search &amp; browse records</span>
+          <span className="text-xs text-gray-500 hidden sm:inline">· deep search · upload · browse · verify</span>
         </div>
         {isOpen ? (
           <ChevronUp className="w-4 h-4 text-gray-500" />
@@ -305,12 +385,13 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
         <div className="border-t border-gray-800/50 p-4 space-y-4">
           {/* Tab bar */}
           <div className="flex gap-1 bg-gray-800/40 rounded-lg p-1">
-            {(["upload", "search", "browse"] as const).map((tab) => (
+            {(["upload", "search", "browse", "stats"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
                   setActiveTab(tab);
-                  if (tab === "browse") void loadBrowse();
+                  if (tab === "browse") { setBrowseCursor(null); void loadBrowse(false); }
+                  if (tab === "stats") void loadStats();
                 }}
                 className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors ${
                   activeTab === tab
@@ -530,31 +611,81 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
 
               {/* Results */}
               {searchResults.length > 0 && (
-                <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-thin">
+                <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
                   {searchResults.map((result: any, idx) => {
-                    const rec: DBRecord = result.record || result;
+                    // DeepSearchMatch: { record, score, matchReason, strategy }
+                    // FaceMatch: { knownFaceId, label, confidence, reason }
+                    const isDeep = result.record !== undefined;
+                    const rec: DBRecord | null = isDeep ? result.record : null;
+                    const displayLabel = rec?.label || result.label || "Unknown";
+                    const displayValue = rec?.value || "";
+                    const displayType = rec?.recordType || result.recordType || "";
+                    const score = isDeep ? result.score : result.confidence;
+                    const reason = isDeep ? result.matchReason : result.reason;
+                    const strategy = isDeep ? result.strategy : "ai";
+                    const strategyColors: Record<string, string> = {
+                      fts: "text-blue-400", fuzzy: "text-amber-400", exact: "text-emerald-400", ai: "text-purple-400"
+                    };
                     return (
-                      <div key={rec.id || idx} className="p-2.5 bg-gray-800/40 rounded-lg border border-gray-700/40">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="flex items-center gap-1 text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
-                            {RECORD_TYPE_ICONS[rec.recordType as RecordType]}
-                            {RECORD_TYPE_LABELS[rec.recordType as RecordType] || rec.recordType}
-                          </span>
-                          {result.confidence !== undefined && (
-                            <span className="text-[10px] text-emerald-400">{Math.round(result.confidence * 100)}% match</span>
+                      <div key={rec?.id || result.knownFaceId || idx} className="p-2.5 bg-gray-800/40 rounded-lg border border-gray-700/40">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {displayType && (
+                            <span className="flex items-center gap-1 text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                              {RECORD_TYPE_ICONS[displayType as RecordType]}
+                              {RECORD_TYPE_LABELS[displayType as RecordType] || displayType}
+                            </span>
+                          )}
+                          {score !== undefined && (
+                            <span className="text-[10px] text-emerald-400">{Math.round(score * 100)}% relevance</span>
+                          )}
+                          {strategy && (
+                            <span className={`text-[10px] ${strategyColors[strategy] || "text-gray-400"}`}>
+                              [{strategy}]
+                            </span>
                           )}
                         </div>
-                        <p className="text-xs font-medium text-white">{rec.label}</p>
-                        {rec.value && <p className="text-[11px] text-gray-400 truncate">{rec.value}</p>}
-                        {result.reason && <p className="text-[10px] text-gray-500 italic">{result.reason}</p>}
+                        <p className="text-xs font-medium text-white">{displayLabel}</p>
+                        {displayValue && <p className="text-[11px] text-gray-400 truncate">{displayValue}</p>}
+                        {reason && <p className="text-[10px] text-gray-500 italic mt-0.5">{reason}</p>}
                       </div>
                     );
                   })}
                 </div>
               )}
-              {isSearching === false && searchResults.length === 0 && (searchQuery || faceSearchImage) && (
+              {!isSearching && searchDone && searchResults.length === 0 && (
                 <p className="text-xs text-gray-500 text-center py-2">No matching records found</p>
               )}
+
+              {/* Inline Verify section within search */}
+              <div className="pt-2 border-t border-gray-800/30">
+                <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3 h-3" /> Verify a record by ID
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={verifyId}
+                    onChange={(e) => setVerifyId(e.target.value)}
+                    placeholder="Paste record UUID…"
+                    className="flex-1 bg-gray-800/60 text-white text-xs px-2.5 py-2 rounded-lg border border-gray-700/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder-gray-600"
+                  />
+                  <button
+                    onClick={() => void handleVerify()}
+                    disabled={isVerifying || !verifyId.trim()}
+                    className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-lg disabled:opacity-40"
+                  >
+                    {isVerifying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                {verifyResult && (
+                  <div className={`mt-2 p-2.5 rounded-lg text-xs border flex items-start gap-2 ${verifyResult.valid ? (verifyResult.integrityOk !== false ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300" : "bg-amber-500/10 border-amber-500/20 text-amber-300") : "bg-red-500/10 border-red-500/20 text-red-300"}`}>
+                    {verifyResult.valid
+                      ? <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+                    {verifyResult.details}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -564,7 +695,7 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
               <div className="flex gap-2 items-center">
                 <select
                   value={browseFilter}
-                  onChange={(e) => setBrowseFilter(e.target.value as "" | RecordType)}
+                  onChange={(e) => { setBrowseFilter(e.target.value as "" | RecordType); setBrowseCursor(null); }}
                   className="flex-1 bg-gray-800/60 text-white text-xs px-2.5 py-2 rounded-lg border border-gray-700/50 focus:outline-none"
                 >
                   <option value="">All types</option>
@@ -573,11 +704,12 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
                   ))}
                 </select>
                 <button
-                  onClick={() => void loadBrowse()}
+                  onClick={() => { setBrowseCursor(null); void loadBrowse(false); }}
                   disabled={isBrowsing}
                   className="p-2 bg-gray-800/60 hover:bg-gray-700 rounded-lg text-gray-300 disabled:opacity-40"
+                  title="Refresh"
                 >
-                  {isBrowsing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  {isBrowsing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                 </button>
               </div>
 
@@ -590,9 +722,6 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
                     <span className="flex items-center gap-1 text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded shrink-0">
                       {RECORD_TYPE_ICONS[rec.recordType as RecordType]}
                     </span>
-                    {rec.imageData && (
-                      <img src={rec.imageData} alt={rec.label} className="w-8 h-8 rounded object-cover shrink-0" />
-                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-white truncate">{rec.label}</p>
                       {rec.value && <p className="text-[10px] text-gray-400 truncate">{rec.value}</p>}
@@ -601,12 +730,106 @@ export function SystemDatabaseWidget({ sourceModule, defaultOpen = false }: Syst
                     <button
                       onClick={() => void deleteRecord(rec.id)}
                       className="p-1 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                      title="Delete record"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
               </div>
+
+              {/* Load more (cursor pagination) */}
+              {browseHasMore && (
+                <button
+                  onClick={() => void loadBrowse(true)}
+                  disabled={isBrowsing}
+                  className="w-full py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800/30 hover:bg-gray-700/40 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  {isBrowsing ? <Loader2 className="w-3 h-3 animate-spin" /> : <ChevronRight className="w-3 h-3" />}
+                  Load more
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── STATS TAB ──────────────────────────────────────────────── */}
+          {activeTab === "stats" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                  <BarChart2 className="w-3.5 h-3.5" /> Database overview
+                </p>
+                <button onClick={() => void loadStats()} disabled={isLoadingStats} className="p-1 text-gray-500 hover:text-white">
+                  {isLoadingStats ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                </button>
+              </div>
+
+              {!stats && !isLoadingStats && (
+                <p className="text-xs text-gray-500 text-center py-4">Click refresh to load statistics</p>
+              )}
+
+              {stats && !stats.error && (
+                <>
+                  {/* Totals */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "Total", value: stats.total, color: "text-cyan-400" },
+                      { label: "Active", value: stats.active, color: "text-emerald-400" },
+                      { label: "Deleted", value: stats.deleted, color: "text-red-400" },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} className="bg-gray-800/40 rounded-lg p-2 text-center">
+                        <p className={`text-sm font-bold ${color}`}>{value.toLocaleString()}</p>
+                        <p className="text-[10px] text-gray-500">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* By type */}
+                  {Object.keys(stats.byType || {}).length > 0 && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 mb-1.5 uppercase tracking-wider">By Record Type</p>
+                      <div className="space-y-1">
+                        {Object.entries(stats.byType).sort(([, a], [, b]) => b - a).map(([type, count]) => {
+                          const pct = stats.active > 0 ? Math.round((count / stats.active) * 100) : 0;
+                          return (
+                            <div key={type} className="flex items-center gap-2">
+                              <span className="flex items-center gap-1 w-24 shrink-0 text-[10px] text-gray-400">
+                                {RECORD_TYPE_ICONS[type as RecordType]}
+                                {RECORD_TYPE_LABELS[type as RecordType] || type}
+                              </span>
+                              <div className="flex-1 bg-gray-800/50 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-cyan-600 to-blue-600 rounded-full"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] text-gray-400 w-8 text-right">{count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* By module */}
+                  {Object.keys(stats.byModule || {}).length > 0 && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 mb-1.5 uppercase tracking-wider">By Module</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(stats.byModule).sort(([, a], [, b]) => b - a).map(([mod, count]) => (
+                          <span key={mod} className="text-[10px] bg-gray-800/50 text-gray-400 px-2 py-0.5 rounded-full">
+                            {mod}: {count}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {stats?.error && (
+                <p className="text-xs text-red-400 text-center py-2">{stats.error}</p>
+              )}
             </div>
           )}
         </div>
