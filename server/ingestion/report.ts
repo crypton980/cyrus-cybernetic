@@ -1,5 +1,6 @@
 import { ExtractionResult } from "./extract";
 import { DetectionResult } from "./detect";
+import { LegalDocumentAnalysis } from "./analyze";
 
 export interface AnalysisReport {
   success: boolean;
@@ -16,12 +17,13 @@ export interface AnalysisReport {
   confidence: "High" | "Medium" | "Low";
   attempted: string[];
   warnings: string[];
+  legalAnalysis?: LegalDocumentAnalysis;
 }
 
 export function buildReport(
   det: DetectionResult,
   ext: ExtractionResult,
-  analysis: { summary: string; findings: string[]; issues: string[]; interpretation: string; recommendations: string[]; confidence: "High" | "Medium" | "Low" },
+  analysis: { summary: string; findings: string[]; issues: string[]; interpretation: string; recommendations: string[]; confidence: "High" | "Medium" | "Low"; legalAnalysis?: LegalDocumentAnalysis },
   success: boolean,
 ): AnalysisReport {
   return {
@@ -39,6 +41,8 @@ export function buildReport(
     confidence: analysis.confidence,
     attempted: ext.attempted,
     warnings: ext.warnings,
+    legalAnalysis: analysis.legalAnalysis,
   };
 }
+
 

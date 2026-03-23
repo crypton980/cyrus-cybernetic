@@ -1,6 +1,6 @@
 import { detectFile } from "./detect";
 import { extractFile } from "./extract";
-import { analyzeExtraction, type AnalysisCitation, type AnalysisOptions } from "./analyze";
+import { analyzeExtraction, type AnalysisCitation, type AnalysisOptions, type LegalDocumentAnalysis } from "./analyze";
 
 export interface FullAnalysisResponse {
   detection: Awaited<ReturnType<typeof detectFile>>;
@@ -42,6 +42,7 @@ export interface FullAnalysisResponse {
     entities: Array<{ type: string; value: string }>;
     riskLevel: "low" | "medium" | "high";
     recommendations: string[];
+    legalAnalysis?: LegalDocumentAnalysis;
   };
   generatedAt: string;
 }
@@ -94,6 +95,7 @@ export async function performFullAnalysis(
       entities: [],
       riskLevel,
       recommendations: analysis.recommendations,
+      legalAnalysis: analysis.legalAnalysis,
     },
     generatedAt: new Date().toISOString(),
   };

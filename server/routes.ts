@@ -771,9 +771,12 @@ export async function registerRoutes(
       if (!buffer) {
         return res.status(500).json({ success: false, error: "Unable to read uploaded file buffer" });
       }
+      const jurisdiction = (req.body.jurisdiction as string) || undefined;
+      const caseType = (req.body.caseType as string) || undefined;
+      const strictLegalReview = req.body.strictLegalReview === "true" || req.body.strictLegalReview === true;
       const det = await detectFile(buffer, req.file.mimetype);
       const ext = await extractFile(buffer, req.file.mimetype);
-      const analysis = await analyzeExtraction(ext);
+      const analysis = await analyzeExtraction(ext, { jurisdiction, caseType, strictLegalReview });
       const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f: { ocrText?: string }) => f.ocrText)));
       const report = buildReport(det, ext, analysis, hasContent);
       if (!hasContent) {
