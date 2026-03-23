@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useComms } from "../hooks/useComms";
+import { analyzeTextSentiment, useAnomalyAlerts } from "../hooks/useCommsIntelligence";
+import { CommsIntelligence } from "../components/comms/CommsIntelligence";
 import { usePresence } from "../contexts/PresenceContext";
 import { CyrusHumanoid } from "../components/CyrusHumanoid";
 import { Link } from "wouter";
@@ -39,9 +41,10 @@ import {
   User,
   ArrowLeft,
   Radio,
+  Monitor,
 } from "lucide-react";
 
-type TabType = "messages" | "reminders" | "news" | "calls";
+type TabType = "messages" | "reminders" | "news" | "calls" | "monitor";
 type CallSubTab = "online" | "contacts" | "room";
 
 export function CommsPage() {
@@ -58,6 +61,9 @@ export function CommsPage() {
   const [callMode, setCallMode] = useState<"create" | "join">("create");
   const [copied, setCopied] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [currentSentiment, setCurrentSentiment] = useState<"positive" | "neutral" | "negative">("neutral");
+  const [anomalyDismissed, setAnomalyDismissed] = useState(false);
+  const sentimentDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -105,7 +111,29 @@ export function CommsPage() {
     declineCall: globalDeclineCall,
     connectPresence,
   } = usePresence();
-  
+
+  // Intelligence: anomaly alerts for the current user
+  const { data: anomalyData } = useAnomalyAlerts(myUserId ?? "");
+  const activeAnomalies: Array<{ type: string; severity: string; description: string }> =
+    anomalyData?.anomalies ?? [];
+
+  // Debounced sentiment analysis for message compose
+  const handleMessageContentChange = useCallback(
+    (value: string) => {
+      setNewMessage((prev) => ({ ...prev, content: value }));
+      if (sentimentDebounceRef.current) clearTimeout(sentimentDebounceRef.current);
+      sentimentDebounceRef.current = setTimeout(() => {
+        if (value.trim().length > 0) {
+          const result = analyzeTextSentiment(value);
+          setCurrentSentiment(result.label);
+        } else {
+          setCurrentSentiment("neutral");
+        }
+      }, 300);
+    },
+    []
+  );
+
   // Merge incoming call from both sources - prefer global
   const incomingCall = globalIncomingCall || localIncomingCall;
   
@@ -201,6 +229,7 @@ export function CommsPage() {
     { id: "reminders", label: "Reminders", icon: Bell },
     { id: "news", label: "News", icon: Newspaper },
     { id: "calls", label: "Calls", icon: Phone },
+    { id: "monitor", label: "Monitor", icon: Monitor },
   ];
 
   const getPriorityColor = (priority: string) => {
@@ -529,6 +558,22 @@ export function CommsPage() {
             )}
           </div>
 
+          {/* Anomaly alert banner */}
+          {!anomalyDismissed && activeAnomalies.length > 0 && (
+            <div className="flex items-center justify-between gap-3 bg-yellow-900/30 border border-yellow-700/50 rounded-xl px-4 py-3 text-sm">
+              <div className="flex items-center gap-2 text-yellow-300">
+                <span className="font-semibold">⚠ {activeAnomalies.length} anomaly alert{activeAnomalies.length > 1 ? "s" : ""} detected</span>
+                <span className="text-yellow-400/70 hidden sm:inline">— view the Monitor tab for details</span>
+              </div>
+              <button
+                onClick={() => setAnomalyDismissed(true)}
+                className="text-yellow-500 hover:text-white transition-colors text-xs shrink-0"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/50 rounded-xl overflow-hidden">
             <div className="flex border-b border-gray-800/50">
               {tabs.map((tab) => {
@@ -572,11 +617,20 @@ export function CommsPage() {
                   <input
                     type="text"
                     value={newMessage.content}
-                    onChange={(e) =>
-                      setNewMessage({ ...newMessage, content: e.target.value })
-                    }
+                    onChange={(e) => handleMessageContentChange(e.target.value)}
                     placeholder="Message"
                     className="flex-2 bg-gray-800 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {/* Sentiment indicator dot */}
+                  <div
+                    className={`w-3 h-3 rounded-full shrink-0 my-auto transition-colors ${
+                      currentSentiment === "positive"
+                        ? "bg-green-500"
+                        : currentSentiment === "negative"
+                        ? "bg-red-500"
+                        : "bg-gray-500"
+                    }`}
+                    title={`Sentiment: ${currentSentiment}`}
                   />
                   <button
                     onClick={handleSendMessage}
@@ -1251,6 +1305,12 @@ export function CommsPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === "monitor" && (
+              <div className="py-2">
+                <CommsIntelligence userId={myUserId ?? "guest"} />
               </div>
             )}
           </div>
