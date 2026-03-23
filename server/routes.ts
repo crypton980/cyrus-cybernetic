@@ -774,9 +774,11 @@ export async function registerRoutes(
       const jurisdiction = (req.body.jurisdiction as string) || undefined;
       const caseType = (req.body.caseType as string) || undefined;
       const strictLegalReview = req.body.strictLegalReview === "true" || req.body.strictLegalReview === true;
+      const auditMode = req.body.auditMode === "true" || req.body.auditMode === true;
+      const organisationName = (req.body.organisationName as string) || undefined;
       const det = await detectFile(buffer, req.file.mimetype);
       const ext = await extractFile(buffer, req.file.mimetype);
-      const analysis = await analyzeExtraction(ext, { jurisdiction, caseType, strictLegalReview });
+      const analysis = await analyzeExtraction(ext, { jurisdiction, caseType, strictLegalReview, auditMode, organisationName });
       const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f: { ocrText?: string }) => f.ocrText)));
       const report = buildReport(det, ext, analysis, hasContent);
       if (!hasContent) {
@@ -804,6 +806,8 @@ export async function registerRoutes(
 
       const jurisdiction = req.body.jurisdiction as string || "Botswana";
       const strictLegalReview = req.body.strictLegalReview === "true";
+      const auditMode = req.body.auditMode === "true";
+      const organisationName = (req.body.organisationName as string) || undefined;
 
       const job = await createAnalysisJob({
         userId: null, // TODO: get from auth
@@ -814,7 +818,9 @@ export async function registerRoutes(
         filePath: req.file.path,
         options: {
           jurisdiction,
-          strictLegalReview
+          strictLegalReview,
+          auditMode,
+          organisationName,
         }
       });
 

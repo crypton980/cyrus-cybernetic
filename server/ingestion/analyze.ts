@@ -31,6 +31,8 @@ export interface AnalysisOptions {
   jurisdiction?: string;
   caseType?: string;
   strictLegalReview?: boolean;
+  auditMode?: boolean;
+  organisationName?: string;
   [key: string]: unknown;
 }
 
@@ -74,6 +76,51 @@ export interface LegalDocumentAnalysis {
   complianceStatus: "compliant" | "non_compliant" | "requires_review";
 }
 
+// ─── Audit interfaces ─────────────────────────────────────────────────────────
+
+export interface AuditFinding {
+  domain: string;
+  severity: "critical" | "high" | "medium" | "low" | "informational";
+  title: string;
+  description: string;
+  evidence: string;
+  recommendation: string;
+}
+
+export interface AuditCorruptionFlag {
+  type: string;
+  description: string;
+  riskLevel: "critical" | "high" | "medium" | "low";
+  affectedArea: string;
+  indicatorsFound: string[];
+}
+
+export interface AuditDomainResult {
+  domain: string;
+  status: "satisfactory" | "needs_improvement" | "non_compliant" | "not_assessed";
+  score: number; // 0-100
+  summary: string;
+  findings: AuditFinding[];
+}
+
+export interface AuditDocumentAnalysis {
+  isAuditDocument: boolean;
+  organisationName: string;
+  auditScope: string;
+  auditPeriod: string;
+  overallRating: "satisfactory" | "needs_improvement" | "unsatisfactory" | "critical";
+  overallScore: number; // 0-100
+  executiveSummary: string;
+  hrManagement: AuditDomainResult;
+  financialRecords: AuditDomainResult;
+  operationsManagement: AuditDomainResult;
+  accounting: AuditDomainResult;
+  governance: AuditDomainResult;
+  corruptionFlags: AuditCorruptionFlag[];
+  priorityActions: Array<{ priority: number; action: string; owner: string; deadline: string }>;
+  regulatoryCompliance: Array<{ regulation: string; status: "compliant" | "non_compliant" | "partial"; notes: string }>;
+}
+
 export interface AnalysisResult {
   summary: string;
   findings: string[];
@@ -92,6 +139,7 @@ export interface AnalysisResult {
   citationAnchors: AnalysisCitation[];
   chunksAnalyzed?: number;
   legalAnalysis?: LegalDocumentAnalysis;
+  auditAnalysis?: AuditDocumentAnalysis;
 }
 
 // ─── Jurisdiction detection ───────────────────────────────────────────────────
@@ -124,6 +172,21 @@ const CRIMINAL_DOCUMENT_PATTERNS = [
   /\b(sentence|imprisonment|fine|probation|parole|acquittal|conviction|guilty|not guilty|plead)\b/i,
 ];
 
+// ─── Audit detection patterns ─────────────────────────────────────────────────
+
+const AUDIT_DOCUMENT_PATTERNS = [
+  // Financial / accounting
+  /\b(balance\s+sheet|income\s+statement|cash\s+flow|profit\s+and\s+loss|general\s+ledger|trial\s+balance|journal\s+entr(?:y|ies)|accounts?\s+(?:payable|receivable)|budget(?:ary)?|expenditure|revenue|financial\s+statement|audited\s+accounts?|appropriation)\b/i,
+  // HR
+  /\b(payroll|salary|staff\s+list|personnel|employee\s+records?|org(?:anisational)?\s+chart|job\s+description|performance\s+appraisal|leave\s+records?|headcount|workforce|recruitment|termination)\b/i,
+  // Procurement / operations
+  /\b(purchase\s+order|procurement|tender|bid|supplier|vendor|invoice|delivery\s+note|stock\s+(?:count|record|register)|inventory|logistics|project\s+plan|milestone|gantt)\b/i,
+  // Audit / compliance
+  /\b(audit\s+report|internal\s+audit|external\s+audit|compliance\s+report|governance|board\s+of\s+directors?|minutes?\s+of\s+(?:meeting|board)|risk\s+register|key\s+performance\s+indicator|kpi)\b/i,
+  // Corruption / fraud red-flags
+  /\b(irregular(?:ity|ities)|fraud|misappropriation|embezzlement|kickback|bribery|conflict\s+of\s+interest|ghost\s+worker|phantom|inflated\s+(?:cost|price|invoice)|sole\s+source|single\s+source|deviation\s+from\s+procurement)\b/i,
+];
+
 function detectLegalDocument(text: string): boolean {
   const matches = LEGAL_DOCUMENT_PATTERNS.filter((p) => p.test(text));
   return matches.length >= 2;
@@ -131,6 +194,12 @@ function detectLegalDocument(text: string): boolean {
 
 function detectCriminalDocument(text: string): boolean {
   return CRIMINAL_DOCUMENT_PATTERNS.some((p) => p.test(text));
+}
+
+function detectAuditDocument(text: string, explicitAuditMode?: boolean): boolean {
+  if (explicitAuditMode) return true;
+  const matches = AUDIT_DOCUMENT_PATTERNS.filter((p) => p.test(text));
+  return matches.length >= 2;
 }
 
 function detectJurisdiction(text: string, explicitJurisdiction?: string): { jurisdiction: string; constitutionFile: string } {
@@ -275,6 +344,225 @@ Be thorough, cite specific laws and constitutional articles, and provide concret
   };
 }
 
+// ─── Audit analysis engine ────────────────────────────────────────────────────
+
+const EMPTY_DOMAIN_RESULT = (domain: string): AuditDomainResult => ({
+  domain,
+  status: "not_assessed",
+  score: 0,
+  summary: "Insufficient data to assess this domain.",
+  findings: [],
+});
+
+async function performAuditAnalysis(
+  documentText: string,
+  options: AnalysisOptions,
+): Promise<AuditDocumentAnalysis> {
+  const orgName = options.organisationName || "the organisation";
+
+  const systemPrompt = `You are CYRUS, an advanced organisational audit AI. You are an expert auditor, forensic accountant, HR compliance specialist, and anti-corruption investigator. Your audit assessments are objective, evidence-based, and actionable.
+
+Your response MUST be valid JSON matching exactly this structure:
+{
+  "organisationName": "...",
+  "auditScope": "...",
+  "auditPeriod": "...",
+  "overallRating": "satisfactory|needs_improvement|unsatisfactory|critical",
+  "overallScore": 0-100,
+  "executiveSummary": "...",
+  "hrManagement": {
+    "domain": "Human Resource Management",
+    "status": "satisfactory|needs_improvement|non_compliant|not_assessed",
+    "score": 0-100,
+    "summary": "...",
+    "findings": [{"domain":"...","severity":"critical|high|medium|low|informational","title":"...","description":"...","evidence":"...","recommendation":"..."}]
+  },
+  "financialRecords": {
+    "domain": "Financial Records",
+    "status": "satisfactory|needs_improvement|non_compliant|not_assessed",
+    "score": 0-100,
+    "summary": "...",
+    "findings": [...]
+  },
+  "operationsManagement": {
+    "domain": "Operations Management",
+    "status": "satisfactory|needs_improvement|non_compliant|not_assessed",
+    "score": 0-100,
+    "summary": "...",
+    "findings": [...]
+  },
+  "accounting": {
+    "domain": "Accounting",
+    "status": "satisfactory|needs_improvement|non_compliant|not_assessed",
+    "score": 0-100,
+    "summary": "...",
+    "findings": [...]
+  },
+  "governance": {
+    "domain": "Governance & Compliance",
+    "status": "satisfactory|needs_improvement|non_compliant|not_assessed",
+    "score": 0-100,
+    "summary": "...",
+    "findings": [...]
+  },
+  "corruptionFlags": [
+    {"type":"...","description":"...","riskLevel":"critical|high|medium|low","affectedArea":"...","indicatorsFound":["..."]}
+  ],
+  "priorityActions": [
+    {"priority":1,"action":"...","owner":"...","deadline":"..."}
+  ],
+  "regulatoryCompliance": [
+    {"regulation":"...","status":"compliant|non_compliant|partial","notes":"..."}
+  ]
+}`;
+
+  const userPrompt = `ORGANISATION: ${orgName}
+
+RECORDS/DOCUMENTS TO AUDIT:
+${documentText.slice(0, 5500)}
+
+Perform a comprehensive organisational audit covering ALL of the following domains. For each domain, assess status, assign a score (0-100), and list specific findings with evidence from the document:
+
+1. HUMAN RESOURCE MANAGEMENT
+   - Organisational structure: clarity, span of control, reporting lines
+   - Staffing levels vs authorised establishment
+   - Employment contracts, job descriptions, qualifications
+   - Payroll accuracy, ghost workers, duplicate entries
+   - Leave management, performance appraisals, disciplinary records
+   - Labour law compliance (fair employment, non-discrimination, minimum wage)
+
+2. FINANCIAL RECORDS
+   - Completeness and accuracy of financial statements (balance sheet, income statement, cash flow)
+   - Budget vs actual expenditure variance analysis
+   - Revenue recognition and recording
+   - Financial ratios (liquidity, solvency, profitability where applicable)
+   - Proper authorisation of expenditure (signatories, limits, supporting documents)
+   - Unexplained surpluses, deficits, or gaps
+
+3. OPERATIONS MANAGEMENT
+   - Process documentation and adherence to procedures
+   - Project management (milestones, deliverables, timelines, resource utilisation)
+   - Supply chain and procurement processes
+   - Inventory and asset management
+   - Operational efficiency and performance against KPIs
+   - Risk management practices
+
+4. ACCOUNTING
+   - GAAP/IFRS compliance (or applicable accounting standards)
+   - Journal entry integrity (proper coding, authorisation, supporting vouchers)
+   - Bank reconciliations and ledger reconciliations
+   - Fixed assets register and depreciation
+   - Petty cash management
+   - Year-end adjustments and provisions
+
+5. GOVERNANCE & COMPLIANCE
+   - Board/management committee structure and meeting regularity
+   - Policies and procedures (existence, currency, adherence)
+   - Conflict of interest declarations
+   - Regulatory filings (tax returns, statutory returns, licensing)
+   - Internal controls assessment (segregation of duties, access controls)
+   - Whistleblower and ethics mechanisms
+
+6. ECONOMIC CORRUPTION INVESTIGATION
+   - Ghost workers / phantom employees
+   - Inflated invoices or purchase orders
+   - Phantom vendors / fictitious suppliers
+   - Duplicate payments or transactions
+   - Bid-rigging, sole-source deviations, procurement irregularities
+   - Kickback and bribery indicators
+   - Misappropriation of funds or assets
+   - Conflict of interest in procurement
+   - Unexplained personal enrichment patterns
+   - Any other red flags present
+
+For each corruption flag found, specify the type, evidence, risk level, and affected area.
+List prioritised corrective actions with owners and realistic deadlines.
+Identify applicable regulations and assess compliance status.
+Be specific — cite exact figures, names, dates, or patterns found in the document.`;
+
+  const llmCall = async (client: any) => {
+    const resp = await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      max_tokens: 3000,
+    });
+    return resp.choices[0].message.content || "{}";
+  };
+
+  let rawJson = "{}";
+  try {
+    if (openaiClient) {
+      rawJson = await llmCall(openaiClient);
+    } else if (useLocalLLM) {
+      rawJson = await localLLM.chat([
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ], { temperature: 0.1, max_tokens: 3000 });
+    }
+  } catch (err) {
+    console.warn("[AuditAnalysis] LLM call failed:", err);
+  }
+
+  let parsed: any = {};
+  try {
+    parsed = JSON.parse(rawJson);
+  } catch {
+    const match = rawJson.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { parsed = JSON.parse(match[0]); } catch { /* ignore */ }
+    }
+  }
+
+  const validRatings = ["satisfactory", "needs_improvement", "unsatisfactory", "critical"];
+  const validDomainStatuses = ["satisfactory", "needs_improvement", "non_compliant", "not_assessed"];
+
+  function parseDomain(raw: any, fallbackName: string): AuditDomainResult {
+    if (!raw || typeof raw !== "object") return EMPTY_DOMAIN_RESULT(fallbackName);
+    return {
+      domain: typeof raw.domain === "string" ? raw.domain : fallbackName,
+      status: validDomainStatuses.includes(raw.status) ? raw.status : "not_assessed",
+      score: typeof raw.score === "number" ? Math.min(100, Math.max(0, raw.score)) : 0,
+      summary: typeof raw.summary === "string" ? raw.summary : "No summary available.",
+      findings: Array.isArray(raw.findings)
+        ? raw.findings.filter((f: any) => f && typeof f.title === "string")
+        : [],
+    };
+  }
+
+  const overallScore = typeof parsed.overallScore === "number"
+    ? Math.min(100, Math.max(0, parsed.overallScore))
+    : 0;
+
+  return {
+    isAuditDocument: true,
+    organisationName: typeof parsed.organisationName === "string" ? parsed.organisationName : orgName,
+    auditScope: typeof parsed.auditScope === "string" ? parsed.auditScope : "General organisational audit",
+    auditPeriod: typeof parsed.auditPeriod === "string" ? parsed.auditPeriod : "As per records provided",
+    overallRating: validRatings.includes(parsed.overallRating) ? parsed.overallRating : "needs_improvement",
+    overallScore,
+    executiveSummary: typeof parsed.executiveSummary === "string" ? parsed.executiveSummary : "Audit summary unavailable.",
+    hrManagement: parseDomain(parsed.hrManagement, "Human Resource Management"),
+    financialRecords: parseDomain(parsed.financialRecords, "Financial Records"),
+    operationsManagement: parseDomain(parsed.operationsManagement, "Operations Management"),
+    accounting: parseDomain(parsed.accounting, "Accounting"),
+    governance: parseDomain(parsed.governance, "Governance & Compliance"),
+    corruptionFlags: Array.isArray(parsed.corruptionFlags)
+      ? parsed.corruptionFlags.filter((f: any) => f && typeof f.type === "string")
+      : [],
+    priorityActions: Array.isArray(parsed.priorityActions)
+      ? parsed.priorityActions.filter((a: any) => a && typeof a.action === "string")
+      : [],
+    regulatoryCompliance: Array.isArray(parsed.regulatoryCompliance)
+      ? parsed.regulatoryCompliance.filter((r: any) => r && typeof r.regulation === "string")
+      : [],
+  };
+}
+
 // ─── Generic analysis ─────────────────────────────────────────────────────────
 
 export async function analyzeExtraction(ext: ExtractionResult, options: AnalysisOptions = {}): Promise<AnalysisResult> {
@@ -309,10 +597,13 @@ export async function analyzeExtraction(ext: ExtractionResult, options: Analysis
   // Detect whether the document is legal in nature
   const isLegal = detectLegalDocument(aggregateText) || options.strictLegalReview === true;
   const isCriminal = detectCriminalDocument(aggregateText);
+  // Detect whether the document is an organisational/audit record
+  const isAudit = detectAuditDocument(aggregateText, options.auditMode === true);
 
   // Run generic analysis and (if legal) legal analysis in parallel
   const jurisdictionNote = options.jurisdiction ? `\n- Apply ${options.jurisdiction} jurisdiction rules.` : '';
   const legalNote = isLegal ? '\n- Apply strict legal review standards; identify constitutional and statutory issues.' : '';
+  const auditNote = isAudit ? '\n- Identify financial, HR, procurement, and governance issues as an organisational auditor.' : '';
   const prompt = `
 You are a professional analyst. Given extracted content from an uploaded file, produce a concise report:
 - Summary (2-4 sentences)
@@ -320,7 +611,7 @@ You are a professional analyst. Given extracted content from an uploaded file, p
 - Issues/Gaps (bullets)
 - Interpretation (1-2 sentences)
 - Recommendations (bullets)
-- Confidence (High/Medium/Low)${jurisdictionNote}${legalNote}
+- Confidence (High/Medium/Low)${jurisdictionNote}${legalNote}${auditNote}
 
 If content is minimal, explain that and keep confidence Low.
 `;
@@ -357,6 +648,13 @@ If content is minimal, explain that and keep confidence Low.
       })
     : Promise.resolve(undefined);
 
+  const auditAnalysisPromise = isAudit && aggregateText
+    ? performAuditAnalysis(aggregateText, options).catch((err) => {
+        console.warn("[AuditAnalysis] Failed:", err);
+        return undefined;
+      })
+    : Promise.resolve(undefined);
+
   let genericResult: AnalysisResult;
   try {
     genericResult = await genericAnalysisPromise;
@@ -381,6 +679,7 @@ If content is minimal, explain that and keep confidence Low.
   }
 
   const legalAnalysis = await legalAnalysisPromise;
+  const auditAnalysis = await auditAnalysisPromise;
 
   if (legalAnalysis) {
     const { jurisdiction } = detectJurisdiction(aggregateText, options.jurisdiction);
@@ -394,6 +693,27 @@ If content is minimal, explain that and keep confidence Low.
     }
     if (!genericResult.knowledgeApplied.includes(`constitution-${jurisdiction.toLowerCase().replace(/\s+/g, "-")}`)) {
       genericResult.knowledgeApplied.push(`constitution-${jurisdiction.toLowerCase().replace(/\s+/g, "-")}`);
+    }
+  }
+
+  if (auditAnalysis) {
+    genericResult.auditAnalysis = auditAnalysis;
+    if (!genericResult.knowledgeApplied.includes("audit-framework")) {
+      genericResult.knowledgeApplied.push("audit-framework");
+    }
+    // Escalate confidence for audit documents since we have a deeper pass
+    if (genericResult.confidence === "Low" && aggregateText) genericResult.confidence = "Medium";
+    // Surface critical corruption flags as top-level issues
+    for (const flag of auditAnalysis.corruptionFlags) {
+      if (flag.riskLevel === "critical" || flag.riskLevel === "high") {
+        const flagMsg = `[AUDIT] ${flag.type}: ${flag.description}`;
+        if (!genericResult.issues.includes(flagMsg)) genericResult.issues.push(flagMsg);
+      }
+    }
+    // Surface priority actions as recommendations
+    for (const action of auditAnalysis.priorityActions.slice(0, 3)) {
+      const actionMsg = `[AUDIT P${action.priority}] ${action.action} (Owner: ${action.owner})`;
+      if (!genericResult.recommendations.includes(actionMsg)) genericResult.recommendations.push(actionMsg);
     }
   }
 

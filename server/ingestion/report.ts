@@ -1,6 +1,6 @@
 import { ExtractionResult } from "./extract";
 import { DetectionResult } from "./detect";
-import { LegalDocumentAnalysis } from "./analyze";
+import { LegalDocumentAnalysis, AuditDocumentAnalysis } from "./analyze";
 
 export interface AnalysisReport {
   success: boolean;
@@ -18,12 +18,13 @@ export interface AnalysisReport {
   attempted: string[];
   warnings: string[];
   legalAnalysis?: LegalDocumentAnalysis;
+  auditAnalysis?: AuditDocumentAnalysis;
 }
 
 export function buildReport(
   det: DetectionResult,
   ext: ExtractionResult,
-  analysis: { summary: string; findings: string[]; issues: string[]; interpretation: string; recommendations: string[]; confidence: "High" | "Medium" | "Low"; legalAnalysis?: LegalDocumentAnalysis },
+  analysis: { summary: string; findings: string[]; issues: string[]; interpretation: string; recommendations: string[]; confidence: "High" | "Medium" | "Low"; legalAnalysis?: LegalDocumentAnalysis; auditAnalysis?: AuditDocumentAnalysis },
   success: boolean,
 ): AnalysisReport {
   return {
@@ -42,6 +43,7 @@ export function buildReport(
     attempted: ext.attempted,
     warnings: ext.warnings,
     legalAnalysis: analysis.legalAnalysis,
+    auditAnalysis: analysis.auditAnalysis,
   };
 }
 
