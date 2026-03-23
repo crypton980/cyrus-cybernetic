@@ -146,6 +146,15 @@ async function initializeSystem() {
   await tick();
 
   try {
+    const { default: sysdbRoutes } = await import("./sysdb/routes");
+    app.use("/api/sysdb", sysdbRoutes);
+    log("[SysDB] System database routes registered");
+  } catch (e) {
+    console.error("[Init] SysDB failed (non-fatal):", e);
+  }
+  await tick();
+
+  try {
     const { registerRoutes } = await import("./routes");
     await registerRoutes(httpServer, app);
   } catch (e) {

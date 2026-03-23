@@ -12,6 +12,7 @@ import {
   FileText,
   Zap,
 } from "lucide-react";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 
 interface DNAAnalysisResult {
   sequence: string;
@@ -324,6 +325,9 @@ export function BiologyPage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="biology" />
       </div>
     </div>
   );

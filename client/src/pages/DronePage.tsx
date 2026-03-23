@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDrone } from '../hooks/useDrone';
 import { CyrusHumanoid } from '../components/CyrusHumanoid';
+import { SystemDatabaseWidget } from '../components/SystemDatabaseWidget';
 import {
   Plane,
   Wifi,
@@ -581,6 +582,9 @@ export function DronePage() {
         context={`User is in aerospace/drone control module. ${state?.connected ? `Drone connected. Mode: ${state.mode}. Armed: ${state.armed}. Battery: ${state.battery}%` : "Drone not connected"}. ${simulationMode ? "Running in simulation mode." : ""}`}
         compact={true}
       />
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="drone" />
+      </div>
     </div>
   );
 }

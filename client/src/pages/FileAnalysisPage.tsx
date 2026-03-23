@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFileAnalysis } from "../hooks/useFileAnalysis";
 import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 import {
   FileUp,
   FileText,
@@ -1308,6 +1309,9 @@ export function FileAnalysisPage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="files" />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
 import { useNavigation } from "../hooks/useNavigation";
 import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 import {
   MapPin,
   Navigation,
@@ -524,6 +525,9 @@ export function NavigationPage() {
         context={`User is in navigation module. ${currentPosition ? `Current position: ${currentPosition.lat.toFixed(6)}, ${currentPosition.lon.toFixed(6)}. Location: ${locationName}` : "No position data"}. GPS tracking: ${isWatching ? "active" : "inactive"}.`}
         compact={true}
       />
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="navigation" />
+      </div>
     </div>
   );
 }

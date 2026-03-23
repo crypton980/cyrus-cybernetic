@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Hash,
 } from "lucide-react";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 
 async function aesEncrypt(plaintext: string, key: string): Promise<{ encrypted: string; iv: string }> {
   const encoder = new TextEncoder();
@@ -388,6 +389,9 @@ export function SecurityPage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="security" />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDeviceControl } from "../hooks/useDeviceControl";
 import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 import {
   Monitor,
   Mouse,
@@ -410,6 +411,9 @@ export function DeviceControlPage() {
         context={`User is in device control module. Dry run mode: ${dryRun ? "enabled" : "disabled"}. ${lastResult ? `Last result: ${lastResult.success ? "success" : "failed"}` : "No recent actions"}`}
         compact={true}
       />
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="device-control" />
+      </div>
     </div>
   );
 }

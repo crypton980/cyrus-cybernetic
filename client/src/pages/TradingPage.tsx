@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTrading } from "../hooks/useTrading";
 import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 import {
   TrendingUp,
   Globe,
@@ -513,6 +514,9 @@ export function TradingPage() {
         context={`User is in Autonomous Trading module. AI Status: ${aiStatus}. Tab: ${activeTab}. Events: ${worldEvents}, Predictions: ${predictions}, Strategies: ${strategies}, Decisions: ${decisions}`}
         compact={true}
       />
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="trading" />
+      </div>
     </div>
   );
 }

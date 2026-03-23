@@ -14,6 +14,7 @@ import {
   Timer,
   Zap,
 } from "lucide-react";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 
 interface SamplingSession {
   id: string;
@@ -424,6 +425,9 @@ export function BloodSamplingPage() {
             )}
           </div>
         </div>
+      </div>
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="blood-sampling" />
       </div>
     </div>
   );

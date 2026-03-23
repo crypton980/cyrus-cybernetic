@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useScan } from "../hooks/useScan";
 import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 import {
   Camera,
   QrCode,
@@ -474,6 +475,9 @@ export function ScanPage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="scan" />
       </div>
     </div>
   );

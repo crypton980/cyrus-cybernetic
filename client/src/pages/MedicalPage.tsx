@@ -41,6 +41,7 @@ import {
   Link2,
   Unlink,
 } from "lucide-react";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 
 interface VitalSigns {
   heartRate: number;
@@ -1293,6 +1294,9 @@ export function MedicalPage() {
           </div>
         </div>
       )}
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="medical" />
+      </div>
     </div>
   );
 }

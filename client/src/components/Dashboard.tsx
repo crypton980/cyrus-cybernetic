@@ -24,6 +24,7 @@ import {
   Radio,
   KeyRound,
   Download,
+  Layers,
 } from "lucide-react";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useAudioProcessing } from "@/hooks/useAudioProcessing";
@@ -95,6 +96,10 @@ export function Dashboard() {
   const [isMatchingFaces, setIsMatchingFaces] = useState(false);
   const [latestSearchMatch, setLatestSearchMatch] = useState<VisionMatch | null>(null);
   const [alarmActive, setAlarmActive] = useState(false);
+  // Multi-frame burst capture state
+  const [isBurstCapturing, setIsBurstCapturing] = useState(false);
+  const [burstFrameCount, setBurstFrameCount] = useState(0);
+  const [burstAnalysis, setBurstAnalysis] = useState<Record<string, unknown> | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [shareMenuId, setShareMenuId] = useState<string | null>(null);
   const [shareMenuContent, setShareMenuContent] = useState<string>("");
@@ -268,7 +273,58 @@ export function Dashboard() {
     }
   }, [cameraActive, captureCurrentFrame, knownFaces.length, triggerVisionAlarm, matchSensitivity]);
 
-  const handleFaceDatabaseUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Multi-frame burst capture: captures N frames over an interval and sends them
+  // to the server for composite analysis (frames from different moments/angles).
+  const runBurstCapture = useCallback(async (frameCount = 4, intervalMs = 400) => {
+    if (!cameraActive) {
+      setVisionError("Activate CYRUS Vision before burst capture");
+      return;
+    }
+    setIsBurstCapturing(true);
+    setBurstFrameCount(0);
+    setBurstAnalysis(null);
+    addVisionEvent("Burst Capture", `Capturing ${frameCount} frames at ${intervalMs}ms intervals…`, "active");
+
+    const frames: string[] = [];
+    for (let i = 0; i < frameCount; i++) {
+      const frame = captureCurrentFrame();
+      if (frame) {
+        frames.push(frame);
+        setBurstFrameCount(i + 1);
+      }
+      if (i < frameCount - 1) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, intervalMs));
+      }
+    }
+
+    if (frames.length === 0) {
+      setVisionError("No frames could be captured during burst");
+      setIsBurstCapturing(false);
+      return;
+    }
+
+    try {
+      const resp = await fetch("/api/vision/multi-frame-analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frames }),
+      });
+      if (!resp.ok) throw new Error("Multi-frame analysis failed");
+      const payload = await resp.json();
+      setBurstAnalysis(payload.analysis || null);
+      const safety = (payload.analysis as any)?.safetyAssessment || "unknown";
+      addVisionEvent(
+        "Burst Analysis Complete",
+        `${frames.length} frames analysed. Safety: ${safety}. Scene: ${(payload.analysis as any)?.compositeScene?.slice(0, 80) || "N/A"}`,
+        safety === "alert" ? "alert" : safety === "caution" ? "warning" : "info",
+      );
+    } catch (err) {
+      addVisionEvent("Burst Analysis Failed", String(err), "alert");
+      setVisionError("Multi-frame analysis failed — check AI configuration");
+    } finally {
+      setIsBurstCapturing(false);
+    }
+  }, [cameraActive, captureCurrentFrame, addVisionEvent]);
     const file = e.target.files?.[0];
     if (!file) return;
     if (!enrollName.trim()) {
@@ -2018,6 +2074,23 @@ export function Dashboard() {
               >
                 <Radio className={`w-4 h-4 ${isRecordingVision ? "animate-pulse" : ""}`} />
               </button>
+              {/* Multi-frame burst capture button */}
+              <button
+                onClick={() => void runBurstCapture(4, 400)}
+                disabled={!cameraActive || isBurstCapturing}
+                className={`p-1.5 rounded-lg transition-colors text-xs font-bold ${
+                  isBurstCapturing
+                    ? "bg-purple-500/20 text-purple-300 cursor-wait"
+                    : "text-[rgba(235,235,245,0.4)] hover:bg-[rgba(120,120,128,0.2)] disabled:opacity-40"
+                }`}
+                title="Burst capture: analyse 4 frames from different angles"
+              >
+                {isBurstCapturing ? (
+                  <span className="text-[10px] font-bold animate-pulse">{burstFrameCount}/4</span>
+                ) : (
+                  <Layers className="w-4 h-4" />
+                )}
+              </button>
               <input type="file" ref={faceDbInputRef} onChange={handleFaceDatabaseUpload} accept="image/*" className="hidden" />
               <button
                 onClick={() => faceDbInputRef.current?.click()}
@@ -2207,6 +2280,30 @@ export function Dashboard() {
                     {new Date(event.timestamp).toLocaleTimeString()} · {event.title}: {event.detail}
                   </p>
                 ))}
+              </div>
+            )}
+            {/* Burst capture analysis result */}
+            {burstAnalysis && (
+              <div className="mt-2 pt-2 border-t border-purple-500/20 space-y-1">
+                <p className="text-[10px] text-purple-300 font-semibold uppercase tracking-wider">Burst Analysis</p>
+                <p className="text-[10px] text-[rgba(235,235,245,0.6)]">
+                  Scene: {String((burstAnalysis as any).compositeScene || "N/A").slice(0, 100)}
+                </p>
+                <p className="text-[10px] text-[rgba(235,235,245,0.5)]">
+                  People: {String((burstAnalysis as any).peopleCount ?? 0)} · Safety:{" "}
+                  <span className={
+                    (burstAnalysis as any).safetyAssessment === "alert" ? "text-red-400" :
+                    (burstAnalysis as any).safetyAssessment === "caution" ? "text-amber-400" :
+                    "text-emerald-400"
+                  }>
+                    {String((burstAnalysis as any).safetyAssessment || "unknown")}
+                  </span>
+                </p>
+                {Array.isArray((burstAnalysis as any).codesDetected) && (burstAnalysis as any).codesDetected.length > 0 && (
+                  <p className="text-[10px] text-cyan-300">
+                    Codes: {(burstAnalysis as any).codesDetected.map((c: any) => `${c.type}:${c.value}`).join(", ")}
+                  </p>
+                )}
               </div>
             )}
           </div>

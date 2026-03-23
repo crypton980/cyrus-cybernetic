@@ -321,6 +321,34 @@ export const trackedUsers = pgTable("tracked_users", {
 });
 
 export const insertLocationRecordSchema = createInsertSchema(locationRecords).omit({ id: true, createdAt: true });
+
+// ─── System Database ──────────────────────────────────────────────────────────
+// Central searchable store for biometric and identifier records from any module.
+export const systemDatabase = pgTable("system_database", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Type of record: face | fingerprint | iris | barcode | qrcode | reference | document | image | text
+  recordType: text("record_type").notNull(),
+  // Human-readable label / name for this record
+  label: text("label").notNull(),
+  // The primary searchable text value (reference number, QR text, barcode value, description, etc.)
+  value: text("value").default(""),
+  // Raw image data stored as base64 for visual record types (face, iris, fingerprint, image)
+  imageData: text("image_data"),
+  // Structured metadata (JSON) — e.g., { age, gender, role, issuer, expiry, … }
+  metadata: jsonb("metadata"),
+  // Comma-separated tags for filtering
+  tags: text("tags").default(""),
+  // Which module uploaded this record
+  sourceModule: text("source_module").default("unknown"),
+  // User who uploaded (optional)
+  userId: varchar("user_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSystemDatabaseSchema = createInsertSchema(systemDatabase).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertSystemDatabase = z.infer<typeof insertSystemDatabaseSchema>;
+export type SystemDatabaseRecord = typeof systemDatabase.$inferSelect;
 export const insertEmergencyAlertSchema = createInsertSchema(emergencyAlerts).omit({ id: true, createdAt: true });
 export const insertLocationShareSchema = createInsertSchema(locationShares).omit({ id: true, createdAt: true });
 export const insertTrackedUserSchema = createInsertSchema(trackedUsers).omit({ id: true, createdAt: true, lastUpdated: true });

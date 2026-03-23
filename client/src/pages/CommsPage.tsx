@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useComms } from "../hooks/useComms";
 import { usePresence } from "../contexts/PresenceContext";
 import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 import { Link } from "wouter";
 import {
   MessageSquare,
@@ -1266,6 +1267,9 @@ export function CommsPage() {
         }`}
         compact={true}
       />
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="comms" />
+      </div>
     </div>
   );
 }

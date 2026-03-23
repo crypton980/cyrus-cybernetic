@@ -12,6 +12,7 @@ import {
   Cpu,
   Layers,
 } from "lucide-react";
+import { SystemDatabaseWidget } from "../components/SystemDatabaseWidget";
 
 interface QuantumCircuit {
   id: string;
@@ -355,6 +356,9 @@ export function QuantumPage() {
             )}
           </div>
         </div>
+      </div>
+      <div className="mt-6">
+        <SystemDatabaseWidget sourceModule="quantum" />
       </div>
     </div>
   );
