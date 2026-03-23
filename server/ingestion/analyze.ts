@@ -33,6 +33,7 @@ export interface AnalysisOptions {
   strictLegalReview?: boolean;
   auditMode?: boolean;
   organisationName?: string;
+  guidancePrompt?: string;
   [key: string]: unknown;
 }
 
@@ -604,6 +605,9 @@ export async function analyzeExtraction(ext: ExtractionResult, options: Analysis
   const jurisdictionNote = options.jurisdiction ? `\n- Apply ${options.jurisdiction} jurisdiction rules.` : '';
   const legalNote = isLegal ? '\n- Apply strict legal review standards; identify constitutional and statutory issues.' : '';
   const auditNote = isAudit ? '\n- Identify financial, HR, procurement, and governance issues as an organisational auditor.' : '';
+  const guidanceNote = options.guidancePrompt
+    ? `\n\nUSER INSTRUCTION (highest priority — follow this guidance when producing the analysis):\n${options.guidancePrompt}`
+    : '';
   const prompt = `
 You are a professional analyst. Given extracted content from an uploaded file, produce a concise report:
 - Summary (2-4 sentences)
@@ -613,7 +617,7 @@ You are a professional analyst. Given extracted content from an uploaded file, p
 - Recommendations (bullets)
 - Confidence (High/Medium/Low)${jurisdictionNote}${legalNote}${auditNote}
 
-If content is minimal, explain that and keep confidence Low.
+If content is minimal, explain that and keep confidence Low.${guidanceNote}
 `;
 
   const genericAnalysisPromise = (async () => {

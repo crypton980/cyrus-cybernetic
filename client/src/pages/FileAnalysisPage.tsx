@@ -16,6 +16,7 @@ import {
   Shield,
   Brain,
   Zap,
+  MessageSquare,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -36,6 +37,7 @@ export function FileAnalysisPage() {
   const [docPreviewMode, setDocPreviewMode] = useState<"layout" | "source">("layout");
   const [jurisdiction, setJurisdiction] = useState("Global");
   const [strictLegalReview, setStrictLegalReview] = useState(true);
+  const [guidancePrompt, setGuidancePrompt] = useState("");
   const [leftPanePercent, setLeftPanePercent] = useState(42);
   const [draggingDivider, setDraggingDivider] = useState(false);
   const [copySummaryState, setCopySummaryState] = useState<"idle" | "copied" | "failed">("idle");
@@ -171,16 +173,22 @@ export function FileAnalysisPage() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    fullPipeline.mutate({ file, jurisdiction, strictLegalReview });
+    fullPipeline.mutate({ file, jurisdiction, strictLegalReview, guidancePrompt: guidancePrompt.trim() || undefined });
     // Allow selecting the same file again to trigger a new analysis run.
     e.target.value = "";
   };
 
+  const handleGuidanceOnlyAnalyze = () => {
+    if (!guidancePrompt.trim()) return;
+    fullPipeline.mutate({ jurisdiction, strictLegalReview, guidancePrompt: guidancePrompt.trim() });
+  };
+
   const handleGenerateDoc = () => {
-    if (!docContent.trim()) return;
+    const content = docContent.trim() || guidancePrompt.trim();
+    if (!content) return;
     generateDocument.mutate({
       docType,
-      content: docContent,
+      content,
       audience: docAudience,
       targetPages,
       wordsPerPage,
@@ -213,9 +221,10 @@ export function FileAnalysisPage() {
   };
 
   const handleGenerateVisual = () => {
-    if (!visualPrompt.trim() && !docContent.trim()) return;
+    const basePrompt = visualPrompt.trim() || docContent.trim() || guidancePrompt.trim();
+    if (!basePrompt) return;
     generateVisual.mutate({
-      prompt: visualPrompt.trim() || docContent.trim(),
+      prompt: basePrompt,
       style: imageStyle,
       mode: visualReferenceFile ? "edit" : "generate",
       referenceFile: visualReferenceFile,
@@ -402,6 +411,34 @@ export function FileAnalysisPage() {
                   </div>
                 </div>
 
+                {/* Guidance / Instruction Prompt */}
+                <div className="mt-4">
+                  <label className="text-xs text-gray-400 block mb-2 flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Guidance / Instruction Prompt
+                    <span className="text-gray-500">(optional — tell the system what to do)</span>
+                  </label>
+                  <textarea
+                    value={guidancePrompt}
+                    onChange={(e) => setGuidancePrompt(e.target.value)}
+                    placeholder={`Examples:\n• "Summarise the key legal obligations of the respondent"\n• "Draft a case report based on the content above"\n• "Check for GDPR compliance issues"\n• No file needed — just describe your task here`}
+                    rows={4}
+                    className="w-full bg-gray-800/50 text-white px-3 py-2.5 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-gray-700/50 placeholder-gray-600 text-sm"
+                  />
+                  <button
+                    onClick={handleGuidanceOnlyAnalyze}
+                    disabled={!guidancePrompt.trim() || isProcessing}
+                    className="mt-2 w-full py-2 bg-gradient-to-r from-purple-700 to-violet-700 hover:from-purple-600 hover:to-violet-600 rounded-xl text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  >
+                    {isProcessing ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    )}
+                    Analyze / Generate with Guidance Only
+                  </button>
+                </div>
+
                 {currentFile && (
                   <div className="mt-4 p-4 bg-gray-800/50 rounded-xl flex items-center gap-3 border border-gray-700/50">
                     <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -576,7 +613,7 @@ export function FileAnalysisPage() {
 
                   <button
                     onClick={handleGenerateDoc}
-                    disabled={!docContent.trim() || isGenerating}
+                    disabled={(!docContent.trim() && !guidancePrompt.trim()) || isGenerating}
                     className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
                   >
                     {isGenerating ? (
@@ -730,7 +767,7 @@ export function FileAnalysisPage() {
 
                   <button
                     onClick={handleGenerateVisual}
-                    disabled={isGeneratingVisual || (!visualPrompt.trim() && !docContent.trim())}
+                    disabled={isGeneratingVisual || (!visualPrompt.trim() && !docContent.trim() && !guidancePrompt.trim())}
                     className="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {isGeneratingVisual ? "Generating Visual..." : "Generate / Illustrate / Draft"}

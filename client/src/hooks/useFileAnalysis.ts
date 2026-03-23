@@ -314,19 +314,24 @@ export function useFileAnalysis() {
       file,
       jurisdiction,
       strictLegalReview,
+      guidancePrompt,
     }: {
-      file: File;
+      file?: File;
       jurisdiction?: string;
       strictLegalReview?: boolean;
+      guidancePrompt?: string;
     }) => {
-      setCurrentFile(file);
+      if (file) setCurrentFile(file);
       setLastReport(null);
       const formData = new FormData();
-      formData.append("file", file);
+      if (file) formData.append("file", file);
       if (jurisdiction) {
         formData.append("jurisdiction", jurisdiction);
       }
       formData.append("strictLegalReview", String(Boolean(strictLegalReview)));
+      if (guidancePrompt) {
+        formData.append("guidancePrompt", guidancePrompt);
+      }
       const res = await fetch("/api/files/full-analysis-async", {
         method: "POST",
         body: formData,

@@ -764,21 +764,31 @@ export async function registerRoutes(
   // Analyze file (reliable ingestion pipeline)
   app.post("/api/files/analyze", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
+      const guidancePrompt = (req.body.guidancePrompt as string) || undefined;
+      if (!req.file && !guidancePrompt) {
+        return res.status(400).json({ error: "No file uploaded and no guidance prompt provided" });
       }
-      const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+      let buffer: Buffer | null = null;
+      let mimetype = "text/plain";
+      if (req.file) {
+        buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+        mimetype = req.file.mimetype;
+      }
       if (!buffer) {
-        return res.status(500).json({ success: false, error: "Unable to read uploaded file buffer" });
+        // No file: use guidance prompt as document text
+        buffer = Buffer.from(guidancePrompt || "", "utf-8");
       }
       const jurisdiction = (req.body.jurisdiction as string) || undefined;
       const caseType = (req.body.caseType as string) || undefined;
       const strictLegalReview = req.body.strictLegalReview === "true" || req.body.strictLegalReview === true;
       const auditMode = req.body.auditMode === "true" || req.body.auditMode === true;
       const organisationName = (req.body.organisationName as string) || undefined;
-      const det = await detectFile(buffer, req.file.mimetype);
-      const ext = await extractFile(buffer, req.file.mimetype);
-      const analysis = await analyzeExtraction(ext, { jurisdiction, caseType, strictLegalReview, auditMode, organisationName });
+      const det = await detectFile(buffer, mimetype);
+      const ext = await extractFile(buffer, mimetype);
+      if (guidancePrompt && !ext.text) {
+        ext.text = guidancePrompt;
+      }
+      const analysis = await analyzeExtraction(ext, { jurisdiction, caseType, strictLegalReview, auditMode, organisationName, guidancePrompt });
       const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f: { ocrText?: string }) => f.ocrText)));
       const report = buildReport(det, ext, analysis, hasContent);
       if (!hasContent) {
@@ -800,8 +810,9 @@ export async function registerRoutes(
   // Async file analysis (job-based)
   app.post("/api/files/full-analysis-async", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
+      const guidancePrompt = (req.body.guidancePrompt as string) || undefined;
+      if (!req.file && !guidancePrompt) {
+        return res.status(400).json({ error: "No file uploaded and no guidance prompt provided" });
       }
 
       const jurisdiction = req.body.jurisdiction as string || "Botswana";
@@ -809,18 +820,43 @@ export async function registerRoutes(
       const auditMode = req.body.auditMode === "true";
       const organisationName = (req.body.organisationName as string) || undefined;
 
+      let filePath: string;
+      let originalName: string;
+      let mimetype: string;
+      let size: number;
+
+      if (req.file) {
+        filePath = req.file.path;
+        originalName = req.file.originalname;
+        mimetype = req.file.mimetype;
+        size = req.file.size;
+      } else {
+        // No file — write the guidance prompt to a temp text file
+        const { writeFile, mkdir } = await import("fs/promises");
+        const tempDir = path.join(process.cwd(), "logs", "file-analysis-jobs", "uploads");
+        await mkdir(tempDir, { recursive: true });
+        const tempName = `guidance-${Date.now()}.txt`;
+        filePath = path.join(tempDir, tempName);
+        const content = guidancePrompt as string;
+        await writeFile(filePath, content, "utf-8");
+        originalName = tempName;
+        mimetype = "text/plain";
+        size = Buffer.byteLength(content, "utf-8");
+      }
+
       const job = await createAnalysisJob({
-        userId: null, // TODO: get from auth
+        userId: null,
         fileId: null,
-        originalName: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        filePath: req.file.path,
+        originalName,
+        mimetype,
+        size,
+        filePath,
         options: {
           jurisdiction,
           strictLegalReview,
           auditMode,
           organisationName,
+          guidancePrompt,
         }
       });
 
