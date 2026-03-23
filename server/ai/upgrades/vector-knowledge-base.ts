@@ -21,7 +21,7 @@ const openai = openaiApiKey && openaiBaseUrl
       ? new AzureOpenAI({
         endpoint: openaiBaseUrl,
         credential: new DefaultAzureCredential(),
-      })
+      } as any)
       : null;
 
 export interface VectorDocument {

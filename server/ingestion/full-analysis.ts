@@ -53,7 +53,7 @@ export async function performFullAnalysis(
 ): Promise<FullAnalysisResponse> {
   const det = await detectFile(buffer, mimetype);
   const ext = await extractFile(buffer, mimetype);
-  const analysis = await analyzeExtraction(ext, options);
+  const analysis: any = await analyzeExtraction(ext);
   const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f) => f.ocrText)));
 
   const riskLevel: "low" | "medium" | "high" =
@@ -66,8 +66,8 @@ export async function performFullAnalysis(
       metadata: {
         attempted: ext.attempted,
         warnings: ext.warnings,
-        pageCount: ext.pageCount,
-        textLength: ext.textLength,
+        pageCount: (ext as any).pageCount,
+        textLength: (ext as any).textLength,
         transcript: ext.transcript,
         ocrText: ext.ocrText,
         frames: ext.frames,

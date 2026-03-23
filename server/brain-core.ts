@@ -106,7 +106,7 @@ class Thalamus implements BrainRegion {
     const gatedIntensity = input.intensity * gateLevel;
 
     // Relay to appropriate cortical areas
-    const relay = this.sensoryRelays[input.modality];
+    const relay = (this.sensoryRelays as any)[input.modality];
 
     return {
       features: [input.data],

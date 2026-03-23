@@ -188,7 +188,7 @@ Response:`;
       console.log('📚 Adding new knowledge to CYRUS brain...');
 
       // Add to both systems
-      await dataIngestionPipeline.ingestContent(content, metadata);
+      await (dataIngestionPipeline as any).ingestContent(content, metadata);
 
       if (this.useAdvancedIntelligence) {
         try {
@@ -216,14 +216,14 @@ Response:`;
     if (this.useAdvancedIntelligence) {
       try {
         const advancedStatus = advancedIntelligenceIntegration.getSystemStatus();
-        basicStatus.advancedStatus = advancedStatus;
+        (basicStatus as any).advancedStatus = advancedStatus;
       } catch (error) {
         console.warn('Failed to get advanced status:', error);
       }
     }
 
     if (this.visionProcessor) {
-      basicStatus.visionStatus = this.getVisionStatus();
+      (basicStatus as any).visionStatus = this.getVisionStatus();
     }
 
     return basicStatus;
@@ -272,8 +272,8 @@ Response:`;
       const result = await this.visionProcessor.processImage(image, analysisType);
 
       // Integrate vision results with intelligence system
-      if (this.useAdvancedIntelligence && result.object_detection?.objects?.length > 0) {
-        const visionContext = `Visual analysis detected: ${result.object_detection.objects.map((obj: any) => obj.label).join(', ')}`;
+      if (this.useAdvancedIntelligence && (result.object_detection?.objects?.length ?? 0) > 0) {
+        const visionContext = `Visual analysis detected: ${result.object_detection?.objects?.map((obj: any) => obj.label).join(', ')}`;
         await this.addKnowledge(visionContext, {
           type: 'vision_analysis',
           timestamp: new Date(),
@@ -295,7 +295,7 @@ Response:`;
 
     try {
       console.log('🎥 Starting live feed processing...');
-      const result = await this.visionProcessor.processLiveFeed(videoSource, duration, callback);
+      const result = await this.visionProcessor.processLiveFeed(videoSource, duration, callback as any);
 
       // Record live feed session in knowledge base
       const sessionSummary = `Live feed session: ${result.total_frames} frames processed, ${result.objects_detected} objects detected, ${result.processing_fps.toFixed(1)} FPS`;
@@ -343,7 +343,7 @@ Response:`;
     return {
       available: true,
       processing_stats: this.visionProcessor.getProcessingStats(),
-      config: this.visionProcessor.config
+      config: (this.visionProcessor as any).config
     };
   }
 

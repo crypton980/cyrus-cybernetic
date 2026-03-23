@@ -20,6 +20,9 @@ export interface AnalysisResult {
   confidence: "High" | "Medium" | "Low";
 }
 
+export type AnalysisCitation = any;
+export type AnalysisOptions = Record<string, any>;
+
 export async function analyzeExtraction(ext: ExtractionResult): Promise<AnalysisResult> {
   const contentPieces = [
     ext.text || "",
@@ -41,6 +44,18 @@ export async function analyzeExtraction(ext: ExtractionResult): Promise<Analysis
   }
 
   // Try local LLM first
+  const prompt = `
+You are a professional analyst. Given extracted content from an uploaded file, produce a concise report:
+- Summary (2-4 sentences)
+- Key Findings (bullets)
+- Issues/Gaps (bullets)
+- Interpretation (1-2 sentences)
+- Recommendations (bullets)
+- Confidence (High/Medium/Low)
+
+If content is minimal, explain that and keep confidence Low.
+`;
+
   if (useLocalLLM) {
     try {
       const localPrompt = `${prompt}\n\nContent to analyze:\n${aggregateText || "No content extracted."}`;
@@ -56,20 +71,8 @@ export async function analyzeExtraction(ext: ExtractionResult): Promise<Analysis
     }
   }
 
-  const prompt = `
-You are a professional analyst. Given extracted content from an uploaded file, produce a concise report:
-- Summary (2-4 sentences)
-- Key Findings (bullets)
-- Issues/Gaps (bullets)
-- Interpretation (1-2 sentences)
-- Recommendations (bullets)
-- Confidence (High/Medium/Low)
-
-If content is minimal, explain that and keep confidence Low.
-`;
-
   try {
-    const resp = await openaiClient.chat.completions.create({
+    const resp = await openaiClient!.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: prompt },

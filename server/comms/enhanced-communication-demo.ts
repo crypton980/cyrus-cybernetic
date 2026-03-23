@@ -209,7 +209,7 @@ class EnhancedCommunicationDemo {
         );
 
         console.log(`   Message: "${message.substring(0, 40)}..."`);
-        console.log(`   Sentiment: ${result.message.sentiment || "Analyzed"}`);
+        console.log(`   Sentiment: ${(result.message as any).sentiment || "Analyzed"}`);
       }
 
       // Test user intelligence

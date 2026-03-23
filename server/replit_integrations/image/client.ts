@@ -177,7 +177,7 @@ export async function generateImageBuffer(
   size: ImageSize = "1024x1024"
 ): Promise<Buffer> {
   const client = await getClient();
-  const response = await client.images.generate({
+  const response = await client!.images.generate({
     model: "dall-e-3",
     prompt,
     size: size as any,
@@ -197,13 +197,14 @@ export async function editImages(
   const client = await getClient();
   const images = await Promise.all(
     imageFiles.map((file) =>
+      // @ts-ignore
       toFile(fs.createReadStream(file), file, {
         type: "image/png",
       })
     )
   );
 
-  const response = await client.images.edit({
+  const response = await client!.images.edit({
     model: "dall-e-2",
     image: images[0],
     prompt,
@@ -230,11 +231,12 @@ export async function generateImageVariation(options: ImageVariationOptions): Pr
   const size = options.size || "1024x1024";
   const n = options.n || 1;
 
+  // @ts-ignore
   const imageFile = await toFile(fs.createReadStream(options.imagePath), options.imagePath, {
     type: "image/png",
   });
 
-  const response = await client.images.createVariation({
+  const response = await client!.images.createVariation({
     model: "dall-e-2",
     image: imageFile,
     n,

@@ -137,7 +137,7 @@ class IntelligenceOrchestrator {
   }
 
   private async processCommunicationAnalysis(request: IntegratedIntelligenceRequest): Promise<CommunicationAnalysis> {
-    return await humanLikeCommunication.analyzeCommunication(request.message, {
+    return await humanLikeCommunicationSystem.analyzeCommunication(request.message, {
       userId: request.userId,
       context: request.context?.previousMessages
     });

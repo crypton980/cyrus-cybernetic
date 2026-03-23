@@ -10,7 +10,7 @@ const llmClient =
   openaiApiKey && openaiBaseUrl
     ? new AzureOpenAI({ endpoint: openaiBaseUrl, apiKey: openaiApiKey })
     : openaiBaseUrl
-      ? new AzureOpenAI({ endpoint: openaiBaseUrl, credential: new DefaultAzureCredential() })
+      ? new AzureOpenAI({ endpoint: openaiBaseUrl, credential: new DefaultAzureCredential() } as any)
       : null;
 
 const documentIntelligenceKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY;

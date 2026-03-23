@@ -145,7 +145,7 @@ class EnhancedSignalingServer {
           serverVersion: "2.0"
         },
         timestamp: Date.now()
-      });
+      } as any);
 
       // Broadcast presence
       this.broadcastPresence(userId, "online");
@@ -217,7 +217,7 @@ class EnhancedSignalingServer {
         this.sendToUser(userId, {
           type: "pong",
           timestamp: Date.now()
-        });
+        } as any);
         break;
 
       default:
@@ -261,7 +261,7 @@ class EnhancedSignalingServer {
           currentQuality: user.networkInfo.quality
         },
         timestamp: Date.now()
-      });
+      } as any);
       return;
     }
 
@@ -295,7 +295,7 @@ class EnhancedSignalingServer {
         }))
       },
       timestamp: Date.now()
-    });
+    } as any);
 
     console.log(`[Enhanced Signaling] User ${userId} joined room ${roomId} (${roomType})`);
   }
@@ -349,7 +349,7 @@ class EnhancedSignalingServer {
         type: "call_error",
         data: { error: "User not found or offline" },
         timestamp: Date.now()
-      });
+      } as any);
       return;
     }
 
@@ -396,7 +396,7 @@ class EnhancedSignalingServer {
         type: "call_error",
         data: { error: "International calling not supported on current network" },
         timestamp: Date.now()
-      });
+      } as any);
       return;
     }
 
@@ -419,7 +419,7 @@ class EnhancedSignalingServer {
         type: "call_error",
         data: { error: "Invalid call acceptance" },
         timestamp: Date.now()
-      });
+      } as any);
       return;
     }
 

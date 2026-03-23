@@ -82,7 +82,7 @@ When answering questions:
 - Invite follow-up questions gracefully`;
 
   async createPresentation(title: string, content: string): Promise<Presentation> {
-    const completion = await getClient().chat.completions.create({
+    const completion = await (await getClient()).chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
@@ -261,7 +261,7 @@ Keep it under 50 words, warm and professional.`
   }
 
   private async generatePresenterSpeech(prompt: string): Promise<string> {
-    const completion = await getClient().chat.completions.create({
+    const completion = await (await getClient()).chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: this.presenterPersonality },

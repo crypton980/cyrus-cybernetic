@@ -1,6 +1,7 @@
 import { detectFile } from "./detect";
 import { ensureCompatibleFormat, speechToText } from "../replit_integrations/audio/client";
 import { Buffer } from "node:buffer";
+// @ts-ignore
 import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 import fs from "fs/promises";

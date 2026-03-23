@@ -26,6 +26,7 @@ let ensureCompatibleFormat: any;
 let textToSpeechElevenLabs: any;
 let textToSpeechStreamElevenLabs: any;
 let ELEVENLABS_VOICES: any;
+type ElevenLabsVoice = any;
 let getEmotionVoiceSettings: any;
 let runAutonomy: any;
 let registerDeviceRoutes: any;
@@ -62,6 +63,10 @@ let systemRefinementEngine: any;
 let emotionFusion: any;
 let voiceProsody: any;
 let brainRoutes: any;
+let createAnalysisJob: any;
+let getAnalysisJob: any;
+let listAnalysisReports: any;
+type HealthProvider = any;
 
 const tick = (ms = 10): Promise<void> => new Promise((r) => setTimeout(r, ms));
 let depsLoaded = false;
@@ -123,9 +128,9 @@ async function loadDependencies() {
   const rpM = await import("./ingestion/report");
   buildReport = rpM.buildReport;
   const jobsM = await import("./ingestion/jobs");
-  const createAnalysisJob = jobsM.createAnalysisJob;
-  const getAnalysisJob = jobsM.getAnalysisJob;
-  const listAnalysisReports = jobsM.listAnalysisReports;
+  createAnalysisJob = jobsM.createAnalysisJob;
+  getAnalysisJob = jobsM.getAnalysisJob;
+  listAnalysisReports = jobsM.listAnalysisReports;
   const dgM = await import("./docgen/generate");
   generateDocument = dgM.generateDocument;
   await tick();
@@ -176,7 +181,7 @@ async function loadDependencies() {
     const autoM = await import("./autonomy/routes");
     autonomyRoutes = autoM.default;
   } catch (error) {
-    console.warn("[Routes] Failed to load autonomy routes:", error.message);
+    console.warn("[Routes] Failed to load autonomy routes:", (error as Error).message);
   }
   await tick();
 
@@ -377,7 +382,7 @@ const openai = openaiApiKey && openaiBaseUrl
       ? new AzureOpenAI({
         endpoint: openaiBaseUrl,
         credential: new DefaultAzureCredential(),
-      })
+      } as any)
       : null;
 
 const upload = multer({
@@ -566,7 +571,7 @@ export async function registerRoutes(
         try {
           console.log(`[CYRUS Image] Detected image generation request: "${message.substring(0, 80)}..."`);
           const promptResponse = await callOpenAIWithTimeout((signal) =>
-            openai.chat.completions.create({
+            openai!.chat.completions.create({
               model: "gpt-4o",
               messages: [
                 { role: "system", content: "Extract a detailed DALL-E image generation prompt from the user's request. Return ONLY the optimized prompt text, nothing else. Make it detailed and descriptive for best image quality." },
@@ -612,7 +617,7 @@ export async function registerRoutes(
       const thought = await cyrusSoul.processThought(message);
       const systemPrompt = cyrusSoul.getSystemPrompt();
 
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
@@ -764,7 +769,7 @@ export async function registerRoutes(
       const det = await detectFile(buffer, req.file.mimetype);
       const ext = await extractFile(buffer, req.file.mimetype);
       const analysis = await analyzeExtraction(ext);
-      const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f) => f.ocrText)));
+      const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f: any) => f.ocrText)));
       const report = buildReport(det, ext, analysis, hasContent);
       if (!hasContent) {
         report.issues.push("No extractable content found.");
@@ -971,7 +976,7 @@ export async function registerRoutes(
       }
 
       // Use OpenAI Vision for OCR
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1016,7 +1021,7 @@ export async function registerRoutes(
       }
 
       // Use OpenAI Vision for comprehensive image analysis
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1078,7 +1083,7 @@ Format your response in a clear, structured manner.`
 
       const targetLangName = languageNames[targetLanguage] || targetLanguage;
 
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1156,7 +1161,7 @@ Format your response in a clear, structured manner.`
         try {
           console.log(`[CYRUS Image] Detected image generation request in /api/infer: "${message.substring(0, 80)}..."`);
           const promptResponse = await callOpenAIWithTimeout((signal) =>
-            openai.chat.completions.create({
+            openai!.chat.completions.create({
               model: "gpt-4o",
               messages: [
                 { role: "system", content: "Extract a detailed DALL-E image generation prompt from the user's request. Return ONLY the optimized prompt text, nothing else. Make it detailed and descriptive for best image quality." },
@@ -1216,7 +1221,7 @@ Format your response in a clear, structured manner.`
       let conversationHistory: Array<{ role: 'user' | 'cyrus'; content: string }> = [];
       try {
         const recentConversations = await storage.getConversations(userId, 10);
-        conversationHistory = recentConversations.reverse().map(c => {
+        conversationHistory = recentConversations.reverse().map((c: any) => {
           const normalizedRole = (c.role === 'cyrus' || c.role === 'assistant') ? 'cyrus' : 'user';
           return {
             role: normalizedRole as 'user' | 'cyrus',
@@ -1565,7 +1570,7 @@ Format your response in a clear, structured manner.`
       res.json({
         domains: domainSummary,
         totalBranches: allBranches.length,
-        branchesByDomain: Object.entries(domainSummary).map(([name, info]) => ({
+        branchesByDomain: Object.entries(domainSummary).map(([name, info]: any) => ({
           name,
           ...info
         }))
@@ -1660,6 +1665,7 @@ Format your response in a clear, structured manner.`
 
   // Agent execution core using autonomy system
   let executeAgentCore = async (command: string): Promise<any> => {
+    const startTime = Date.now();
     const { runAutonomy } = await import("./autonomy/run");
 
     const result = await runAutonomy({
@@ -1815,7 +1821,7 @@ If you detect a command that requires physical device interaction, inform the op
       }
 
       // Call OpenAI with gpt-4o model (supports vision)
-      const completion = await openai.chat.completions.create({
+      const completion = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: chatMessages,
         max_tokens: 2048,
@@ -2236,7 +2242,7 @@ If you detect a command that requires physical device interaction, inform the op
 
       try {
         const aiResponse = await callOpenAIWithTimeout((signal) =>
-          openai.chat.completions.create({
+          openai!.chat.completions.create({
             model: "gpt-4o",
             messages: [
               {
@@ -2447,7 +2453,7 @@ Return ONLY valid JSON.`
 
     try {
       const aiResponse = await callOpenAIWithTimeout((signal) =>
-        openai.chat.completions.create({
+        openai!.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
@@ -2758,7 +2764,7 @@ Return ONLY valid JSON.`
 
       // Image analysis using OpenAI Vision
       if (mimeType?.startsWith("image/")) {
-        const response = await openai.chat.completions.create({
+        const response = await openai!.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
