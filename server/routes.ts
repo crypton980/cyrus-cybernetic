@@ -71,6 +71,7 @@ let brainRoutes: any;
 let createAnalysisJob: any;
 let getAnalysisJob: any;
 let listAnalysisReports: any;
+let knowledgeLib: typeof import("./knowledge/library") | null = null;
 type HealthProvider = any;
 
 const tick = (ms = 10): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -144,6 +145,7 @@ async function loadDependencies() {
   listDocgenJobs = dgJobsM.listDocgenJobs;
   cancelDocgenJob = dgJobsM.cancelDocgenJob;
   resumeDocgenJob = dgJobsM.resumeDocgenJob;
+  knowledgeLib = await import("./knowledge/library");
   await tick();
 
   const sgM = await import("./comms/signaling");
@@ -889,6 +891,114 @@ export async function registerRoutes(
     } catch (err: any) {
       console.error("File extract failed:", err);
       return res.status(500).json({ error: "File extraction failed", details: err?.message || String(err) });
+    }
+  });
+
+  // ============================================
+  // KNOWLEDGE LIBRARY ROUTES
+  // ============================================
+
+  // List all indexed documents
+  app.get("/api/knowledge/library", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const category = req.query.category as string | undefined;
+      const includeInactive = req.query.includeInactive === "true";
+      const docs = await knowledgeLib.listDocuments(category, includeInactive);
+      res.json({ documents: docs, total: docs.length });
+    } catch (err: any) {
+      console.error("Knowledge library list failed:", err);
+      return res.status(500).json({ error: "Failed to list library", details: err?.message || String(err) });
+    }
+  });
+
+  // Search documents
+  app.get("/api/knowledge/library/search", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const q = (req.query.q || req.query.query) as string;
+      const category = req.query.category as string | undefined;
+      if (!q) return res.status(400).json({ error: "Query parameter 'q' is required" });
+      const results = await knowledgeLib.searchDocuments(q, category, 12);
+      res.json({ results, total: results.length });
+    } catch (err: any) {
+      console.error("Knowledge library search failed:", err);
+      return res.status(500).json({ error: "Search failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Index a new document into the library (upload + index in one step)
+  app.post("/api/knowledge/library/index", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+      if (!buffer) return res.status(500).json({ error: "Unable to read uploaded file buffer" });
+      const category = (req.body.category as string) || undefined;
+      const result = await knowledgeLib.indexDocument(
+        buffer,
+        req.file.originalname,
+        req.file.mimetype,
+        category,
+        req.file.path || undefined,
+      );
+      res.json({ document: result.doc, alreadyIndexed: result.alreadyIndexed });
+    } catch (err: any) {
+      console.error("Knowledge library index failed:", err);
+      return res.status(500).json({ error: "Indexing failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Bulk-index all files in the uploads directory
+  app.post("/api/knowledge/library/bulk-index", async (_req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const uploadsDir = path.join(process.cwd(), "public", "uploads");
+      const result = await knowledgeLib.bulkIndexUploadedFiles(uploadsDir);
+      res.json(result);
+    } catch (err: any) {
+      console.error("Knowledge library bulk-index failed:", err);
+      return res.status(500).json({ error: "Bulk indexing failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Get a specific document by ID (includes fullText)
+  app.get("/api/knowledge/library/:docId", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const doc = await knowledgeLib.getDocumentById(req.params.docId);
+      if (!doc) return res.status(404).json({ error: "Document not found" });
+      res.json(doc);
+    } catch (err: any) {
+      console.error("Knowledge library get failed:", err);
+      return res.status(500).json({ error: "Failed to get document", details: err?.message || String(err) });
+    }
+  });
+
+  // Toggle document active/inactive
+  app.patch("/api/knowledge/library/:docId/toggle", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const active = req.body.active !== false; // default: activate
+      const doc = await knowledgeLib.toggleDocumentActive(req.params.docId, active);
+      if (!doc) return res.status(404).json({ error: "Document not found" });
+      res.json({ document: doc });
+    } catch (err: any) {
+      console.error("Knowledge library toggle failed:", err);
+      return res.status(500).json({ error: "Toggle failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Delete a document from the index
+  app.delete("/api/knowledge/library/:docId", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const deleted = await knowledgeLib.deleteDocumentFromLibrary(req.params.docId);
+      if (!deleted) return res.status(404).json({ error: "Document not found" });
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Knowledge library delete failed:", err);
+      return res.status(500).json({ error: "Delete failed", details: err?.message || String(err) });
     }
   });
 
@@ -1966,10 +2076,28 @@ If you detect a command that requires physical device interaction, inform the op
         }
       }
 
+      // Inject relevant document context from Knowledge Library
+      let docContext = '';
+      if (knowledgeLib) {
+        try {
+          docContext = await knowledgeLib.getDocumentContext(message);
+        } catch (docErr) {
+          console.warn("[KnowledgeLib] Context retrieval failed:", docErr);
+        }
+      }
+
       // Build the user message content
       const fullMessage = contextInfo
         ? `${message}\n\n[CONTEXT]${contextInfo}`
         : message;
+
+      // Append document context to the system message if any was found
+      if (docContext) {
+        chatMessages[0] = {
+          role: "system",
+          content: chatMessages[0].content + docContext,
+        };
+      }
 
       // Check if we have image data for vision analysis
       if (imageData && typeof imageData === 'string' && imageData.startsWith('data:image')) {

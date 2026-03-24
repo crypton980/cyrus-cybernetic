@@ -22,6 +22,7 @@ import {
   LogOut,
   User,
   Users,
+  Library,
 } from "lucide-react";
 
 import { AccessGate } from "./components/AccessGate";
@@ -41,6 +42,7 @@ import { QuantumPage } from "./pages/QuantumPage";
 import { SecurityPage } from "./pages/SecurityPage";
 import { BiologyPage } from "./pages/BiologyPage";
 import { BloodSamplingPage } from "./pages/BloodSamplingPage";
+import { KnowledgeLibraryPage } from "./pages/KnowledgeLibraryPage";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
@@ -60,6 +62,7 @@ const moduleItems = [
   { path: "/security", label: "Security", sublabel: "Encryption", icon: Shield },
   { path: "/biology", label: "Biology", sublabel: "Lab Analysis", icon: Microscope },
   { path: "/blood", label: "Blood", sublabel: "Sampling", icon: Droplets },
+  { path: "/knowledge", label: "Knowledge", sublabel: "Document Library", icon: Library },
 ];
 
 export default function App() {
@@ -420,6 +423,7 @@ function AppContent({
             <Route path="/modules" component={ModulesPage} />
             <Route path="/scan" component={ScanPage} />
             <Route path="/files" component={FileAnalysisPage} />
+            <Route path="/knowledge" component={KnowledgeLibraryPage} />
             <Route path="/nav" component={NavigationPage} />
             <Route path="/comms" component={CommsPage} />
             <Route path="/device" component={DeviceControlPage} />

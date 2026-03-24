@@ -334,5 +334,33 @@ export type LocationShareRecord = typeof locationShares.$inferSelect;
 export type InsertTrackedUser = z.infer<typeof insertTrackedUserSchema>;
 export type TrackedUser = typeof trackedUsers.$inferSelect;
 
+// Document Knowledge Library — stores extracted text for AI reference
+export const documentLibrary = pgTable("document_library", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  originalName: text("original_name").notNull(),
+  category: text("category").notNull().default("general"), // "legal" | "constitution" | "engineering" | "military" | "general"
+  documentType: text("document_type").default("document"), // "constitution" | "legal_code" | "engineering_manual" | "military_manual" | etc.
+  summary: text("summary"),
+  fullText: text("full_text"),           // First 800 KB of extracted content (sufficient for LLM context)
+  keyConcepts: jsonb("key_concepts"),    // string[] — top extracted keywords/concepts
+  isActive: integer("is_active").default(1),
+  mimetype: text("mimetype"),
+  size: integer("size"),
+  sha256: text("sha256"),
+  filePath: text("file_path"),           // Absolute path to original file on disk
+  indexedAt: timestamp("indexed_at").defaultNow().notNull(),
+  lastAccessed: timestamp("last_accessed").defaultNow().notNull(),
+  accessCount: integer("access_count").default(0),
+});
+
+export const insertDocumentLibrarySchema = createInsertSchema(documentLibrary).omit({
+  id: true,
+  indexedAt: true,
+  lastAccessed: true,
+});
+
+export type InsertDocumentLibrary = z.infer<typeof insertDocumentLibrarySchema>;
+export type DocumentLibrary = typeof documentLibrary.$inferSelect;
+
 export * from "./models/auth";
 export * from "./models/comms";
