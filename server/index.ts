@@ -87,7 +87,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const port = parseInt(process.env.PORT || "5000", 10);
+const port = parseInt(process.env.PORT || "3105", 10);
 const listenOptions: { port: number; host: string; reusePort?: boolean } = {
   port,
   host: "0.0.0.0",
