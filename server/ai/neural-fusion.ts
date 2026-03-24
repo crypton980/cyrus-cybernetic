@@ -1075,6 +1075,70 @@ Unix Epoch: ${Math.floor(now.getTime() / 1000)}
 My internal chronometer is synchronized with atomic time standards. Temporal prediction algorithms are operational.`;
   }
 
+  /** Safely evaluate simple arithmetic expressions without using eval or new Function. */
+  private safeEvalArithmetic(expr: string): number | null {
+    // Only allow digits, spaces, and the four basic operators + parentheses + decimals
+    if (!/^[\d\s\+\-\*\/\.\(\)]+$/.test(expr)) return null;
+    // Recursive-descent parser: handles +, -, *, / with correct precedence and parentheses
+    let pos = 0;
+    const peek = () => expr[pos] ?? '';
+    const consume = () => expr[pos++];
+    const skipWs = () => { while (peek() === ' ') pos++; };
+    const parseNumber = (): number => {
+      skipWs();
+      let s = '';
+      if (peek() === '-') { s += consume(); }
+      while (/[\d\.]/.test(peek())) s += consume();
+      if (s === '' || s === '-') return NaN;
+      return parseFloat(s);
+    };
+    // Forward declarations
+    let parseExpr: () => number;
+    const parsePrimary = (): number => {
+      skipWs();
+      if (peek() === '(') {
+        consume(); // '('
+        const val = parseExpr();
+        skipWs();
+        if (peek() === ')') consume();
+        return val;
+      }
+      return parseNumber();
+    };
+    const parseMulDiv = (): number => {
+      let left = parsePrimary();
+      while (true) {
+        skipWs();
+        const op = peek();
+        if (op !== '*' && op !== '/') break;
+        consume();
+        const right = parsePrimary();
+        left = op === '*' ? left * right : left / right;
+      }
+      return left;
+    };
+    parseExpr = (): number => {
+      let left = parseMulDiv();
+      while (true) {
+        skipWs();
+        const op = peek();
+        if (op !== '+' && op !== '-') break;
+        consume();
+        const right = parseMulDiv();
+        left = op === '+' ? left + right : left - right;
+      }
+      return left;
+    };
+    try {
+      const result = parseExpr();
+      skipWs();
+      if (pos < expr.length) return null; // didn't consume everything
+      return isFinite(result) ? result : null;
+    } catch {
+      return null;
+    }
+  }
+
   private generateOfflineResponse(thought: ThoughtProcess, request: InferenceRequest): string {
     const msg = request.message.toLowerCase();
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1117,18 +1181,13 @@ My internal chronometer is synchronized with atomic time standards. Temporal pre
       return `I'm CYRUS and I'm here to help! My full AI reasoning capabilities require an OpenAI API key to be configured. Currently operating in offline mode with built-in modules active:\n\n• Vision Analysis (requires camera)\n• Drone Control Module\n• Document Knowledge Library\n• System Status & Monitoring\n• Face Recognition\n\nTo unlock full AI conversational intelligence, add your OpenAI API key to the CYRUS environment configuration.`;
     }
 
-    // Math
-    if (/\d+\s*[\+\-\*\/\^]\s*\d+/.test(msg)) {
-      try {
-        const expr = msg.match(/[\d\s\+\-\*\/\.\(\)]+/)?.[0]?.trim();
-        if (expr) {
-          // eslint-disable-next-line no-new-func
-          const result = new Function(`return ${expr}`)();
-          if (typeof result === 'number' && isFinite(result)) {
-            return `Calculation result: ${expr} = ${result}`;
-          }
-        }
-      } catch { /* fall through */ }
+    // Math — safe arithmetic only (no eval/new Function)
+    const mathMatch = msg.match(/^[\d\s\+\-\*\/\.\(\)]+$/);
+    if (mathMatch) {
+      const safeResult = this.safeEvalArithmetic(msg.trim());
+      if (safeResult !== null) {
+        return `Calculation result: ${msg.trim()} = ${safeResult}`;
+      }
     }
 
     // Default fallback
