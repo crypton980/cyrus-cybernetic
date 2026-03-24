@@ -36,6 +36,11 @@ let extractFile: any;
 let analyzeExtraction: any;
 let buildReport: any;
 let generateDocument: any;
+let createDocgenJob: any;
+let getDocgenJob: any;
+let listDocgenJobs: any;
+let cancelDocgenJob: any;
+let resumeDocgenJob: any;
 let initSignalingServer: any;
 let initSocketSignaling: any;
 let enqueueMessage: any;
@@ -133,6 +138,12 @@ async function loadDependencies() {
   listAnalysisReports = jobsM.listAnalysisReports;
   const dgM = await import("./docgen/generate");
   generateDocument = dgM.generateDocument;
+  const dgJobsM = await import("./docgen/jobs");
+  createDocgenJob = dgJobsM.createDocgenJob;
+  getDocgenJob = dgJobsM.getDocgenJob;
+  listDocgenJobs = dgJobsM.listDocgenJobs;
+  cancelDocgenJob = dgJobsM.cancelDocgenJob;
+  resumeDocgenJob = dgJobsM.resumeDocgenJob;
   await tick();
 
   const sgM = await import("./comms/signaling");
@@ -767,7 +778,8 @@ export async function registerRoutes(
         return res.status(500).json({ success: false, error: "Unable to read uploaded file buffer" });
       }
       const jurisdiction = (req.body.jurisdiction as string) || "Global";
-      const strictLegalReview = req.body.strictLegalReview === "true";
+      const rawStrict = req.body.strictLegalReview;
+      const strictLegalReview = rawStrict === true || rawStrict === "true";
       const det = await detectFile(buffer, req.file.mimetype);
       const ext = await extractFile(buffer, req.file.mimetype);
       const analysis = await analyzeExtraction(ext, { jurisdiction, strictLegalReview });
@@ -849,6 +861,163 @@ export async function registerRoutes(
         error: "Failed to list analysis reports",
         details: err?.message || String(err),
       });
+    }
+  });
+
+  // File detect route
+  app.post("/api/files/detect", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+      if (!buffer) return res.status(500).json({ error: "Unable to read uploaded file buffer" });
+      const det = await detectFile(buffer, req.file.mimetype);
+      res.json(det);
+    } catch (err: any) {
+      console.error("File detect failed:", err);
+      return res.status(500).json({ error: "File detection failed", details: err?.message || String(err) });
+    }
+  });
+
+  // File extract route
+  app.post("/api/files/extract", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+      if (!buffer) return res.status(500).json({ error: "Unable to read uploaded file buffer" });
+      const ext = await extractFile(buffer, req.file.mimetype);
+      res.json(ext);
+    } catch (err: any) {
+      console.error("File extract failed:", err);
+      return res.status(500).json({ error: "File extraction failed", details: err?.message || String(err) });
+    }
+  });
+
+  // ============================================
+  // DOCGEN ROUTES
+  // ============================================
+
+  // List all docgen jobs
+  app.get("/api/docgen/jobs", (_req, res) => {
+    try {
+      const jobs = listDocgenJobs(20);
+      res.json({ jobs });
+    } catch (err: any) {
+      console.error("List docgen jobs failed:", err);
+      return res.status(500).json({ error: "Failed to list docgen jobs", details: err?.message || String(err) });
+    }
+  });
+
+  // Get a specific docgen job
+  app.get("/api/docgen/jobs/:jobId", (req, res) => {
+    try {
+      const job = getDocgenJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+      res.json(job);
+    } catch (err: any) {
+      console.error("Get docgen job failed:", err);
+      return res.status(500).json({ error: "Failed to get docgen job", details: err?.message || String(err) });
+    }
+  });
+
+  // Cancel a docgen job
+  app.post("/api/docgen/jobs/:jobId/cancel", (req, res) => {
+    try {
+      const job = cancelDocgenJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+      res.json({ job });
+    } catch (err: any) {
+      console.error("Cancel docgen job failed:", err);
+      return res.status(500).json({ error: "Failed to cancel docgen job", details: err?.message || String(err) });
+    }
+  });
+
+  // Resume a docgen job
+  app.post("/api/docgen/jobs/:jobId/resume", (req, res) => {
+    try {
+      const job = resumeDocgenJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found or cannot be resumed" });
+      res.json({ job });
+    } catch (err: any) {
+      console.error("Resume docgen job failed:", err);
+      return res.status(500).json({ error: "Failed to resume docgen job", details: err?.message || String(err) });
+    }
+  });
+
+  // Generate document (synchronous — used for small page counts)
+  app.post("/api/docgen/generate", async (req, res) => {
+    try {
+      const { docType, content, audience, targetPages, wordsPerPage, includeImages, imageStyle } = req.body || {};
+      const doc = await generateDocument({ docType, content, audience, targetPages, wordsPerPage, includeImages, imageStyle });
+      res.json(doc);
+    } catch (err: any) {
+      console.error("Docgen generate failed:", err);
+      return res.status(500).json({ error: "Document generation failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Generate document async (job-based — used for large page counts)
+  app.post("/api/docgen/generate-async", async (req, res) => {
+    try {
+      const { docType, content, audience, targetPages, wordsPerPage, includeImages, imageStyle } = req.body || {};
+      const job = createDocgenJob({ docType, content, audience, targetPages, wordsPerPage, includeImages, imageStyle });
+      res.json({ job });
+    } catch (err: any) {
+      console.error("Docgen generate-async failed:", err);
+      return res.status(500).json({ error: "Failed to start async document generation", details: err?.message || String(err) });
+    }
+  });
+
+  // Visual generation (image generation via DALL-E)
+  app.post("/api/docgen/visualize", upload.single("reference"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      const { prompt, style, mode } = req.body || {};
+      if (!prompt) return res.status(400).json({ error: "Prompt is required" });
+
+      if (!openai) {
+        return res.status(503).json({ error: "Image generation not configured (missing OpenAI API key)" });
+      }
+
+      const styleDescriptor =
+        style === "realistic_3d"
+          ? "photorealistic 3D render, professional rendering, high detail"
+          : style === "schematic"
+            ? "technical schematic diagram, blueprint style, line drawing, engineering drawing"
+            : "graphical illustration, clean vector style, professional infographic";
+
+      const fullPrompt = `${prompt}. Style: ${styleDescriptor}`;
+
+      if (mode === "edit" && req.file) {
+        const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+        if (buffer) {
+          try {
+            const { toFile } = await import("openai");
+            const imageFile = await toFile(buffer, "reference.png", { type: "image/png" });
+            const editResp = await openai.images.edit({
+              model: "dall-e-2",
+              image: imageFile,
+              prompt: fullPrompt,
+              n: 1,
+              size: "1024x1024",
+            });
+            return res.json({ url: editResp.data[0]?.url });
+          } catch (editErr) {
+            console.warn("[Visualize] Image edit failed, falling back to generate:", editErr);
+          }
+        }
+      }
+
+      const genResp = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: fullPrompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "url",
+      });
+
+      res.json({ url: genResp.data[0]?.url });
+    } catch (err: any) {
+      console.error("Docgen visualize failed:", err);
+      return res.status(500).json({ error: "Visual generation failed", details: err?.message || String(err) });
     }
   });
 
