@@ -53,11 +53,8 @@ export async function performFullAnalysis(
 ): Promise<FullAnalysisResponse> {
   const det = await detectFile(buffer, mimetype);
   const ext = await extractFile(buffer, mimetype);
-  const analysis: any = await analyzeExtraction(ext);
+  const analysis = await analyzeExtraction(ext, options);
   const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f) => f.ocrText)));
-
-  const riskLevel: "low" | "medium" | "high" =
-    analysis.confidence === "Low" ? "high" : analysis.confidence === "Medium" ? "medium" : "low";
 
   return {
     detection: det,
@@ -91,8 +88,8 @@ export async function performFullAnalysis(
       strictLegalReview: analysis.strictLegalReview,
       citationAnchors: analysis.citationAnchors,
       chunksAnalyzed: analysis.chunksAnalyzed,
-      entities: [],
-      riskLevel,
+      entities: analysis.entities,
+      riskLevel: analysis.riskLevel,
       recommendations: analysis.recommendations,
     },
     generatedAt: new Date().toISOString(),

@@ -11,6 +11,18 @@ const openaiClient =
     ? new (await import("openai")).default({ apiKey: openaiApiKey, baseURL: openaiBaseUrl })
     : null;
 
+export interface AnalysisCitation {
+  clause: string;
+  excerpt: string;
+  rationale: string;
+}
+
+export interface AnalysisOptions {
+  jurisdiction?: string;
+  strictLegalReview?: boolean;
+  [key: string]: any;
+}
+
 export interface AnalysisResult {
   summary: string;
   findings: string[];
@@ -18,124 +30,211 @@ export interface AnalysisResult {
   interpretation: string;
   recommendations: string[];
   confidence: "High" | "Medium" | "Low";
+  documentType: string;
+  documentTypeConfidence: "High" | "Medium" | "Low";
+  decisionActions: Array<{ action: string; owner: string; deadline: string; obligation: string }>;
+  executiveBrief: string;
+  knowledgeApplied: string[];
+  capabilitySummary: string;
+  jurisdictionApplied: string;
+  strictLegalReview: boolean;
+  citationAnchors: AnalysisCitation[];
+  entities: Array<{ type: string; value: string }>;
+  riskLevel: "low" | "medium" | "high";
+  chunksAnalyzed?: number;
 }
 
-export type AnalysisCitation = any;
-export type AnalysisOptions = Record<string, any>;
+function buildSystemPrompt(jurisdiction: string, strictLegal: boolean): string {
+  return `You are an expert document analyst and legal intelligence system. Your task is to perform a comprehensive, structured analysis of the provided document content.
 
-export async function analyzeExtraction(ext: ExtractionResult): Promise<AnalysisResult> {
+Jurisdiction context: ${jurisdiction}
+Strict legal review: ${strictLegal ? "ENABLED — apply rigorous legal scrutiny" : "DISABLED — standard analysis"}
+
+Return ONLY a valid JSON object with exactly these fields (no markdown, no extra text):
+{
+  "summary": "2-5 sentence factual summary of the document",
+  "documentType": "one of: contract, report, memo, legal_notice, invoice, policy, letter, form, transcript, article, technical_document, financial_statement, other",
+  "documentTypeConfidence": "High | Medium | Low",
+  "interpretation": "1-3 sentence interpretation of the document's purpose and intent",
+  "executiveBrief": "1-2 paragraph executive-level brief for senior decision makers",
+  "confidence": "High | Medium | Low (overall analysis confidence)",
+  "riskLevel": "low | medium | high",
+  "capabilitySummary": "summary of what analytical capabilities and knowledge domains were applied",
+  "jurisdictionApplied": "${jurisdiction}",
+  "strictLegalReview": ${strictLegal},
+  "findings": ["key finding 1", "key finding 2", "..."],
+  "issues": ["issue or gap 1", "issue or gap 2", "..."],
+  "recommendations": ["recommendation 1", "recommendation 2", "..."],
+  "knowledgeApplied": ["domain or knowledge area 1", "domain 2", "..."],
+  "decisionActions": [
+    { "action": "specific action to take", "owner": "responsible party", "deadline": "timeframe", "obligation": "mandatory | recommended | optional" }
+  ],
+  "citationAnchors": [
+    { "clause": "clause or section reference", "excerpt": "exact or near-exact text excerpt", "rationale": "why this clause is significant" }
+  ],
+  "entities": [
+    { "type": "PERSON | ORG | DATE | MONEY | LOCATION | LAW | CONTRACT_TERM", "value": "the entity value" }
+  ]
+}
+
+If the content is empty or cannot be analyzed, still return the JSON with appropriate placeholder values and set confidence to "Low".`;
+}
+
+function safeJsonParse(text: string): any | null {
+  // Strip markdown code fences if present
+  const stripped = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+  try {
+    return JSON.parse(stripped);
+  } catch {
+    // Try to extract first JSON object from the text
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+function normalizeConfidence(val: any): "High" | "Medium" | "Low" {
+  const s = String(val || "").toLowerCase();
+  if (s === "high") return "High";
+  if (s === "low") return "Low";
+  return "Medium";
+}
+
+function normalizeRisk(val: any): "low" | "medium" | "high" {
+  const s = String(val || "").toLowerCase();
+  if (s === "high") return "high";
+  if (s === "low") return "low";
+  return "medium";
+}
+
+function buildFallbackResult(aggregateText: string, reason: string, options: AnalysisOptions): AnalysisResult {
+  return {
+    summary: aggregateText ? aggregateText.slice(0, 300) : "No extracted text available for analysis.",
+    documentType: "other",
+    documentTypeConfidence: "Low",
+    interpretation: reason,
+    executiveBrief: "Automated analysis was not available. Manual review is recommended.",
+    confidence: "Low",
+    riskLevel: aggregateText ? "medium" : "high",
+    capabilitySummary: "Basic text extraction only; AI analysis unavailable.",
+    jurisdictionApplied: options.jurisdiction || "Global",
+    strictLegalReview: Boolean(options.strictLegalReview),
+    findings: aggregateText ? ["Document content was extracted but could not be fully analyzed."] : [],
+    issues: [reason],
+    recommendations: ["Configure AI credentials and retry for full analysis.", "Perform manual document review."],
+    knowledgeApplied: ["text extraction"],
+    decisionActions: [],
+    citationAnchors: [],
+    entities: [],
+  };
+}
+
+function parseJsonResult(parsed: any, options: AnalysisOptions): AnalysisResult {
+  return {
+    summary: String(parsed.summary || "Summary unavailable"),
+    documentType: String(parsed.documentType || "other"),
+    documentTypeConfidence: normalizeConfidence(parsed.documentTypeConfidence),
+    interpretation: String(parsed.interpretation || "Interpretation unavailable"),
+    executiveBrief: String(parsed.executiveBrief || ""),
+    confidence: normalizeConfidence(parsed.confidence),
+    riskLevel: normalizeRisk(parsed.riskLevel),
+    capabilitySummary: String(parsed.capabilitySummary || ""),
+    jurisdictionApplied: String(parsed.jurisdictionApplied || options.jurisdiction || "Global"),
+    strictLegalReview: Boolean(parsed.strictLegalReview ?? options.strictLegalReview ?? false),
+    findings: Array.isArray(parsed.findings) ? parsed.findings.map(String) : [],
+    issues: Array.isArray(parsed.issues) ? parsed.issues.map(String) : [],
+    recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations.map(String) : [],
+    knowledgeApplied: Array.isArray(parsed.knowledgeApplied) ? parsed.knowledgeApplied.map(String) : [],
+    decisionActions: Array.isArray(parsed.decisionActions)
+      ? parsed.decisionActions.map((d: any) => ({
+          action: String(d.action || ""),
+          owner: String(d.owner || ""),
+          deadline: String(d.deadline || ""),
+          obligation: String(d.obligation || ""),
+        }))
+      : [],
+    citationAnchors: Array.isArray(parsed.citationAnchors)
+      ? parsed.citationAnchors.map((c: any) => ({
+          clause: String(c.clause || ""),
+          excerpt: String(c.excerpt || ""),
+          rationale: String(c.rationale || ""),
+        }))
+      : [],
+    entities: Array.isArray(parsed.entities)
+      ? parsed.entities.map((e: any) => ({
+          type: String(e.type || ""),
+          value: String(e.value || ""),
+        }))
+      : [],
+  };
+}
+
+export async function analyzeExtraction(ext: ExtractionResult, options: AnalysisOptions = {}): Promise<AnalysisResult> {
+  const jurisdiction = options.jurisdiction || "Global";
+  const strictLegal = Boolean(options.strictLegalReview);
+
   const contentPieces = [
     ext.text || "",
     ext.ocrText || "",
     ext.transcript || "",
     ...(ext.frames?.map((f) => f.ocrText || "").filter(Boolean) || []),
   ].filter(Boolean);
-  const aggregateText = contentPieces.join("\n").slice(0, 8000); // cap to avoid long prompts
+  const aggregateText = contentPieces.join("\n").slice(0, 12000);
 
   if (!openaiClient && !useLocalLLM) {
-    return {
-      summary: aggregateText ? aggregateText.slice(0, 300) : "No extracted text",
-      findings: [],
-      issues: ["AI analysis unavailable (no OpenAI config and local LLM disabled)."],
-      interpretation: "Minimal analysis due to missing AI configuration.",
-      recommendations: ["Configure OpenAI credentials or enable local LLM for full analysis."],
-      confidence: aggregateText ? "Low" : "Low",
-    };
+    return buildFallbackResult(aggregateText, "AI analysis unavailable (no OpenAI config and local LLM disabled).", options);
   }
 
+  const systemPrompt = buildSystemPrompt(jurisdiction, strictLegal);
+  const userContent = aggregateText || "No content was extracted from this document.";
+
   // Try local LLM first
-  const prompt = `
-You are a professional analyst. Given extracted content from an uploaded file, produce a concise report:
-- Summary (2-4 sentences)
-- Key Findings (bullets)
-- Issues/Gaps (bullets)
-- Interpretation (1-2 sentences)
-- Recommendations (bullets)
-- Confidence (High/Medium/Low)
-
-If content is minimal, explain that and keep confidence Low.
-`;
-
   if (useLocalLLM) {
     try {
-      const localPrompt = `${prompt}\n\nContent to analyze:\n${aggregateText || "No content extracted."}`;
       const localResponse = await localLLM.chat([
-        { role: "system", content: "You are a professional analyst providing concise, factual analysis." },
-        { role: "user", content: localPrompt }
-      ], { temperature: 0.3, max_tokens: 600 });
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Analyze this document content:\n\n${userContent}` },
+      ], { temperature: 0.2, max_tokens: 1800 });
 
-      return parseLLMReport(localResponse);
+      const parsed = safeJsonParse(localResponse);
+      if (parsed) {
+        return parseJsonResult(parsed, options);
+      }
+      console.warn("[LocalLLM] JSON parse failed, falling back to OpenAI");
     } catch (error) {
       console.warn("[LocalLLM] Analysis failed, falling back to OpenAI:", error);
-      // Continue to OpenAI fallback
     }
+  }
+
+  if (!openaiClient) {
+    return buildFallbackResult(aggregateText, "OpenAI client not configured.", options);
   }
 
   try {
-    const resp = await openaiClient!.chat.completions.create({
+    const resp = await openaiClient.chat.completions.create({
       model: "gpt-4o-mini",
+      response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: prompt },
-        { role: "user", content: aggregateText || "No content extracted." },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Analyze this document content:\n\n${userContent}` },
       ],
-      max_tokens: 600,
+      max_tokens: 1800,
+      temperature: 0.2,
     });
     const text = resp.choices[0].message.content || "";
-    return parseLLMReport(text);
+    const parsed = safeJsonParse(text);
+    if (parsed) {
+      return parseJsonResult(parsed, options);
+    }
+    throw new Error("LLM returned non-parseable JSON");
   } catch (err) {
-    return {
-      summary: aggregateText ? aggregateText.slice(0, 300) : "No extracted text",
-      findings: [],
-      issues: [`LLM analysis failed: ${err}`],
-      interpretation: "Partial analysis; LLM call failed.",
-      recommendations: ["Retry analysis later."],
-      confidence: "Low",
-    };
+    return buildFallbackResult(aggregateText, `LLM analysis failed: ${err instanceof Error ? err.message : String(err)}`, options);
   }
-}
-
-function parseLLMReport(text: string): AnalysisResult {
-  // Very light parser: split by lines; not strict.
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
-  const findings: string[] = [];
-  const issues: string[] = [];
-  const recommendations: string[] = [];
-  let summary = "";
-  let interpretation = "";
-  let confidence: "High" | "Medium" | "Low" = "Medium";
-
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-    if (!summary && lower.startsWith("summary")) {
-      summary = line.replace(/summary[:\-]\s*/i, "");
-      continue;
-    }
-    if (lower.startsWith("-") || lower.startsWith("•")) {
-      if (lower.includes("issue") || lower.includes("gap")) issues.push(line.replace(/^[-•]\s*/, ""));
-      else if (lower.includes("recommend")) recommendations.push(line.replace(/^[-•]\s*/, ""));
-      else findings.push(line.replace(/^[-•]\s*/, ""));
-      continue;
-    }
-    if (lower.includes("confidence")) {
-      if (lower.includes("high")) confidence = "High";
-      else if (lower.includes("low")) confidence = "Low";
-      else confidence = "Medium";
-      continue;
-    }
-    if (lower.startsWith("interpretation")) {
-      interpretation = line.replace(/interpretation[:\-]\s*/i, "");
-      continue;
-    }
-    if (!summary) summary = line;
-  }
-
-  return {
-    summary: summary || "Summary unavailable",
-    findings,
-    issues,
-    interpretation: interpretation || "Interpretation unavailable",
-    recommendations,
-    confidence,
-  };
 }
 
