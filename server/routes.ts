@@ -2120,7 +2120,16 @@ If you detect a command that requires physical device interaction, inform the op
       }
 
       // Call OpenAI with gpt-4o model (supports vision)
-      const completion = await openai!.chat.completions.create({
+      if (!openai) {
+        // No API key configured — return a helpful offline response
+        cyrusSoul.processThought(message, context?.summary);
+        return res.json({
+          response: "I'm CYRUS, your advanced AI system. My language model requires an OpenAI API key to be configured. Please set OPENAI_API_KEY in your environment and restart the server to unlock full AI capabilities.",
+          identity: { name: identity.name, designation: identity.designation },
+          operationalContext: cyrusSoul.getOperationalContext()
+        });
+      }
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: chatMessages,
         max_tokens: 2048,
