@@ -171,7 +171,7 @@ async function initializeSystem() {
   } else {
     const dp = findDistPublic();
     if (dp) {
-      app.use("*", (_req, res) => {
+      app.use("*splat", (_req, res) => {
         res.sendFile(path.join(dp, "index.html"));
       });
     }
