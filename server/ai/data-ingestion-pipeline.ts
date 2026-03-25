@@ -1,5 +1,5 @@
-import { knowledgeAcquisition } from './knowledge-acquisition.js';
-import { learningSystem } from './learning-system.js';
+import { knowledgeAcquisition } from './knowledge-acquisition';
+import { learningSystem } from './learning-system';
 import fs from 'fs';
 import path from 'path';
 

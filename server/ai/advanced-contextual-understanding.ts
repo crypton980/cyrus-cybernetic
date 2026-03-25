@@ -5,7 +5,7 @@
 
 import { knowledgeSynthesisEngine, type KnowledgeNode } from './knowledge-synthesis-engine';
 import { quantumCore, type QuantumProcessingResult } from './quantum-core';
-import { localLLM } from './local-llm-client.js';
+import { localLLM } from './local-llm-client';
 
 export interface ContextLayer {
   id: string;

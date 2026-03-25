@@ -5,7 +5,7 @@
  */
 
 import { quantumCore, type QuantumProcessingResult } from './quantum-core';
-import { localLLM } from './local-llm-client.js';
+import { localLLM } from './local-llm-client';
 import { dataIngestionPipeline } from './data-ingestion-pipeline';
 import { quantumResponseFormatter } from './quantum-response-formatter';
 

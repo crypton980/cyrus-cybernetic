@@ -9,7 +9,7 @@ import { knowledgeSynthesisEngine, type SynthesisResult } from './knowledge-synt
 import { advancedContextualUnderstanding, type ConversationContext } from './advanced-contextual-understanding';
 import { quantumCore, type QuantumProcessingResult } from './quantum-core';
 import { quantumResponseFormatter } from './quantum-response-formatter';
-import { localLLM } from './local-llm-client.js';
+import { localLLM } from './local-llm-client';
 
 export interface IntegratedIntelligenceRequest {
   userId: string;

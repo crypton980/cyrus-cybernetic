@@ -1,5 +1,5 @@
 import { dataIngestionPipeline } from './data-ingestion-pipeline';
-import { localLLM } from './local-llm-client.js';
+import { localLLM } from './local-llm-client';
 import { advancedIntelligenceIntegration, type IntegratedIntelligenceRequest } from './advanced-intelligence-integration';
 import { AdvancedVisionProcessor } from './advanced-vision-module';
 

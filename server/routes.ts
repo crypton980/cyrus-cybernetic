@@ -1109,7 +1109,7 @@ export async function registerRoutes(
               n: 1,
               size: "1024x1024",
             });
-            return res.json({ url: editResp.data[0]?.url });
+            return res.json({ url: editResp.data?.[0]?.url });
           } catch (editErr) {
             console.warn("[Visualize] Image edit failed, falling back to generate:", editErr);
           }
@@ -1124,7 +1124,7 @@ export async function registerRoutes(
         response_format: "url",
       });
 
-      res.json({ url: genResp.data[0]?.url });
+      res.json({ url: genResp.data?.[0]?.url });
     } catch (err: any) {
       console.error("Docgen visualize failed:", err);
       return res.status(500).json({ error: "Visual generation failed", details: err?.message || String(err) });
