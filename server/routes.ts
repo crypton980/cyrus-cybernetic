@@ -565,6 +565,9 @@ export async function registerRoutes(
   app.post("/api/inference", async (req, res) => {
     try {
       const { message } = req.body;
+      if (!openai) {
+        return res.status(503).json({ error: "OpenAI API key not configured" });
+      }
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
@@ -1172,7 +1175,7 @@ export async function registerRoutes(
     const limit = Number(req.query.limit || 5);
     const apiKey = process.env.NEWS_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: "NEWS_API_KEY not set" });
+      return res.status(503).json({ error: "NEWS_API_KEY not configured" });
     }
     try {
       const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(topics)}&pageSize=${limit}&sortBy=publishedAt&language=en&apiKey=${apiKey}`;
@@ -1252,6 +1255,9 @@ export async function registerRoutes(
   app.post("/api/scan/ocr", async (req: Request, res) => {
     try {
       const { image } = req.body;
+      if (!openai) {
+        return res.status(503).json({ success: false, error: "OpenAI API key not configured" });
+      }
       if (!image) {
         return res.status(400).json({ success: false, error: "No image data provided" });
       }
@@ -1297,6 +1303,9 @@ export async function registerRoutes(
   app.post("/api/scan/vision", async (req: Request, res) => {
     try {
       const { image } = req.body;
+      if (!openai) {
+        return res.status(503).json({ success: false, error: "OpenAI API key not configured" });
+      }
       if (!image) {
         return res.status(400).json({ success: false, error: "No image data provided" });
       }
@@ -1351,6 +1360,9 @@ Format your response in a clear, structured manner.`
   app.post("/api/scan/translate", async (req: Request, res) => {
     try {
       const { text, targetLanguage } = req.body;
+      if (!openai) {
+        return res.status(503).json({ success: false, error: "OpenAI API key not configured" });
+      }
       if (!text) {
         return res.status(400).json({ success: false, error: "No text provided for translation" });
       }
@@ -2180,6 +2192,10 @@ If you detect a command that requires physical device interaction, inform the op
         return res.status(400).json({ error: "Text is required" });
       }
 
+      if (!process.env.ELEVENLABS_API_KEY) {
+        return res.status(503).json({ error: "ElevenLabs API key not configured" });
+      }
+
       const elevenLabsVoice = (voice in ELEVENLABS_VOICES ? voice : "rachel") as ElevenLabsVoice;
       const emotionSettings = emotion ? getEmotionVoiceSettings(emotion) : {};
       const audioBuffer = await textToSpeechElevenLabs(text, elevenLabsVoice, emotionSettings);
@@ -2200,6 +2216,10 @@ If you detect a command that requires physical device interaction, inform the op
 
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text is required" });
+      }
+
+      if (!process.env.ELEVENLABS_API_KEY) {
+        return res.status(503).json({ error: "ElevenLabs API key not configured" });
       }
 
       res.setHeader("Content-Type", "text/event-stream");
@@ -2536,6 +2556,9 @@ If you detect a command that requires physical device interaction, inform the op
   app.post("/api/cyrus/device/execute", async (req, res) => {
     try {
       const { command } = req.body;
+      if (!openai) {
+        return res.status(503).json({ error: "OpenAI API key not configured" });
+      }
       if (!command || typeof command !== 'string') {
         return res.status(400).json({ error: "Command is required" });
       }
@@ -2759,6 +2782,11 @@ Return ONLY valid JSON.`
     let taskDescription = command;
     let steps: any[] = [];
 
+    if (!openai) {
+      // Offline fallback: generate a basic plan without OpenAI
+      steps = [{ type: "observe", description: `Process request: ${command}`, estimated_duration: 1000 }];
+      taskDescription = command;
+    } else
     try {
       const aiResponse = await callOpenAIWithTimeout((signal) =>
         openai!.chat.completions.create({
@@ -3064,6 +3092,9 @@ Return ONLY valid JSON.`
     try {
       const { fileId, fileUrl, mimeType } = req.body;
 
+      if (!openai) {
+        return res.status(503).json({ error: "OpenAI API key not configured" });
+      }
       if (!fileUrl) {
         return res.status(400).json({ error: "File URL is required" });
       }
