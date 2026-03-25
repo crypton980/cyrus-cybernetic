@@ -153,6 +153,15 @@ async function initializeSystem() {
   }
   await tick();
 
+  try {
+    const { default: myServerRoutes } = await import("./myserver/routes");
+    app.use("/api/myserver", myServerRoutes);
+    log("[MyServer] Custom personal server registered at /api/myserver");
+  } catch (e) {
+    console.error("[Init] MyServer failed (non-fatal):", e);
+  }
+  await tick();
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
