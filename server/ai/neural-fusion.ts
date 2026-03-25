@@ -476,10 +476,15 @@ export class NeuralFusionEngine {
 
     this.openaiClient = new OpenAI({
       apiKey,
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
     });
 
     return this.openaiClient;
+  }
+
+  /** Invalidate cached client so the next call re-reads the key from env/DB. */
+  resetOpenAIClient(): void {
+    this.openaiClient = null;
   }
 
   private getModelCandidates(): string[] {
@@ -1199,8 +1204,14 @@ My internal chronometer is synchronized with atomic time standards. Temporal pre
     request: InferenceRequest,
     priorLearning?: { optimizedApproach: string | null; predictedTime: number; learningApplied: boolean; confidenceLevel: number }
   ): Promise<string> {
-    // Check if API key is configured before attempting OpenAI call
-    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    // Check if API key is configured before attempting OpenAI call (env or DB)
+    let apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      try {
+        const { getOpenAIKey } = await import("../settings/service");
+        apiKey = await getOpenAIKey() ?? undefined;
+      } catch { /* settings service unavailable */ }
+    }
     if (!apiKey) {
       return this.generateOfflineResponse(thought, request);
     }

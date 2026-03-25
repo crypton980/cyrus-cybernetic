@@ -23,6 +23,7 @@ import {
   User,
   Users,
   Library,
+  Settings,
 } from "lucide-react";
 
 import { AccessGate } from "./components/AccessGate";
@@ -43,6 +44,7 @@ import { SecurityPage } from "./pages/SecurityPage";
 import { BiologyPage } from "./pages/BiologyPage";
 import { BloodSamplingPage } from "./pages/BloodSamplingPage";
 import { KnowledgeLibraryPage } from "./pages/KnowledgeLibraryPage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
@@ -63,6 +65,7 @@ const moduleItems = [
   { path: "/biology", label: "Biology", sublabel: "Lab Analysis", icon: Microscope },
   { path: "/blood", label: "Blood", sublabel: "Sampling", icon: Droplets },
   { path: "/knowledge", label: "Knowledge", sublabel: "Document Library", icon: Library },
+  { path: "/settings", label: "Settings", sublabel: "API Keys", icon: Settings },
 ];
 
 export default function App() {
@@ -434,6 +437,7 @@ function AppContent({
             <Route path="/security" component={SecurityPage} />
             <Route path="/biology" component={BiologyPage} />
             <Route path="/blood" component={BloodSamplingPage} />
+            <Route path="/settings" component={SettingsPage} />
           </Switch>
         </main>
       </div>

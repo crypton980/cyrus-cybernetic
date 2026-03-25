@@ -154,6 +154,15 @@ async function initializeSystem() {
   await tick();
 
   try {
+    const { default: settingsRoutes } = await import("./settings/routes");
+    app.use("/api/settings", settingsRoutes);
+    log("[Settings] API key management registered at /api/settings");
+  } catch (e) {
+    console.error("[Init] Settings routes failed (non-fatal):", e);
+  }
+  await tick();
+
+  try {
     const { default: myServerRoutes } = await import("./myserver/routes");
     app.use("/api/myserver", myServerRoutes);
     log("[MyServer] Custom personal server registered at /api/myserver");

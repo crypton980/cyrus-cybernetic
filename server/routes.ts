@@ -379,24 +379,38 @@ const normalizeActionType = (type: string): string => {
   return 'click';
 };
 
-const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+function buildOpenAIClient(apiKey: string | null, baseUrl: string | null): OpenAI | null {
+  if (apiKey && baseUrl) {
+    return new AzureOpenAI({ endpoint: baseUrl, apiKey }) as unknown as OpenAI;
+  }
+  if (apiKey) {
+    return new OpenAI({ apiKey });
+  }
+  if (baseUrl) {
+    return new AzureOpenAI({ endpoint: baseUrl, credential: new DefaultAzureCredential() } as any) as unknown as OpenAI;
+  }
+  return null;
+}
 
-const openai = openaiApiKey && openaiBaseUrl
-  ? new AzureOpenAI({
-    endpoint: openaiBaseUrl,
-    apiKey: openaiApiKey,
-  })
-  : openaiApiKey
-    ? new OpenAI({
-      apiKey: openaiApiKey,
-    })
-    : openaiBaseUrl
-      ? new AzureOpenAI({
-        endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
-      } as any)
-      : null;
+let openai: OpenAI | null = buildOpenAIClient(
+  process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || null,
+  process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || null,
+);
+
+/** Called by the settings route after a key update so the new key takes effect immediately. */
+export async function refreshOpenAIClient(): Promise<void> {
+  const { getOpenAIKey, getOpenAIBaseUrl } = await import("./settings/service");
+  const [key, baseUrl] = await Promise.all([getOpenAIKey(), getOpenAIBaseUrl()]);
+  openai = buildOpenAIClient(key, baseUrl);
+
+  // Also reset neural-fusion's cached client so it picks up the new key
+  try {
+    const { neuralFusionEngine } = await import("./ai/neural-fusion");
+    neuralFusionEngine.resetOpenAIClient();
+  } catch {
+    // neural-fusion may not be loaded yet; that's fine
+  }
+}
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -414,6 +428,9 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   await loadDependencies();
+
+  // Load API keys from DB (if any were saved via settings UI) before serving requests
+  await refreshOpenAIClient().catch(() => {});
 
   initSignalingServer(httpServer);
   initSocketSignaling(httpServer);

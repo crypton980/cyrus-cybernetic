@@ -362,5 +362,16 @@ export const insertDocumentLibrarySchema = createInsertSchema(documentLibrary).o
 export type InsertDocumentLibrary = z.infer<typeof insertDocumentLibrarySchema>;
 export type DocumentLibrary = typeof documentLibrary.$inferSelect;
 
+// System settings — stores runtime configuration such as API keys
+export const systemSettings = pgTable("system_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSystemSettingsSchema = createInsertSchema(systemSettings);
+export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
+export type SystemSettings = typeof systemSettings.$inferSelect;
+
 export * from "./models/auth";
 export * from "./models/comms";
