@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "wouter";
 import {
   Cpu,
   Brain,
@@ -19,6 +20,7 @@ import {
   AlertCircle,
   XCircle,
   Droplets,
+  Library,
 } from "lucide-react";
 
 interface ModuleStatus {
@@ -68,6 +70,7 @@ const moduleIcons: Record<string, any> = {
   "teaching": Brain,
   "security": Shield,
   "blood-sampling": Droplets,
+  "knowledge-library": Library,
 };
 
 const moduleColors: Record<string, string> = {
@@ -91,6 +94,7 @@ const moduleColors: Record<string, string> = {
   "teaching": "from-yellow-500 to-amber-600",
   "security": "from-slate-500 to-zinc-600",
   "blood-sampling": "from-red-600 to-rose-700",
+  "knowledge-library": "from-blue-500 to-indigo-600",
 };
 
 export function ModulesPage() {
@@ -287,6 +291,25 @@ export function ModulesPage() {
             })}
           </div>
         )}
+
+        <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Library className="w-5 h-5 text-blue-400" />
+            Knowledge Library
+          </h2>
+          <p className="text-[rgba(235,235,245,0.6)] text-sm leading-relaxed mb-4">
+            All uploaded legal documents, constitutions, engineering books, military manuals and
+            other reference materials are indexed here. CYRUS automatically searches and references
+            these documents when answering your questions.
+          </p>
+          <Link
+            href="/knowledge"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/40 transition-colors text-sm font-medium"
+          >
+            <Library className="w-4 h-4" />
+            Manage Knowledge Library
+          </Link>
+        </div>
 
         <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">

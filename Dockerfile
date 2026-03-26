@@ -1,25 +1,37 @@
-FROM python:3.12-slim
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+COPY package*.json ./
+RUN npm ci
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
 COPY . .
+RUN npm run build
 
-# Expose port
-EXPOSE 3000
+# Production image
+FROM node:20-alpine AS runner
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+WORKDIR /app
 
-# Start the application
-CMD ["python", "simple_flask_server.py"]
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy built client assets
+COPY --from=builder /app/dist ./dist
+# Copy server source (tsx runs TypeScript directly in production)
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/shared ./shared
+COPY --from=builder /app/standalone ./standalone
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/tsconfig.server.json ./tsconfig.server.json
+COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+
+EXPOSE 3105
+
+ENV NODE_ENV=production
+ENV PORT=3105
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget -qO- http://localhost:3105/__health || exit 1
+
+CMD ["npm", "start"]

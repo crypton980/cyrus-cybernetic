@@ -1,0 +1,68 @@
+name: Merge development branch into main
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch all branches
+        run: git fetch --all
+
+      - name: Checkout main
+        run: git checkout main
+
+      - name: Show current state
+        run: |
+          echo "=== main branch commits ==="
+          git log --oneline -5
+          echo "=== copilot branch commits ==="
+          git log --oneline origin/copilot/get-app-published -5
+
+      - name: Apply copilot branch files to main
+        run: |
+          git checkout origin/copilot/get-app-published -- .
+          git status
+
+      - name: Commit merged changes
+        run: |
+          if git diff --cached --quiet; then
+            echo "No changes to commit - branches may already be in sync"
+          else
+            git commit -m "feat: merge all UI development into main
+
+          Brings all changes from copilot/get-app-published:
+          - Settings page /settings with runtime API key management
+          - Document Knowledge Library at /knowledge
+          - CYRUS offline fallback (works without OpenAI key)
+          - 503 null guards on all AI-dependent routes
+          - Document analysis full structured output
+          - Dashboard burst capture, Humanoid Live, face DB UI
+          - Safe math parser, port 3105, tsconfig.server.json
+          - All sidebar modules: Command, Modules, Vision, Documents,
+            Nav, Comms, Systems, Aerospace, Markets, Medical, Quantum,
+            Security, Biology, Blood, Knowledge, Settings"
+          fi
+
+      - name: Push to main
+        run: git push origin main
+
+      - name: Summary
+        run: |
+          echo "✅ Successfully merged development into main"
+          git log --oneline -3

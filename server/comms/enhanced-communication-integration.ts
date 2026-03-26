@@ -133,7 +133,7 @@ class EnhancedCommunicationIntegration {
         console.error("[Integration] Health check error:", error);
         res.status(500).json({
           status: "unhealthy",
-          error: error.message
+          error: (error as Error).message
         });
       }
     });
@@ -178,7 +178,7 @@ class EnhancedCommunicationIntegration {
         console.error("[Integration] Network optimization error:", error);
         res.status(500).json({
           error: "Failed to optimize network",
-          details: error.message
+          details: (error as Error).message
         });
       }
     });
@@ -216,7 +216,7 @@ class EnhancedCommunicationIntegration {
         reject(new Error("ML Service startup timeout"));
       }, 30000);
 
-      this.mlServiceProcess.stdout.on("data", (data) => {
+      this.mlServiceProcess.stdout.on("data", (data: any) => {
         const output = data.toString();
         console.log("[ML Service]", output.trim());
 
@@ -227,18 +227,18 @@ class EnhancedCommunicationIntegration {
         }
       });
 
-      this.mlServiceProcess.stderr.on("data", (data) => {
+      this.mlServiceProcess.stderr.on("data", (data: any) => {
         console.error("[ML Service Error]", data.toString().trim());
       });
 
-      this.mlServiceProcess.on("close", (code) => {
+      this.mlServiceProcess.on("close", (code: any) => {
         if (code !== 0) {
           console.error(`[Integration] ML Service exited with code ${code}`);
           reject(new Error(`ML Service failed with code ${code}`));
         }
       });
 
-      this.mlServiceProcess.on("error", (error) => {
+      this.mlServiceProcess.on("error", (error: any) => {
         console.error("[Integration] Failed to start ML Service:", error);
         reject(error);
       });

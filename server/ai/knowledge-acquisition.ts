@@ -21,7 +21,7 @@ export class KnowledgeAcquisition {
         await this.vectorDb.heartbeat(); // Test connection
         console.log('[Knowledge Acquisition] ChromaDB connected successfully');
       } catch (error) {
-        console.warn('[Knowledge Acquisition] ChromaDB connection failed, falling back to file-based storage:', error.message);
+        console.warn('[Knowledge Acquisition] ChromaDB connection failed, falling back to file-based storage:', (error as Error).message);
         this.vectorDb = null; // Fallback to file-based
       }
     }
@@ -61,7 +61,7 @@ export class KnowledgeAcquisition {
               const subKnowledge = await this.acquireFromWeb(link, depth - 1);
               newKnowledge.push(...subKnowledge);
             } catch (error) {
-              console.warn(`Failed to crawl ${link}:`, error.message);
+              console.warn(`Failed to crawl ${link}:`, (error as Error).message);
             }
           }
         }

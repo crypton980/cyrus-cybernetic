@@ -1,5 +1,5 @@
-import { knowledgeAcquisition } from './knowledge-acquisition.js';
-import { learningSystem } from './learning-system.js';
+import { knowledgeAcquisition } from './knowledge-acquisition';
+import { learningSystem } from './learning-system';
 import fs from 'fs';
 import path from 'path';
 
@@ -59,7 +59,7 @@ export class DataIngestionPipeline {
         // Rate limiting
         await this.delay(1000 / this.config.dataSources.web.rateLimit);
       } catch (error) {
-        console.warn(`Failed to ingest from ${url}:`, error.message);
+        console.warn(`Failed to ingest from ${url}:`, (error as Error).message);
       }
     }
   }
@@ -84,7 +84,7 @@ export class DataIngestionPipeline {
         await knowledgeAcquisition.acquireFromYouTube(videoId);
         await this.delay(2000); // Rate limiting
       } catch (error) {
-        console.warn(`Failed to ingest YouTube video ${videoId}:`, error.message);
+        console.warn(`Failed to ingest YouTube video ${videoId}:`, (error as Error).message);
       }
     }
   }
@@ -114,7 +114,7 @@ export class DataIngestionPipeline {
         await knowledgeAcquisition.acquireFromWikipedia(topic);
         await this.delay(1000);
       } catch (error) {
-        console.warn(`Failed to ingest Wikipedia topic ${topic}:`, error.message);
+        console.warn(`Failed to ingest Wikipedia topic ${topic}:`, (error as Error).message);
       }
     }
   }
@@ -138,7 +138,7 @@ export class DataIngestionPipeline {
         await knowledgeAcquisition.acquireFromWeb(url, 1);
         await this.delay(2000);
       } catch (error) {
-        console.warn(`Failed to ingest academic paper ${url}:`, error.message);
+        console.warn(`Failed to ingest academic paper ${url}:`, (error as Error).message);
       }
     }
   }
@@ -161,7 +161,7 @@ export class DataIngestionPipeline {
         await knowledgeAcquisition.acquireFromWeb(url, 2);
         await this.delay(3000);
       } catch (error) {
-        console.warn(`Failed to ingest news from ${url}:`, error.message);
+        console.warn(`Failed to ingest news from ${url}:`, (error as Error).message);
       }
     }
   }

@@ -26,6 +26,7 @@ let ensureCompatibleFormat: any;
 let textToSpeechElevenLabs: any;
 let textToSpeechStreamElevenLabs: any;
 let ELEVENLABS_VOICES: any;
+type ElevenLabsVoice = any;
 let getEmotionVoiceSettings: any;
 let runAutonomy: any;
 let registerDeviceRoutes: any;
@@ -35,6 +36,11 @@ let extractFile: any;
 let analyzeExtraction: any;
 let buildReport: any;
 let generateDocument: any;
+let createDocgenJob: any;
+let getDocgenJob: any;
+let listDocgenJobs: any;
+let cancelDocgenJob: any;
+let resumeDocgenJob: any;
 let initSignalingServer: any;
 let initSocketSignaling: any;
 let enqueueMessage: any;
@@ -62,6 +68,11 @@ let systemRefinementEngine: any;
 let emotionFusion: any;
 let voiceProsody: any;
 let brainRoutes: any;
+let createAnalysisJob: any;
+let getAnalysisJob: any;
+let listAnalysisReports: any;
+let knowledgeLib: typeof import("./knowledge/library") | null = null;
+type HealthProvider = any;
 
 const tick = (ms = 10): Promise<void> => new Promise((r) => setTimeout(r, ms));
 let depsLoaded = false;
@@ -123,11 +134,18 @@ async function loadDependencies() {
   const rpM = await import("./ingestion/report");
   buildReport = rpM.buildReport;
   const jobsM = await import("./ingestion/jobs");
-  const createAnalysisJob = jobsM.createAnalysisJob;
-  const getAnalysisJob = jobsM.getAnalysisJob;
-  const listAnalysisReports = jobsM.listAnalysisReports;
+  createAnalysisJob = jobsM.createAnalysisJob;
+  getAnalysisJob = jobsM.getAnalysisJob;
+  listAnalysisReports = jobsM.listAnalysisReports;
   const dgM = await import("./docgen/generate");
   generateDocument = dgM.generateDocument;
+  const dgJobsM = await import("./docgen/jobs");
+  createDocgenJob = dgJobsM.createDocgenJob;
+  getDocgenJob = dgJobsM.getDocgenJob;
+  listDocgenJobs = dgJobsM.listDocgenJobs;
+  cancelDocgenJob = dgJobsM.cancelDocgenJob;
+  resumeDocgenJob = dgJobsM.resumeDocgenJob;
+  knowledgeLib = await import("./knowledge/library");
   await tick();
 
   const sgM = await import("./comms/signaling");
@@ -176,7 +194,7 @@ async function loadDependencies() {
     const autoM = await import("./autonomy/routes");
     autonomyRoutes = autoM.default;
   } catch (error) {
-    console.warn("[Routes] Failed to load autonomy routes:", error.message);
+    console.warn("[Routes] Failed to load autonomy routes:", (error as Error).message);
   }
   await tick();
 
@@ -361,24 +379,38 @@ const normalizeActionType = (type: string): string => {
   return 'click';
 };
 
-const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+function buildOpenAIClient(apiKey: string | null, baseUrl: string | null): OpenAI | null {
+  if (apiKey && baseUrl) {
+    return new AzureOpenAI({ endpoint: baseUrl, apiKey }) as unknown as OpenAI;
+  }
+  if (apiKey) {
+    return new OpenAI({ apiKey });
+  }
+  if (baseUrl) {
+    return new AzureOpenAI({ endpoint: baseUrl, credential: new DefaultAzureCredential() } as any) as unknown as OpenAI;
+  }
+  return null;
+}
 
-const openai = openaiApiKey && openaiBaseUrl
-  ? new AzureOpenAI({
-    endpoint: openaiBaseUrl,
-    apiKey: openaiApiKey,
-  })
-  : openaiApiKey
-    ? new OpenAI({
-      apiKey: openaiApiKey,
-    })
-    : openaiBaseUrl
-      ? new AzureOpenAI({
-        endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
-      })
-      : null;
+let openai: OpenAI | null = buildOpenAIClient(
+  process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || null,
+  process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || null,
+);
+
+/** Called by the settings route after a key update so the new key takes effect immediately. */
+export async function refreshOpenAIClient(): Promise<void> {
+  const { getOpenAIKey, getOpenAIBaseUrl } = await import("./settings/service");
+  const [key, baseUrl] = await Promise.all([getOpenAIKey(), getOpenAIBaseUrl()]);
+  openai = buildOpenAIClient(key, baseUrl);
+
+  // Also reset neural-fusion's cached client so it picks up the new key
+  try {
+    const { neuralFusionEngine } = await import("./ai/neural-fusion");
+    neuralFusionEngine.resetOpenAIClient();
+  } catch {
+    // neural-fusion may not be loaded yet; that's fine
+  }
+}
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -396,6 +428,9 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   await loadDependencies();
+
+  // Load API keys from DB (if any were saved via settings UI) before serving requests
+  await refreshOpenAIClient().catch(() => {});
 
   initSignalingServer(httpServer);
   initSocketSignaling(httpServer);
@@ -547,6 +582,9 @@ export async function registerRoutes(
   app.post("/api/inference", async (req, res) => {
     try {
       const { message } = req.body;
+      if (!openai) {
+        return res.status(503).json({ error: "OpenAI API key not configured" });
+      }
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
@@ -566,7 +604,7 @@ export async function registerRoutes(
         try {
           console.log(`[CYRUS Image] Detected image generation request: "${message.substring(0, 80)}..."`);
           const promptResponse = await callOpenAIWithTimeout((signal) =>
-            openai.chat.completions.create({
+            openai!.chat.completions.create({
               model: "gpt-4o",
               messages: [
                 { role: "system", content: "Extract a detailed DALL-E image generation prompt from the user's request. Return ONLY the optimized prompt text, nothing else. Make it detailed and descriptive for best image quality." },
@@ -612,7 +650,7 @@ export async function registerRoutes(
       const thought = await cyrusSoul.processThought(message);
       const systemPrompt = cyrusSoul.getSystemPrompt();
 
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
@@ -761,10 +799,13 @@ export async function registerRoutes(
       if (!buffer) {
         return res.status(500).json({ success: false, error: "Unable to read uploaded file buffer" });
       }
+      const jurisdiction = (req.body.jurisdiction as string) || "Global";
+      const rawStrict = req.body.strictLegalReview;
+      const strictLegalReview = rawStrict === true || rawStrict === "true";
       const det = await detectFile(buffer, req.file.mimetype);
       const ext = await extractFile(buffer, req.file.mimetype);
-      const analysis = await analyzeExtraction(ext);
-      const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f) => f.ocrText)));
+      const analysis = await analyzeExtraction(ext, { jurisdiction, strictLegalReview });
+      const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f: any) => f.ocrText)));
       const report = buildReport(det, ext, analysis, hasContent);
       if (!hasContent) {
         report.issues.push("No extractable content found.");
@@ -845,6 +886,271 @@ export async function registerRoutes(
     }
   });
 
+  // File detect route
+  app.post("/api/files/detect", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+      if (!buffer) return res.status(500).json({ error: "Unable to read uploaded file buffer" });
+      const det = await detectFile(buffer, req.file.mimetype);
+      res.json(det);
+    } catch (err: any) {
+      console.error("File detect failed:", err);
+      return res.status(500).json({ error: "File detection failed", details: err?.message || String(err) });
+    }
+  });
+
+  // File extract route
+  app.post("/api/files/extract", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+      if (!buffer) return res.status(500).json({ error: "Unable to read uploaded file buffer" });
+      const ext = await extractFile(buffer, req.file.mimetype);
+      res.json(ext);
+    } catch (err: any) {
+      console.error("File extract failed:", err);
+      return res.status(500).json({ error: "File extraction failed", details: err?.message || String(err) });
+    }
+  });
+
+  // ============================================
+  // KNOWLEDGE LIBRARY ROUTES
+  // ============================================
+
+  // List all indexed documents
+  app.get("/api/knowledge/library", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const category = req.query.category as string | undefined;
+      const includeInactive = req.query.includeInactive === "true";
+      const docs = await knowledgeLib.listDocuments(category, includeInactive);
+      res.json({ documents: docs, total: docs.length });
+    } catch (err: any) {
+      console.error("Knowledge library list failed:", err);
+      return res.status(500).json({ error: "Failed to list library", details: err?.message || String(err) });
+    }
+  });
+
+  // Search documents
+  app.get("/api/knowledge/library/search", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const q = (req.query.q || req.query.query) as string;
+      const category = req.query.category as string | undefined;
+      if (!q) return res.status(400).json({ error: "Query parameter 'q' is required" });
+      const results = await knowledgeLib.searchDocuments(q, category, 12);
+      res.json({ results, total: results.length });
+    } catch (err: any) {
+      console.error("Knowledge library search failed:", err);
+      return res.status(500).json({ error: "Search failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Index a new document into the library (upload + index in one step)
+  app.post("/api/knowledge/library/index", upload.single("file"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+      if (!buffer) return res.status(500).json({ error: "Unable to read uploaded file buffer" });
+      const category = (req.body.category as string) || undefined;
+      const result = await knowledgeLib.indexDocument(
+        buffer,
+        req.file.originalname,
+        req.file.mimetype,
+        category,
+        req.file.path || undefined,
+      );
+      res.json({ document: result.doc, alreadyIndexed: result.alreadyIndexed });
+    } catch (err: any) {
+      console.error("Knowledge library index failed:", err);
+      return res.status(500).json({ error: "Indexing failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Bulk-index all files in the uploads directory
+  app.post("/api/knowledge/library/bulk-index", async (_req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const uploadsDir = path.join(process.cwd(), "public", "uploads");
+      const result = await knowledgeLib.bulkIndexUploadedFiles(uploadsDir);
+      res.json(result);
+    } catch (err: any) {
+      console.error("Knowledge library bulk-index failed:", err);
+      return res.status(500).json({ error: "Bulk indexing failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Get a specific document by ID (includes fullText)
+  app.get("/api/knowledge/library/:docId", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const doc = await knowledgeLib.getDocumentById(req.params.docId);
+      if (!doc) return res.status(404).json({ error: "Document not found" });
+      res.json(doc);
+    } catch (err: any) {
+      console.error("Knowledge library get failed:", err);
+      return res.status(500).json({ error: "Failed to get document", details: err?.message || String(err) });
+    }
+  });
+
+  // Toggle document active/inactive
+  app.patch("/api/knowledge/library/:docId/toggle", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const active = req.body.active !== false; // default: activate
+      const doc = await knowledgeLib.toggleDocumentActive(req.params.docId, active);
+      if (!doc) return res.status(404).json({ error: "Document not found" });
+      res.json({ document: doc });
+    } catch (err: any) {
+      console.error("Knowledge library toggle failed:", err);
+      return res.status(500).json({ error: "Toggle failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Delete a document from the index
+  app.delete("/api/knowledge/library/:docId", async (req, res) => {
+    try {
+      if (!knowledgeLib) return res.status(503).json({ error: "Knowledge library not initialized" });
+      const deleted = await knowledgeLib.deleteDocumentFromLibrary(req.params.docId);
+      if (!deleted) return res.status(404).json({ error: "Document not found" });
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Knowledge library delete failed:", err);
+      return res.status(500).json({ error: "Delete failed", details: err?.message || String(err) });
+    }
+  });
+
+  // ============================================
+  // DOCGEN ROUTES
+  // ============================================
+
+  // List all docgen jobs
+  app.get("/api/docgen/jobs", (_req, res) => {
+    try {
+      const jobs = listDocgenJobs(20);
+      res.json({ jobs });
+    } catch (err: any) {
+      console.error("List docgen jobs failed:", err);
+      return res.status(500).json({ error: "Failed to list docgen jobs", details: err?.message || String(err) });
+    }
+  });
+
+  // Get a specific docgen job
+  app.get("/api/docgen/jobs/:jobId", (req, res) => {
+    try {
+      const job = getDocgenJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+      res.json(job);
+    } catch (err: any) {
+      console.error("Get docgen job failed:", err);
+      return res.status(500).json({ error: "Failed to get docgen job", details: err?.message || String(err) });
+    }
+  });
+
+  // Cancel a docgen job
+  app.post("/api/docgen/jobs/:jobId/cancel", (req, res) => {
+    try {
+      const job = cancelDocgenJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+      res.json({ job });
+    } catch (err: any) {
+      console.error("Cancel docgen job failed:", err);
+      return res.status(500).json({ error: "Failed to cancel docgen job", details: err?.message || String(err) });
+    }
+  });
+
+  // Resume a docgen job
+  app.post("/api/docgen/jobs/:jobId/resume", (req, res) => {
+    try {
+      const job = resumeDocgenJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found or cannot be resumed" });
+      res.json({ job });
+    } catch (err: any) {
+      console.error("Resume docgen job failed:", err);
+      return res.status(500).json({ error: "Failed to resume docgen job", details: err?.message || String(err) });
+    }
+  });
+
+  // Generate document (synchronous — used for small page counts)
+  app.post("/api/docgen/generate", async (req, res) => {
+    try {
+      const { docType, content, audience, targetPages, wordsPerPage, includeImages, imageStyle } = req.body || {};
+      const doc = await generateDocument({ docType, content, audience, targetPages, wordsPerPage, includeImages, imageStyle });
+      res.json(doc);
+    } catch (err: any) {
+      console.error("Docgen generate failed:", err);
+      return res.status(500).json({ error: "Document generation failed", details: err?.message || String(err) });
+    }
+  });
+
+  // Generate document async (job-based — used for large page counts)
+  app.post("/api/docgen/generate-async", async (req, res) => {
+    try {
+      const { docType, content, audience, targetPages, wordsPerPage, includeImages, imageStyle } = req.body || {};
+      const job = createDocgenJob({ docType, content, audience, targetPages, wordsPerPage, includeImages, imageStyle });
+      res.json({ job });
+    } catch (err: any) {
+      console.error("Docgen generate-async failed:", err);
+      return res.status(500).json({ error: "Failed to start async document generation", details: err?.message || String(err) });
+    }
+  });
+
+  // Visual generation (image generation via DALL-E)
+  app.post("/api/docgen/visualize", upload.single("reference"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      const { prompt, style, mode } = req.body || {};
+      if (!prompt) return res.status(400).json({ error: "Prompt is required" });
+
+      if (!openai) {
+        return res.status(503).json({ error: "Image generation not configured (missing OpenAI API key)" });
+      }
+
+      const styleDescriptor =
+        style === "realistic_3d"
+          ? "photorealistic 3D render, professional rendering, high detail"
+          : style === "schematic"
+            ? "technical schematic diagram, blueprint style, line drawing, engineering drawing"
+            : "graphical illustration, clean vector style, professional infographic";
+
+      const fullPrompt = `${prompt}. Style: ${styleDescriptor}`;
+
+      if (mode === "edit" && req.file) {
+        const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
+        if (buffer) {
+          try {
+            const { toFile } = await import("openai");
+            const imageFile = await toFile(buffer, "reference.png", { type: "image/png" });
+            const editResp = await openai.images.edit({
+              model: "dall-e-2",
+              image: imageFile,
+              prompt: fullPrompt,
+              n: 1,
+              size: "1024x1024",
+            });
+            return res.json({ url: editResp.data?.[0]?.url });
+          } catch (editErr) {
+            console.warn("[Visualize] Image edit failed, falling back to generate:", editErr);
+          }
+        }
+      }
+
+      const genResp = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: fullPrompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "url",
+      });
+
+      res.json({ url: genResp.data?.[0]?.url });
+    } catch (err: any) {
+      console.error("Docgen visualize failed:", err);
+      return res.status(500).json({ error: "Visual generation failed", details: err?.message || String(err) });
+    }
+  });
+
   // Messaging (offline queue)
   app.post("/api/comms/message", (req, res) => {
     const { to, from, text } = req.body || {};
@@ -886,7 +1192,7 @@ export async function registerRoutes(
     const limit = Number(req.query.limit || 5);
     const apiKey = process.env.NEWS_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: "NEWS_API_KEY not set" });
+      return res.status(503).json({ error: "NEWS_API_KEY not configured" });
     }
     try {
       const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(topics)}&pageSize=${limit}&sortBy=publishedAt&language=en&apiKey=${apiKey}`;
@@ -966,12 +1272,15 @@ export async function registerRoutes(
   app.post("/api/scan/ocr", async (req: Request, res) => {
     try {
       const { image } = req.body;
+      if (!openai) {
+        return res.status(503).json({ success: false, error: "OpenAI API key not configured" });
+      }
       if (!image) {
         return res.status(400).json({ success: false, error: "No image data provided" });
       }
 
       // Use OpenAI Vision for OCR
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1011,12 +1320,15 @@ export async function registerRoutes(
   app.post("/api/scan/vision", async (req: Request, res) => {
     try {
       const { image } = req.body;
+      if (!openai) {
+        return res.status(503).json({ success: false, error: "OpenAI API key not configured" });
+      }
       if (!image) {
         return res.status(400).json({ success: false, error: "No image data provided" });
       }
 
       // Use OpenAI Vision for comprehensive image analysis
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1065,6 +1377,9 @@ Format your response in a clear, structured manner.`
   app.post("/api/scan/translate", async (req: Request, res) => {
     try {
       const { text, targetLanguage } = req.body;
+      if (!openai) {
+        return res.status(503).json({ success: false, error: "OpenAI API key not configured" });
+      }
       if (!text) {
         return res.status(400).json({ success: false, error: "No text provided for translation" });
       }
@@ -1078,7 +1393,7 @@ Format your response in a clear, structured manner.`
 
       const targetLangName = languageNames[targetLanguage] || targetLanguage;
 
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -1156,7 +1471,7 @@ Format your response in a clear, structured manner.`
         try {
           console.log(`[CYRUS Image] Detected image generation request in /api/infer: "${message.substring(0, 80)}..."`);
           const promptResponse = await callOpenAIWithTimeout((signal) =>
-            openai.chat.completions.create({
+            openai!.chat.completions.create({
               model: "gpt-4o",
               messages: [
                 { role: "system", content: "Extract a detailed DALL-E image generation prompt from the user's request. Return ONLY the optimized prompt text, nothing else. Make it detailed and descriptive for best image quality." },
@@ -1216,7 +1531,7 @@ Format your response in a clear, structured manner.`
       let conversationHistory: Array<{ role: 'user' | 'cyrus'; content: string }> = [];
       try {
         const recentConversations = await storage.getConversations(userId, 10);
-        conversationHistory = recentConversations.reverse().map(c => {
+        conversationHistory = recentConversations.reverse().map((c: any) => {
           const normalizedRole = (c.role === 'cyrus' || c.role === 'assistant') ? 'cyrus' : 'user';
           return {
             role: normalizedRole as 'user' | 'cyrus',
@@ -1565,7 +1880,7 @@ Format your response in a clear, structured manner.`
       res.json({
         domains: domainSummary,
         totalBranches: allBranches.length,
-        branchesByDomain: Object.entries(domainSummary).map(([name, info]) => ({
+        branchesByDomain: Object.entries(domainSummary).map(([name, info]: any) => ({
           name,
           ...info
         }))
@@ -1660,6 +1975,7 @@ Format your response in a clear, structured manner.`
 
   // Agent execution core using autonomy system
   let executeAgentCore = async (command: string): Promise<any> => {
+    const startTime = Date.now();
     const { runAutonomy } = await import("./autonomy/run");
 
     const result = await runAutonomy({
@@ -1789,10 +2105,28 @@ If you detect a command that requires physical device interaction, inform the op
         }
       }
 
+      // Inject relevant document context from Knowledge Library
+      let docContext = '';
+      if (knowledgeLib) {
+        try {
+          docContext = await knowledgeLib.getDocumentContext(message);
+        } catch (docErr) {
+          console.warn("[KnowledgeLib] Context retrieval failed:", docErr);
+        }
+      }
+
       // Build the user message content
       const fullMessage = contextInfo
         ? `${message}\n\n[CONTEXT]${contextInfo}`
         : message;
+
+      // Append document context to the system message if any was found
+      if (docContext) {
+        chatMessages[0] = {
+          role: "system",
+          content: chatMessages[0].content + docContext,
+        };
+      }
 
       // Check if we have image data for vision analysis
       if (imageData && typeof imageData === 'string' && imageData.startsWith('data:image')) {
@@ -1815,6 +2149,15 @@ If you detect a command that requires physical device interaction, inform the op
       }
 
       // Call OpenAI with gpt-4o model (supports vision)
+      if (!openai) {
+        // No API key configured — return a helpful offline response
+        cyrusSoul.processThought(message, context?.summary);
+        return res.json({
+          response: "I'm CYRUS, your advanced AI system. My language model requires an OpenAI API key to be configured. Please set OPENAI_API_KEY in your environment and restart the server to unlock full AI capabilities.",
+          identity: { name: identity.name, designation: identity.designation },
+          operationalContext: cyrusSoul.getOperationalContext()
+        });
+      }
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: chatMessages,
@@ -1866,6 +2209,10 @@ If you detect a command that requires physical device interaction, inform the op
         return res.status(400).json({ error: "Text is required" });
       }
 
+      if (!process.env.ELEVENLABS_API_KEY) {
+        return res.status(503).json({ error: "ElevenLabs API key not configured" });
+      }
+
       const elevenLabsVoice = (voice in ELEVENLABS_VOICES ? voice : "rachel") as ElevenLabsVoice;
       const emotionSettings = emotion ? getEmotionVoiceSettings(emotion) : {};
       const audioBuffer = await textToSpeechElevenLabs(text, elevenLabsVoice, emotionSettings);
@@ -1886,6 +2233,10 @@ If you detect a command that requires physical device interaction, inform the op
 
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text is required" });
+      }
+
+      if (!process.env.ELEVENLABS_API_KEY) {
+        return res.status(503).json({ error: "ElevenLabs API key not configured" });
       }
 
       res.setHeader("Content-Type", "text/event-stream");
@@ -2222,6 +2573,9 @@ If you detect a command that requires physical device interaction, inform the op
   app.post("/api/cyrus/device/execute", async (req, res) => {
     try {
       const { command } = req.body;
+      if (!openai) {
+        return res.status(503).json({ error: "OpenAI API key not configured" });
+      }
       if (!command || typeof command !== 'string') {
         return res.status(400).json({ error: "Command is required" });
       }
@@ -2236,7 +2590,7 @@ If you detect a command that requires physical device interaction, inform the op
 
       try {
         const aiResponse = await callOpenAIWithTimeout((signal) =>
-          openai.chat.completions.create({
+          openai!.chat.completions.create({
             model: "gpt-4o",
             messages: [
               {
@@ -2445,9 +2799,14 @@ Return ONLY valid JSON.`
     let taskDescription = command;
     let steps: any[] = [];
 
+    if (!openai) {
+      // Offline fallback: generate a basic plan without OpenAI
+      steps = [{ type: "observe", description: `Process request: ${command}`, estimated_duration: 1000 }];
+      taskDescription = command;
+    } else
     try {
       const aiResponse = await callOpenAIWithTimeout((signal) =>
-        openai.chat.completions.create({
+        openai!.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
@@ -2743,13 +3102,16 @@ Return ONLY valid JSON.`
   });
 
   // ============================================
-  // FILE ANALYSIS ROUTES
+  // FILE ANALYSIS ROUTES (legacy fileUrl-based handler — kept for Dashboard uploads)
   // ============================================
 
-  app.post("/api/files/analyze", async (req, res) => {
+  app.post("/api/files/analyze-url", async (req, res) => {
     try {
       const { fileId, fileUrl, mimeType } = req.body;
 
+      if (!openai) {
+        return res.status(503).json({ error: "OpenAI API key not configured" });
+      }
       if (!fileUrl) {
         return res.status(400).json({ error: "File URL is required" });
       }
@@ -2758,7 +3120,7 @@ Return ONLY valid JSON.`
 
       // Image analysis using OpenAI Vision
       if (mimeType?.startsWith("image/")) {
-        const response = await openai.chat.completions.create({
+        const response = await openai!.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {

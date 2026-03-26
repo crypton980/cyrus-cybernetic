@@ -368,7 +368,7 @@ class NaturalLanguagePatterns {
     const flow = this.conversationalFlows.get(context.conversationStyle);
     if (!flow) return '';
 
-    const elements = flow[type];
+    const elements = (flow as any)[type];
     if (!elements || elements.length === 0) return '';
 
     // Add some randomness - sometimes don't use elements
@@ -443,7 +443,7 @@ class NaturalLanguagePatterns {
       }
     }
 
-    if (context.emotionalState === 'happy') {
+    if ((context.emotionalState as any) === 'happy') {
       const enthusiasmPattern = this.getRandomPattern('enthusiasm', context);
       if (enthusiasmPattern && Math.random() > 0.8) {
         humanized = `${enthusiasmPattern} ${humanized}`;
@@ -863,6 +863,7 @@ export class HumanLikeCommunicationSystem {
 
     return recommendations;
   }
+}
 
 // Export singleton instance
 export const humanLikeCommunicationSystem = new HumanLikeCommunicationSystem();

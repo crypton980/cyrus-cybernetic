@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
-import { generateDocument, type GeneratedDoc } from "./generate";
-import type { DocGenInput } from "./analyze";
+import { generateDocument, type GeneratedDocument, type DocGenInput } from "./generate";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 
@@ -20,7 +19,7 @@ export interface DocgenJob {
   recoveredFromDisk?: boolean;
   resumedFromJobId?: string;
   input: DocGenInput;
-  result?: GeneratedDoc;
+  result?: GeneratedDocument;
 }
 
 const jobs = new Map<string, DocgenJob>();
@@ -122,7 +121,7 @@ async function runDocgenJob(id: string): Promise<void> {
 
   try {
     const result = await generateDocument(job.input, {
-      onProgress: (progress, stage) => {
+      onProgress: (progress: number, stage: string) => {
         const current = jobs.get(id);
         if (!current || current.status !== "running") return;
         updateJob(id, { progress, stage });

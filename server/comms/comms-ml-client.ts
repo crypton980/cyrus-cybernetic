@@ -80,7 +80,7 @@ class CommsMLClient {
       clearTimeout(timeout);
       const data = await res.json();
       const wasAvailable = this.available;
-      this.available = data.status === 'operational';
+      this.available = (data as any).status === 'operational';
       if (this.available && !wasAvailable) {
         console.log('[Comms ML Client] Connected to ML Intelligence Service');
       }

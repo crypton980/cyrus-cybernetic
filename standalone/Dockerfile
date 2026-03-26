@@ -43,11 +43,11 @@ COPY --from=build /app/dist ./dist
 RUN rm -rf .git .replit replit.nix .upm .cache
 
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=3105
 
-EXPOSE 5000 5001 5002
+EXPOSE 3105 5001 5002
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
-    CMD curl -f http://localhost:5000/__health || exit 1
+    CMD curl -f http://localhost:3105/__health || exit 1
 
 CMD ["bash", "-c", "python3 server/quantum_ai/quantum_bridge.py & python3 server/comms/ml_service.py & exec npx tsx server/index.ts"]

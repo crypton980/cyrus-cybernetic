@@ -56,9 +56,6 @@ export async function performFullAnalysis(
   const analysis = await analyzeExtraction(ext, options);
   const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f) => f.ocrText)));
 
-  const riskLevel: "low" | "medium" | "high" =
-    analysis.confidence === "Low" ? "high" : analysis.confidence === "Medium" ? "medium" : "low";
-
   return {
     detection: det,
     extraction: {
@@ -66,8 +63,8 @@ export async function performFullAnalysis(
       metadata: {
         attempted: ext.attempted,
         warnings: ext.warnings,
-        pageCount: ext.pageCount,
-        textLength: ext.textLength,
+        pageCount: (ext as any).pageCount,
+        textLength: (ext as any).textLength,
         transcript: ext.transcript,
         ocrText: ext.ocrText,
         frames: ext.frames,
@@ -91,8 +88,8 @@ export async function performFullAnalysis(
       strictLegalReview: analysis.strictLegalReview,
       citationAnchors: analysis.citationAnchors,
       chunksAnalyzed: analysis.chunksAnalyzed,
-      entities: [],
-      riskLevel,
+      entities: analysis.entities,
+      riskLevel: analysis.riskLevel,
       recommendations: analysis.recommendations,
     },
     generatedAt: new Date().toISOString(),

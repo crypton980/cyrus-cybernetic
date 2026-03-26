@@ -476,10 +476,15 @@ export class NeuralFusionEngine {
 
     this.openaiClient = new OpenAI({
       apiKey,
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
     });
 
     return this.openaiClient;
+  }
+
+  /** Invalidate cached client so the next call re-reads the key from env/DB. */
+  resetOpenAIClient(): void {
+    this.openaiClient = null;
   }
 
   private getModelCandidates(): string[] {
@@ -1075,11 +1080,142 @@ Unix Epoch: ${Math.floor(now.getTime() / 1000)}
 My internal chronometer is synchronized with atomic time standards. Temporal prediction algorithms are operational.`;
   }
 
+  /** Safely evaluate simple arithmetic expressions without using eval or new Function. */
+  private safeEvalArithmetic(expr: string): number | null {
+    // Only allow digits, spaces, and the four basic operators + parentheses + decimals
+    if (!/^[\d\s\+\-\*\/\.\(\)]+$/.test(expr)) return null;
+    // Recursive-descent parser: handles +, -, *, / with correct precedence and parentheses
+    let pos = 0;
+    const peek = () => expr[pos] ?? '';
+    const consume = () => expr[pos++];
+    const skipWs = () => { while (peek() === ' ') pos++; };
+    const parseNumber = (): number => {
+      skipWs();
+      let s = '';
+      if (peek() === '-') { s += consume(); }
+      while (/[\d\.]/.test(peek())) s += consume();
+      if (s === '' || s === '-') return NaN;
+      return parseFloat(s);
+    };
+    // Forward declarations
+    let parseExpr: () => number;
+    const parsePrimary = (): number => {
+      skipWs();
+      if (peek() === '(') {
+        consume(); // '('
+        const val = parseExpr();
+        skipWs();
+        if (peek() === ')') consume();
+        return val;
+      }
+      return parseNumber();
+    };
+    const parseMulDiv = (): number => {
+      let left = parsePrimary();
+      while (true) {
+        skipWs();
+        const op = peek();
+        if (op !== '*' && op !== '/') break;
+        consume();
+        const right = parsePrimary();
+        left = op === '*' ? left * right : left / right;
+      }
+      return left;
+    };
+    parseExpr = (): number => {
+      let left = parseMulDiv();
+      while (true) {
+        skipWs();
+        const op = peek();
+        if (op !== '+' && op !== '-') break;
+        consume();
+        const right = parseMulDiv();
+        left = op === '+' ? left + right : left - right;
+      }
+      return left;
+    };
+    try {
+      const result = parseExpr();
+      skipWs();
+      if (pos < expr.length) return null; // didn't consume everything
+      return isFinite(result) ? result : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private generateOfflineResponse(thought: ThoughtProcess, request: InferenceRequest): string {
+    const msg = request.message.toLowerCase();
+    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+    // Greetings
+    if (/^(hi|hello|hey|good\s*(morning|afternoon|evening)|howdy|sup|what'?s up)\b/.test(msg)) {
+      return `Hello! I'm CYRUS — your Cybernetic Unified Robust Intelligence System. I'm online and ready to assist you. My AI cloud engine requires an OpenAI API key to be configured for deep reasoning; but I can still answer many questions and assist with tasks using my built-in knowledge modules. How can I help you today?`;
+    }
+
+    // Factual definitions: "what is X"
+    const whatIsMatch = msg.match(/what\s+is\s+(?:a\s+|an\s+|the\s+)?(.+?)[\?\.\!]*$/i);
+    if (whatIsMatch) {
+      const term = whatIsMatch[1].trim();
+      const definitions: Record<string, string> = {
+        "rape": "Rape is a form of sexual assault involving sexual penetration or intercourse without the victim's consent. It is a serious crime and a violation of human rights in every jurisdiction worldwide. Victims can access support through crisis hotlines, medical professionals, and law enforcement. If you or someone you know needs help, please contact emergency services or a local sexual assault support center.",
+        "ai": "AI (Artificial Intelligence) is the simulation of human intelligence processes by computer systems. It includes machine learning, natural language processing, computer vision, and reasoning capabilities.",
+        "machine learning": "Machine learning is a subset of AI where systems learn and improve from experience without being explicitly programmed. It uses algorithms to analyze data, identify patterns, and make decisions.",
+        "blockchain": "A blockchain is a distributed, decentralized digital ledger that records transactions across many computers so that the record cannot be altered retroactively.",
+        "dna": "DNA (Deoxyribonucleic Acid) is a molecule that carries the genetic instructions for the development, functioning, growth, and reproduction of all living organisms.",
+        "gravity": "Gravity is a fundamental force of nature that attracts objects with mass toward each other. On Earth, it gives weight to objects and causes them to fall when dropped.",
+        "photosynthesis": "Photosynthesis is the process by which plants, algae, and some bacteria convert sunlight, water, and carbon dioxide into glucose (sugar) and oxygen.",
+        "democracy": "Democracy is a system of government in which power is vested in the people, who exercise it directly or through elected representatives.",
+        "climate change": "Climate change refers to long-term shifts in global temperatures and weather patterns, primarily driven by human activities like burning fossil fuels that release greenhouse gases.",
+        "cryptocurrency": "Cryptocurrency is a digital or virtual currency that uses cryptography for security and operates on decentralized networks, typically based on blockchain technology.",
+      };
+      const key = Object.keys(definitions).find(k => term.toLowerCase().includes(k));
+      if (key) {
+        return `${capitalize(key)}: ${definitions[key]}\n\nFor deeper analysis and context-aware responses, configure an OpenAI API key in the CYRUS settings.`;
+      }
+      return `You asked about "${term}". My built-in knowledge modules have information on many topics. For comprehensive, real-time AI analysis of this topic, please configure an OpenAI API key in your CYRUS environment settings (OPENAI_API_KEY). My deep reasoning engine requires this to provide detailed responses.`;
+    }
+
+    // Questions
+    if (/^(how|why|when|where|who|which|can|does|do|is|are|was|were|will|would|should|could|may|might)\b/.test(msg)) {
+      return `That's a great question! My core reasoning engine requires an OpenAI API key to provide in-depth, intelligent answers. Please set your OPENAI_API_KEY in the server environment, then restart CYRUS to unlock full AI capabilities. Once configured, I can provide detailed, intelligent responses to all your questions.`;
+    }
+
+    // Help request
+    if (msg.includes('help') || msg.includes('assist')) {
+      return `I'm CYRUS and I'm here to help! My full AI reasoning capabilities require an OpenAI API key to be configured. Currently operating in offline mode with built-in modules active:\n\n• Vision Analysis (requires camera)\n• Drone Control Module\n• Document Knowledge Library\n• System Status & Monitoring\n• Face Recognition\n\nTo unlock full AI conversational intelligence, add your OpenAI API key to the CYRUS environment configuration.`;
+    }
+
+    // Math — safe arithmetic only (no eval/new Function)
+    const mathMatch = msg.match(/^[\d\s\+\-\*\/\.\(\)]+$/);
+    if (mathMatch) {
+      const safeResult = this.safeEvalArithmetic(msg.trim());
+      if (safeResult !== null) {
+        return `Calculation result: ${msg.trim()} = ${safeResult}`;
+      }
+    }
+
+    // Default fallback
+    return `I received your message: "${request.message.substring(0, 100)}${request.message.length > 100 ? '...' : ''}"\n\nMy neural architecture is active and processing through ${thought.branchesUsed.length} cognitive branches. However, my advanced language model requires an OpenAI API key (OPENAI_API_KEY) to be configured in the server environment for full conversational AI capability.\n\nOnce configured, restart the server and I'll be able to engage with you at full intelligence capacity. Currently, I can handle:\n• System status inquiries\n• Vision analysis tasks\n• Drone control operations\n• Knowledge library searches\n• Basic factual questions`;
+  }
+
   private async generateAdaptiveResponse(
     thought: ThoughtProcess, 
     request: InferenceRequest,
     priorLearning?: { optimizedApproach: string | null; predictedTime: number; learningApplied: boolean; confidenceLevel: number }
   ): Promise<string> {
+    // Check if API key is configured before attempting OpenAI call (env or DB)
+    let apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      try {
+        const { getOpenAIKey } = await import("../settings/service");
+        apiKey = await getOpenAIKey() ?? undefined;
+      } catch { /* settings service unavailable */ }
+    }
+    if (!apiKey) {
+      return this.generateOfflineResponse(thought, request);
+    }
+
     try {
       const client = this.getOpenAIClient();
       let enhancedSystemPrompt = CYRUS_SYSTEM_PROMPT;
@@ -1195,8 +1331,7 @@ Based on ${priorLearning.confidenceLevel}% confidence from previous similar inte
       return aiResponse;
     } catch (error) {
       console.error('OpenAI API error:', error);
-      const status = cyrusSoul.getSystemStatus();
-      return `OpenAI API Error: ${error instanceof Error ? error.message : String(error)}. Processing through ${thought.branchesUsed.length} neural branches with ${(thought.confidence * 100).toFixed(0)}% confidence. ${thought.quantumEnhanced ? 'Quantum acceleration engaged.' : ''} My systems are ready for your next directive.`;
+      return this.generateOfflineResponse(thought, request);
     }
   }
 

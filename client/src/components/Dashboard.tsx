@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import type { ObjectDetection } from "@tensorflow-models/coco-ssd";
 import {
   Send,
@@ -24,9 +25,12 @@ import {
   Radio,
   KeyRound,
   Download,
+  Library,
 } from "lucide-react";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useAudioProcessing } from "@/hooks/useAudioProcessing";
+
+const LIBRARY_STATS_POLL_INTERVAL = 60_000;
 
 interface DetectedObject {
   class: string;
@@ -119,6 +123,7 @@ export function Dashboard() {
     () => localStorage.getItem("cyrus-elevenlabs-api-key") || ""
   );
   const [gpsLocation, setGpsLocation] = useState<{lat: number, lng: number, accuracy: number} | null>(null);
+  const [libraryStats, setLibraryStats] = useState<{ active: number; total: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const faceDbInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
@@ -158,6 +163,22 @@ export function Dashboard() {
       cleanupAudio();
     };
   }, [cleanupAudio]);
+
+  // Fetch Knowledge Library stats for Dashboard widget
+  useEffect(() => {
+    const fetchLibraryStats = async () => {
+      try {
+        const res = await fetch("/api/knowledge/library");
+        if (!res.ok) return;
+        const data = await res.json();
+        const docs: Array<{ isActive: number }> = data.documents || [];
+        setLibraryStats({ active: docs.filter((d) => d.isActive).length, total: docs.length });
+      } catch { /* silent */ }
+    };
+    void fetchLibraryStats();
+    const interval = setInterval(fetchLibraryStats, LIBRARY_STATS_POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, []);
 
   const addVisionEvent = useCallback((title: string, detail: string, severity: VisionActivityEvent["severity"] = "info") => {
     const timestamp = new Date().toISOString();
@@ -2213,7 +2234,26 @@ export function Dashboard() {
         </div>
 
         <div className="flex-1 min-h-[160px] p-3">
-          <div className="relative w-full h-full rounded-2xl overflow-hidden border border-cyan-500/35 bg-black/45 shadow-lg shadow-cyan-500/20">
+          {/* Knowledge Library Status Widget */}
+          {libraryStats !== null && (
+            <div className="mb-2 rounded-xl border border-blue-500/20 bg-blue-950/20 px-3 py-2 flex items-center gap-3">
+              <Library className="w-4 h-4 text-blue-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-semibold text-blue-300 uppercase tracking-wide">Knowledge Library</p>
+                <p className="text-[11px] text-white/55">
+                  <span className="text-green-400 font-semibold">{libraryStats.active}</span> active /{" "}
+                  <span>{libraryStats.total}</span> total documents available to CYRUS
+                </p>
+              </div>
+              <Link
+                href="/knowledge"
+                className="text-[10px] px-2 py-1 rounded-md bg-blue-500/15 text-blue-300 hover:bg-blue-500/30 transition-colors whitespace-nowrap font-medium border border-blue-500/20"
+              >
+                Manage
+              </Link>
+            </div>
+          )}
+          <div className="relative w-full rounded-2xl overflow-hidden border border-cyan-500/35 bg-black/45 shadow-lg shadow-cyan-500/20" style={{ height: libraryStats !== null ? "calc(100% - 56px)" : "100%" }}>
             <img src="/images/cyrus-logo.png" alt="CYRUS" className="w-full h-full object-cover scale-110" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/45" />
 

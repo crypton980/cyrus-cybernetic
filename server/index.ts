@@ -87,7 +87,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const port = parseInt(process.env.PORT || "5000", 10);
+const port = parseInt(process.env.PORT || "3105", 10);
 const listenOptions: { port: number; host: string; reusePort?: boolean } = {
   port,
   host: "0.0.0.0",
@@ -153,6 +153,24 @@ async function initializeSystem() {
   }
   await tick();
 
+  try {
+    const { default: settingsRoutes } = await import("./settings/routes");
+    app.use("/api/settings", settingsRoutes);
+    log("[Settings] API key management registered at /api/settings");
+  } catch (e) {
+    console.error("[Init] Settings routes failed (non-fatal):", e);
+  }
+  await tick();
+
+  try {
+    const { default: myServerRoutes } = await import("./myserver/routes");
+    app.use("/api/myserver", myServerRoutes);
+    log("[MyServer] Custom personal server registered at /api/myserver");
+  } catch (e) {
+    console.error("[Init] MyServer failed (non-fatal):", e);
+  }
+  await tick();
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -171,7 +189,7 @@ async function initializeSystem() {
   } else {
     const dp = findDistPublic();
     if (dp) {
-      app.use("*", (_req, res) => {
+      app.use("*splat", (_req, res) => {
         res.sendFile(path.join(dp, "index.html"));
       });
     }
