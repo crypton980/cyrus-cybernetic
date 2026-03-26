@@ -403,10 +403,11 @@ export async function refreshOpenAIClient(): Promise<void> {
   const [key, baseUrl] = await Promise.all([getOpenAIKey(), getOpenAIBaseUrl()]);
   openai = buildOpenAIClient(key, baseUrl);
 
-  // Also reset neural-fusion's cached client so it picks up the new key
+  // Also update neural-fusion's cached client with the resolved key so that
+  // a DB-stored key takes effect immediately without a server restart.
   try {
     const { neuralFusionEngine } = await import("./ai/neural-fusion");
-    neuralFusionEngine.resetOpenAIClient();
+    neuralFusionEngine.setOpenAIClient(key, baseUrl);
   } catch {
     // neural-fusion may not be loaded yet; that's fine
   }
