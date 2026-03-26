@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - copilot/get-app-published
   workflow_dispatch:
 
 jobs:
@@ -39,7 +40,8 @@ jobs:
           path: |
             dist/
             package*.json
-            public/
+            server/
+            shared/
 
   deploy:
     runs-on: ubuntu-latest
@@ -70,4 +72,4 @@ jobs:
         with:
           app-name: 'cyrus-cybernetic'
           slot-name: 'Production'
-          startup-command: 'node dist/server/index.js'
+          startup-command: 'npm start'
