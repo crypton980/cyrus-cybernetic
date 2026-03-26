@@ -2,6 +2,14 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install Python and build dependencies for the builder stage
+RUN apk add --no-cache python3 py3-pip python3-dev build-base
+
+# Install Python dependencies into a virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --no-cache-dir numpy scipy scikit-learn networkx matplotlib pandas nltk
+
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
 
@@ -12,6 +20,13 @@ RUN npm run build
 FROM node:20-alpine AS runner
 
 WORKDIR /app
+
+# Install Python 3 runtime in the final image so Python processes can be spawned
+RUN apk add --no-cache python3
+
+# Copy the pre-built virtual environment with all Python packages from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 COPY package*.json ./
 RUN npm ci --omit=dev --legacy-peer-deps
@@ -26,12 +41,12 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/tsconfig.server.json ./tsconfig.server.json
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 
-EXPOSE 3105
+EXPOSE 3105 5001 5002
 
 ENV NODE_ENV=production
 ENV PORT=3105
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget -qO- http://localhost:3105/__health || exit 1
 
-CMD ["npm", "start"]
+CMD ["sh", "-c", "python3 server/quantum_ai/quantum_bridge.py & python3 server/comms/ml_service.py & exec npm start"]
