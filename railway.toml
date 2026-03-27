@@ -3,6 +3,7 @@ builder = "dockerfile"
 
 [deploy]
 startCommand = "npm start"
+releaseCommand = "npx drizzle-kit push"
 healthcheckPath = "/__health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"

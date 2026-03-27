@@ -13,8 +13,8 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install python3 for vision/OCR features
-RUN apk add --no-cache python3
+# Install python3 + numpy for quantum bridge and ML services
+RUN apk add --no-cache python3 py3-numpy
 
 COPY package*.json ./
 RUN npm ci --omit=dev
@@ -33,6 +33,9 @@ EXPOSE 3105
 
 ENV NODE_ENV=production
 ENV PORT=3105
+
+# Ensure upload/media directories exist (multer + static serving)
+RUN mkdir -p public/uploads public/images public/videos
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD wget -qO- http://localhost:3105/__health || exit 1
