@@ -13,6 +13,9 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
+# Install python3 for vision/OCR features
+RUN apk add --no-cache python3
+
 COPY package*.json ./
 RUN npm ci --omit=dev
 

@@ -4,11 +4,22 @@ import * as schema from "../shared/schema";
 
 const { Pool } = pg;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+const dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+  console.error(
+    "⚠️  DATABASE_URL is not set. The server will start but all database " +
+    "operations will fail. In Railway, add a PostgreSQL service to " +
+    "automatically provide DATABASE_URL."
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+// When DATABASE_URL is missing, pool and db are null. Routes that call the
+// database will throw at runtime, but the server and UI will still load.
+export const pool: pg.Pool = dbUrl
+  ? new Pool({ connectionString: dbUrl })
+  : (null as unknown as pg.Pool);
+
+export const db: ReturnType<typeof drizzle<typeof schema>> = dbUrl
+  ? drizzle(pool, { schema })
+  : (null as unknown as ReturnType<typeof drizzle<typeof schema>>);
