@@ -9,6 +9,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// Trust the reverse proxy (Railway, Azure, etc.) so that req.secure is set
+// correctly and session cookies are sent with Secure flag over HTTPS.
+app.set("trust proxy", 1);
 const httpServer = createServer(app);
 let systemReady = false;
 
@@ -201,9 +204,9 @@ async function initializeSystem() {
   if (process.env.NODE_ENV === "production") {
     try {
       const { spawn } = await import("child_process");
-      const pyBridge = spawn("python", ["server/quantum_ai/quantum_bridge.py"], { stdio: "ignore", detached: true });
+      const pyBridge = spawn("python3", ["server/quantum_ai/quantum_bridge.py"], { stdio: "ignore", detached: true });
       pyBridge.unref();
-      const pyML = spawn("python", ["server/comms/ml_service.py"], { stdio: "ignore", detached: true });
+      const pyML = spawn("python3", ["server/comms/ml_service.py"], { stdio: "ignore", detached: true });
       pyML.unref();
       log("Python services spawned");
     } catch (e) {

@@ -52,7 +52,7 @@ export async function setupAuth(app: Express): Promise<void> {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       maxAge: SESSION_TTL,
       sameSite: "lax" as const,
     },
@@ -124,7 +124,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       maxAge: SESSION_TTL,
       sameSite: "lax" as const,
     },

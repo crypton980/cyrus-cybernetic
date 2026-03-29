@@ -42,6 +42,10 @@ jobs:
             package*.json
             server/
             shared/
+            standalone/
+            tsconfig.json
+            tsconfig.server.json
+            drizzle.config.ts
 
   deploy:
     runs-on: ubuntu-latest
