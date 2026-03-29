@@ -487,6 +487,23 @@ export class NeuralFusionEngine {
     this.openaiClient = null;
   }
 
+  /**
+   * Replace the cached OpenAI client with a pre-built instance.
+   * Used by the settings refresh flow so that a DB-stored API key is
+   * immediately picked up without requiring a server restart.
+   */
+  setOpenAIClient(key: string | null, baseUrl: string | null): void {
+    if (key) {
+      this.openaiClient = new OpenAI({
+        apiKey: key,
+        ...(baseUrl ? { baseURL: baseUrl } : {}),
+      });
+    } else {
+      console.warn("[Neural Fusion] setOpenAIClient called with no key — OpenAI client will be unavailable");
+      this.openaiClient = null;
+    }
+  }
+
   private getModelCandidates(): string[] {
     const configured = [
       process.env.AI_INTEGRATIONS_OPENAI_MODEL,
