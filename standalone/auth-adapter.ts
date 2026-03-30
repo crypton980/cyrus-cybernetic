@@ -4,6 +4,7 @@ import connectPg from "connect-pg-simple";
 import crypto from "crypto";
 
 const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
+const CSRF_TOKEN_BYTES = 32;
 
 function resolveSessionSecret(): string {
   const secret = process.env.SESSION_SECRET;
@@ -54,13 +55,53 @@ export async function setupAuth(app: Express): Promise<void> {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: SESSION_TTL,
-      sameSite: "lax" as const,
+      sameSite: "strict" as const,
     },
   });
 
   app.use(sessionMiddleware);
 
+  // ── CSRF token endpoint (synchronizer token pattern) ──────────────────────
+  // The frontend must call GET /api/csrf-token before POST /api/login and
+  // include the returned token as the X-CSRF-Token request header.
+  app.get("/api/csrf-token", (req: any, res) => {
+    if (!req.session.csrfToken) {
+      req.session.csrfToken = crypto.randomBytes(CSRF_TOKEN_BYTES).toString("hex");
+    }
+    res.json({ csrfToken: req.session.csrfToken });
+  });
+
   app.post("/api/login", (req: any, res) => {
+    // ── CSRF: synchronizer token validation ───────────────────────────────
+    const sessionCsrfToken: string | undefined = req.session.csrfToken;
+    const headerCsrfToken: string | undefined =
+      req.get("x-csrf-token") || req.get("x-xsrf-token");
+
+    if (!sessionCsrfToken || !headerCsrfToken) {
+      return res.status(403).json({ message: "CSRF token missing" });
+    }
+    // Constant-time comparison to prevent timing attacks
+    if (
+      sessionCsrfToken.length !== headerCsrfToken.length ||
+      !crypto.timingSafeEqual(Buffer.from(sessionCsrfToken), Buffer.from(headerCsrfToken))
+    ) {
+      return res.status(403).json({ message: "CSRF token invalid" });
+    }
+
+    // Additional host-origin check for defense in depth
+    const origin = req.get("origin") || req.get("referer");
+    if (origin) {
+      try {
+        const originHost = new URL(origin).host;
+        const serverHost = req.get("host") || "";
+        if (originHost !== serverHost) {
+          return res.status(403).json({ message: "Forbidden: origin mismatch" });
+        }
+      } catch {
+        return res.status(403).json({ message: "Forbidden: invalid origin" });
+      }
+    }
+
     const { username, code } = req.body || {};
     if (!username || !code) {
       return res.status(400).json({ message: "Username and access code required" });
@@ -74,6 +115,9 @@ export async function setupAuth(app: Express): Promise<void> {
     }
 
     const userId = crypto.createHash("sha256").update(username).digest("hex").slice(0, 16);
+
+    // Rotate CSRF token after successful authentication
+    req.session.csrfToken = crypto.randomBytes(CSRF_TOKEN_BYTES).toString("hex");
 
     req.session.user = {
       id: userId,
@@ -92,6 +136,21 @@ export async function setupAuth(app: Express): Promise<void> {
   });
 
   app.post("/api/logout", (req: any, res) => {
+    // ── CSRF: synchronizer token validation ───────────────────────────────
+    const sessionCsrfToken: string | undefined = req.session.csrfToken;
+    const headerCsrfToken: string | undefined =
+      req.get("x-csrf-token") || req.get("x-xsrf-token");
+
+    if (!sessionCsrfToken || !headerCsrfToken) {
+      return res.status(403).json({ message: "CSRF token missing" });
+    }
+    if (
+      sessionCsrfToken.length !== headerCsrfToken.length ||
+      !crypto.timingSafeEqual(Buffer.from(sessionCsrfToken), Buffer.from(headerCsrfToken))
+    ) {
+      return res.status(403).json({ message: "CSRF token invalid" });
+    }
+
     req.session.destroy((err: any) => {
       if (err) console.error("[Auth] Session destroy error:", err);
       res.json({ success: true });
@@ -126,7 +185,7 @@ export function getSession() {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: SESSION_TTL,
-      sameSite: "lax" as const,
+      sameSite: "strict" as const,
     },
   });
 }

@@ -1,11 +1,26 @@
-import { Router } from "express";
+import { Router, type Request, type RequestHandler } from "express";
 import {
   getSettingsStatus,
   setSetting,
   deleteSetting,
 } from "./service";
 
+interface AuthenticatedRequest extends Request {
+  session: Request["session"] & {
+    user?: { id: string; username: string; role: string };
+  };
+}
+
 const router = Router();
+
+// Guard: admin role required for mutating API keys
+const requireAdmin: RequestHandler = (req, res, next) => {
+  const authReq = req as AuthenticatedRequest;
+  if (!authReq.session?.user || authReq.session.user.role !== "admin") {
+    return res.status(403).json({ error: "Forbidden: admin access required" });
+  }
+  return next();
+};
 
 // GET /api/settings/keys — returns masked key status (no plaintext values)
 router.get("/keys", async (_req, res) => {
@@ -18,9 +33,9 @@ router.get("/keys", async (_req, res) => {
   }
 });
 
-// POST /api/settings/keys — update one or more API keys
+// POST /api/settings/keys — update one or more API keys (admin only)
 // Body: { openaiKey?, openaiModel?, openaiBaseUrl?, elevenLabsKey?, newsApiKey? }
-router.post("/keys", async (req, res) => {
+router.post("/keys", requireAdmin, async (req, res) => {
   try {
     const {
       openaiKey,

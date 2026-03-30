@@ -16,4 +16,48 @@ __pycache__/
 .pytest_cache/
 nexus_env/
 *.zip
+*.tar.gz
+*.tgz
 .venv/
+
+# Loose training/demo/deployment scripts generated at runtime
+cyrus_*_report*.json
+cyrus_*_results*.json
+cyrus_access_info_*.json
+cyrus_deployment_*.json
+cyrus_performance_*.json
+cyrus_security_*.json
+cyrus_uat_*.json
+cyrus_ui_*.json
+cyrus_global_*.json
+cyrus_planetary_*.json
+cyrus_super_intelligence_*.json
+
+# QR codes and PNG credentials generated at runtime
+cyrus_access_qr_code_*.png
+cyrus_public_access_*.html
+Screenshot\ *.png
+
+# Generated robotics designs / images (large binary files)
+generated_robotics_designs/
+generated_robotics_images/
+generated_robotics_content/
+generated_images/
+generation_cache/
+
+# Training and checkpoint caches
+training_cache/
+training_results/
+checkpoints/
+core_algorithms/
+
+# Deployment artefacts
+cyrus-deployment-*/
+deployment_results/
+deployment_summary/
+golive_results/
+uat_results/
+verification_results/
+optimization_results/
+health_monitoring_results/
+final_reports/

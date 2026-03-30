@@ -4,6 +4,8 @@ import { createServer } from "http";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +16,73 @@ const app = express();
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
 let systemReady = false;
+
+// ── Security headers (Helmet) ────────────────────────────────────────────────
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc: ["'self'", "wss:", "ws:", "https:"],
+        mediaSrc: ["'self'", "blob:"],
+        workerSrc: ["'self'", "blob:"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// ── Rate limiters for AI-consuming endpoints ─────────────────────────────────
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many uploads. Please try again later." },
+});
+
+// General rate limiter for all /api traffic — protects the authentication
+// middleware from being probed at unbounded speed.
+const generalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+});
+
+// Applied before route registration so they cover all matching paths.
+app.use("/api", generalApiLimiter);
+app.use("/api/inference", aiLimiter);
+app.use("/api/cyrus/speak", aiLimiter);
+app.use("/api/vision", aiLimiter);
+app.use("/api/scan", aiLimiter);
+app.use("/api/files/upload", uploadLimiter);
+app.use("/api/files/full-analysis-async", uploadLimiter);
+app.use("/api/files/analyze", uploadLimiter);
+
+// Tight rate limit on authentication endpoints to prevent brute-force
+// credential guessing.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many login attempts. Please try again later." },
+});
+app.use("/api/login", authLimiter);
+app.use("/api/auth", authLimiter);
 
 function findDistPublic(): string | null {
   const candidates = [
@@ -62,8 +131,9 @@ declare module "http" {
   }
 }
 
-app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }));
-app.use(express.urlencoded({ extended: false }));
+// Limit request body to 2 MB to prevent memory-exhaustion attacks.
+app.use(express.json({ limit: "2mb", verify: (req, _res, buf) => { req.rawBody = buf; } }));
+app.use(express.urlencoded({ extended: false, limit: "2mb" }));
 
 app.use("/api", (req, res, next) => {
   if (systemReady) return next();
@@ -110,6 +180,15 @@ httpServer.listen(listenOptions, () => {
   }, 500);
 });
 
+// ── Public API paths that must remain accessible before/without auth ─────────
+const PUBLIC_API_PATHS = [
+  "/api/login",
+  "/api/logout",
+  "/api/auth/user",
+  "/api/__health",
+  "/api/csrf-token",
+];
+
 async function initializeSystem() {
   const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 5));
 
@@ -121,12 +200,33 @@ async function initializeSystem() {
       log("Replit Auth initialized");
     } else {
       const { setupAuth, registerAuthRoutes } = await import("../standalone/auth-adapter");
-      setupAuth(app);
+      await setupAuth(app);
       registerAuthRoutes(app);
       log("Standalone Auth initialized");
     }
   } catch (e) {
     console.error("[Init] Auth setup failed (non-fatal):", e);
+  }
+  await tick();
+
+  // ── Global API authentication ─────────────────────────────────────────────
+  // After session middleware is mounted by setupAuth(), enforce authentication
+  // on all /api routes except the public login/auth paths.
+  // The generalApiLimiter (already applied at app startup) covers this path,
+  // but we also wrap the handler directly to ensure rate limiting is
+  // unambiguously enforced on every auth check.
+  try {
+    const { isAuthenticated } = await import("../standalone/auth-adapter");
+    app.use("/api", generalApiLimiter, (req: Request & { session?: { user?: unknown }; path: string }, res, next) => {
+      const isPublic = PUBLIC_API_PATHS.some(
+        (p) => req.path === p || req.path.startsWith(p + "/")
+      );
+      if (isPublic) return next();
+      return isAuthenticated(req, res, next);
+    });
+    log("[Auth] Global API authentication enforced");
+  } catch (e) {
+    console.error("[Init] Global auth middleware failed (non-fatal):", e);
   }
   await tick();
 
@@ -174,6 +274,11 @@ async function initializeSystem() {
   }
   await tick();
 
+  // ── API 404 catch-all (must be after all /api routes, before SPA fallback) ─
+  app.use("/api", (_req, res) => {
+    res.status(404).json({ error: "API endpoint not found" });
+  });
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -215,7 +320,30 @@ async function initializeSystem() {
   }
 }
 
-process.on("SIGTERM", () => { httpServer.close(); });
+// ── Graceful shutdown ────────────────────────────────────────────────────────
+async function gracefulShutdown(signal: string) {
+  log(`[Process] ${signal} received — shutting down gracefully`);
+  httpServer.close(async () => {
+    try {
+      const { pool } = await import("./db");
+      await pool.end();
+      log("[Process] Database pool closed");
+    } catch {
+      // pool may not have been initialized yet
+    }
+    log("[Process] Shutdown complete");
+    process.exit(0);
+  });
+
+  // Force-exit after 10 s if connections haven't drained
+  setTimeout(() => {
+    console.error("[Process] Forced shutdown after timeout");
+    process.exit(1);
+  }, 10_000).unref();
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 process.on("unhandledRejection", (r) => { console.error("[Process] Unhandled rejection:", r); });
 process.on("uncaughtException", (e) => {
   console.error("[Process] Uncaught exception:", e);

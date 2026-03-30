@@ -49,4 +49,4 @@ ENV PORT=3105
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget -qO- http://localhost:3105/__health || exit 1
 
-CMD ["sh", "-c", "python3 server/quantum_ai/quantum_bridge.py & python3 server/comms/ml_service.py & exec npm start"]
+CMD ["npm", "start"]

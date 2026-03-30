@@ -45,9 +45,11 @@
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
     "express-session": "^1.19.0",
     "fast-xml-parser": "^5.5.6",
     "file-type": "^19.6.0",
+    "helmet": "^8.1.0",
     "jimp": "^1.6.0",
     "lucide-react": "^0.469.0",
     "mammoth": "^1.8.0",
@@ -70,11 +72,11 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.172.0",
+    "tsx": "^4.0.0",
     "uuid": "^13.0.0",
     "wouter": "^3.3.5",
     "ws": "^8.20.0",
-    "zod": "^4.3.6",
-    "tsx": "^4.0.0"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/connect-pg-simple": "^7.0.3",

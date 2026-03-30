@@ -3,11 +3,22 @@
  * from the system_settings database table.  Values stored here take priority
  * over environment variables so that keys can be updated without restarting
  * the server.
+ *
+ * Sensitive values (API keys) are encrypted at rest using AES-256-GCM.
+ * Non-sensitive values (model names, URLs) are stored as plaintext.
  */
 
 import { db } from "../db";
 import { systemSettings } from "../../shared/schema";
 import { eq } from "drizzle-orm";
+import { encrypt, decrypt } from "../utils/encryption";
+
+// Keys that hold sensitive credentials — their values are encrypted at rest.
+const ENCRYPTED_KEYS = new Set([
+  "openai_api_key",
+  "elevenlabs_api_key",
+  "news_api_key",
+]);
 
 // ─── Generic helpers ──────────────────────────────────────────────────────────
 
@@ -18,17 +29,28 @@ export async function getSetting(key: string): Promise<string | null> {
       .from(systemSettings)
       .where(eq(systemSettings.key, key))
       .limit(1);
-    return rows[0]?.value ?? null;
+
+    const raw = rows[0]?.value ?? null;
+    if (raw === null) return null;
+
+    // Decrypt if this is a sensitive key
+    if (ENCRYPTED_KEYS.has(key)) {
+      return decrypt(raw);
+    }
+    return raw;
   } catch {
     return null;
   }
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
+  // Encrypt sensitive keys before persisting
+  const stored = ENCRYPTED_KEYS.has(key) ? encrypt(value) : value;
+
   await db
     .insert(systemSettings)
-    .values({ key, value })
-    .onConflictDoUpdate({ target: systemSettings.key, set: { value, updatedAt: new Date() } });
+    .values({ key, value: stored })
+    .onConflictDoUpdate({ target: systemSettings.key, set: { value: stored, updatedAt: new Date() } });
 }
 
 export async function deleteSetting(key: string): Promise<void> {

@@ -17,7 +17,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
     const now = new Date();
     const formatted = now.toISOString().split("T")[0];
     setCurrentDate(formatted);
-    
+
     const savedUsername = localStorage.getItem("cyrus-display-name");
     if (savedUsername) {
       setUsername(savedUsername);
@@ -37,25 +37,36 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
     setIsInitializing(true);
     setError("");
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Step 1: fetch CSRF token
+      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
+      if (!csrfRes.ok) throw new Error("Failed to fetch CSRF token");
+      const { csrfToken } = await csrfRes.json() as { csrfToken: string };
 
-    const isAdmin = username.trim() === "DELTA UNIFORM 00";
-    const validAdminCode = accessCode === "71580019";
-    const validUserCode = accessCode === "170392";
-    
-    if ((isAdmin && validAdminCode) || (!isAdmin && validUserCode)) {
-      localStorage.setItem("cyrus_authenticated", "true");
-      localStorage.setItem("cyrus-display-name", username.trim());
-      localStorage.setItem("cyrus-user-role", isAdmin ? "admin" : "user");
-      onAuthenticated();
-    } else if (isAdmin && !validAdminCode) {
-      setError("ACCESS DENIED - Invalid ADMIN authorization code");
-      setIsInitializing(false);
-    } else if (!isAdmin && !validUserCode) {
-      setError("ACCESS DENIED - Invalid OPERATOR authorization code");
-      setIsInitializing(false);
-    } else {
-      setError("ACCESS DENIED - Invalid authorization code");
+      // Step 2: authenticate against the server
+      const loginRes = await fetch("/api/login", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify({ username: username.trim(), code: accessCode.trim() }),
+      });
+
+      const data = await loginRes.json() as { success?: boolean; user?: { role: string }; message?: string };
+
+      if (loginRes.ok && data.success) {
+        localStorage.setItem("cyrus_authenticated", "true");
+        localStorage.setItem("cyrus-display-name", username.trim());
+        localStorage.setItem("cyrus-user-role", data.user?.role ?? "user");
+        onAuthenticated();
+      } else {
+        setError(`ACCESS DENIED - ${data.message ?? "Invalid authorization code"}`);
+        setIsInitializing(false);
+      }
+    } catch {
+      setError("Network error — unable to reach CYRUS core");
       setIsInitializing(false);
     }
   };
