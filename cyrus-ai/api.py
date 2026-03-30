@@ -28,6 +28,8 @@ POST /platform/action               → execute an external action
 
 import logging
 import os
+import threading
+import time
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -44,6 +46,9 @@ from metrics.tracker import get_metrics, get_summary, clear_metrics
 from ingestion.stream_ingestor import ingest_event, queue_size, ingestor_stats
 from fusion.fusion_engine import get_last_fusion
 from actions.action_executor import execute_action, list_action_types
+from distributed.node_sync import NODE_ID, start_node_keepalive
+from distributed.message_bus import is_redis_available
+from distributed.listener import start_listener
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -58,12 +63,28 @@ logger = logging.getLogger("cyrus.ai")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start the autonomy monitoring loop when the service boots."""
+    """Start the autonomy monitoring loop and distributed listener when the service boots."""
     thread = start_autonomy_loop()
     logger.info("[App] Autonomy loop started (thread=%s)", thread.name)
+
+    # Distributed listener — subscribes to Redis cluster channel (daemon thread)
+    listener_thread = threading.Thread(
+        target=start_listener, daemon=True, name="cyrus-dist-listener"
+    )
+    listener_thread.start()
+    logger.info("[App] Distributed listener started (thread=%s)", listener_thread.name)
+
+    # Node keepalive — registers this node and refreshes cluster TTL
+    keepalive_thread = start_node_keepalive()
+    logger.info(
+        "[App] Node keepalive started node=%s (thread=%s)",
+        NODE_ID,
+        keepalive_thread.name,
+    )
+
     yield
-    # Daemon thread — stops automatically when process exits.
-    logger.info("[App] Shutting down")
+    # Daemon threads — stop automatically when process exits.
+    logger.info("[App] Shutting down node=%s", NODE_ID)
 
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -143,8 +164,59 @@ class CognitiveRequest(BaseModel):
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "cyrus-ai", "version": "2.0.0"}
+def health() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "service": "cyrus-ai",
+        "version": "2.0.0",
+        "node_id": NODE_ID,
+    }
+
+
+@app.get("/system/health")
+def system_health() -> dict[str, Any]:
+    """
+    Detailed node health including Redis/distributed status.
+
+    Returns
+    -------
+    dict with keys:
+        ``status``         — "healthy" | "degraded"
+        ``node``           — node identity string
+        ``redis``          — whether Redis is currently reachable
+        ``ingestion_queue``— pending event count
+    """
+    redis_up = is_redis_available()
+    return {
+        "status": "healthy" if redis_up else "degraded",
+        "node": NODE_ID,
+        "redis": redis_up,
+        "ingestion_queue": queue_size(),
+    }
+
+
+@app.get("/system/node")
+def node_info() -> dict[str, Any]:
+    """
+    Return identity and cluster information for this node.
+
+    Returns
+    -------
+    dict with keys:
+        ``node_id``       — unique identifier for this CYRUS instance
+        ``redis``         — Redis connectivity status
+        ``cluster_size``  — number of currently registered cluster nodes
+        ``active_nodes``  — list of known peer node IDs
+    """
+    from distributed.node_sync import get_active_nodes  # noqa: PLC0415
+
+    active = get_active_nodes()
+    return {
+        "node_id": NODE_ID,
+        "redis": is_redis_available(),
+        "cluster_size": len(active),
+        "active_nodes": active,
+    }
 
 
 @app.get("/memory/stats")
@@ -325,13 +397,12 @@ def system_state() -> dict[str, Any]:
         ``metrics_count``   — number of metric entries in store
         ``available_actions`` — list of registered action types
     """
-    import time as _time  # noqa: PLC0415
     try:
         start_time = getattr(system_state, "_start_time", None)
         if start_time is None:
-            system_state._start_time = _time.time()  # type: ignore[attr-defined]
+            system_state._start_time = time.time()  # type: ignore[attr-defined]
             start_time = system_state._start_time
-        uptime = round(_time.time() - start_time, 1)
+        uptime = round(time.time() - start_time, 1)
     except Exception:  # noqa: BLE001
         uptime = 0.0
 

@@ -6,11 +6,19 @@ feedback entries, training documents) using embedding-based similarity search.
 
 The ChromaDB client is configured to persist to disk so memories survive
 service restarts.  Set CHROMA_PERSIST_DIR env var to override the default.
+
+Distributed sync
+----------------
+When Redis is available, every call to ``store_memory()`` publishes a
+``memory_update`` event to the cluster channel so all peer nodes can react
+to the new memory.  The sync is fire-and-forget (daemon thread) and never
+blocks or fails the local store operation.
 """
 
 import os
 import uuid
 import logging
+import threading
 from typing import Any
 
 import chromadb
@@ -36,7 +44,12 @@ _collection = _client.get_or_create_collection(
 # ── Public interface ──────────────────────────────────────────────────────────
 
 def store_memory(text: str, metadata: dict[str, Any]) -> str:
-    """Embed and persist a memory entry.  Returns the generated memory ID."""
+    """Embed and persist a memory entry.  Returns the generated memory ID.
+
+    Side-effect: fires a non-blocking background thread that publishes a
+    ``memory_update`` event to the distributed cluster channel when Redis is
+    available.  The sync never blocks or affects the return value.
+    """
     memory_id = str(uuid.uuid4())
     _collection.add(
         documents=[text],
@@ -44,6 +57,17 @@ def store_memory(text: str, metadata: dict[str, Any]) -> str:
         ids=[memory_id],
     )
     logger.info("[Memory] stored id=%s type=%s", memory_id, metadata.get("type", "general"))
+
+    # Distributed sync — fire and forget (never blocks the caller)
+    def _sync() -> None:
+        try:
+            from distributed.node_sync import sync_memory_update  # noqa: PLC0415
+            sync_memory_update({"text": text[:500], "metadata": metadata, "memory_id": memory_id})
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("[Memory] distributed sync skipped: %s", exc)
+
+    threading.Thread(target=_sync, daemon=True, name="cyrus-mem-sync").start()
+
     return memory_id
 
 

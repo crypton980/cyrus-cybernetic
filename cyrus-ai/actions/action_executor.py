@@ -128,14 +128,37 @@ def _handle_metric(action: str, payload: dict[str, Any]) -> dict[str, Any]:
         return {"status": "error", "reason": str(exc)}
 
 
+def _is_private_host(url: str) -> bool:
+    """Return True if the URL resolves to a private/loopback IP range.
+
+    Blocks SSRF to internal infrastructure even when the env URL is
+    correctly set to an https:// address that could resolve to a private IP.
+    Checked ranges: 127.x, 10.x, 172.16-31.x, 192.168.x, ::1 (IPv6 loopback).
+    """
+    import ipaddress  # noqa: PLC0415
+    import urllib.parse  # noqa: PLC0415
+    import socket  # noqa: PLC0415
+
+    try:
+        host = urllib.parse.urlparse(url).hostname or ""
+        if not host:
+            return True  # can't parse → reject
+        addr = ipaddress.ip_address(socket.gethostbyname(host))
+        return addr.is_private or addr.is_loopback or addr.is_link_local
+    except Exception:  # noqa: BLE001
+        return False  # DNS failure is handled later by urlopen
+
+
 def _handle_webhook(action: str, payload: dict[str, Any]) -> dict[str, Any]:
     """POST payload to a webhook URL.
 
     The destination URL must be configured via the CYRUS_WEBHOOK_URL
     environment variable.  Per-request URL overrides from the payload are
-    intentionally NOT supported to prevent SSRF.  If a ``url`` key is present
-    in the payload and it does not match the configured env URL, the action is
-    rejected.
+    intentionally NOT supported to prevent SSRF.
+
+    Additional SSRF protections:
+    * Only http:// and https:// schemes are accepted.
+    * The resolved host must not be a private, loopback, or link-local address.
     """
     env_url = os.getenv("CYRUS_WEBHOOK_URL", "").strip()
     if not env_url:
@@ -144,6 +167,10 @@ def _handle_webhook(action: str, payload: dict[str, Any]) -> dict[str, Any]:
     # Validate scheme to allow only https/http (block file://, ftp://, etc.)
     if not (env_url.startswith("https://") or env_url.startswith("http://")):
         return {"status": "error", "reason": "CYRUS_WEBHOOK_URL must use http or https scheme"}
+
+    # Block private/loopback destinations
+    if _is_private_host(env_url):
+        return {"status": "error", "reason": "CYRUS_WEBHOOK_URL must not resolve to a private IP"}
 
     body = json.dumps(payload, default=str).encode()
     req = urllib.request.Request(
