@@ -46,6 +46,69 @@ from metrics.tracker import log_metric
 logger = logging.getLogger(__name__)
 
 
+# ── Explainability helper ─────────────────────────────────────────────────────
+
+
+def generate_explanation(input_text: str, result: dict[str, Any]) -> dict[str, Any]:
+    """
+    Produce a human-readable explanation for a Commander pipeline result.
+
+    Returns a structured dict that operators and auditors can read to
+    understand *why* the system made the decision it did.
+    """
+    analysis = result.get("analysis") or {}
+    memory = result.get("memory") or {}
+    mission = result.get("mission") or {}
+    fusion = result.get("fusion") or {}
+    evaluation = result.get("evaluation") or {}
+
+    intent = analysis.get("intent", "response")
+    source = analysis.get("source", "unknown")
+    confidence = float(fusion.get("confidence", evaluation.get("overall", 0.0)))
+
+    # Determine the primary reasoning source
+    if source == "local_model":
+        reasoning_mode = "local HuggingFace model"
+    elif source == "llm":
+        reasoning_mode = "OpenAI GPT-4o-mini"
+    else:
+        reasoning_mode = "keyword classification (fallback)"
+
+    memories_used = bool(
+        memory.get("documents") and len(memory.get("documents") or []) > 0
+    )
+
+    return {
+        "summary": (
+            f"Decision intent='{intent}' via {reasoning_mode}. "
+            f"Memory context {'was' if memories_used else 'was not'} used. "
+            f"Confidence: {confidence:.0%}."
+        ),
+        "factors": {
+            "memory_used": memories_used,
+            "memory_entries_retrieved": len(memory.get("documents") or []),
+            "analysis_source": source,
+            "reasoning_mode": reasoning_mode,
+            "mission_generated": bool(mission),
+            "live_data_fused": bool(fusion.get("live_events_count", 0)),
+            "confidence": confidence,
+        },
+        "decision_intent": intent,
+        "recommended_action": analysis.get("action", "respond"),
+        "pipeline_steps": [
+            "security_gate",
+            "memory_retrieval",
+            "llm_analysis",
+            "mission_planning",
+            "intelligence_fusion",
+            *(["learning_strategy"] if result.get("learning") else []),
+            "evaluation",
+            "training_log",
+            "audit_log",
+        ],
+    }
+
+
 class Commander:
     """
     Central intelligence orchestrator.
@@ -99,10 +162,27 @@ class Commander:
             ``fusion``      — multi-source intelligence fusion picture
             ``learning``    — strategy result (only when feedback is supplied)
             ``evaluation``  — multi-dimensional quality score
+            ``explanation`` — human-readable decision explanation
             ``agent_performance`` — per-agent success/failure counters
             ``pipeline_ms`` — total elapsed milliseconds for this call
         """
         start_ts = time.monotonic()
+
+        # ── Safety gate: global lockdown check ───────────────────────────────
+        try:
+            from safety.override import is_locked  # noqa: PLC0415
+            if is_locked():
+                elapsed = int((time.monotonic() - start_ts) * 1_000)
+                logger.critical("[Commander] pipeline blocked — system in lockdown")
+                return {
+                    "type": "multi-agent",
+                    "blocked": True,
+                    "reason": "SYSTEM_LOCKDOWN",
+                    "error": "System is in safety lockdown. All processing halted.",
+                    "pipeline_ms": elapsed,
+                }
+        except Exception:  # noqa: BLE001
+            pass  # Safety module unavailable — proceed normally
 
         # ── Step 1: Security gate ─────────────────────────────────────────
         security_result = self.security.process(input_text)
@@ -213,6 +293,29 @@ class Commander:
             "analysis_source": (analysis_result or {}).get("source"),
             "has_live_data": live_data is not None and len(live_data) > 0,
         })
+
+        # ── Step 10: Decision explanation ─────────────────────────────────
+        explanation = generate_explanation(input_text, result)
+        result["explanation"] = explanation
+
+        # ── Step 11: Immutable audit log ──────────────────────────────────
+        try:
+            from audit.logger import log_audit  # noqa: PLC0415
+            from distributed.node_sync import NODE_ID  # noqa: PLC0415
+
+            log_audit({
+                "event": "commander_execute",
+                "input": input_text[:500],
+                "intent": (analysis_result or {}).get("intent"),
+                "analysis_source": (analysis_result or {}).get("source"),
+                "confidence": float(fusion_result.get("confidence", 0.0)),
+                "overall_score": float(evaluation.get("overall", 0.0)),
+                "pipeline_ms": elapsed,
+                "node_id": NODE_ID,
+                "explanation_summary": explanation.get("summary"),
+            })
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("[Commander] audit log skipped: %s", exc)
 
         logger.info(
             "[Commander] pipeline complete in %d ms score=%.3f fusion_confidence=%.3f",

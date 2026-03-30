@@ -7,15 +7,31 @@
  * Route map:
  *   POST   /api/platform/ingest          — enqueue a real-time event
  *   GET    /api/platform/intelligence    — latest fused intelligence picture
- *   POST   /api/platform/action         — execute an external action
+ *   POST   /api/platform/action         — execute an external action (admin)
  *   GET    /api/platform/state          — system health (queue depth, uptime…)
  *   GET    /api/platform/plugins        — list registered plugins
+ *
+ *   GET    /api/platform/control/audit            — audit log entries (admin)
+ *   GET    /api/platform/control/audit/stats      — audit stats (admin)
+ *   POST   /api/platform/control/audit/verify     — verify chain integrity (admin)
+ *   GET    /api/platform/control/pending-actions  — HITL pending approvals (admin)
+ *   POST   /api/platform/control/approve/:id      — approve HITL action (admin)
+ *   POST   /api/platform/control/reject/:id       — reject HITL action (admin)
+ *   GET    /api/platform/control/lockdown         — lockdown state (admin)
+ *   POST   /api/platform/control/lockdown/enable  — enable lockdown (admin)
+ *   POST   /api/platform/control/lockdown/disable — disable lockdown (admin)
+ *
+ *   GET    /api/platform/mission/list             — list missions (admin)
+ *   POST   /api/platform/mission/start            — start a mission (admin)
+ *   POST   /api/platform/mission/stop             — stop a mission (admin)
+ *   POST   /api/platform/mission/complete         — complete a mission (admin)
+ *   GET    /api/platform/mission/:id              — get a mission (admin)
  *
  * All routes proxy to the Python FastAPI service at CYRUS_AI_URL.
  * The plugin manifest endpoint is served locally (no Python call needed).
  */
 
-import { Router, type Request, type Response } from "express";
+import { Router, type Request, type Response, type RequestHandler } from "express";
 import axios, { type AxiosInstance } from "axios";
 import { getPluginManifest } from "../plugins/index";
 
@@ -35,6 +51,60 @@ function getClient(): AxiosInstance {
     });
   }
   return _client;
+}
+
+// ── Admin guard ───────────────────────────────────────────────────────────────
+
+interface AuthSession {
+  user?: { id: string; username: string; role: string };
+}
+
+function getSessionUser(req: Request): AuthSession["user"] | undefined {
+  return (req as Request & { session: AuthSession }).session?.user;
+}
+
+const requireAdmin: RequestHandler = (req, res, next) => {
+  const user = getSessionUser(req);
+  if (!user || user.role !== "admin") {
+    res.status(403).json({ error: "Forbidden: admin access required" });
+    return;
+  }
+  next();
+};
+
+// ── Generic Python proxy helper ───────────────────────────────────────────────
+
+async function proxyGet(
+  pythonPath: string,
+  params: Record<string, unknown>,
+  req: Request,
+  res: Response,
+  tag: string,
+): Promise<void> {
+  try {
+    const result = await getClient().get<Record<string, unknown>>(pythonPath, { params });
+    res.json(result.data);
+  } catch (err) {
+    const message = (err as Error).message;
+    console.warn(`[Platform] ${tag} proxy error:`, message);
+    res.status(503).json({ error: "CYRUS AI service unavailable", detail: message });
+  }
+}
+
+async function proxyPost(
+  pythonPath: string,
+  body: unknown,
+  res: Response,
+  tag: string,
+): Promise<void> {
+  try {
+    const result = await getClient().post<Record<string, unknown>>(pythonPath, body);
+    res.json(result.data);
+  } catch (err) {
+    const message = (err as Error).message;
+    console.warn(`[Platform] ${tag} proxy error:`, message);
+    res.status(503).json({ error: "CYRUS AI service unavailable", detail: message });
+  }
 }
 
 /** POST /api/platform/ingest — forward a real-time event to the Python ingestion layer. */
@@ -79,8 +149,8 @@ router.get("/intelligence", async (_req: Request, res: Response) => {
   }
 });
 
-/** POST /api/platform/action — execute a named external action. */
-router.post("/action", async (req: Request, res: Response) => {
+/** POST /api/platform/action — execute a named external action. Admin only. */
+router.post("/action", requireAdmin, async (req: Request, res: Response) => {
   const { action, payload } = req.body as {
     action?: string;
     payload?: Record<string, unknown>;
@@ -124,4 +194,86 @@ router.get("/plugins", (_req: Request, res: Response) => {
   return res.json({ plugins: getPluginManifest() });
 });
 
+// ── Control / Safety / Audit endpoints (all admin-only) ───────────────────────
+
+router.get("/control/audit", requireAdmin, (req: Request, res: Response) =>
+  proxyGet("/control/audit", { max_entries: req.query["max_entries"] ?? 100 }, req, res, "/control/audit"),
+);
+
+router.get("/control/audit/stats", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/control/audit/stats", {}, _req, res, "/control/audit/stats"),
+);
+
+router.post("/control/audit/verify", requireAdmin, (_req: Request, res: Response) =>
+  proxyPost("/control/audit/verify", {}, res, "/control/audit/verify"),
+);
+
+router.get("/control/pending-actions", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/control/pending-actions", {}, _req, res, "/control/pending-actions"),
+);
+
+router.post("/control/approve/:actionId", requireAdmin, (req: Request, res: Response) =>
+  proxyPost(`/control/approve/${req.params["actionId"]}`, {}, res, "/control/approve"),
+);
+
+router.post("/control/reject/:actionId", requireAdmin, (req: Request, res: Response) =>
+  proxyPost(
+    `/control/reject/${req.params["actionId"]}`,
+    { reason: (req.body as { reason?: string }).reason ?? "rejected by operator" },
+    res,
+    "/control/reject",
+  ),
+);
+
+router.get("/control/lockdown", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/control/lockdown", {}, _req, res, "/control/lockdown"),
+);
+
+router.post("/control/lockdown/enable", requireAdmin, (req: Request, res: Response) =>
+  proxyPost(
+    "/control/lockdown/enable",
+    { reason: (req.body as { reason?: string }).reason ?? "operator command" },
+    res,
+    "/control/lockdown/enable",
+  ),
+);
+
+router.post("/control/lockdown/disable", requireAdmin, (req: Request, res: Response) =>
+  proxyPost(
+    "/control/lockdown/disable",
+    { reason: (req.body as { reason?: string }).reason ?? "operator command" },
+    res,
+    "/control/lockdown/disable",
+  ),
+);
+
+// ── Mission Control endpoints (all admin-only) ────────────────────────────────
+
+router.get("/mission/list", requireAdmin, (req: Request, res: Response) =>
+  proxyGet(
+    "/mission/list",
+    { status: req.query["status"], limit: req.query["limit"] ?? 50 },
+    req,
+    res,
+    "/mission/list",
+  ),
+);
+
+router.post("/mission/start", requireAdmin, (req: Request, res: Response) =>
+  proxyPost("/mission/start", req.body, res, "/mission/start"),
+);
+
+router.post("/mission/stop", requireAdmin, (req: Request, res: Response) =>
+  proxyPost("/mission/stop", req.body, res, "/mission/stop"),
+);
+
+router.post("/mission/complete", requireAdmin, (req: Request, res: Response) =>
+  proxyPost("/mission/complete", req.body, res, "/mission/complete"),
+);
+
+router.get("/mission/:missionId", requireAdmin, (req: Request, res: Response) =>
+  proxyGet(`/mission/${req.params["missionId"]}`, {}, req, res, "/mission/:id"),
+);
+
 export default router;
+

@@ -238,6 +238,28 @@ def execute_action(
     payload = payload or {}
     payload_summary = str(payload)[:120]
 
+    # ── HITL Approval gate ────────────────────────────────────────────────────
+    # High-risk actions (e.g. webhook) require explicit human approval when
+    # CYRUS_REQUIRE_APPROVAL is configured.
+    try:
+        from control.approval import needs_approval, request_approval  # noqa: PLC0415
+        if needs_approval(action):
+            approval_response = request_approval(action, payload)
+            logger.info(
+                "[ActionExecutor] action=%s gated for HITL approval action_id=%s",
+                action,
+                approval_response.get("action_id"),
+            )
+            return {
+                "action": action,
+                "status": "pending_approval",
+                "payload_summary": payload_summary,
+                "detail": approval_response.get("message", "Awaiting human approval"),
+                "action_id": approval_response.get("action_id"),
+            }
+    except Exception:  # noqa: BLE001
+        pass  # approval module unavailable — proceed without gate
+
     with _registry_lock:
         handler = _handlers.get(action)
 

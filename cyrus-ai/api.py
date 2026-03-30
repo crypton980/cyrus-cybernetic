@@ -29,6 +29,20 @@ POST /platform/action               → execute an external action
 GET  /model/status                  → local model info and availability
 GET  /training/stats                → training dataset stats + job status
 POST /training/trigger              → manually trigger a fine-tuning run
+GET  /control/audit                 → recent immutable audit log entries
+GET  /control/audit/stats           → audit log statistics + chain hash
+POST /control/audit/verify          → verify hash chain integrity
+GET  /control/pending-actions       → list pending HITL approval requests
+POST /control/approve/{action_id}   → approve a pending action
+POST /control/reject/{action_id}    → reject a pending action
+GET  /control/lockdown              → current lockdown state
+POST /control/lockdown/enable       → enable safety lockdown (halt all processing)
+POST /control/lockdown/disable      → disable safety lockdown
+GET  /mission/list                  → list missions (optional ?status= filter)
+POST /mission/start                 → start a new mission
+POST /mission/stop                  → stop a running mission
+POST /mission/complete              → complete a mission
+GET  /mission/{id}                  → get a mission by ID
 """
 
 import logging
@@ -590,3 +604,280 @@ def trigger_training(req: TrainingTriggerRequest) -> dict[str, Any]:
 
     return {"status": job.status, "job": job.to_dict()}
 
+
+
+# ── Control Layer API ─────────────────────────────────────────────────────────
+
+# ── Audit endpoints ───────────────────────────────────────────────────────────
+
+
+@app.get("/control/audit")
+def get_audit(max_entries: int = 100) -> dict[str, Any]:
+    """
+    Return the most recent audit log entries (newest last).
+
+    Query params
+    ------------
+    max_entries : int  — max records to return (default 100, max 1000)
+    """
+    from audit.logger import load_recent_audit_logs  # noqa: PLC0415
+
+    max_entries = min(max(1, max_entries), 1000)
+    entries = load_recent_audit_logs(max_entries)
+    return {"count": len(entries), "entries": entries}
+
+
+@app.get("/control/audit/stats")
+def get_audit_stats_endpoint() -> dict[str, Any]:
+    """Return audit log statistics including file size and chain hash."""
+    from audit.logger import get_audit_stats  # noqa: PLC0415
+
+    return get_audit_stats()
+
+
+@app.post("/control/audit/verify")
+def verify_audit_chain() -> dict[str, Any]:
+    """
+    Verify the SHA-256 hash chain integrity of the audit log.
+
+    A broken chain indicates tampering (deletion, modification, or
+    out-of-order insertion).
+    """
+    from audit.logger import verify_chain  # noqa: PLC0415
+
+    return verify_chain(max_entries=10_000)
+
+
+# ── HITL approval endpoints ───────────────────────────────────────────────────
+
+
+@app.get("/control/pending-actions")
+def get_pending_actions() -> dict[str, Any]:
+    """Return all currently pending HITL approval requests."""
+    from control.approval import list_pending_approvals  # noqa: PLC0415
+
+    pending = list_pending_approvals()
+    return {"count": len(pending), "pending": pending}
+
+
+@app.post("/control/approve/{action_id}")
+def approve_pending_action(action_id: str) -> dict[str, Any]:
+    """
+    Approve a pending HITL action.
+
+    The action is removed from the pending store and its details are
+    returned.
+
+    Raises
+    ------
+    404 — if the action_id is unknown or already expired/resolved.
+    """
+    from control.approval import approve_action  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    result = approve_action(action_id)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Action '{action_id}' not found (unknown, expired, or already resolved).",
+        )
+    log_audit({
+        "event": "action_approved",
+        "action_id": action_id,
+        "action_type": result.get("action_type"),
+    })
+    return {"status": "approved", "action": result}
+
+
+class RejectRequest(BaseModel):
+    reason: str = "rejected by operator"
+
+
+@app.post("/control/reject/{action_id}")
+def reject_pending_action(action_id: str, req: RejectRequest = RejectRequest()) -> dict[str, Any]:
+    """
+    Reject a pending HITL action.
+
+    Raises
+    ------
+    404 — if the action_id is unknown or already expired/resolved.
+    """
+    from control.approval import reject_action  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    success = reject_action(action_id, req.reason)
+    if not success:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Action '{action_id}' not found (unknown, expired, or already resolved).",
+        )
+    log_audit({
+        "event": "action_rejected",
+        "action_id": action_id,
+        "reason": req.reason,
+    })
+    return {"status": "rejected", "action_id": action_id, "reason": req.reason}
+
+
+# ── Safety lockdown endpoints ─────────────────────────────────────────────────
+
+
+@app.get("/control/lockdown")
+def get_lockdown_status() -> dict[str, Any]:
+    """Return the current safety lockdown state."""
+    from safety.override import get_lockdown_state  # noqa: PLC0415
+
+    return get_lockdown_state()
+
+
+class LockdownRequest(BaseModel):
+    reason: str = "operator command"
+
+
+@app.post("/control/lockdown/enable")
+def lockdown_enable(req: LockdownRequest) -> dict[str, Any]:
+    """
+    Activate the global safety lockdown.
+
+    **All intelligence processing will halt immediately.**  The autonomy
+    loop, Commander pipeline, and all training jobs will refuse to run.
+
+    Use ``POST /control/lockdown/disable`` to resume normal operation.
+    """
+    from safety.override import enable_lockdown  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    state = enable_lockdown(req.reason)
+    log_audit({"event": "lockdown_enabled", "reason": req.reason})
+    return state
+
+
+@app.post("/control/lockdown/disable")
+def lockdown_disable(req: LockdownRequest) -> dict[str, Any]:
+    """Deactivate the global safety lockdown and resume normal operation."""
+    from safety.override import disable_lockdown  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    state = disable_lockdown(req.reason)
+    log_audit({"event": "lockdown_disabled", "reason": req.reason})
+    return state
+
+
+# ── Mission Control API ───────────────────────────────────────────────────────
+
+
+@app.get("/mission/list")
+def list_missions_endpoint(status: str | None = None, limit: int = 50) -> dict[str, Any]:
+    """
+    List missions, optionally filtered by status.
+
+    Query params
+    ------------
+    status : str | None  — ``running`` | ``stopped`` | ``completed`` | ``failed``
+    limit  : int         — max records (default 50, max 200)
+    """
+    from mission_control.controller import list_missions  # noqa: PLC0415
+
+    limit = min(max(1, limit), 200)
+    missions = list_missions(status=status, limit=limit)
+    return {"count": len(missions), "missions": missions}
+
+
+class StartMissionRequest(BaseModel):
+    objective: str = Field(..., min_length=1, description="Mission objective")
+    mission_id: str | None = Field(default=None, description="Optional caller-supplied ID")
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.post("/mission/start")
+def start_mission_endpoint(req: StartMissionRequest) -> dict[str, Any]:
+    """
+    Start a new mission.
+
+    Raises
+    ------
+    409 — if a mission with the given mission_id already exists.
+    """
+    from mission_control.controller import start_mission  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    try:
+        record = start_mission(req.objective, req.mission_id, req.metadata)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    log_audit({
+        "event": "mission_started",
+        "mission_id": record.mission_id,
+        "objective": req.objective[:200],
+    })
+    return record.to_dict()
+
+
+class StopMissionRequest(BaseModel):
+    mission_id: str
+    reason: str = "operator stop"
+
+
+@app.post("/mission/stop")
+def stop_mission_endpoint(req: StopMissionRequest) -> dict[str, Any]:
+    """
+    Stop a running mission.
+
+    Raises
+    ------
+    404 — if the mission_id is not found.
+    """
+    from mission_control.controller import stop_mission  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    record = stop_mission(req.mission_id, req.reason)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Mission '{req.mission_id}' not found.")
+    log_audit({"event": "mission_stopped", "mission_id": req.mission_id, "reason": req.reason})
+    return record.to_dict()
+
+
+class CompleteMissionRequest(BaseModel):
+    mission_id: str
+    result_summary: str | None = None
+
+
+@app.post("/mission/complete")
+def complete_mission_endpoint(req: CompleteMissionRequest) -> dict[str, Any]:
+    """
+    Mark a mission as completed.
+
+    Raises
+    ------
+    404 — if the mission_id is not found.
+    """
+    from mission_control.controller import complete_mission  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    record = complete_mission(req.mission_id, req.result_summary)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Mission '{req.mission_id}' not found.")
+    log_audit({
+        "event": "mission_completed",
+        "mission_id": req.mission_id,
+        "result_summary": req.result_summary,
+    })
+    return record.to_dict()
+
+
+@app.get("/mission/{mission_id}")
+def get_mission_endpoint(mission_id: str) -> dict[str, Any]:
+    """
+    Retrieve a mission by ID.
+
+    Raises
+    ------
+    404 — if the mission_id is not found.
+    """
+    from mission_control.controller import get_mission  # noqa: PLC0415
+
+    record = get_mission(mission_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Mission '{mission_id}' not found.")
+    return record.to_dict()
