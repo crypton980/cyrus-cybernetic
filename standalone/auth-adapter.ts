@@ -74,8 +74,8 @@ export async function setupAuth(app: Express): Promise<void> {
   app.post("/api/login", (req: any, res) => {
     // ── CSRF: synchronizer token validation ───────────────────────────────
     const sessionCsrfToken: string | undefined = req.session.csrfToken;
-    const headerCsrfToken: string | undefined =
-      req.get("x-csrf-token") || req.get("x-xsrf-token");
+    // Standardized on X-CSRF-Token only (AccessGate.tsx sends this header)
+    const headerCsrfToken: string | undefined = req.get("x-csrf-token");
 
     if (!sessionCsrfToken || !headerCsrfToken) {
       return res.status(403).json({ message: "CSRF token missing" });
@@ -138,8 +138,8 @@ export async function setupAuth(app: Express): Promise<void> {
   app.post("/api/logout", (req: any, res) => {
     // ── CSRF: synchronizer token validation ───────────────────────────────
     const sessionCsrfToken: string | undefined = req.session.csrfToken;
-    const headerCsrfToken: string | undefined =
-      req.get("x-csrf-token") || req.get("x-xsrf-token");
+    // Standardized on X-CSRF-Token only (same header used by login)
+    const headerCsrfToken: string | undefined = req.get("x-csrf-token");
 
     if (!sessionCsrfToken || !headerCsrfToken) {
       return res.status(403).json({ message: "CSRF token missing" });

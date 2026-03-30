@@ -217,7 +217,7 @@ async function initializeSystem() {
   // unambiguously enforced on every auth check.
   try {
     const { isAuthenticated } = await import("../standalone/auth-adapter");
-    app.use("/api", generalApiLimiter, (req: Request & { session?: { user?: unknown }; path: string }, res, next) => {
+    app.use("/api", (req: Request & { session?: { user?: unknown }; path: string }, res, next) => {
       const isPublic = PUBLIC_API_PATHS.some(
         (p) => req.path === p || req.path.startsWith(p + "/")
       );
@@ -271,6 +271,16 @@ async function initializeSystem() {
     log("[MyServer] Custom personal server registered at /api/myserver");
   } catch (e) {
     console.error("[Init] MyServer failed (non-fatal):", e);
+  }
+  await tick();
+
+  // ── CYRUS Intelligence Core (memory, learning, brain, execution, training) ─
+  try {
+    const { default: intelligenceRoutes } = await import("./intelligence/routes");
+    app.use("/api", intelligenceRoutes);
+    log("[Intelligence] Memory, brain, feedback, execute, train registered");
+  } catch (e) {
+    console.error("[Init] Intelligence routes failed (non-fatal):", e);
   }
   await tick();
 
@@ -335,11 +345,13 @@ async function gracefulShutdown(signal: string) {
     process.exit(0);
   });
 
-  // Force-exit after 10 s if connections haven't drained
+  // Force-exit after 10 s if connections haven't drained.
+  // NOTE: intentionally NOT calling .unref() so the process stays alive for
+  // the full drain window rather than exiting prematurely.
   setTimeout(() => {
     console.error("[Process] Forced shutdown after timeout");
     process.exit(1);
-  }, 10_000).unref();
+  }, 10_000);
 }
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
