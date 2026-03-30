@@ -1,17 +1,22 @@
 /**
  * CYRUS Brain Service — Node.js client for the Python decision engine.
  *
- * Routes input through the Python brain module which classifies intent,
- * retrieves semantic context, and returns a structured decision payload.
- * Also implements the tool execution layer that translates decisions into
- * concrete server-side actions.
+ * Routes input through the Python brain module which runs LLM reasoning,
+ * retrieves semantic context, builds a multi-step execution plan, and returns
+ * a structured decision payload.  Falls back gracefully when the AI service
+ * is unavailable.
+ *
+ * Dynamic tool execution:
+ *   The tool registry maps action names (returned by the brain) to concrete
+ *   Node.js functions.  executeDecision() uses the brain's `decision.action`
+ *   field to select and invoke the correct tool automatically.
  */
 
 import axios, { type AxiosInstance } from "axios";
 import { storeMemory, queryMemory } from "./memoryService";
 
 const AI_BASE_URL = process.env.CYRUS_AI_URL || "http://localhost:8001";
-const AI_TIMEOUT_MS = parseInt(process.env.CYRUS_AI_TIMEOUT_MS || "10000", 10);
+const AI_TIMEOUT_MS = parseInt(process.env.CYRUS_AI_TIMEOUT_MS || "15000", 10);
 
 let _client: AxiosInstance | null = null;
 
@@ -28,35 +33,51 @@ function getClient(): AxiosInstance {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export interface BrainDecision {
-  type: "mission" | "analysis" | "training" | "memory" | "response";
+/** Inner decision from the LLM / keyword engine. */
+export interface LLMDecision {
   intent: string;
-  context: Record<string, unknown>;
+  action: string;
   confidence: number;
+  reasoning: string;
+  source: "llm" | "keyword" | "keyword_fallback";
+}
+
+/** Full brain process response (v2 — includes plan + decision). */
+export interface BrainResult {
+  plan: string[];
+  plan_detail: Array<{ step: string; description: string }>;
+  decision: LLMDecision;
+  context: Record<string, unknown>;
+  memory_confidence: number;
   recommendation: string;
 }
 
+/** Final tool-execution result returned to the caller. */
 export interface ToolExecutionResult {
   action: string;
-  decisionType: string;
   intent: string;
   confidence: number;
+  memoryConfidence: number;
+  plan: string[];
   context: Record<string, unknown>;
   recommendation: string;
+  reasoning: string;
+  toolResult: unknown;
+  source: string;
 }
 
 // ── Brain processing ──────────────────────────────────────────────────────────
 
 /**
- * Send input to the Python brain for intent classification and context retrieval.
+ * Send input to the Python brain for LLM reasoning and context retrieval.
  * Falls back to a local response decision when the AI service is unavailable.
  */
 export async function processBrain(
   input: string,
   nContext = 5
-): Promise<BrainDecision> {
+): Promise<BrainResult> {
   try {
-    const res = await getClient().post<BrainDecision>("/brain/process", {
+    const res = await getClient().post<BrainResult>("/brain/process", {
       input,
       n_context: nContext,
     });
@@ -65,10 +86,17 @@ export async function processBrain(
     console.error("[BrainService] processBrain failed:", (err as Error).message);
     // Local fallback — no AI service required
     return {
-      type: "response",
-      intent: "general",
+      plan: ["analyze_input", "retrieve_memory", "reason_decision", "execute_action", "evaluate_result"],
+      plan_detail: [],
+      decision: {
+        intent: "response",
+        action: "respond",
+        confidence: 0,
+        reasoning: "AI service unavailable — local fallback.",
+        source: "keyword_fallback",
+      },
       context: {},
-      confidence: 0,
+      memory_confidence: 0,
       recommendation: "AI service unavailable — responding from local context only.",
     };
   }
@@ -76,11 +104,23 @@ export async function processBrain(
 
 // ── Tool registry ─────────────────────────────────────────────────────────────
 
-const tools: Record<string, (...args: unknown[]) => Promise<unknown>> = {
-  memory_store: async (text: unknown, metadata: unknown) =>
-    storeMemory(String(text), (metadata as Record<string, unknown>) ?? {}),
-  memory_search: async (query: unknown) =>
-    queryMemory(String(query)),
+/**
+ * Maps brain action names to concrete Node.js async functions.
+ *
+ * When the brain returns `decision.action = "memory_search"`, the tool
+ * registry automatically selects `queryMemory` and invokes it with `input`.
+ *
+ * To add a new tool: add an entry here and register the action in brain.py's
+ * _ACTIONS map.
+ */
+const tools: Record<string, (input: string) => Promise<unknown>> = {
+  respond: async () => ({ status: "respond" }),
+  execute_mission: async (input) => queryMemory(input),
+  analyze: async (input) => queryMemory(input),
+  ingest_knowledge: async (input) => storeMemory(input, { type: "auto_ingestion" }),
+  retrieve_memory: async (input) => queryMemory(input),
+  memory_store: async (input) => storeMemory(input, { type: "direct_store" }),
+  memory_search: async (input) => queryMemory(input),
 };
 
 export function getRegisteredTools(): string[] {
@@ -94,55 +134,51 @@ export function getRegisteredTools(): string[] {
  */
 export async function executeTool(
   toolName: string,
-  ...args: unknown[]
+  input: string
 ): Promise<unknown> {
   const fn = tools[toolName];
   if (!fn) throw new Error(`Unknown tool: ${toolName}`);
-  return fn(...args);
+  return fn(input);
 }
 
-// ── Decision → action mapping ─────────────────────────────────────────────────
+// ── Decision → action → tool dispatch ────────────────────────────────────────
 
 /**
- * Translate a brain decision into a server-side action.
- *
- * Decision types:
- *   mission   → execute_mission
- *   analysis  → analyze
- *   training  → ingest_knowledge
- *   memory    → retrieve_memory
- *   response  → respond
+ * Full execution pipeline:
+ *  1. Call Python brain (LLM reasoning + plan + memory context)
+ *  2. Extract `decision.action` from the response
+ *  3. Dispatch to the matching registered tool (or fallback to "respond")
+ *  4. Return a unified result payload
  */
 export async function executeDecision(
   input: string,
   nContext = 5
 ): Promise<ToolExecutionResult> {
-  const decision = await processBrain(input, nContext);
+  const brainResult = await processBrain(input, nContext);
+  const { decision, plan, context, memory_confidence, recommendation } = brainResult;
 
-  let action: string;
-  switch (decision.type) {
-    case "mission":
-      action = "execute_mission";
-      break;
-    case "analysis":
-      action = "analyze";
-      break;
-    case "training":
-      action = "ingest_knowledge";
-      break;
-    case "memory":
-      action = "retrieve_memory";
-      break;
-    default:
-      action = "respond";
+  // Dispatch to the tool matching the brain's action
+  const action = decision.action || "respond";
+  let toolResult: unknown = null;
+  try {
+    const toolFn = tools[action];
+    toolResult = toolFn ? await toolFn(input) : null;
+  } catch (toolErr) {
+    console.error(`[BrainService] tool '${action}' failed:`, (toolErr as Error).message);
+    toolResult = { error: (toolErr as Error).message };
   }
 
   return {
     action,
-    decisionType: decision.type,
     intent: decision.intent,
     confidence: decision.confidence,
-    context: decision.context,
-    recommendation: decision.recommendation,
+    memoryConfidence: memory_confidence,
+    plan,
+    context,
+    recommendation,
+    reasoning: decision.reasoning,
+    toolResult,
+    source: decision.source,
   };
 }
+

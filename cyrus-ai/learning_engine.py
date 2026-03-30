@@ -11,6 +11,12 @@ Feedback taxonomy
   neutral (rating = 3) → "observe"  — keep monitoring
   good    (rating > 3) → "reinforce" — pattern should be amplified
 
+Strategy taxonomy (update_behavior)
+------------------------------------
+  adjust    → strategy "adjust"   — actively change behaviour
+  observe   → strategy "observe"  — collect more data before acting
+  reinforce → strategy "reinforce" — amplify the pattern
+
 Interaction logging
 -------------------
 Every store_interaction() call produces a structured memory entry that CYRUS
@@ -27,16 +33,37 @@ logger = logging.getLogger(__name__)
 # ── Feedback classification ───────────────────────────────────────────────────
 
 POOR_THRESHOLD = 3
-GOOD_THRESHOLD = 3
+GOOD_THRESHOLD = 4  # rating >= 4 is "good" for strategy purposes
 
 
 def classify_feedback(rating: float) -> str:
     """Translate a numeric rating into a learning directive."""
     if rating < POOR_THRESHOLD:
         return "adjust"
-    if rating == GOOD_THRESHOLD:
+    if rating < GOOD_THRESHOLD:
         return "observe"
     return "reinforce"
+
+
+def update_behavior(feedback: dict[str, Any]) -> dict[str, str]:
+    """
+    Determine the behavioural strategy based on a feedback entry.
+
+    Differs from `classify_feedback` in that it is the *forward-looking*
+    strategic directive, not the retrospective label.
+
+    Returns:
+        { "strategy": "adjust" | "observe" | "reinforce" }
+    """
+    rating: float = float(feedback.get("rating", 3))
+    if rating < POOR_THRESHOLD:
+        strategy = "adjust"
+    elif rating >= GOOD_THRESHOLD:
+        strategy = "reinforce"
+    else:
+        strategy = "observe"
+    logger.info("[Learning] update_behavior strategy=%s rating=%.1f", strategy, rating)
+    return {"strategy": strategy}
 
 
 def learn_from_feedback(feedback: dict[str, Any]) -> dict[str, Any]:

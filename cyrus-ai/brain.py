@@ -1,9 +1,15 @@
 """
-CYRUS Brain — decision engine and context-aware intelligence router.
+CYRUS Brain — LLM-powered reasoning engine with keyword fallback.
 
-The brain receives raw input, retrieves relevant memories from the vector
-store, classifies the intent, and returns a structured decision payload that
-the Node.js backend can act upon.
+Primary path (when OPENAI_API_KEY is set):
+  1. Retrieve top-K semantically similar memories from ChromaDB.
+  2. Build a structured prompt injecting the memory context.
+  3. Call GPT-4o-mini (JSON mode) for intent classification and reasoning.
+  4. Run the multi-step planner to produce an execution plan.
+  5. Return a unified decision payload.
+
+Fallback path (no API key / network error):
+  Keyword-based intent classification is used so the system never goes dark.
 
 Decision types
 --------------
@@ -12,24 +18,43 @@ Decision types
   training  — knowledge ingestion command
   memory    — explicit memory retrieval request
   response  — general interaction (fallback)
-
-Each decision carries:
-  - type          : decision class
-  - intent        : detected keyword that triggered the class
-  - context       : top-K semantically similar memories
-  - confidence    : distance-based confidence (0.0–1.0, higher is more confident)
-  - recommendation: plain-language suggested next action
 """
 
+from __future__ import annotations
+
+import json
 import logging
+import os
 from typing import Any
 
 from memory_service import query_memory
+from planner import create_plan, describe_plan
 
 logger = logging.getLogger(__name__)
 
+# ── OpenAI client (optional) ──────────────────────────────────────────────────
 
-# ── Intent classification rules ───────────────────────────────────────────────
+_openai_client: Any = None  # lazy-initialised
+
+def _get_openai_client() -> Any | None:
+    """Return a cached OpenAI client, or None if the key is absent."""
+    global _openai_client  # noqa: PLW0603
+    if _openai_client is not None:
+        return _openai_client
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        return None
+    try:
+        from openai import OpenAI  # noqa: PLC0415
+        _openai_client = OpenAI(api_key=api_key)
+        logger.info("[Brain] OpenAI client initialised")
+    except Exception:  # noqa: BLE001
+        logger.warning("[Brain] OpenAI not available — using keyword fallback")
+        _openai_client = None
+    return _openai_client
+
+
+# ── Keyword fallback ──────────────────────────────────────────────────────────
 
 _INTENT_MAP: list[tuple[list[str], str]] = [
     (["mission", "deploy", "objective", "operation", "execute", "target"], "mission"),
@@ -38,27 +63,15 @@ _INTENT_MAP: list[tuple[list[str], str]] = [
     (["remember", "recall", "retrieve", "what did", "find memory", "search memory"], "memory"),
 ]
 
+_ACTIONS: dict[str, str] = {
+    "mission": "execute_mission",
+    "analysis": "analyze",
+    "training": "ingest_knowledge",
+    "memory": "retrieve_memory",
+    "response": "respond",
+}
 
-def _classify_intent(text: str) -> tuple[str, str]:
-    """Return (decision_type, matched_keyword)."""
-    lower = text.lower()
-    for keywords, decision_type in _INTENT_MAP:
-        for kw in keywords:
-            if kw in lower:
-                return decision_type, kw
-    return "response", "general"
-
-
-def _compute_confidence(distances: list[float]) -> float:
-    """Convert average cosine distance to a 0.0–1.0 confidence score."""
-    if not distances:
-        return 0.0
-    avg_dist = sum(distances) / len(distances)
-    # cosine distance is in [0, 2]; convert to similarity
-    return max(0.0, min(1.0, 1.0 - avg_dist / 2.0))
-
-
-_RECOMMENDATION_MAP = {
+_RECOMMENDATIONS: dict[str, str] = {
     "mission": "Initiate mission planning sequence with retrieved operational context.",
     "analysis": "Apply analytical framework to retrieved intelligence context.",
     "training": "Queue knowledge ingestion pipeline with provided document source.",
@@ -67,46 +80,173 @@ _RECOMMENDATION_MAP = {
 }
 
 
+def _keyword_classify(text: str) -> tuple[str, str]:
+    """Return (intent, matched_keyword) from simple keyword matching."""
+    lower = text.lower()
+    for keywords, intent in _INTENT_MAP:
+        for kw in keywords:
+            if kw in lower:
+                return intent, kw
+    return "response", "general"
+
+
+def _compute_confidence(distances: list[float]) -> float:
+    """Convert average cosine distance → 0.0–1.0 confidence."""
+    if not distances:
+        return 0.0
+    avg_dist = sum(distances) / len(distances)
+    return max(0.0, min(1.0, 1.0 - avg_dist / 2.0))
+
+
+# ── Memory context builder ────────────────────────────────────────────────────
+
+def build_context(input_text: str, n_context: int = 5) -> tuple[dict[str, Any], str]:
+    """
+    Query the vector store and format a text context block.
+
+    Returns
+    -------
+    (raw_memory_results, context_text)
+    """
+    memory_results = query_memory(input_text, n_results=n_context)
+    docs: list[str] = []
+    if memory_results.get("documents") and memory_results["documents"]:
+        docs = memory_results["documents"][0] or []
+    context_text = "\n".join(docs[:n_context]) if docs else ""
+    return memory_results, context_text
+
+
+# ── LLM reasoning ─────────────────────────────────────────────────────────────
+
+_SYSTEM_PROMPT = (
+    "You are CYRUS, an autonomous intelligence system. "
+    "You reason precisely and always respond in the exact JSON format requested."
+)
+
+_VALID_INTENTS = {"mission", "analysis", "training", "memory", "response"}
+_VALID_ACTIONS = set(_ACTIONS.values())
+
+
+def reason(input_text: str, context_text: str) -> dict[str, Any]:
+    """
+    Call GPT-4o-mini to produce a structured decision.
+
+    Returns a dict with keys: intent, action, confidence, reasoning.
+    Falls back to keyword classification on any error.
+    """
+    client = _get_openai_client()
+    if client is None:
+        intent, keyword = _keyword_classify(input_text)
+        return {
+            "intent": intent,
+            "action": _ACTIONS[intent],
+            "confidence": 0.5,
+            "reasoning": f"Keyword fallback — matched '{keyword}' → intent '{intent}'.",
+            "source": "keyword",
+        }
+
+    user_prompt = (
+        "Context from memory:\n"
+        f"{context_text or '(no relevant memories retrieved)'}\n\n"
+        "Input:\n"
+        f"{input_text}\n\n"
+        "Respond with ONLY a JSON object (no markdown, no extra text):\n"
+        "{\n"
+        '  "intent": "mission|analysis|training|memory|response",\n'
+        '  "action": "execute_mission|analyze|ingest_knowledge|retrieve_memory|respond",\n'
+        '  "confidence": <float 0.0–1.0>,\n'
+        '  "reasoning": "<one concise sentence explaining the decision>"\n'
+        "}"
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.1,
+            max_tokens=256,
+        )
+        raw = response.choices[0].message.content or "{}"
+        parsed: dict[str, Any] = json.loads(raw)
+
+        # Validate and sanitize fields
+        intent = str(parsed.get("intent", "response"))
+        if intent not in _VALID_INTENTS:
+            intent = "response"
+        action = str(parsed.get("action", _ACTIONS[intent]))
+        if action not in _VALID_ACTIONS:
+            action = _ACTIONS[intent]
+        confidence = float(parsed.get("confidence", 0.5))
+        confidence = max(0.0, min(1.0, confidence))
+        reasoning = str(parsed.get("reasoning", ""))[:500]
+
+        return {
+            "intent": intent,
+            "action": action,
+            "confidence": confidence,
+            "reasoning": reasoning,
+            "source": "llm",
+        }
+
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[Brain] LLM reasoning failed (%s) — using keyword fallback", exc)
+        intent, keyword = _keyword_classify(input_text)
+        return {
+            "intent": intent,
+            "action": _ACTIONS[intent],
+            "confidence": 0.4,
+            "reasoning": f"LLM error — keyword fallback matched '{keyword}'.",
+            "source": "keyword_fallback",
+        }
+
+
 # ── Public interface ──────────────────────────────────────────────────────────
 
 def process_input(input_text: str, n_context: int = 5) -> dict[str, Any]:
     """
-    Core decision function.
-
-    Parameters
-    ----------
-    input_text : str
-        Raw user / system input.
-    n_context : int
-        Number of memory entries to retrieve for context.
-
-    Returns
-    -------
-    dict with keys: type, intent, context, confidence, recommendation
+    Core decision function.  Returns:
+      {
+        plan:       list[str]              — ordered execution steps
+        plan_detail: list[{step, description}]
+        decision:   {intent, action, confidence, reasoning, source}
+        context:    <raw ChromaDB results>
+        memory_confidence: float           — vector-distance confidence
+        recommendation: str
+      }
     """
-    decision_type, intent = _classify_intent(input_text)
+    memory_results, context_text = build_context(input_text, n_context)
 
-    memory_results = query_memory(input_text, n_results=n_context)
-
-    # Extract distances from results for confidence computation
+    # Extract distances for memory-level confidence
     raw_distances: list[float] = []
     if memory_results.get("distances") and memory_results["distances"]:
         raw_distances = memory_results["distances"][0] or []
+    memory_confidence = _compute_confidence(raw_distances)
 
-    confidence = _compute_confidence(raw_distances)
+    # LLM (or keyword) reasoning
+    decision = reason(input_text, context_text)
+
+    # Build execution plan based on classified intent
+    plan = create_plan(input_text, intent=decision["intent"])
+    plan_detail = describe_plan(plan)
 
     logger.info(
-        "[Brain] input=%r type=%s intent=%s confidence=%.2f",
+        "[Brain] input=%r intent=%s action=%s source=%s confidence=%.2f",
         input_text[:80],
-        decision_type,
-        intent,
-        confidence,
+        decision["intent"],
+        decision["action"],
+        decision.get("source", "?"),
+        decision["confidence"],
     )
 
     return {
-        "type": decision_type,
-        "intent": intent,
+        "plan": plan,
+        "plan_detail": plan_detail,
+        "decision": decision,
         "context": memory_results,
-        "confidence": confidence,
-        "recommendation": _RECOMMENDATION_MAP[decision_type],
+        "memory_confidence": memory_confidence,
+        "recommendation": _RECOMMENDATIONS.get(decision["intent"], "Process input."),
     }

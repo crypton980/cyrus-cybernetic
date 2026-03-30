@@ -1,8 +1,9 @@
 """
 CYRUS AI Service — FastAPI application.
 
-Exposes the memory system, learning engine, and decision brain over HTTP so
-the Node.js backend can integrate without spawning in-process Python.
+Exposes the memory system, learning engine, decision brain, planner, and
+autonomy loop over HTTP so the Node.js backend can integrate without
+spawning in-process Python.
 
 Endpoints
 ---------
@@ -11,12 +12,15 @@ GET  /memory/stats           → collection statistics
 POST /memory/store           → embed and persist a memory entry
 POST /memory/query           → semantic similarity search
 DELETE /memory/{id}          → hard-delete a memory entry
-POST /feedback               → log interaction feedback and update learning
-POST /brain/process          → classify input and retrieve context
+POST /feedback               → log interaction feedback + learning strategy
+POST /interaction            → log a raw CYRUS interaction
+POST /brain/process          → LLM reasoning + plan + context retrieval
+POST /plan                   → generate a multi-step execution plan
 """
 
 import logging
 import os
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
@@ -24,8 +28,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from memory_service import store_memory, query_memory, delete_memory, memory_stats
-from learning_engine import learn_from_feedback, store_interaction
+from learning_engine import learn_from_feedback, update_behavior, store_interaction
 from brain import process_input
+from planner import create_plan, describe_plan
+from autonomy import start_autonomy_loop
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -35,14 +41,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger("cyrus.ai")
 
+
+# ── Lifespan (autonomy thread) ────────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Start the autonomy monitoring loop when the service boots."""
+    thread = start_autonomy_loop()
+    logger.info("[App] Autonomy loop started (thread=%s)", thread.name)
+    yield
+    # Daemon thread — stops automatically when process exits.
+    logger.info("[App] Shutting down")
+
+
 # ── App ───────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
     title="CYRUS AI Service",
-    description="Memory, learning, and decision intelligence microservice.",
-    version="1.0.0",
+    description="Memory, learning, reasoning, and decision intelligence microservice.",
+    version="2.0.0",
     docs_url="/docs" if os.getenv("NODE_ENV") != "production" else None,
     redoc_url=None,
+    lifespan=lifespan,
 )
 
 # Restrict CORS to the Node.js backend only
@@ -88,12 +108,17 @@ class BrainRequest(BaseModel):
     n_context: int = Field(default=5, ge=1, le=10)
 
 
+class PlanRequest(BaseModel):
+    input: str = Field(..., min_length=1, max_length=5_000)
+    intent: str | None = Field(default=None)
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "cyrus-ai"}
+    return {"status": "ok", "service": "cyrus-ai", "version": "2.0.0"}
 
 
 @app.get("/memory/stats")
@@ -131,9 +156,15 @@ def delete(memory_id: str) -> dict[str, Any]:
 
 @app.post("/feedback")
 def feedback(req: FeedbackRequest) -> dict[str, Any]:
+    """Log feedback, run learning engine, and determine behavioural strategy."""
     try:
-        result = learn_from_feedback(req.model_dump())
-        return result
+        payload = req.model_dump()
+        learning_result = learn_from_feedback(payload)
+        strategy_result = update_behavior(payload)
+        return {
+            "learning": learning_result,
+            "strategy": strategy_result,
+        }
     except Exception as exc:  # noqa: BLE001
         logger.exception("[API] /feedback failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -151,9 +182,18 @@ def interaction(req: InteractionRequest) -> dict[str, str]:
 
 @app.post("/brain/process")
 def brain_process(req: BrainRequest) -> dict[str, Any]:
+    """Run LLM reasoning (with keyword fallback) and return plan + decision."""
     try:
-        decision = process_input(req.input, n_context=req.n_context)
-        return decision
+        result = process_input(req.input, n_context=req.n_context)
+        return result
     except Exception as exc:  # noqa: BLE001
         logger.exception("[API] /brain/process failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/plan")
+def plan(req: PlanRequest) -> dict[str, Any]:
+    """Generate a multi-step execution plan without running the full brain."""
+    steps = create_plan(req.input, intent=req.intent)
+    detail = describe_plan(steps)
+    return {"plan": steps, "plan_detail": detail, "intent": req.intent or "default"}

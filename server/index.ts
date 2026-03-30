@@ -10,6 +10,8 @@ import rateLimit from "express-rate-limit";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const GRACEFUL_SHUTDOWN_TIMEOUT_MS = 10_000;
+
 const app = express();
 // Trust the reverse proxy (Railway, Azure, etc.) so that req.secure is set
 // correctly and session cookies are sent with Secure flag over HTTPS.
@@ -345,13 +347,13 @@ async function gracefulShutdown(signal: string) {
     process.exit(0);
   });
 
-  // Force-exit after 10 s if connections haven't drained.
+  // Force-exit after the grace period if connections haven't drained.
   // NOTE: intentionally NOT calling .unref() so the process stays alive for
   // the full drain window rather than exiting prematurely.
   setTimeout(() => {
     console.error("[Process] Forced shutdown after timeout");
     process.exit(1);
-  }, 10_000);
+  }, GRACEFUL_SHUTDOWN_TIMEOUT_MS);
 }
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));

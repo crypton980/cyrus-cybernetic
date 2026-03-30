@@ -1,26 +1,30 @@
 /**
  * CYRUS Intelligence Routes
  *
- * Exposes memory, learning, decision, execution, and training capabilities
- * through the Node.js REST API.  All routes require authentication (enforced
- * globally in server/index.ts).  Admin-only endpoints additionally require
- * req.session.user.role === "admin".
+ * Exposes memory, learning, decision, execution, training, session memory,
+ * and observability capabilities through the Node.js REST API.
+ * All routes require authentication (enforced globally in server/index.ts).
+ * Admin-only endpoints additionally require role === "admin".
  *
  * Route map:
- *   POST /api/memory/store          — store a memory entry
- *   POST /api/memory/query          — semantic memory search
- *   DELETE /api/memory/:id          — remove a memory entry (admin)
- *   GET  /api/memory/stats          — collection statistics (admin)
- *   POST /api/feedback              — log rated interaction feedback
- *   POST /api/execute               — run brain decision + tool execution
- *   POST /api/train                 — ingest a PDF file into memory (admin)
+ *   POST   /api/memory/store               — store a memory entry
+ *   POST   /api/memory/query               — semantic memory search
+ *   DELETE /api/memory/:id                 — remove a memory entry (admin)
+ *   GET    /api/memory/stats               — collection statistics (admin)
+ *   POST   /api/feedback                   — log rated interaction feedback
+ *   POST   /api/execute                    — brain decision + tool execution + session log
+ *   POST   /api/train                      — ingest a PDF/txt/md into memory (admin)
+ *   GET    /api/session                    — retrieve current user's session history
+ *   DELETE /api/session                    — clear current user's session history
+ *   GET    /api/system/intelligence-metrics — system observability metrics
  */
 
 import { Router, type Request, type RequestHandler } from "express";
 import path from "path";
 import fs from "fs";
 import { storeMemory, queryMemory, deleteMemory, getMemoryStats, logFeedback } from "../services/memoryService";
-import { executeDecision } from "../services/brainService";
+import { executeDecision, getRegisteredTools } from "../services/brainService";
+import { storeSession, getSession, clearSession, isRedisOnline } from "../services/sessionMemory";
 
 const router = Router();
 
@@ -30,9 +34,13 @@ interface AuthSession {
   user?: { id: string; username: string; role: string };
 }
 
+function getSessionUser(req: Request): AuthSession["user"] | undefined {
+  return (req as Request & { session: AuthSession }).session?.user;
+}
+
 const requireAdmin: RequestHandler = (req, res, next) => {
-  const session = (req as Request & { session: AuthSession }).session;
-  if (!session?.user || session.user.role !== "admin") {
+  const user = getSessionUser(req);
+  if (!user || user.role !== "admin") {
     return res.status(403).json({ error: "Forbidden: admin access required" });
   }
   return next();
@@ -116,6 +124,18 @@ router.post("/execute", async (req, res) => {
   }
 
   const result = await executeDecision(input.trim(), nContext ?? 5);
+
+  // Persist to session memory (non-blocking — errors don't fail the request)
+  const user = getSessionUser(req);
+  if (user?.id) {
+    storeSession(user.id, {
+      input: input.trim(),
+      decision: result as unknown as Record<string, unknown>,
+    }).catch((err) => {
+      console.warn("[Intelligence] storeSession failed:", (err as Error).message);
+    });
+  }
+
   return res.json(result);
 });
 
@@ -140,10 +160,19 @@ router.post("/train", requireAdmin, async (req, res) => {
 
   // Mode 2: caller passes an absolute server-side file path
   if (filePath) {
-    // Security: resolve and validate path is within uploads directory
+    // Security: resolve both paths to their canonical forms and verify the
+    // target is strictly inside the uploads directory.  Using path.relative()
+    // avoids startsWith() bypass attacks (e.g. sibling directory names that
+    // share a common prefix with uploadsDir).
     const uploadsDir = path.resolve(process.cwd(), "public", "uploads");
     const resolvedPath = path.resolve(filePath);
-    if (!resolvedPath.startsWith(uploadsDir)) {
+    const relativeToUploads = path.relative(uploadsDir, resolvedPath);
+    const isOutsideUploads =
+      !relativeToUploads ||
+      relativeToUploads.startsWith("..") ||
+      path.isAbsolute(relativeToUploads);
+
+    if (isOutsideUploads) {
       return res.status(400).json({ error: "filePath must be within the uploads directory" });
     }
 
@@ -195,6 +224,47 @@ router.post("/train", requireAdmin, async (req, res) => {
   }
 
   return res.status(400).json({ error: "Either text or filePath is required" });
+});
+
+// ── Session memory routes ─────────────────────────────────────────────────────
+
+/** GET /api/session — retrieve current user's recent interaction history */
+router.get("/session", async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user?.id) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  const history = await getSession(user.id);
+  return res.json({ userId: user.id, count: history.length, history });
+});
+
+/** DELETE /api/session — clear current user's session history */
+router.delete("/session", async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user?.id) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  await clearSession(user.id);
+  return res.json({ status: "cleared", userId: user.id });
+});
+
+// ── Observability / metrics route ─────────────────────────────────────────────
+
+/** GET /api/system/intelligence-metrics */
+router.get("/system/intelligence-metrics", async (_req, res) => {
+  const [memStats, redisOnline] = await Promise.all([
+    getMemoryStats(),
+    isRedisOnline(),
+  ]);
+
+  return res.json({
+    uptime: process.uptime(),
+    memoryUsage: process.memoryUsage(),
+    timestamp: Date.now(),
+    registeredTools: getRegisteredTools(),
+    redis: { online: redisOnline },
+    vectorMemory: memStats,
+  });
 });
 
 export default router;
