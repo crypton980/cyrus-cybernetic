@@ -1,0 +1,166 @@
+name: CYRUS CI/CD Pipeline
+
+# Runs on every push to main and the active Copilot branch.
+# Stages:
+#   1. Lint & type-check (Node + Python)
+#   2. Build (client Vite bundle + typecheck)
+#   3. Docker image build & smoke test
+#   4. Deploy (Railway, Azure, or custom — gated on main branch)
+
+on:
+  push:
+    branches:
+      - main
+      - "copilot/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.11"
+  DOCKER_IMAGE: "cyrus"
+
+jobs:
+  # ── Job 1: Node.js lint + typecheck + build ─────────────────────────────────
+  node-build:
+    name: "Node.js: install → typecheck → build"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: TypeScript type-check
+        run: npm run typecheck
+
+      - name: Build client (Vite)
+        run: npm run build
+
+      - name: Upload build artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-dist
+          path: dist/
+          retention-days: 3
+
+  # ── Job 2: Python syntax + import check ──────────────────────────────────────
+  python-check:
+    name: "Python: syntax + import check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install core Python dependencies (no heavy ML packages)
+        run: |
+          pip install --upgrade pip
+          pip install \
+            fastapi uvicorn pydantic httpx openai redis tiktoken chromadb \
+            loguru prometheus-client \
+            opentelemetry-sdk opentelemetry-instrumentation-fastapi
+
+      - name: Python syntax check (compile all .py files)
+        run: |
+          find cyrus-ai -name "*.py" -print0 | xargs -0 python -m py_compile && \
+          echo "✅ All Python files compile successfully"
+
+      - name: Run fast import check
+        working-directory: cyrus-ai
+        env:
+          CYRUS_NODE_ID: "ci-node"
+          CYRUS_MODEL_MODE: "openai"
+        run: |
+          python -c "
+          import sys, os
+          sys.path.insert(0, '.')
+          # Lightweight import checks — avoid heavy ML or DB startup
+          from observability.logger import configure_logging, get_logger
+          from observability.tracing import setup_tracing
+          from alerts.alerter import send_alert, AlertSeverity, get_alert_history
+          from backup.manager import get_backup_stats, list_backups
+          from safety.override import enable_lockdown, disable_lockdown, is_locked
+          from audit.logger import log_audit, load_recent_audit_logs
+          from control.approval import request_approval, list_pending_approvals
+          from mission_control.controller import start_mission, stop_mission, list_missions
+          print('✅ All CYRUS Python modules import successfully')
+          "
+
+  # ── Job 3: Docker build ───────────────────────────────────────────────────────
+  docker-build:
+    name: "Docker: build production image"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [node-build, python-check]
+    # Only build the Docker image on pushes, not PRs (reduces build minutes)
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build production Docker image (Dockerfile.prod)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: false          # change to true when registry credentials are set
+          tags: ${{ env.DOCKER_IMAGE }}:${{ github.sha }},${{ env.DOCKER_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Optional: push to a container registry when secrets are configured
+      # - name: Log in to registry
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+      #
+      # - name: Push to GHCR
+      #   if: github.ref == 'refs/heads/main'
+      #   run: docker push ghcr.io/${{ github.repository_owner }}/cyrus:latest
+
+  # ── Job 4: Deploy (main branch only) ────────────────────────────────────────
+  deploy:
+    name: "Deploy to Railway"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [node-build, python-check]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    environment:
+      name: production
+      url: https://cyrus.up.railway.app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Railway
+        uses: railwayapp/actions/deploy@main
+        with:
+          railway-token: ${{ secrets.RAILWAY_TOKEN }}

@@ -43,6 +43,13 @@ POST /mission/start                 → start a new mission
 POST /mission/stop                  → stop a running mission
 POST /mission/complete              → complete a mission
 GET  /mission/{id}                  → get a mission by ID
+GET  /healthz                       → Kubernetes readiness / liveness probe
+GET  /metrics                       → Prometheus text-format metrics
+GET  /control/alerts                → alert history ring buffer
+POST /control/alerts/test           → fire a test alert
+POST /backup/trigger                → trigger on-demand data backup
+GET  /backup/list                   → list available backup archives
+POST /backup/restore/{backup_id}    → restore a backup archive
 """
 
 import logging
@@ -52,7 +59,7 @@ import time
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -69,13 +76,28 @@ from distributed.node_sync import NODE_ID, start_node_keepalive
 from distributed.message_bus import is_redis_available
 from distributed.listener import start_listener
 
-# ── Logging ───────────────────────────────────────────────────────────────────
+# ── Observability — configure logging first ────────────────────────────────────
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-logger = logging.getLogger("cyrus.ai")
+from observability.logger import configure_logging, get_logger
+from observability.tracing import setup_tracing
+
+configure_logging()
+logger = get_logger("cyrus.api")
+
+# ── Startup config validation ──────────────────────────────────────────────────
+# Fail fast rather than silently misbehave in production.
+
+_REQUIRED_ENV: list[str] = os.getenv(
+    "CYRUS_REQUIRED_ENV",
+    "CYRUS_NODE_ID",           # only hard-require node ID in production
+).split(",")
+
+_missing = [v.strip() for v in _REQUIRED_ENV if v.strip() and not os.getenv(v.strip())]
+if _missing and os.getenv("NODE_ENV") == "production":
+    raise RuntimeError(
+        f"[Config] Missing required environment variable(s): {', '.join(_missing)}. "
+        "Set them in your .env file or Kubernetes Secret before starting."
+    )
 
 
 # ── Lifespan (autonomy thread) ────────────────────────────────────────────────
@@ -100,6 +122,18 @@ async def lifespan(app: FastAPI):
         NODE_ID,
         keepalive_thread.name,
     )
+
+    # Periodic error-rate check — fires alert if error rate exceeds threshold
+    def _error_rate_monitor() -> None:
+        from alerts.alerter import check_error_rate_threshold  # noqa: PLC0415
+        while True:
+            time.sleep(60)
+            try:
+                check_error_rate_threshold()
+            except Exception:  # noqa: BLE001
+                pass
+
+    threading.Thread(target=_error_rate_monitor, daemon=True, name="cyrus-alert-monitor").start()
 
     yield
     # Daemon threads — stop automatically when process exits.
@@ -132,6 +166,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
+# Set up OpenTelemetry distributed tracing (graceful degradation)
+setup_tracing(app)
 
 # ── Request / response models ─────────────────────────────────────────────────
 
@@ -881,3 +918,170 @@ def get_mission_endpoint(mission_id: str) -> dict[str, Any]:
     if record is None:
         raise HTTPException(status_code=404, detail=f"Mission '{mission_id}' not found.")
     return record.to_dict()
+
+
+# ── Kubernetes / Docker health probe ──────────────────────────────────────────
+
+@app.get("/healthz", tags=["infra"])
+def healthz() -> dict[str, Any]:
+    """
+    Minimal liveness/readiness probe for Kubernetes and Docker HEALTHCHECK.
+
+    Returns HTTP 200 with ``{"status": "ok"}`` when the service is running.
+    This endpoint is excluded from distributed tracing and rate-limiting.
+    """
+    return {
+        "status": "ok",
+        "node_id": NODE_ID,
+        "uptime_sec": round(time.time() - _SERVICE_START_TIME, 1),
+    }
+
+
+# ── Prometheus-format metrics export ─────────────────────────────────────────
+
+@app.get("/metrics", tags=["infra"])
+def prometheus_metrics(response: Response) -> str:
+    """
+    Expose CYRUS performance metrics in Prometheus text exposition format.
+
+    The endpoint can be scraped by Prometheus, Grafana Agent, or any
+    OpenMetrics-compatible collector.  Annotate your Kubernetes pod with::
+
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    """
+    try:
+        from prometheus_client import (  # noqa: PLC0415
+            CONTENT_TYPE_LATEST,
+            CollectorRegistry,
+            Gauge,
+            generate_latest,
+        )
+        from metrics.tracker import get_summary as _get_summary  # noqa: PLC0415
+        from ingestion.stream_ingestor import queue_size as _queue_size  # noqa: PLC0415
+        from safety.override import is_locked  # noqa: PLC0415
+
+        reg = CollectorRegistry(auto_describe=False)
+        summary = _get_summary()
+        recent = summary.get("recent", {})
+        lifetime = summary.get("lifetime", {})
+
+        def _g(name: str, help_text: str) -> Gauge:
+            return Gauge(name, help_text, registry=reg)
+
+        _g("cyrus_uptime_seconds", "Seconds since service start").set(
+            time.time() - _SERVICE_START_TIME
+        )
+        _g("cyrus_requests_total", "Total requests processed (lifetime)").set(
+            lifetime.get("total_requests", 0)
+        )
+        _g("cyrus_success_rate", "Rolling success rate (recent window)").set(
+            recent.get("success_rate", 0)
+        )
+        _g("cyrus_avg_latency_ms", "Rolling average latency in ms").set(
+            recent.get("avg_latency_ms", 0)
+        )
+        _g("cyrus_avg_score", "Rolling average overall quality score").set(
+            recent.get("avg_score", 0)
+        )
+        _g("cyrus_ingest_queue_depth", "Current ingestion queue depth").set(
+            _queue_size()
+        )
+        _g("cyrus_system_locked", "1 if system is in lockdown mode, else 0").set(
+            1 if is_locked() else 0
+        )
+
+        response.headers["Content-Type"] = CONTENT_TYPE_LATEST
+        return generate_latest(reg).decode("utf-8")
+
+    except ImportError:
+        # prometheus_client not installed — return a minimal plaintext response
+        summary = get_summary()
+        recent = summary.get("recent", {})
+        lines = [
+            "# HELP cyrus_uptime_seconds Seconds since service start",
+            f"cyrus_uptime_seconds {time.time() - _SERVICE_START_TIME:.1f}",
+            "# HELP cyrus_requests_total Total requests processed",
+            f"cyrus_requests_total {summary.get('lifetime', {}).get('total_requests', 0)}",
+            "# HELP cyrus_success_rate Rolling success rate",
+            f"cyrus_success_rate {recent.get('success_rate', 0)}",
+            "# HELP cyrus_avg_latency_ms Rolling average latency ms",
+            f"cyrus_avg_latency_ms {recent.get('avg_latency_ms', 0)}",
+        ]
+        response.headers["Content-Type"] = "text/plain; version=0.0.4"
+        return "\n".join(lines) + "\n"
+
+
+# ── Alerting endpoints ────────────────────────────────────────────────────────
+
+@app.get("/control/alerts", tags=["control"])
+def get_alert_history_endpoint(limit: int = 100) -> dict[str, Any]:
+    """Return recent alert history from the in-process ring buffer."""
+    from alerts.alerter import get_alert_history  # noqa: PLC0415
+    return {
+        "alerts": get_alert_history(limit=max(1, min(limit, 500))),
+        "count": limit,
+    }
+
+
+@app.post("/control/alerts/test", tags=["control"])
+def send_test_alert(severity: str = "info") -> dict[str, Any]:
+    """
+    Fire a test alert for operator verification.
+
+    Query parameter ``severity`` accepts: ``info``, ``warning``, ``error``, ``critical``.
+    """
+    from alerts.alerter import send_alert, AlertSeverity  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    try:
+        sev = AlertSeverity(severity)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Unknown severity: {severity}")
+
+    alert = send_alert(
+        f"Test alert from CYRUS operator dashboard [{severity}]",
+        severity=sev,
+        source="api/test",
+        force=True,
+    )
+    log_audit({"event": "test_alert_fired", "severity": severity})
+    return alert.to_dict()
+
+
+# ── Backup endpoints ──────────────────────────────────────────────────────────
+
+@app.post("/backup/trigger", tags=["backup"])
+def trigger_backup(label: str = "") -> dict[str, Any]:
+    """Trigger an on-demand backup of all configured data sources."""
+    from backup.manager import backup_now  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    manifest = backup_now(label=label or "api_trigger")
+    log_audit({"event": "backup_triggered", "backup_id": manifest.backup_id, "status": manifest.status})
+    return manifest.to_dict()
+
+
+@app.get("/backup/list", tags=["backup"])
+def list_backups_endpoint(limit: int = 20) -> dict[str, Any]:
+    """List available backup archives."""
+    from backup.manager import list_backups, get_backup_stats  # noqa: PLC0415
+    return {
+        "backups": list_backups(limit=max(1, min(limit, 100))),
+        "stats": get_backup_stats(),
+    }
+
+
+@app.post("/backup/restore/{backup_id}", tags=["backup"])
+def restore_backup_endpoint(backup_id: str) -> dict[str, Any]:
+    """Restore a backup archive to the default data directory."""
+    from backup.manager import restore_backup  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    try:
+        result = restore_backup(backup_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    log_audit({"event": "backup_restored", "backup_id": backup_id})
+    return result

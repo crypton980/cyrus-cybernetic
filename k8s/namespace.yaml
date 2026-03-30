@@ -1,0 +1,8 @@
+# ── CYRUS Kubernetes Namespace ────────────────────────────────────────────────
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cyrus
+  labels:
+    app.kubernetes.io/name: cyrus
+    app.kubernetes.io/part-of: cyrus-platform

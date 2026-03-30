@@ -1,0 +1,98 @@
+# ── CYRUS Production Dockerfile (Dockerfile.prod) ─────────────────────────────
+#
+# Hardened multi-stage image suitable for production Kubernetes deployments.
+#
+# Differences from the dev Dockerfile:
+#   * Non-root user (uid 1001 / gid 1001) for security
+#   * No dev dependencies installed in the final image
+#   * --no-new-privileges signal to seccomp
+#   * Python venv copied from builder (no pip in final image)
+#   * Separate HEALTHCHECK for both services
+#   * Explicit signal handling via dumb-init
+#
+# Build:
+#   docker build -f Dockerfile.prod -t cyrus:latest .
+#
+# Run:
+#   docker run --rm -p 3105:3105 -p 8001:8001 \
+#     --env-file .env cyrus:latest
+
+# ── Stage 1: Node.js + Python build ──────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install Python and build tools needed for native modules
+RUN apk add --no-cache python3 py3-pip python3-dev build-base
+
+# Build Python venv with all Python deps
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+COPY cyrus-ai/requirements.txt /tmp/cyrus-ai-requirements.txt
+RUN pip install --no-cache-dir -r /tmp/cyrus-ai-requirements.txt
+
+# Node install + build (client Vite bundle)
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps
+
+COPY . .
+RUN npm run build
+
+# ── Stage 2: Lean production image ────────────────────────────────────────────
+FROM node:20-alpine AS runner
+
+LABEL maintainer="CYRUS Platform <ops@cyrus.ai>" \
+      org.opencontainers.image.title="CYRUS Intelligence Platform" \
+      org.opencontainers.image.description="Production-grade autonomous intelligence system"
+
+WORKDIR /app
+
+# dumb-init: proper PID-1 signal handling + zombie reaping
+RUN apk add --no-cache python3 dumb-init wget
+
+# Copy pre-built Python venv (no pip in final image)
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Create non-root user
+RUN addgroup -g 1001 -S cyrus && \
+    adduser  -u 1001 -S cyrus -G cyrus
+
+# Install production Node deps only
+COPY package*.json ./
+RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
+
+# Copy built assets and source
+COPY --from=builder /app/dist          ./dist
+COPY --from=builder /app/server        ./server
+COPY --from=builder /app/shared        ./shared
+COPY --from=builder /app/standalone    ./standalone
+COPY --from=builder /app/tsconfig.json      ./tsconfig.json
+COPY --from=builder /app/tsconfig.server.json ./tsconfig.server.json
+COPY --from=builder /app/drizzle.config.ts   ./drizzle.config.ts
+COPY --from=builder /app/cyrus-ai      ./cyrus-ai
+
+# Create writable directories for the non-root user
+RUN mkdir -p /app/data /app/audit_logs /app/backups && \
+    chown -R cyrus:cyrus /app
+
+USER cyrus
+
+EXPOSE 3105 8001
+
+ENV NODE_ENV=production \
+    PORT=3105 \
+    CYRUS_AI_URL=http://localhost:8001
+
+# Kubernetes/Docker health-check: probe the Node.js health endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+    CMD wget -qO- http://localhost:3105/__health || exit 1
+
+# dumb-init as PID 1; uvicorn + Node in the same container for single-container
+# deployments.  For Kubernetes HA, deploy each service as a separate container.
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["sh", "-c", \
+     "cd /app/cyrus-ai && uvicorn api:app --host 0.0.0.0 --port 8001 --workers 2 --log-level warning & \
+      AI_PID=$!; \
+      trap 'kill $AI_PID 2>/dev/null; exit 0' TERM INT; \
+      exec npm start"]

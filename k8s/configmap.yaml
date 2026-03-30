@@ -1,0 +1,49 @@
+# ── CYRUS Kubernetes ConfigMap ────────────────────────────────────────────────
+#
+# Non-secret configuration for the CYRUS platform.
+# Secret values (API keys, DB passwords) must live in a Kubernetes Secret,
+# NOT in a ConfigMap.  Reference them via envFrom.secretRef in deployment.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cyrus-config
+  namespace: cyrus
+  labels:
+    app.kubernetes.io/name: cyrus
+    app.kubernetes.io/component: config
+data:
+  # Service
+  NODE_ENV: "production"
+  PORT: "3105"
+  CYRUS_AI_URL: "http://cyrus-ai-svc:8001"
+  CYRUS_AI_TIMEOUT_MS: "15000"
+
+  # Distributed network
+  CYRUS_TASK_ROUTE_STRATEGY: "random"
+  CYRUS_EVENT_CHANNEL: "cyrus:events"
+
+  # Model / training
+  CYRUS_MODEL_MODE: "openai"
+  CYRUS_AUTO_TRAIN: "false"
+  CYRUS_MIN_TRAIN_EXAMPLES: "50"
+  CYRUS_TRAIN_EPOCHS: "1"
+  CYRUS_TRAIN_BATCH_SIZE: "2"
+
+  # Safety / control
+  CYRUS_REQUIRE_APPROVAL: "webhook"
+  CYRUS_APPROVAL_TTL_SEC: "3600"
+  CYRUS_AUDIT_FILE: "/data/audit_log.jsonl"
+  CYRUS_AUDIT_MAX_LINES: "500000"
+  CYRUS_MAX_MISSIONS: "1000"
+
+  # Observability
+  CYRUS_LOG_LEVEL: "info"
+  CYRUS_TRACING_ENABLED: "true"
+  CYRUS_METRICS_ENABLED: "true"
+
+  # Alerting
+  CYRUS_ALERT_ERROR_RATE_THRESHOLD: "0.3"
+
+  # Backup
+  CYRUS_BACKUP_DIR: "/backups"
+  CYRUS_BACKUP_KEEP: "7"

@@ -1,0 +1,43 @@
+# ── CYRUS Kubernetes Services ─────────────────────────────────────────────────
+
+# Web (Node.js) — exposed via LoadBalancer or Ingress
+apiVersion: v1
+kind: Service
+metadata:
+  name: cyrus-web-svc
+  namespace: cyrus
+  labels:
+    app.kubernetes.io/name: cyrus
+    app.kubernetes.io/component: web
+spec:
+  selector:
+    app: cyrus
+    component: core
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3105
+      protocol: TCP
+  type: ClusterIP
+
+---
+
+# Python AI microservice — internal only
+apiVersion: v1
+kind: Service
+metadata:
+  name: cyrus-ai-svc
+  namespace: cyrus
+  labels:
+    app.kubernetes.io/name: cyrus
+    app.kubernetes.io/component: ai
+spec:
+  selector:
+    app: cyrus
+    component: core
+  ports:
+    - name: ai
+      port: 8001
+      targetPort: 8001
+      protocol: TCP
+  type: ClusterIP

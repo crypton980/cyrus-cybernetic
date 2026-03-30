@@ -1,0 +1,177 @@
+# ── CYRUS Kubernetes Deployment ──────────────────────────────────────────────
+#
+# Deploys the CYRUS intelligence platform with:
+#   * 3 replicas for HA
+#   * Resource limits for QoS (Burstable class)
+#   * Readiness and liveness probes
+#   * Non-root security context
+#   * Rolling update strategy with max-surge=1 / max-unavailable=0
+#   * ConfigMap + Secret references
+#
+# Prerequisites:
+#   kubectl apply -f namespace.yaml
+#   kubectl apply -f configmap.yaml
+#   kubectl create secret generic cyrus-secrets \
+#     --from-literal=DATABASE_URL="postgres://..." \
+#     --from-literal=OPENAI_API_KEY="sk-..." \
+#     --from-literal=ADMIN_ACCESS_CODE="..." \
+#     --from-literal=USER_ACCESS_CODE="..." \
+#     --namespace=cyrus
+#   kubectl apply -f deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cyrus-core
+  namespace: cyrus
+  labels:
+    app.kubernetes.io/name: cyrus
+    app.kubernetes.io/component: core
+    app.kubernetes.io/version: "9"
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: cyrus
+      component: core
+  template:
+    metadata:
+      labels:
+        app: cyrus
+        component: core
+        app.kubernetes.io/name: cyrus
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    spec:
+      # Use the service account with minimal RBAC
+      serviceAccountName: cyrus-sa
+      automountServiceAccountToken: false
+
+      # Security: all containers run as non-root
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      # Prefer to spread replicas across nodes/zones
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: cyrus
+
+      containers:
+        # ── Python AI microservice ──────────────────────────────────────────
+        - name: cyrus-ai
+          image: cyrus:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - "sh"
+            - "-c"
+            - "cd /app/cyrus-ai && uvicorn api:app --host 0.0.0.0 --port 8001 --workers 2 --log-level warning"
+          ports:
+            - name: ai
+              containerPort: 8001
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: cyrus-config
+            - secretRef:
+                name: cyrus-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8001
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: backups
+              mountPath: /backups
+
+        # ── Node.js web server ──────────────────────────────────────────────
+        - name: cyrus-web
+          image: cyrus:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - "npm"
+            - "start"
+          ports:
+            - name: web
+              containerPort: 3105
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: cyrus-config
+            - secretRef:
+                name: cyrus-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /__health
+              port: 3105
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /__health
+              port: 3105
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: backups
+          emptyDir: {}
+
+      # Graceful shutdown
+      terminationGracePeriodSeconds: 60
