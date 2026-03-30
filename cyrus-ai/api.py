@@ -32,6 +32,7 @@ from learning_engine import learn_from_feedback, update_behavior, store_interact
 from brain import process_input, process_input_multi_agent
 from planner import create_plan, describe_plan
 from autonomy import start_autonomy_loop
+from metrics.tracker import get_metrics, get_summary, clear_metrics
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -244,3 +245,55 @@ def cognitive_process(req: CognitiveRequest) -> dict[str, Any]:
         logger.exception("[API] /cognitive/process failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+
+@app.get("/system/performance")
+def system_performance() -> dict[str, Any]:
+    """
+    Return current performance telemetry for the CYRUS pipeline.
+
+    Includes aggregate statistics computed from the in-memory metrics store
+    and the last 50 individual request records.
+
+    Returns
+    -------
+    dict with keys:
+        ``summary``  — aggregate stats (avg latency, p95, error_rate, …)
+        ``metrics``  — last 50 individual request metrics
+        ``count``    — total entries in the metrics store
+    """
+    summary = get_summary()
+    recent = get_metrics(limit=50)
+    return {
+        "summary": summary,
+        "metrics": recent,
+        "count": summary.get("count", 0),
+    }
+
+
+@app.delete("/system/performance/metrics")
+def clear_performance_metrics() -> dict[str, Any]:
+    """Clear the in-memory metrics store and return the number of entries removed."""
+    cleared = clear_metrics()
+    return {"status": "cleared", "removed": cleared}
+
+
+@app.get("/system/benchmark")
+def system_benchmark() -> dict[str, Any]:
+    """
+    Run the built-in benchmark suite against the Commander and return results.
+
+    Each test exercises a different agent/intent combination and reports
+    pass/fail, latency, and evaluation score.
+
+    This endpoint is compute-bound; avoid calling it under high load.
+    """
+    try:
+        from benchmarks.test_suite import run_benchmark  # noqa: PLC0415
+        from brain import _get_commander              # noqa: PLC0415
+
+        commander = _get_commander()
+        results = run_benchmark(commander)
+        return results
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("[API] /system/benchmark failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

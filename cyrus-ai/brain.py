@@ -254,10 +254,11 @@ def process_input(input_text: str, n_context: int = 5) -> dict[str, Any]:
 
 # ── Multi-agent entry point ───────────────────────────────────────────────────
 
-# Commander is instantiated once at module level (singleton pattern).
-# Import is deferred to avoid a circular import at module load time and to
-# ensure the agents package can import from memory_service / learning_engine
-# without pulling in brain.py first.
+# Commander singleton — initialised lazily to avoid circular imports.
+# The None sentinel is set at module level before _get_commander() is defined
+# so it is always present even if this module is partially imported.
+_commander: "Any | None" = None
+
 
 def _get_commander() -> "Any":
     """Lazy-load the Commander singleton to avoid circular imports."""
@@ -266,9 +267,6 @@ def _get_commander() -> "Any":
     if _commander is None:
         _commander = Commander()
     return _commander
-
-
-_commander: "Any | None" = None
 
 
 def process_input_multi_agent(

@@ -82,6 +82,28 @@ export interface LearningResult {
 }
 
 /**
+ * Quality evaluation score from the EvaluationEngine.
+ * All dimensions are 0.0–1.0 floats.
+ */
+export interface EvaluationScore {
+  relevance: number;
+  accuracy: number;
+  completeness: number;
+  safety: number;
+  coherence: number;
+  overall: number;
+  details: Record<string, unknown>;
+}
+
+/** Per-agent performance counters. */
+export interface AgentPerformanceReport {
+  agent: string;
+  success_count: number;
+  fail_count: number;
+  performance_score: number;
+}
+
+/**
  * Full multi-agent cognitive process response.
  * Returned by `processCognitive()` and the `/cognitive/process` endpoint.
  */
@@ -93,6 +115,8 @@ export interface CognitiveResult {
   analysis?: AnalysisResult;
   mission?: MissionResult;
   learning?: LearningResult;
+  evaluation?: EvaluationScore;
+  agent_performance?: Record<string, AgentPerformanceReport>;
   pipeline_ms: number;
 }
 

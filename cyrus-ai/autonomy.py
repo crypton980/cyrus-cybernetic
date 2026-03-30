@@ -51,14 +51,29 @@ def _heartbeat(stats: dict[str, Any]) -> None:
 
 
 def _run_cycle() -> None:
-    """Execute one autonomy cycle."""
+    """Execute one autonomy cycle — memory heartbeat + self-improvement check."""
     try:
-        # Import here to avoid circular imports at module load time
         from memory_service import memory_stats  # noqa: PLC0415
         stats = memory_stats()
         _heartbeat(stats)
     except Exception:  # noqa: BLE001
-        logger.exception("[Autonomy] cycle error — continuing")
+        logger.exception("[Autonomy] memory stats cycle error — continuing")
+
+    # Self-improvement: analyse recent metrics and log optimization directive
+    try:
+        from metrics.tracker import get_metrics        # noqa: PLC0415
+        from optimization.improver import improve_system  # noqa: PLC0415
+
+        recent_metrics = get_metrics(limit=200)  # last 200 requests
+        if recent_metrics:
+            directive = improve_system(recent_metrics)
+            logger.info(
+                "[Autonomy] optimization directive — action=%s reason=%s",
+                directive.get("action"),
+                directive.get("reason"),
+            )
+    except Exception:  # noqa: BLE001
+        logger.exception("[Autonomy] optimization cycle error — continuing")
 
 
 # ── Public interface ───────────────────────────────────────────────────────────

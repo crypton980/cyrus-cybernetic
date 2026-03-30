@@ -118,6 +118,7 @@ class AnalysisAgent(BaseAgent):
 
         client = self._get_client()
         if client is None:
+            self.record_success()  # offline path is not a failure
             return {
                 "analysis": self._offline_analysis(input_text, context_text),
                 "source": "offline",
@@ -136,20 +137,66 @@ class AnalysisAgent(BaseAgent):
             "4. Recommended action — concrete next step for CYRUS.\n"
         )
 
-        try:
-            response = client.chat.completions.create(
-                model=self._model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-                max_tokens=self._max_tokens,
-            )
-            analysis_text = (response.choices[0].message.content or "").strip()
-            self._logger.info("[AnalysisAgent] LLM analysis complete (%d chars)", len(analysis_text))
-            return {"analysis": analysis_text, "source": "llm"}
+        result = self._safe_llm_call(client, prompt)
+        return result
 
-        except Exception as exc:  # noqa: BLE001
-            self._logger.warning("[AnalysisAgent] LLM call failed: %s", exc)
-            return {
-                "analysis": self._offline_analysis(input_text, context_text),
-                "source": "offline_fallback",
-            }
+    def _safe_llm_call(
+        self,
+        client: Any,
+        prompt: str,
+        retries: int = 2,
+    ) -> dict[str, Any]:
+        """
+        Call the LLM with automatic retry on transient failure.
+
+        Parameters
+        ----------
+        client : OpenAI
+            Initialised OpenAI client.
+        prompt : str
+            The full prompt string.
+        retries : int
+            Total number of attempts before giving up (default: 2).
+
+        Returns
+        -------
+        dict with ``analysis`` (str) and ``source`` ("llm" | "offline_fallback").
+        """
+        last_exc: Exception | None = None
+        for attempt in range(1, retries + 1):
+            try:
+                response = client.chat.completions.create(
+                    model=self._model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.2,
+                    max_tokens=self._max_tokens,
+                )
+                analysis_text = (response.choices[0].message.content or "").strip()
+                self._logger.info(
+                    "[AnalysisAgent] LLM analysis complete attempt=%d (%d chars)",
+                    attempt,
+                    len(analysis_text),
+                )
+                self.record_success()
+                return {"analysis": analysis_text, "source": "llm"}
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                self._logger.warning(
+                    "[AnalysisAgent] LLM call failed (attempt %d/%d): %s",
+                    attempt,
+                    retries,
+                    exc,
+                )
+
+        self.record_failure()
+        self._logger.error(
+            "[AnalysisAgent] all %d LLM attempts failed, returning offline fallback: %s",
+            retries,
+            last_exc,
+        )
+        # Extract plain-text context from the prompt for offline fallback
+        input_text = prompt.split("Input to analyse:\n")[-1].split("\n")[0]
+        return {
+            "analysis": self._offline_analysis(input_text, ""),
+            "source": "offline_fallback",
+        }
