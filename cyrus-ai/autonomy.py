@@ -72,6 +72,14 @@ def _run_cycle() -> None:
                 directive.get("action"),
                 directive.get("reason"),
             )
+
+            # Self-training: trigger fine-tuning when metrics warrant it
+            try:
+                from training.training_trigger import maybe_trigger_training  # noqa: PLC0415
+                maybe_trigger_training(directive)
+            except Exception:  # noqa: BLE001
+                logger.debug("[Autonomy] training trigger check failed — skipping")
+
     except Exception:  # noqa: BLE001
         logger.exception("[Autonomy] optimization cycle error — continuing")
 

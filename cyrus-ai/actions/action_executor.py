@@ -36,6 +36,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
+import urllib.error
 import urllib.request
 import json
 from dataclasses import dataclass, asdict
@@ -149,6 +150,18 @@ def _is_private_host(url: str) -> bool:
         return False  # DNS failure is handled later by urlopen
 
 
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """HTTP handler that disables all redirect following.
+
+    Prevents redirect-based SSRF bypass where an attacker-controlled
+    server redirects to an internal address after passing the initial
+    IP validation.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001,ANN201
+        raise urllib.error.HTTPError(newurl, code, f"Redirect blocked: {newurl}", headers, fp)
+
+
 def _handle_webhook(action: str, payload: dict[str, Any]) -> dict[str, Any]:
     """POST payload to a webhook URL.
 
@@ -159,6 +172,7 @@ def _handle_webhook(action: str, payload: dict[str, Any]) -> dict[str, Any]:
     Additional SSRF protections:
     * Only http:// and https:// schemes are accepted.
     * The resolved host must not be a private, loopback, or link-local address.
+    * HTTP redirects are disabled to prevent redirect-based SSRF bypass.
     """
     env_url = os.getenv("CYRUS_WEBHOOK_URL", "").strip()
     if not env_url:
@@ -180,7 +194,8 @@ def _handle_webhook(action: str, payload: dict[str, Any]) -> dict[str, Any]:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
+        opener = urllib.request.build_opener(_NoRedirectHandler)
+        with opener.open(req, timeout=5) as resp:  # noqa: S310
             status_code = resp.getcode()
         return {"status": "executed", "detail": f"webhook HTTP {status_code}"}
     except Exception as exc:  # noqa: BLE001

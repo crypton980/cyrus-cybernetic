@@ -21,9 +21,14 @@ GET  /system/performance            → metrics summary + recent records
 DELETE /system/performance/metrics  → clear metrics store
 GET  /system/benchmark              → run built-in benchmark suite
 GET  /system/state                  → real-time system health (queue depth, uptime…)
+GET  /system/health                 → node health + distributed status
+GET  /system/node                   → node identity + cluster info
 POST /platform/ingest               → enqueue a real-time event
 GET  /platform/intelligence         → last fused intelligence picture
 POST /platform/action               → execute an external action
+GET  /model/status                  → local model info and availability
+GET  /training/stats                → training dataset stats + job status
+POST /training/trigger              → manually trigger a fine-tuning run
 """
 
 import logging
@@ -85,6 +90,11 @@ async def lifespan(app: FastAPI):
     yield
     # Daemon threads — stop automatically when process exits.
     logger.info("[App] Shutting down node=%s", NODE_ID)
+
+
+# ── Service start time (for uptime reporting) ──────────────────────────────────
+
+_SERVICE_START_TIME: float = time.time()
 
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -398,11 +408,7 @@ def system_state() -> dict[str, Any]:
         ``available_actions`` — list of registered action types
     """
     try:
-        start_time = getattr(system_state, "_start_time", None)
-        if start_time is None:
-            system_state._start_time = time.time()  # type: ignore[attr-defined]
-            start_time = system_state._start_time
-        uptime = round(time.time() - start_time, 1)
+        uptime = round(time.time() - _SERVICE_START_TIME, 1)
     except Exception:  # noqa: BLE001
         uptime = 0.0
 
@@ -489,3 +495,98 @@ def platform_action(req: ActionRequest) -> dict[str, Any]:
     dict — ActionResult serialisation with ``action``, ``status``, ``detail``.
     """
     return execute_action(req.action, req.payload)
+
+
+# ── Model and Training Endpoints ───────────────────────────────────────────────
+
+
+@app.get("/model/status")
+def model_status() -> dict[str, Any]:
+    """
+    Return the current state of the local inference model.
+
+    Includes model name, load status, device configuration, and the
+    active model mode (``CYRUS_MODEL_MODE``).
+    """
+    from models.local_model import get_local_model_info  # noqa: PLC0415
+    from brain import MODEL_MODE  # noqa: PLC0415
+
+    info = get_local_model_info()
+    info["model_mode"] = MODEL_MODE
+    return info
+
+
+@app.get("/training/stats")
+def training_stats() -> dict[str, Any]:
+    """
+    Return training dataset statistics and the current fine-tuning job status.
+
+    Response keys
+    -------------
+    ``dataset``     — file path, example count, size in bytes
+    ``job``         — current or most recent job status (or null)
+    ``auto_train``  — whether autonomous training is enabled
+    ``versions``    — list of known checkpoint versions (latest first)
+    """
+    from training.dataset_builder import get_dataset_stats  # noqa: PLC0415
+    from training.train import get_training_status  # noqa: PLC0415
+    from training.training_trigger import _AUTO_TRAIN  # noqa: PLC0415
+    from models.versioning import list_model_versions  # noqa: PLC0415
+
+    versions = list_model_versions()
+    return {
+        "dataset": get_dataset_stats(),
+        "job": get_training_status(),
+        "auto_train": _AUTO_TRAIN,
+        "versions": list(reversed(versions)),  # latest first
+        "node_id": NODE_ID,
+    }
+
+
+class TrainingTriggerRequest(BaseModel):
+    force: bool = Field(
+        default=False,
+        description=(
+            "When True, bypass the dataset-size guard and start training even "
+            "with fewer than the minimum required examples.  Use with caution."
+        ),
+    )
+
+
+@app.post("/training/trigger")
+def trigger_training(req: TrainingTriggerRequest) -> dict[str, Any]:
+    """
+    Manually trigger a fine-tuning run.
+
+    The job runs in a background daemon thread so this endpoint returns
+    immediately with ``{"status": "queued"}`` (or raises 409 if a job
+    is already running).
+
+    Raises
+    ------
+    503 — if ``transformers`` / ``torch`` are not installed.
+    409 — if a training job is already in progress.
+    """
+    from training.dataset_builder import get_dataset_stats  # noqa: PLC0415
+    from training.train import train_model, _MIN_EXAMPLES  # noqa: PLC0415
+
+    # Check dataset size unless force=True
+    if not req.force:
+        stats = get_dataset_stats()
+        if stats["num_examples"] < _MIN_EXAMPLES:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Dataset too small: {stats['num_examples']} examples. "
+                    f"Need at least {_MIN_EXAMPLES}. "
+                    "Pass force=true to override."
+                ),
+            )
+
+    try:
+        job = train_model()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return {"status": job.status, "job": job.to_dict()}
+

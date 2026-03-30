@@ -169,7 +169,29 @@ class Commander:
         evaluation = evaluate_response(input_text, result)
         result["evaluation"] = evaluation
 
-        # ── Step 8: Agent performance snapshot ───────────────────────────
+        # ── Step 8: Log training example (dataset builder) ────────────────
+        # Append a high-quality interaction to the training dataset so CYRUS
+        # can learn from its own responses over time.
+        try:
+            from training.dataset_builder import log_training_example  # noqa: PLC0415
+            from distributed.node_sync import NODE_ID  # noqa: PLC0415
+
+            quality = float(evaluation.get("overall", 0.0))
+            log_training_example(
+                input_text,
+                analysis_result,
+                quality_score=quality,
+                metadata={
+                    "intent": (analysis_result or {}).get("intent"),
+                    "source": (analysis_result or {}).get("source"),
+                    "node_id": NODE_ID,
+                    "pipeline_ms": elapsed,
+                },
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("[Commander] training log skipped: %s", exc)
+
+        # ── Step 9: Agent performance snapshot ───────────────────────────
         result["agent_performance"] = {
             agent.name: agent.performance_report()
             for agent in (

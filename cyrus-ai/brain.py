@@ -22,9 +22,10 @@ Decision types
 
 from __future__ import annotations
 
-import json
 import logging
+import json
 import os
+import time
 from typing import Any
 
 from memory_service import query_memory
@@ -126,6 +127,138 @@ _SYSTEM_PROMPT = (
 _VALID_INTENTS = {"mission", "analysis", "training", "memory", "response"}
 _VALID_ACTIONS = set(_ACTIONS.values())
 
+# ── Model mode ─────────────────────────────────────────────────────────────────
+# CYRUS_MODEL_MODE: "openai" (default), "local", "hybrid"
+# * openai  — use OpenAI GPT-4o-mini exclusively
+# * local   — use local HuggingFace model exclusively
+# * hybrid  — try local first, fall back to OpenAI on failure / unavailability
+#
+# NOTE: MODEL_MODE is read once at module import time from the environment.
+# Changes to CYRUS_MODEL_MODE after process startup require a service restart.
+
+MODEL_MODE: str = os.getenv("CYRUS_MODEL_MODE", "openai").lower()
+
+
+def _parse_local_response(raw: str) -> dict[str, Any] | None:
+    """
+    Attempt to parse a JSON decision dict from a local model text response.
+
+    The local model may not reliably output pure JSON, so this function
+    tries a few extraction strategies before returning None.
+    """
+    if not raw:
+        return None
+    # Strategy 1: raw text is valid JSON
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+    # Strategy 2: find the first {...} block
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            return json.loads(raw[start : end + 1])
+        except json.JSONDecodeError:
+            pass
+    return None
+
+
+def _local_reason(input_text: str, context_text: str) -> dict[str, Any] | None:
+    """
+    Attempt classification using the local model.
+
+    Returns a decision dict on success, or None if the local model is
+    unavailable or produces an unparseable response.
+    """
+    try:
+        from models.local_model import local_infer, is_local_model_available  # noqa: PLC0415
+
+        if not is_local_model_available():
+            return None
+
+        prompt = (
+            "You are CYRUS, an autonomous intelligence system.\n"
+            "Classify the following input and respond with ONLY valid JSON.\n\n"
+            "Context from memory:\n"
+            f"{context_text or '(none)'}\n\n"
+            "Input:\n"
+            f"{input_text}\n\n"
+            "Respond with ONLY a JSON object:\n"
+            '{"intent": "mission|analysis|training|memory|response", '
+            '"action": "execute_mission|analyze|ingest_knowledge|retrieve_memory|respond", '
+            '"confidence": <float 0.0-1.0>, '
+            '"reasoning": "<one sentence>"}'
+        )
+
+        raw = local_infer(prompt)
+        if raw is None:
+            return None
+
+        parsed = _parse_local_response(raw)
+        if parsed is None:
+            logger.debug("[Brain] local model response unparseable: %s", raw[:200])
+            return None
+
+        intent = str(parsed.get("intent", "response"))
+        if intent not in _VALID_INTENTS:
+            intent = "response"
+        action = str(parsed.get("action", _ACTIONS[intent]))
+        if action not in _VALID_ACTIONS:
+            action = _ACTIONS[intent]
+        confidence = float(parsed.get("confidence", 0.5))
+        confidence = max(0.0, min(1.0, confidence))
+        reasoning = str(parsed.get("reasoning", ""))[:500]
+
+        return {
+            "intent": intent,
+            "action": action,
+            "confidence": confidence,
+            "reasoning": reasoning,
+            "source": "local_model",
+        }
+
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("[Brain] local reason error: %s", exc)
+        return None
+
+
+def hybrid_reason(input_text: str, context_text: str) -> dict[str, Any]:
+    """
+    Route reasoning through local model, OpenAI, or both — per MODEL_MODE.
+
+    Strategies
+    ----------
+    ``local``   — local model only; keyword fallback on failure.
+    ``hybrid``  — try local first, fall back to OpenAI (then keyword).
+    ``openai``  — OpenAI only (same as original ``reason()``).
+    """
+    if MODEL_MODE == "local":
+        result = _local_reason(input_text, context_text)
+        if result is not None:
+            return result
+        # Local unavailable / failed → keyword fallback
+        intent, keyword = _keyword_classify(input_text)
+        return {
+            "intent": intent,
+            "action": _ACTIONS[intent],
+            "confidence": 0.4,
+            "reasoning": f"Local model unavailable — keyword fallback matched '{keyword}'.",
+            "source": "keyword_fallback",
+        }
+
+    if MODEL_MODE == "hybrid":
+        result = _local_reason(input_text, context_text)
+        if result is not None:
+            logger.debug("[Brain] hybrid: using local model result")
+            return result
+        # Local failed → try OpenAI
+        logger.debug("[Brain] hybrid: local failed, falling back to OpenAI")
+        return reason(input_text, context_text)
+
+    # Default: openai-only path
+    return reason(input_text, context_text)
+
 
 def reason(input_text: str, context_text: str) -> dict[str, Any]:
     """
@@ -226,8 +359,8 @@ def process_input(input_text: str, n_context: int = 5) -> dict[str, Any]:
         raw_distances = memory_results["distances"][0] or []
     memory_confidence = _compute_confidence(raw_distances)
 
-    # LLM (or keyword) reasoning
-    decision = reason(input_text, context_text)
+    # Route through hybrid_reason (honours MODEL_MODE env var)
+    decision = hybrid_reason(input_text, context_text)
 
     # Build execution plan based on classified intent
     plan = create_plan(input_text, intent=decision["intent"])
