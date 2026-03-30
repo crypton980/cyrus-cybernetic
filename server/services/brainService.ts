@@ -104,6 +104,27 @@ export interface AgentPerformanceReport {
 }
 
 /**
+ * Fused intelligence picture from the Fusion Engine.
+ */
+export interface FusionResult {
+  situation: {
+    memory: Record<string, unknown> | null;
+    live: unknown[] | null;
+    analysis: Record<string, unknown> | null;
+    extra?: Record<string, unknown>;
+  };
+  confidence: number;
+  fused_at: number;
+  source_count: number;
+  metadata: {
+    memory_confidence: number;
+    live_confidence: number;
+    analysis_confidence: number;
+    has_live_data: boolean;
+  };
+}
+
+/**
  * Full multi-agent cognitive process response.
  * Returned by `processCognitive()` and the `/cognitive/process` endpoint.
  */
@@ -114,6 +135,7 @@ export interface CognitiveResult {
   memory?: Record<string, unknown>;
   analysis?: AnalysisResult;
   mission?: MissionResult;
+  fusion?: FusionResult;
   learning?: LearningResult;
   evaluation?: EvaluationScore;
   agent_performance?: Record<string, AgentPerformanceReport>;

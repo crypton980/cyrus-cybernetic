@@ -51,7 +51,7 @@ def _heartbeat(stats: dict[str, Any]) -> None:
 
 
 def _run_cycle() -> None:
-    """Execute one autonomy cycle — memory heartbeat + self-improvement check."""
+    """Execute one autonomy cycle — memory heartbeat + self-improvement + live ingestion."""
     try:
         from memory_service import memory_stats  # noqa: PLC0415
         stats = memory_stats()
@@ -74,6 +74,30 @@ def _run_cycle() -> None:
             )
     except Exception:  # noqa: BLE001
         logger.exception("[Autonomy] optimization cycle error — continuing")
+
+    # Real-time ingestion: drain pending events and process through Commander
+    try:
+        from ingestion.stream_ingestor import drain_events, queue_size  # noqa: PLC0415
+        from brain import _get_commander                                  # noqa: PLC0415
+
+        pending = queue_size()
+        if pending > 0:
+            events = drain_events(max_items=20)
+            logger.info("[Autonomy] draining %d ingestion event(s)", len(events))
+            commander = _get_commander()
+            for event in events:
+                try:
+                    commander.execute(
+                        f"[LIVE EVENT] source={event.source} type={event.type}",
+                        live_data=[event],
+                    )
+                except Exception:  # noqa: BLE001
+                    logger.warning(
+                        "[Autonomy] failed to process ingestion event source=%s",
+                        event.source,
+                    )
+    except Exception:  # noqa: BLE001
+        logger.exception("[Autonomy] ingestion drain cycle error — continuing")
 
 
 # ── Public interface ───────────────────────────────────────────────────────────

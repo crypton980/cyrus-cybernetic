@@ -286,6 +286,16 @@ async function initializeSystem() {
   }
   await tick();
 
+  // ── CYRUS Platform Layer (ingestion, fusion, actions, plugins) ───────────
+  try {
+    const { default: platformRoutes } = await import("./platform/routes");
+    app.use("/api/platform", platformRoutes);
+    log("[Platform] Ingest, intelligence, action, state, plugins registered");
+  } catch (e) {
+    console.error("[Init] Platform routes failed (non-fatal):", e);
+  }
+  await tick();
+
   // ── API 404 catch-all (must be after all /api routes, before SPA fallback) ─
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "API endpoint not found" });

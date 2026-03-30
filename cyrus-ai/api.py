@@ -7,15 +7,23 @@ spawning in-process Python.
 
 Endpoints
 ---------
-GET  /health                 → liveness probe
-GET  /memory/stats           → collection statistics
-POST /memory/store           → embed and persist a memory entry
-POST /memory/query           → semantic similarity search
-DELETE /memory/{id}          → hard-delete a memory entry
-POST /feedback               → log interaction feedback + learning strategy
-POST /interaction            → log a raw CYRUS interaction
-POST /brain/process          → LLM reasoning + plan + context retrieval
-POST /plan                   → generate a multi-step execution plan
+GET  /health                        → liveness probe
+GET  /memory/stats                  → collection statistics
+POST /memory/store                  → embed and persist a memory entry
+POST /memory/query                  → semantic similarity search
+DELETE /memory/{id}                 → hard-delete a memory entry
+POST /feedback                      → log interaction feedback + learning strategy
+POST /interaction                   → log a raw CYRUS interaction
+POST /brain/process                 → LLM reasoning + plan + context retrieval
+POST /plan                          → generate a multi-step execution plan
+POST /cognitive/process             → full multi-agent pipeline
+GET  /system/performance            → metrics summary + recent records
+DELETE /system/performance/metrics  → clear metrics store
+GET  /system/benchmark              → run built-in benchmark suite
+GET  /system/state                  → real-time system health (queue depth, uptime…)
+POST /platform/ingest               → enqueue a real-time event
+GET  /platform/intelligence         → last fused intelligence picture
+POST /platform/action               → execute an external action
 """
 
 import logging
@@ -33,6 +41,9 @@ from brain import process_input, process_input_multi_agent
 from planner import create_plan, describe_plan
 from autonomy import start_autonomy_loop
 from metrics.tracker import get_metrics, get_summary, clear_metrics
+from ingestion.stream_ingestor import ingest_event, queue_size, ingestor_stats
+from fusion.fusion_engine import get_last_fusion
+from actions.action_executor import execute_action, list_action_types
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -297,3 +308,113 @@ def system_benchmark() -> dict[str, Any]:
     except Exception as exc:  # noqa: BLE001
         logger.exception("[API] /system/benchmark failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/system/state")
+def system_state() -> dict[str, Any]:
+    """
+    Return real-time system health and operational state.
+
+    Returns
+    -------
+    dict with keys:
+        ``status``          — always "active"
+        ``uptime_sec``      — process uptime in seconds
+        ``events_queue``    — pending events in ingestion queue
+        ``ingestor``        — ingestion statistics (total_ingested, drop_rate)
+        ``metrics_count``   — number of metric entries in store
+        ``available_actions`` — list of registered action types
+    """
+    import time as _time  # noqa: PLC0415
+    try:
+        start_time = getattr(system_state, "_start_time", None)
+        if start_time is None:
+            system_state._start_time = _time.time()  # type: ignore[attr-defined]
+            start_time = system_state._start_time
+        uptime = round(_time.time() - start_time, 1)
+    except Exception:  # noqa: BLE001
+        uptime = 0.0
+
+    metrics_summary = get_summary()
+    return {
+        "status": "active",
+        "uptime_sec": uptime,
+        "events_queue": queue_size(),
+        "ingestor": ingestor_stats(),
+        "metrics_count": metrics_summary.get("count", 0),
+        "available_actions": list_action_types(),
+    }
+
+
+# ── Platform API ───────────────────────────────────────────────────────────────
+
+
+class IngestRequest(BaseModel):
+    source: str = Field(..., description="Origin system or device identifier")
+    type: str = Field(..., description="Event category (alert, telemetry, command, …)")
+    payload: dict[str, Any] = Field(default_factory=dict)
+    priority: int = Field(default=5, ge=1, le=10)
+    correlation_id: str = Field(default="")
+
+
+@app.post("/platform/ingest")
+def platform_ingest(req: IngestRequest) -> dict[str, Any]:
+    """
+    Enqueue a real-time event into the ingestion layer.
+
+    The event will be picked up and processed by the autonomy loop on the
+    next cycle (default: 30 seconds).  For immediate processing the caller
+    can POST to ``/cognitive/process`` directly.
+
+    Returns
+    -------
+    dict with ``queued`` (bool), ``queue_size`` (int), and ``dropped`` (bool).
+    """
+    queued = ingest_event(
+        source=req.source,
+        type=req.type,
+        payload=req.payload,
+        priority=req.priority,
+        correlation_id=req.correlation_id,
+    )
+    return {
+        "queued": queued,
+        "dropped": not queued,
+        "queue_size": queue_size(),
+    }
+
+
+@app.get("/platform/intelligence")
+def platform_intelligence() -> dict[str, Any]:
+    """
+    Return the most recent fused intelligence picture.
+
+    The fusion snapshot is updated after every successful Commander pipeline
+    execution and by the autonomy loop when live events are processed.
+
+    Returns ``{"available": false}`` if no fusion has occurred yet.
+    """
+    fusion = get_last_fusion()
+    if fusion is None:
+        return {"available": False}
+    return {"available": True, "fusion": fusion}
+
+
+class ActionRequest(BaseModel):
+    action: str = Field(..., description="Action type (log, alert, store, metric, webhook, …)")
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.post("/platform/action")
+def platform_action(req: ActionRequest) -> dict[str, Any]:
+    """
+    Execute a named external action.
+
+    Built-in actions: ``log``, ``alert``, ``store``, ``metric``, ``webhook``.
+    Custom actions can be registered via ``register_action_handler()``.
+
+    Returns
+    -------
+    dict — ActionResult serialisation with ``action``, ``status``, ``detail``.
+    """
+    return execute_action(req.action, req.payload)

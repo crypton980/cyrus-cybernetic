@@ -257,10 +257,10 @@ def process_input(input_text: str, n_context: int = 5) -> dict[str, Any]:
 # Commander singleton — initialised lazily to avoid circular imports.
 # The None sentinel is set at module level before _get_commander() is defined
 # so it is always present even if this module is partially imported.
-_commander: "Any | None" = None
+_commander: Any | None = None
 
 
-def _get_commander() -> "Any":
+def _get_commander() -> Any:
     """Lazy-load the Commander singleton to avoid circular imports."""
     from agents.commander import Commander  # noqa: PLC0415
     global _commander  # noqa: PLW0603
@@ -271,7 +271,7 @@ def _get_commander() -> "Any":
 
 def process_input_multi_agent(
     input_text: str,
-    feedback: "dict[str, Any] | None" = None,
+    feedback: dict[str, Any] | None = None,
     n_memory: int = 5,
 ) -> "dict[str, Any]":
     """

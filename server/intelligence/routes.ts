@@ -26,6 +26,7 @@ import fs from "fs";
 import { storeMemory, queryMemory, deleteMemory, getMemoryStats, logFeedback } from "../services/memoryService";
 import { executeDecision, processCognitive, getRegisteredTools } from "../services/brainService";
 import { storeSession, getSession, clearSession, isRedisOnline } from "../services/sessionMemory";
+import { getPluginManifest } from "../plugins/index";
 
 const router = Router();
 
@@ -310,6 +311,7 @@ router.get("/system/intelligence-metrics", async (_req, res) => {
     registeredTools: getRegisteredTools(),
     redis: { online: redisOnline },
     vectorMemory: memStats,
+    plugins: getPluginManifest(),
   });
 });
 
