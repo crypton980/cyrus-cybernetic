@@ -335,7 +335,16 @@ async function initializeSystem() {
 // ── Graceful shutdown ────────────────────────────────────────────────────────
 async function gracefulShutdown(signal: string) {
   log(`[Process] ${signal} received — shutting down gracefully`);
+
+  // Store the timer handle so it can be cancelled if the server closes cleanly
+  // before the timeout fires.
+  const forceExitTimer = setTimeout(() => {
+    console.error("[Process] Forced shutdown after timeout");
+    process.exit(1);
+  }, GRACEFUL_SHUTDOWN_TIMEOUT_MS);
+
   httpServer.close(async () => {
+    clearTimeout(forceExitTimer);
     try {
       const { pool } = await import("./db");
       await pool.end();
@@ -346,14 +355,6 @@ async function gracefulShutdown(signal: string) {
     log("[Process] Shutdown complete");
     process.exit(0);
   });
-
-  // Force-exit after the grace period if connections haven't drained.
-  // NOTE: intentionally NOT calling .unref() so the process stays alive for
-  // the full drain window rather than exiting prematurely.
-  setTimeout(() => {
-    console.error("[Process] Forced shutdown after timeout");
-    process.exit(1);
-  }, GRACEFUL_SHUTDOWN_TIMEOUT_MS);
 }
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));

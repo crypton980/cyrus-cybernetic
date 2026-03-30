@@ -2,7 +2,7 @@
  * CYRUS Intelligence Routes
  *
  * Exposes memory, learning, decision, execution, training, session memory,
- * and observability capabilities through the Node.js REST API.
+ * multi-agent cognitive processing, and observability through the Node.js REST API.
  * All routes require authentication (enforced globally in server/index.ts).
  * Admin-only endpoints additionally require role === "admin".
  *
@@ -16,6 +16,7 @@
  *   POST   /api/train                      — ingest a PDF/txt/md into memory (admin)
  *   GET    /api/session                    — retrieve current user's session history
  *   DELETE /api/session                    — clear current user's session history
+ *   POST   /api/cognitive/process          — full multi-agent cognitive pipeline
  *   GET    /api/system/intelligence-metrics — system observability metrics
  */
 
@@ -23,7 +24,7 @@ import { Router, type Request, type RequestHandler } from "express";
 import path from "path";
 import fs from "fs";
 import { storeMemory, queryMemory, deleteMemory, getMemoryStats, logFeedback } from "../services/memoryService";
-import { executeDecision, getRegisteredTools } from "../services/brainService";
+import { executeDecision, processCognitive, getRegisteredTools } from "../services/brainService";
 import { storeSession, getSession, clearSession, isRedisOnline } from "../services/sessionMemory";
 
 const router = Router();
@@ -246,6 +247,51 @@ router.delete("/session", async (req, res) => {
   }
   await clearSession(user.id);
   return res.json({ status: "cleared", userId: user.id });
+});
+
+// ── Cognitive / multi-agent route ─────────────────────────────────────────────
+
+/**
+ * POST /api/cognitive/process
+ *
+ * Runs the full multi-agent intelligence pipeline:
+ *   SecurityAgent → MemoryAgent → AnalysisAgent → MissionAgent
+ *   (→ LearningAgent when feedback is provided)
+ *
+ * Body:
+ *   { input: string, nMemory?: number, feedback?: { rating: number, ... } }
+ *
+ * Returns the complete CognitiveResult payload and stores the interaction
+ * in session memory (non-blocking).
+ */
+router.post("/cognitive/process", async (req, res) => {
+  const { input, nMemory, feedback } = req.body as {
+    input?: string;
+    nMemory?: number;
+    feedback?: { rating: number; [key: string]: unknown } | null;
+  };
+
+  if (!input || typeof input !== "string" || !input.trim()) {
+    return res.status(400).json({ error: "input is required" });
+  }
+
+  const result = await processCognitive(input.trim(), {
+    nMemory: typeof nMemory === "number" ? nMemory : 5,
+    feedback: feedback ?? null,
+  });
+
+  // Persist interaction to session memory (non-blocking)
+  const user = getSessionUser(req);
+  if (user?.id) {
+    storeSession(user.id, {
+      input: input.trim(),
+      decision: result as unknown as Record<string, unknown>,
+    }).catch((err) => {
+      console.warn("[Intelligence] storeSession (cognitive) failed:", (err as Error).message);
+    });
+  }
+
+  return res.json(result);
 });
 
 // ── Observability / metrics route ─────────────────────────────────────────────

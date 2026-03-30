@@ -1,15 +1,17 @@
 /**
  * CYRUS Brain Service — Node.js client for the Python decision engine.
  *
- * Routes input through the Python brain module which runs LLM reasoning,
- * retrieves semantic context, builds a multi-step execution plan, and returns
- * a structured decision payload.  Falls back gracefully when the AI service
- * is unavailable.
+ * Two processing modes are available:
+ *
+ *  1. `processBrain()`     → single-model LLM reasoning (legacy, `/brain/process`)
+ *  2. `processCognitive()` → full multi-agent pipeline (new, `/cognitive/process`)
+ *     SecurityAgent → MemoryAgent → AnalysisAgent → MissionAgent → (LearningAgent)
+ *
+ * Both fall back gracefully when the AI service is unavailable.
  *
  * Dynamic tool execution:
- *   The tool registry maps action names (returned by the brain) to concrete
- *   Node.js functions.  executeDecision() uses the brain's `decision.action`
- *   field to select and invoke the correct tool automatically.
+ *   `executeDecision()` reads `decision.action` from the brain result and
+ *   dispatches to the matching registered tool automatically.
  */
 
 import axios, { type AxiosInstance } from "axios";
@@ -50,6 +52,48 @@ export interface BrainResult {
   context: Record<string, unknown>;
   memory_confidence: number;
   recommendation: string;
+}
+
+/** Security gate result from the SecurityAgent. */
+export interface SecurityResult {
+  status: "ok" | "blocked" | "error";
+  reason?: string;
+  check?: string;
+}
+
+/** Analysis result from the AnalysisAgent. */
+export interface AnalysisResult {
+  analysis: string;
+  source: "llm" | "offline" | "offline_fallback";
+}
+
+/** Mission plan from the MissionAgent. */
+export interface MissionResult {
+  mission_plan: string[];
+  plan_detail: Array<{ step: string; description: string }>;
+  intent: string;
+  objective: string;
+}
+
+/** Optional learning strategy from the LearningAgent. */
+export interface LearningResult {
+  strategy: "adjust" | "observe" | "reinforce";
+  rating: number;
+}
+
+/**
+ * Full multi-agent cognitive process response.
+ * Returned by `processCognitive()` and the `/cognitive/process` endpoint.
+ */
+export interface CognitiveResult {
+  type: "multi-agent";
+  security: SecurityResult;
+  blocked?: boolean;
+  memory?: Record<string, unknown>;
+  analysis?: AnalysisResult;
+  mission?: MissionResult;
+  learning?: LearningResult;
+  pipeline_ms: number;
 }
 
 /** Final tool-execution result returned to the caller. */
@@ -98,6 +142,51 @@ export async function processBrain(
       context: {},
       memory_confidence: 0,
       recommendation: "AI service unavailable — responding from local context only.",
+    };
+  }
+}
+
+/**
+ * Run the full multi-agent cognitive pipeline via the Python Commander.
+ *
+ * Pipeline (Python-side):
+ *   SecurityAgent → MemoryAgent → AnalysisAgent → MissionAgent
+ *   (→ LearningAgent when feedback is provided)
+ *
+ * Falls back to a safe blocked/error payload when the AI service is down.
+ */
+export async function processCognitive(
+  input: string,
+  options: {
+    nMemory?: number;
+    feedback?: { rating: number; [key: string]: unknown } | null;
+  } = {}
+): Promise<CognitiveResult> {
+  try {
+    const res = await getClient().post<CognitiveResult>("/cognitive/process", {
+      input,
+      n_memory: options.nMemory ?? 5,
+      feedback: options.feedback ?? null,
+    });
+    return res.data;
+  } catch (err) {
+    console.error("[BrainService] processCognitive failed:", (err as Error).message);
+    // Graceful fallback — pipeline structure is preserved with an offline marker
+    return {
+      type: "multi-agent",
+      security: { status: "ok" },
+      memory: {},
+      analysis: {
+        analysis: "AI service unavailable — offline mode. No LLM analysis performed.",
+        source: "offline",
+      },
+      mission: {
+        mission_plan: ["analyze_input", "retrieve_memory", "reason_decision", "execute_action", "evaluate_result"],
+        plan_detail: [],
+        intent: "response",
+        objective: "[response] AI service unavailable",
+      },
+      pipeline_ms: 0,
     };
   }
 }

@@ -29,7 +29,7 @@ from pydantic import BaseModel, Field
 
 from memory_service import store_memory, query_memory, delete_memory, memory_stats
 from learning_engine import learn_from_feedback, update_behavior, store_interaction
-from brain import process_input
+from brain import process_input, process_input_multi_agent
 from planner import create_plan, describe_plan
 from autonomy import start_autonomy_loop
 
@@ -111,6 +111,20 @@ class BrainRequest(BaseModel):
 class PlanRequest(BaseModel):
     input: str = Field(..., min_length=1, max_length=5_000)
     intent: str | None = Field(default=None)
+
+
+class CognitiveRequest(BaseModel):
+    """Request model for the multi-agent cognitive pipeline."""
+
+    input: str = Field(..., min_length=1, max_length=5_000)
+    n_memory: int = Field(default=5, ge=1, le=20)
+    feedback: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Optional feedback payload for the LearningAgent step. "
+            'Must contain at least "rating" (float 1–5).'
+        ),
+    )
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -197,3 +211,36 @@ def plan(req: PlanRequest) -> dict[str, Any]:
     steps = create_plan(req.input, intent=req.intent)
     detail = describe_plan(steps)
     return {"plan": steps, "plan_detail": detail, "intent": req.intent or "default"}
+
+
+@app.post("/cognitive/process")
+def cognitive_process(req: CognitiveRequest) -> dict[str, Any]:
+    """
+    Run the full multi-agent intelligence pipeline.
+
+    Pipeline:
+      SecurityAgent → MemoryAgent → AnalysisAgent → MissionAgent
+      (→ LearningAgent when feedback is supplied)
+
+    Returns
+    -------
+    dict with keys:
+        ``type``        — "multi-agent"
+        ``security``    — input validation result
+        ``memory``      — ChromaDB retrieval results
+        ``analysis``    — LLM deep analysis
+        ``mission``     — execution plan
+        ``learning``    — strategy (only when feedback provided)
+        ``pipeline_ms`` — elapsed processing time in milliseconds
+    """
+    try:
+        result = process_input_multi_agent(
+            req.input,
+            feedback=req.feedback,
+            n_memory=req.n_memory,
+        )
+        return result
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("[API] /cognitive/process failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+

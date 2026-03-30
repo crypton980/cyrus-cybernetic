@@ -250,3 +250,52 @@ def process_input(input_text: str, n_context: int = 5) -> dict[str, Any]:
         "memory_confidence": memory_confidence,
         "recommendation": _RECOMMENDATIONS.get(decision["intent"], "Process input."),
     }
+
+
+# ── Multi-agent entry point ───────────────────────────────────────────────────
+
+# Commander is instantiated once at module level (singleton pattern).
+# Import is deferred to avoid a circular import at module load time and to
+# ensure the agents package can import from memory_service / learning_engine
+# without pulling in brain.py first.
+
+def _get_commander() -> "Any":
+    """Lazy-load the Commander singleton to avoid circular imports."""
+    from agents.commander import Commander  # noqa: PLC0415
+    global _commander  # noqa: PLW0603
+    if _commander is None:
+        _commander = Commander()
+    return _commander
+
+
+_commander: "Any | None" = None
+
+
+def process_input_multi_agent(
+    input_text: str,
+    feedback: "dict[str, Any] | None" = None,
+    n_memory: int = 5,
+) -> "dict[str, Any]":
+    """
+    Multi-agent entry point — routes through the Commander pipeline.
+
+    This is the primary entry point when the full agent architecture is
+    active.  The legacy `process_input()` above is retained for backward
+    compatibility with the `/brain/process` endpoint.
+
+    Parameters
+    ----------
+    input_text : str
+        Raw operator input.
+    feedback : dict | None
+        Optional feedback payload for the LearningAgent step.
+    n_memory : int
+        Number of memory entries to retrieve (default: 5).
+
+    Returns
+    -------
+    dict — Commander result with ``type = "multi-agent"``.
+    """
+    commander = _get_commander()
+    return commander.execute(input_text, feedback=feedback, n_memory=n_memory)
+
