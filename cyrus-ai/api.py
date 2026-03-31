@@ -1085,3 +1085,249 @@ def restore_backup_endpoint(backup_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(exc))
     log_audit({"event": "backup_restored", "backup_id": backup_id})
     return result
+
+
+# ── Embodied Intelligence API ──────────────────────────────────────────────────
+#
+# These endpoints manage the drone + perception + mission execution stack.
+# The DroneController, VisionSystem, and MissionEngine are lazy-initialised on
+# first call so the FastAPI server starts immediately even without hardware.
+# ──────────────────────────────────────────────────────────────────────────────
+
+import threading as _threading
+
+_embodiment_lock = _threading.Lock()
+_drone_ctrl: Any = None
+_vision_sys: Any = None
+_mission_eng: Any = None
+_core_loop: Any  = None
+
+
+def _get_embodiment() -> tuple[Any, Any, Any, Any]:
+    """Lazy-init and return (drone, vision, mission_engine, core_loop)."""
+    global _drone_ctrl, _vision_sys, _mission_eng, _core_loop  # noqa: PLW0603
+    with _embodiment_lock:
+        if _drone_ctrl is None:
+            from embodiment.drone_controller import DroneController  # noqa: PLC0415
+            from perception.vision import VisionSystem              # noqa: PLC0415
+            from mission.engine import MissionEngine                # noqa: PLC0415
+            from embodiment.core_loop import CyrusCoreLoop          # noqa: PLC0415
+
+            _drone_ctrl  = DroneController()
+            _vision_sys  = VisionSystem()
+            _mission_eng = MissionEngine(drone=_drone_ctrl, vision=_vision_sys)
+            _core_loop   = CyrusCoreLoop(
+                drone=_drone_ctrl,
+                vision=_vision_sys,
+                mission_engine=_mission_eng,
+            )
+    return _drone_ctrl, _vision_sys, _mission_eng, _core_loop
+
+
+@app.get("/embodiment/status", tags=["embodiment"])
+def embodiment_status() -> dict[str, Any]:
+    """Return the current status of the embodied intelligence system."""
+    drone, vision, engine, loop = _get_embodiment()
+    telemetry = drone.telemetry.to_dict()
+    return {
+        "loop": {
+            "running":  loop.is_running(),
+            "stats":    loop.stats.to_dict(),
+        },
+        "drone": {
+            "simulated": drone.simulated,
+            "telemetry": telemetry,
+        },
+        "mission": engine.current_mission(),
+        "vision":  {"model": vision.model_id, "conf_thresh": vision.conf_thresh},
+    }
+
+
+class _StartRequest(BaseModel):
+    connection_string: str | None = None
+    auto_connect: bool = True
+
+
+@app.post("/embodiment/start", tags=["embodiment"])
+def start_embodiment(body: _StartRequest = _StartRequest()) -> dict[str, Any]:
+    """
+    Connect to the drone and start the continuous sense→think→act core loop.
+    Safe to call multiple times — idempotent.
+    """
+    from audit.logger import log_audit  # noqa: PLC0415
+    drone, _vision, _eng, loop = _get_embodiment()
+
+    if loop.is_running():
+        return {"status": "already_running", "loop": loop.stats.to_dict()}
+
+    if body.auto_connect and not drone.simulated:
+        connected = drone.connect()
+        if not connected:
+            raise HTTPException(status_code=503, detail="Drone connection failed")
+    elif not drone.simulated:
+        drone.connect()
+
+    loop.start()
+    log_audit({"event": "embodiment_started", "simulated": drone.simulated})
+    logger.info("[API] embodiment loop started")
+    return {"status": "started", "loop": loop.stats.to_dict()}
+
+
+@app.post("/embodiment/stop", tags=["embodiment"])
+def stop_embodiment() -> dict[str, Any]:
+    """Stop the core loop and disconnect from the drone."""
+    from audit.logger import log_audit  # noqa: PLC0415
+    _d, _v, _e, loop = _get_embodiment()
+    loop.stop()
+    log_audit({"event": "embodiment_stopped", "ticks": loop.stats.ticks})
+    return {"status": "stopped", "stats": loop.stats.to_dict()}
+
+
+class _MissionRequest(BaseModel):
+    id: str | None = None
+    label: str = "api_mission"
+    steps: list[dict[str, Any]]
+
+
+@app.post("/embodiment/mission", tags=["embodiment"])
+def submit_mission(body: _MissionRequest) -> dict[str, Any]:
+    """
+    Submit a mission for immediate execution.
+
+    The mission runs in a background thread; the endpoint returns immediately
+    with the mission ID so the caller can poll ``/mission/{id}`` for status.
+    """
+    import uuid as _uuid  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    _drone, _vision, engine, _loop = _get_embodiment()
+
+    if engine.is_active():
+        raise HTTPException(status_code=409, detail="A mission is already active")
+
+    mission = body.model_dump()
+    if not mission.get("id"):
+        mission["id"] = str(_uuid.uuid4())
+
+    def _run() -> None:
+        try:
+            engine.execute_mission(mission)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("[API] mission error: %s", exc)
+
+    t = _threading.Thread(target=_run, daemon=True, name=f"mission-{mission['id'][:8]}")
+    t.start()
+
+    log_audit({"event": "mission_submitted", "mission_id": mission["id"], "label": mission["label"]})
+    return {"status": "submitted", "mission_id": mission["id"]}
+
+
+class _DroneCommand(BaseModel):
+    action: str
+    lat:    float | None = None
+    lon:    float | None = None
+    alt:    float | None = None
+    vx:     float | None = None
+    vy:     float | None = None
+    vz:     float | None = None
+
+
+@app.post("/embodiment/command", tags=["embodiment"])
+def drone_command(body: _DroneCommand) -> dict[str, Any]:
+    """
+    Send a direct command to the drone (bypasses mission engine).
+
+    Supported actions: arm, disarm, takeoff, land, rtl, hover, goto, velocity
+    """
+    from audit.logger import log_audit  # noqa: PLC0415
+
+    drone, _v, _e, _l = _get_embodiment()
+    action = body.action.lower()
+
+    try:
+        if action == "arm":
+            drone.arm()
+        elif action == "disarm":
+            drone.disarm()
+        elif action == "takeoff":
+            drone.takeoff(altitude_m=body.alt or 10.0)
+        elif action == "land":
+            drone.land()
+        elif action == "rtl":
+            drone.return_to_launch()
+        elif action == "hover":
+            drone.hover()
+        elif action == "goto":
+            if body.lat is None or body.lon is None:
+                raise HTTPException(status_code=422, detail="goto requires lat, lon")
+            drone.goto(lat=body.lat, lon=body.lon, alt_m=body.alt or 20.0)
+        elif action == "velocity":
+            drone.set_velocity(vx=body.vx or 0, vy=body.vy or 0, vz=body.vz or 0)
+        else:
+            raise HTTPException(status_code=422, detail=f"Unknown action: {action}")
+
+        log_audit({"event": "drone_command", "action": action, "params": body.model_dump()})
+        return {"status": "ok", "action": action, "telemetry": drone.telemetry.to_dict()}
+
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.error("[API] drone command error: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+# ── Human Interaction API ──────────────────────────────────────────────────────
+
+class _InteractRequest(BaseModel):
+    user_id: str
+    text: str
+    context: dict[str, Any] = {}
+
+
+@app.post("/human/interact", tags=["embodiment"])
+def human_interact(body: _InteractRequest) -> dict[str, Any]:
+    """
+    Process a human utterance and return a CYRUS response.
+
+    The interaction system maintains per-user conversation history and
+    selects an adaptive behavior mode based on context.
+    """
+    from human.interaction import get_interaction  # noqa: PLC0415
+
+    # Enrich context with live drone telemetry if embodiment is running
+    context = dict(body.context)
+    try:
+        drone = _drone_ctrl
+        if drone:
+            context.setdefault("drone", drone.telemetry.to_dict())
+    except Exception:  # noqa: BLE001
+        pass
+
+    interaction = get_interaction()
+    return interaction.process_input(
+        user_id=body.user_id,
+        text=body.text,
+        context=context,
+    )
+
+
+@app.get("/human/history/{user_id}", tags=["embodiment"])
+def get_interaction_history(user_id: str, last_n: int = 10) -> dict[str, Any]:
+    """Return the conversation history for a user."""
+    from human.interaction import get_interaction  # noqa: PLC0415
+    interaction = get_interaction()
+    return {
+        "user_id": user_id,
+        "history": interaction.get_history(user_id, last_n=max(1, min(last_n, 50))),
+        "stats":   interaction.user_stats(user_id),
+    }
+
+
+@app.delete("/human/history/{user_id}", tags=["embodiment"])
+def clear_interaction_history(user_id: str) -> dict[str, Any]:
+    """Clear the conversation history for a user."""
+    from human.interaction import get_interaction  # noqa: PLC0415
+    from audit.logger import log_audit  # noqa: PLC0415
+    get_interaction().clear_history(user_id)
+    log_audit({"event": "interaction_history_cleared", "user_id": user_id})
+    return {"status": "cleared", "user_id": user_id}

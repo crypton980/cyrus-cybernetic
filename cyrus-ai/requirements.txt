@@ -24,3 +24,11 @@ transformers>=4.40.0
 torch>=2.2.0
 accelerate>=0.29.0
 datasets>=2.19.0
+
+# ── Embodied intelligence (optional — install for drone + vision support) ─────
+# pymavlink is required for real MAVLink/PX4 drone control.
+# cv2 (opencv-python-headless) is required for camera frame capture.
+# ultralytics provides the YOLOv8 detection model (torch is also used for v5).
+pymavlink>=2.4.40
+opencv-python-headless>=4.9.0.80
+ultralytics>=8.2.0

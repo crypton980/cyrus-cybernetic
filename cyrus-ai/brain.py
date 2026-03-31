@@ -430,3 +430,73 @@ def process_input_multi_agent(
     commander = _get_commander()
     return commander.execute(input_text, feedback=feedback, n_memory=n_memory)
 
+
+# ── Embodied intelligence integration ─────────────────────────────────────────
+
+def process_embodied_input(perception: dict[str, Any]) -> dict[str, Any]:
+    """
+    Translate raw perception data into an actionable decision.
+
+    Called every tick by the ``CyrusCoreLoop`` to close the
+    sense → think → act cycle.
+
+    The perception dict may include:
+
+    * ``objects``   — list of detected objects (label, confidence, bbox …)
+    * ``drone``     — current telemetry snapshot
+    * ``mission``   — active mission state (if any)
+
+    Returns a decision dict which may contain:
+
+    * ``mission``       — a full mission spec to execute (dict with ``steps``)
+    * ``drone_command`` — immediate low-level command (dict with ``action``)
+    * ``response``      — narrative summary of the reasoning
+    * ``type``          — decision type string
+    """
+    objects = perception.get("objects", [])
+    drone   = perception.get("drone", {})
+
+    # Summarise perception into a natural-language prompt
+    parts: list[str] = []
+    if objects:
+        labels = [o.get("label", "object") for o in objects[:10]]
+        counts: dict[str, int] = {}
+        for lbl in labels:
+            counts[lbl] = counts.get(lbl, 0) + 1
+        summary = ", ".join(f"{v}× {k}" for k, v in counts.items())
+        parts.append(f"Objects detected: {summary}.")
+
+    if drone:
+        state = drone.get("state", "unknown")
+        alt   = drone.get("alt_m", 0.0)
+        batt  = drone.get("battery_pct", 100.0)
+        parts.append(f"Drone: state={state}, altitude={alt:.1f}m, battery={batt:.0f}%.")
+
+        # Safety: low battery → RTL
+        if batt < 15.0 and state not in ("returning", "landing"):
+            logger.warning("[Brain] low battery %.0f%% — issuing RTL command", batt)
+            return {
+                "type": "safety_override",
+                "drone_command": {"action": "rtl"},
+                "response": f"Battery critical ({batt:.0f}%) — returning to launch.",
+            }
+
+    if not parts:
+        parts.append("No significant perception data.")
+
+    context_text = " ".join(parts)
+
+    try:
+        context_dict, _enriched = build_context(context_text, n_context=3)
+        decision = hybrid_reason(context_text, _enriched)
+        decision["type"] = decision.get("type", "embodied")
+        decision["perception_summary"] = context_text
+        return decision
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("[Brain] embodied reasoning error: %s", exc)
+        return {
+            "type": "noop",
+            "response": "Perception processed — no action required.",
+            "perception_summary": context_text,
+        }
+
