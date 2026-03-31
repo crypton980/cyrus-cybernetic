@@ -23,6 +23,8 @@ GET  /system/benchmark              → run built-in benchmark suite
 GET  /system/state                  → real-time system health (queue depth, uptime…)
 GET  /system/health                 → node health + distributed status
 GET  /system/node                   → node identity + cluster info
+GET  /system/orchestrator           → SystemOrchestrator module health snapshot
+POST /system/orchestrator/restart/{module} → live-restart a named subsystem module
 POST /platform/ingest               → enqueue a real-time event
 GET  /platform/intelligence         → last fused intelligence picture
 POST /platform/action               → execute an external action
@@ -135,9 +137,23 @@ async def lifespan(app: FastAPI):
 
     threading.Thread(target=_error_rate_monitor, daemon=True, name="cyrus-alert-monitor").start()
 
+    # System orchestrator — initialise all subsystems and start the global brain loop.
+    # autonomy/listener/keepalive threads are managed above, so use start_subsystems().
+    try:
+        from core.system_orchestrator import get_orchestrator  # noqa: PLC0415
+        get_orchestrator().start_subsystems()
+        logger.info("[App] System orchestrator subsystems started")
+    except Exception as _orch_exc:  # noqa: BLE001
+        logger.warning("[App] Orchestrator start failed (non-fatal): %s", _orch_exc)
+
     yield
     # Daemon threads — stop automatically when process exits.
     logger.info("[App] Shutting down node=%s", NODE_ID)
+    try:
+        from core.system_orchestrator import get_orchestrator  # noqa: PLC0415
+        get_orchestrator().shutdown()
+    except Exception:  # noqa: BLE001
+        pass
 
 
 # ── Service start time (for uptime reporting) ──────────────────────────────────
@@ -278,6 +294,34 @@ def node_info() -> dict[str, Any]:
         "cluster_size": len(active),
         "active_nodes": active,
     }
+
+
+@app.get("/system/orchestrator", tags=["system"])
+def orchestrator_status() -> dict[str, Any]:
+    """
+    Return the live status of the SystemOrchestrator and all managed subsystems.
+
+    Useful for the dashboard health panel and alerting pipelines.
+    """
+    try:
+        from core.system_orchestrator import get_orchestrator  # noqa: PLC0415
+        return get_orchestrator().get_status()
+    except Exception as exc:  # noqa: BLE001
+        return {"orchestrator": "error", "reason": str(exc)}
+
+
+@app.post("/system/orchestrator/restart/{module}", tags=["system"])
+def orchestrator_restart_module(module: str) -> dict[str, Any]:
+    """
+    Attempt to live-restart a named subsystem module without restarting the service.
+
+    Supported modules: brain, swarm, vision, mission, nxi, safety, pursuit.
+    """
+    try:
+        from core.system_orchestrator import get_orchestrator  # noqa: PLC0415
+        return get_orchestrator().restart_module(module)
+    except Exception as exc:  # noqa: BLE001
+        return {"status": "error", "reason": str(exc)}
 
 
 @app.get("/memory/stats")
