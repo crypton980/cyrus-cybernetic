@@ -304,8 +304,8 @@ class HumanInteraction:
     @staticmethod
     def _mission_active() -> bool:
         try:
-            from mission_control.controller import get_controller  # noqa: PLC0415
-            return bool(get_controller().active_missions())
+            from mission_control.controller import list_missions  # noqa: PLC0415
+            return bool(list_missions(status="running"))
         except Exception:  # noqa: BLE001
             return False
 

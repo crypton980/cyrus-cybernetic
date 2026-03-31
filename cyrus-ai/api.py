@@ -1592,3 +1592,59 @@ def swarm_event(body: _SwarmEventRequest) -> dict[str, Any]:
 
     event = body.model_dump(exclude_none=True)
     return process_swarm_event(event)
+
+
+# ── NXI World-Model dedicated endpoints ──────────────────────────────────────
+
+@app.get("/nxi/state", tags=["nxi"])
+def nxi_get_state(events_n: int = 50) -> dict[str, Any]:
+    """
+    Return the current NXI world-model snapshot.
+
+    Includes all known drones, tracked targets, and the most recent
+    ``events_n`` ring-buffer events (max 200).
+    """
+    from nxi.map_engine import get_nxi_map  # noqa: PLC0415
+    return get_nxi_map().get_state(events_n=max(1, min(events_n, 200)))
+
+
+@app.post("/nxi/update", tags=["nxi"])
+def nxi_update_entity(body: dict[str, Any]) -> dict[str, Any]:
+    """
+    Push a raw entity update into the NXI world model.
+
+    Accepts a dict with at minimum ``entity_id`` and ``entity_type``
+    (``drone`` or ``target``) plus any telemetry fields.
+    """
+    from nxi.map_engine import get_nxi_map  # noqa: PLC0415
+    nxi = get_nxi_map()
+    eid   = body.get("entity_id", "unknown")
+    etype = body.get("entity_type", "target")
+    payload = {k: v for k, v in body.items() if k not in ("entity_id", "entity_type")}
+    if etype == "drone":
+        nxi.update_drone(eid, payload)
+    else:
+        nxi.update_target(eid, payload)
+    return {"status": "updated", "entity_id": eid, "entity_type": etype}
+
+
+# ── Training / Model proxy endpoints (thin wrappers already in the module) ──
+
+@app.get("/training/dataset/stats", tags=["training"])
+def training_dataset_stats() -> dict[str, Any]:
+    """Return dataset quality stats from the dataset builder."""
+    from training.dataset_builder import get_dataset_stats  # noqa: PLC0415
+    try:
+        return get_dataset_stats()
+    except Exception as exc:  # noqa: BLE001
+        return {"status": "unavailable", "detail": str(exc)}
+
+
+@app.get("/model/checkpoints", tags=["model"])
+def model_checkpoints() -> dict[str, Any]:
+    """Return the list of saved model checkpoints."""
+    from models.versioning import list_model_versions  # noqa: PLC0415
+    try:
+        return {"checkpoints": list_model_versions()}
+    except Exception as exc:  # noqa: BLE001
+        return {"status": "unavailable", "detail": str(exc)}

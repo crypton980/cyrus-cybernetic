@@ -275,5 +275,67 @@ router.get("/mission/:missionId", requireAdmin, (req: Request, res: Response) =>
   proxyGet(`/mission/${req.params["missionId"]}`, {}, req, res, "/mission/:id"),
 );
 
+// ── Training / Model endpoints ────────────────────────────────────────────────
+
+router.get("/training/stats", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/training/stats", {}, _req, res, "/training/stats"),
+);
+
+router.post("/training/trigger", requireAdmin, (req: Request, res: Response) =>
+  proxyPost("/training/trigger", req.body, res, "/training/trigger"),
+);
+
+router.get("/training/dataset/stats", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/training/dataset/stats", {}, _req, res, "/training/dataset/stats"),
+);
+
+router.get("/model/status", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/model/status", {}, _req, res, "/model/status"),
+);
+
+router.get("/model/checkpoints", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/model/checkpoints", {}, _req, res, "/model/checkpoints"),
+);
+
+// ── Observability / Backup / Alerts endpoints ─────────────────────────────────
+
+router.get("/observability/health", (_req: Request, res: Response) =>
+  proxyGet("/system/health", {}, _req, res, "/observability/health"),
+);
+
+router.get("/observability/metrics", (_req: Request, res: Response) =>
+  proxyGet("/system/performance", {}, _req, res, "/observability/metrics"),
+);
+
+router.get("/control/alerts", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/control/alerts", {}, _req, res, "/control/alerts"),
+);
+
+router.post("/control/alerts/test", requireAdmin, (req: Request, res: Response) =>
+  proxyPost("/control/alerts/test", req.body, res, "/control/alerts/test"),
+);
+
+router.post("/backup/trigger", requireAdmin, (req: Request, res: Response) =>
+  proxyPost("/backup/trigger", req.body, res, "/backup/trigger"),
+);
+
+router.get("/backup/list", requireAdmin, (_req: Request, res: Response) =>
+  proxyGet("/backup/list", {}, _req, res, "/backup/list"),
+);
+
+router.post("/backup/restore/:backupId", requireAdmin, (req: Request, res: Response) =>
+  proxyPost(`/backup/restore/${req.params["backupId"]}`, req.body, res, "/backup/restore"),
+);
+
+// ── NXI World-Model endpoints ─────────────────────────────────────────────────
+
+router.get("/nxi/state", (_req: Request, res: Response) =>
+  proxyGet("/nxi/state", { events_n: _req.query["events_n"] ?? 50 }, _req, res, "/nxi/state"),
+);
+
+router.post("/nxi/update", (req: Request, res: Response) =>
+  proxyPost("/nxi/update", req.body, res, "/nxi/update"),
+);
+
 export default router;
 

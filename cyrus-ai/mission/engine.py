@@ -345,20 +345,19 @@ class MissionEngine:
     @staticmethod
     def _register_mission(mission_id: str, label: str) -> None:
         try:
-            from mission_control.controller import get_controller  # noqa: PLC0415
-            get_controller().start(mission_id, label)
+            from mission_control.controller import start_mission  # noqa: PLC0415
+            start_mission(objective=label, mission_id=mission_id)
         except Exception:  # noqa: BLE001
             pass
 
     @staticmethod
     def _complete_mission(mission_id: str, status: MissionStatus) -> None:
         try:
-            from mission_control.controller import get_controller  # noqa: PLC0415
-            ctrl = get_controller()
+            from mission_control.controller import complete_mission, fail_mission  # noqa: PLC0415
             if status == MissionStatus.COMPLETED:
-                ctrl.complete(mission_id)
+                complete_mission(mission_id)
             else:
-                ctrl.fail(mission_id, str(status.value))
+                fail_mission(mission_id, str(status.value))
         except Exception:  # noqa: BLE001
             pass
 

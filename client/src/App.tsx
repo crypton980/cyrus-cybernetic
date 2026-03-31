@@ -25,6 +25,9 @@ import {
   Library,
   Settings,
   Radio,
+  Flag,
+  Brain,
+  Gauge,
 } from "lucide-react";
 
 import { AccessGate } from "./components/AccessGate";
@@ -47,11 +50,19 @@ import { BiologyPage } from "./pages/BiologyPage";
 import { BloodSamplingPage } from "./pages/BloodSamplingPage";
 import { KnowledgeLibraryPage } from "./pages/KnowledgeLibraryPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { MissionControlPage } from "./pages/MissionControlPage";
+import { SafetyControlPage } from "./pages/SafetyControlPage";
+import { TrainingPage } from "./pages/TrainingPage";
+import { ObservabilityPage } from "./pages/ObservabilityPage";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
   { path: "/modules", label: "Modules", sublabel: "AI Orchestrator", icon: Cpu },
   { path: "/swarm", label: "Swarm", sublabel: "Multi-drone · NXI", icon: Radio },
+  { path: "/mission", label: "Missions", sublabel: "HITL Control", icon: Flag },
+  { path: "/safety", label: "Safety", sublabel: "Audit · Lockdown", icon: Shield },
+  { path: "/training", label: "Training", sublabel: "Self-Improve", icon: Brain },
+  { path: "/observability", label: "Observability", sublabel: "Health · Metrics", icon: Gauge },
   { path: "/scan", label: "Vision", sublabel: "Optical Analysis", icon: Scan },
   { path: "/files", label: "Documents", sublabel: "File Processing", icon: FileText },
   { path: "/nav", label: "Navigation", sublabel: "Geospatial", icon: MapPin },
@@ -428,6 +439,10 @@ function AppContent({
             <Route path="/" component={Dashboard} />
             <Route path="/modules" component={ModulesPage} />
             <Route path="/swarm" component={SwarmPage} />
+            <Route path="/mission" component={MissionControlPage} />
+            <Route path="/safety" component={SafetyControlPage} />
+            <Route path="/training" component={TrainingPage} />
+            <Route path="/observability" component={ObservabilityPage} />
             <Route path="/scan" component={ScanPage} />
             <Route path="/files" component={FileAnalysisPage} />
             <Route path="/knowledge" component={KnowledgeLibraryPage} />
