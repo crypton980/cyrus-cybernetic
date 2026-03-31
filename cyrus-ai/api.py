@@ -1331,3 +1331,220 @@ def clear_interaction_history(user_id: str) -> dict[str, Any]:
     get_interaction().clear_history(user_id)
     log_audit({"event": "interaction_history_cleared", "user_id": user_id})
     return {"status": "cleared", "user_id": user_id}
+
+
+# ── Swarm Intelligence API ─────────────────────────────────────────────────────
+
+class _TrackRequest(BaseModel):
+    target_id: str
+    position: list[float]            # [x, y] or [lat, lon]
+    confidence: float = 1.0
+    label: str = "unknown"
+    formation: Optional[str] = None  # None → single-drone intercept
+    num_drones: int = 3              # only used when formation != None
+
+
+class _RegisterDroneRequest(BaseModel):
+    drone_id: str
+    initial_position: Optional[list[float]] = None
+    initial_battery: float = 100.0
+
+
+class _SwarmStateRequest(BaseModel):
+    drone_id: str
+    position: list[float]
+    battery: float
+    status: Optional[str] = None
+
+
+class _SwarmEventRequest(BaseModel):
+    type: str
+    id: Optional[str] = None
+    target_id: Optional[str] = None
+    position: Optional[list[float]] = None
+    drone_id: Optional[str] = None
+    confidence: float = 1.0
+    label: str = "unknown"
+    num_drones: int = 3
+    formation: str = "circle"
+    reason: Optional[str] = None
+
+
+class _FormationRequest(BaseModel):
+    center: list[float]
+    num_drones: int = 3
+    formation_type: str = "circle"   # circle | line | wedge
+    radius: float = 50.0
+    altitude: float = 20.0
+    bearing: float = 0.0
+
+
+@app.post("/swarm/track", tags=["swarm"])
+def swarm_track(body: _TrackRequest) -> dict[str, Any]:
+    """
+    Process a target detection and assign drone(s) for intercept.
+
+    If ``formation`` is set to ``"circle"``, ``"line"``, or ``"wedge"``,
+    *num_drones* drones are assigned in that formation around the predicted
+    intercept point.  Otherwise, a single best-available drone is assigned.
+    """
+    from swarm.swarm_pursuit import get_coordinator  # noqa: PLC0415
+
+    coord    = get_coordinator()
+    position = tuple(body.position[:2])
+
+    if body.formation:
+        assigned = coord.handle_detection_formation(
+            body.target_id,
+            position,
+            num_drones=body.num_drones,
+            formation_type=body.formation,
+            confidence=body.confidence,
+            label=body.label,
+        )
+        return {
+            "formation": body.formation,
+            "target_id": body.target_id,
+            "assigned_drones": assigned,
+        }
+
+    drone_id = coord.handle_detection(
+        body.target_id,
+        position,
+        confidence=body.confidence,
+        label=body.label,
+    )
+    return {
+        "target_id":    body.target_id,
+        "assigned_drone": drone_id,
+    }
+
+
+@app.get("/swarm/state", tags=["swarm"])
+def swarm_state(events_n: int = 20) -> dict[str, Any]:
+    """Return the current NXI world-model state (drones, targets, events)."""
+    from nxi.map_engine import get_nxi_map         # noqa: PLC0415
+    from swarm.swarm_controller import get_swarm_controller  # noqa: PLC0415
+
+    return {
+        "nxi":   get_nxi_map().get_state(events_n=max(1, min(events_n, 200))),
+        "swarm": get_swarm_controller().get_state(),
+    }
+
+
+@app.post("/swarm/register", tags=["swarm"])
+def swarm_register_drone(body: _RegisterDroneRequest) -> dict[str, Any]:
+    """
+    Register a new drone with the swarm controller.
+
+    In a real deployment the ``controller`` object is resolved from the
+    embodiment layer.  When the drone is already registered in the embodiment
+    stack this endpoint wires the two layers together automatically.
+    """
+    from swarm.swarm_controller import get_swarm_controller  # noqa: PLC0415
+    from nxi.map_engine import get_nxi_map                   # noqa: PLC0415
+
+    # Retrieve the embodiment DroneController if available
+    ctrl: Any = None
+    try:
+        from embodiment.drone_controller import get_drone_controller  # noqa: PLC0415
+        ctrl = get_drone_controller(body.drone_id)
+    except Exception:  # noqa: BLE001
+        pass
+
+    pos = tuple(body.initial_position[:2]) if body.initial_position else None
+    get_swarm_controller().register_drone(
+        body.drone_id,
+        ctrl,
+        initial_position=pos,
+        initial_battery=body.initial_battery,
+    )
+    get_nxi_map().update_drone(body.drone_id, {
+        "position": pos,
+        "battery":  body.initial_battery,
+        "status":   "idle",
+    })
+    return {"status": "registered", "drone_id": body.drone_id}
+
+
+@app.get("/swarm/drones", tags=["swarm"])
+def swarm_list_drones() -> dict[str, Any]:
+    """Return all registered drones and their current state."""
+    from swarm.swarm_controller import get_swarm_controller  # noqa: PLC0415
+    return get_swarm_controller().get_state()
+
+
+@app.post("/swarm/drone/state", tags=["swarm"])
+def swarm_update_drone_state(body: _SwarmStateRequest) -> dict[str, Any]:
+    """Update telemetry for a registered drone (heartbeat endpoint)."""
+    from swarm.swarm_controller import get_swarm_controller  # noqa: PLC0415
+    from nxi.map_engine import get_nxi_map                   # noqa: PLC0415
+
+    pos = tuple(body.position[:2])
+    get_swarm_controller().update_state(
+        body.drone_id, pos, body.battery, status=body.status
+    )
+    get_nxi_map().update_drone(body.drone_id, {
+        "position": pos,
+        "battery":  body.battery,
+        "status":   body.status or "idle",
+    })
+    return {"status": "updated", "drone_id": body.drone_id}
+
+
+@app.post("/swarm/formation", tags=["swarm"])
+def swarm_formation(body: _FormationRequest) -> dict[str, Any]:
+    """
+    Compute and assign a geometric formation around *center*.
+
+    Returns the list of (drone_id, position) pairs assigned.
+    """
+    from swarm.formation import circle_formation, line_formation, wedge_formation  # noqa: PLC0415
+    from swarm.swarm_controller import get_swarm_controller  # noqa: PLC0415
+    import math  # noqa: PLC0415
+
+    center = tuple(body.center[:2])
+    n      = max(1, body.num_drones)
+
+    if body.formation_type == "line":
+        positions = line_formation(
+            center, bearing=body.bearing, spacing=body.radius / max(n - 1, 1), num_drones=n
+        )
+    elif body.formation_type == "wedge":
+        positions = wedge_formation(
+            center, bearing=body.bearing, spacing=body.radius / max(n - 1, 1), num_drones=n
+        )
+    else:
+        positions = circle_formation(center, body.radius, n)
+
+    ctrl = get_swarm_controller()
+    assignments: list[dict[str, Any]] = []
+    for pos in positions:
+        task: dict[str, Any] = {
+            "type":     "formation",
+            "target":   pos,
+            "altitude": body.altitude,
+        }
+        drone_id = ctrl.assign_task(task)
+        assignments.append({"drone_id": drone_id, "position": pos})
+
+    return {
+        "formation":   body.formation_type,
+        "center":      center,
+        "assignments": assignments,
+    }
+
+
+@app.post("/swarm/event", tags=["swarm"])
+def swarm_event(body: _SwarmEventRequest) -> dict[str, Any]:
+    """
+    Dispatch a swarm event to the CYRUS brain for routing.
+
+    This is the primary integration point between the Node.js platform layer
+    and the Python swarm brain.  All event types supported by
+    ``brain.process_swarm_event()`` are accepted here.
+    """
+    from brain import process_swarm_event  # noqa: PLC0415
+
+    event = body.model_dump(exclude_none=True)
+    return process_swarm_event(event)

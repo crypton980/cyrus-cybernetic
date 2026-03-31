@@ -500,3 +500,119 @@ def process_embodied_input(perception: dict[str, Any]) -> dict[str, Any]:
             "perception_summary": context_text,
         }
 
+
+
+# ── Swarm event hook ──────────────────────────────────────────────────────────
+
+def process_swarm_event(event: dict[str, Any]) -> dict[str, Any]:
+    """
+    Route a swarm-layer event into the coordinator and return an action dict.
+
+    Supported event types
+    ---------------------
+    * ``target_detected``  — a vision detection; triggers intercept assignment.
+    * ``drone_fault``      — a drone went offline; updates NXI world model.
+    * ``formation_request``— request a formation intercept with multiple drones.
+    * ``state_query``      — return current NXI world-model snapshot.
+
+    All actions are safety-gated: if the system is in lockdown the event is
+    acknowledged but no physical commands are issued.
+    """
+    event_type = event.get("type", "")
+
+    # ── lockdown gate ─────────────────────────────────────────────────────────
+    try:
+        from safety.override import is_locked_down  # noqa: PLC0415
+        if is_locked_down() and event_type not in ("state_query", "drone_fault"):
+            return {
+                "type":   "lockdown",
+                "event":  event_type,
+                "status": "blocked",
+                "reason": "System lockdown active.",
+            }
+    except ImportError:
+        pass
+
+    # ── target detected ───────────────────────────────────────────────────────
+    if event_type == "target_detected":
+        target_id = event.get("id") or event.get("target_id", "unknown")
+        position  = event.get("position")
+        if position is None:
+            return {"type": "error", "reason": "missing position in target_detected event"}
+        try:
+            from swarm.swarm_pursuit import get_coordinator  # noqa: PLC0415
+            coord = get_coordinator()
+            drone_id = coord.handle_detection(
+                target_id,
+                tuple(position),
+                confidence=float(event.get("confidence", 1.0)),
+                label=str(event.get("label", "unknown")),
+            )
+            return {
+                "type":      "intercept_assigned",
+                "target_id": target_id,
+                "drone_id":  drone_id,
+                "position":  position,
+            }
+        except Exception as exc:  # noqa: BLE001
+            logger.error("[Brain] swarm target_detected error: %s", exc)
+            return {"type": "error", "reason": str(exc)}
+
+    # ── drone fault ───────────────────────────────────────────────────────────
+    if event_type == "drone_fault":
+        drone_id = event.get("drone_id", "unknown")
+        reason   = event.get("reason", "unknown")
+        try:
+            from nxi.map_engine import get_nxi_map  # noqa: PLC0415
+            nxi = get_nxi_map()
+            nxi.update_drone(drone_id, {"status": "faulted", "fault_reason": reason})
+            nxi.add_event({"type": "drone_fault", "drone_id": drone_id, "reason": reason})
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("[Brain] NXI drone fault update error: %s", exc)
+        return {
+            "type":     "acknowledged",
+            "event":    "drone_fault",
+            "drone_id": drone_id,
+            "reason":   reason,
+        }
+
+    # ── formation request ─────────────────────────────────────────────────────
+    if event_type == "formation_request":
+        target_id    = event.get("id") or event.get("target_id", "unknown")
+        position     = event.get("position")
+        num_drones   = int(event.get("num_drones", 3))
+        formation    = str(event.get("formation", "circle"))
+        if position is None:
+            return {"type": "error", "reason": "missing position in formation_request event"}
+        try:
+            from swarm.swarm_pursuit import get_coordinator  # noqa: PLC0415
+            coord = get_coordinator()
+            assigned = coord.handle_detection_formation(
+                target_id,
+                tuple(position),
+                num_drones=num_drones,
+                formation_type=formation,
+                confidence=float(event.get("confidence", 1.0)),
+            )
+            return {
+                "type":      "formation_intercept",
+                "target_id": target_id,
+                "assigned":  assigned,
+                "formation": formation,
+            }
+        except Exception as exc:  # noqa: BLE001
+            logger.error("[Brain] formation_request error: %s", exc)
+            return {"type": "error", "reason": str(exc)}
+
+    # ── state query ───────────────────────────────────────────────────────────
+    if event_type == "state_query":
+        try:
+            from nxi.map_engine import get_nxi_map  # noqa: PLC0415
+            state = get_nxi_map().get_state(events_n=10)
+            return {"type": "state_snapshot", **state}
+        except Exception as exc:  # noqa: BLE001
+            return {"type": "error", "reason": str(exc)}
+
+    # ── unknown ───────────────────────────────────────────────────────────────
+    logger.warning("[Brain] unknown swarm event type: %s", event_type)
+    return {"type": "noop", "event": event_type, "reason": "unknown event type"}
