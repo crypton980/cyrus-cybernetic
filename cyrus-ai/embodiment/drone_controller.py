@@ -215,15 +215,18 @@ class DroneController:
                 self._telemetry.state = DroneState.AIRBORNE
             return
 
-        self._master.mav.command_long_send(
-            self._master.target_system,
-            self._master.target_component,
-            _mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
-            0,                    # confirmation
-            0, 0, 0, math.nan,    # p1-p4 (pitch, yaw; nan = keep current)
-            0, 0,                 # lat/lon (0 = use current)
-            altitude_m,
-        )
+        try:
+            self._master.mav.command_long_send(
+                self._master.target_system,
+                self._master.target_component,
+                _mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+                0,                    # confirmation
+                0, 0, 0, math.nan,    # p1-p4 (pitch, yaw; nan = keep current)
+                0, 0,                 # lat/lon (0 = use current)
+                altitude_m,
+            )
+        except AttributeError as exc:
+            raise RuntimeError(f"pymavlink MAVLink constant unavailable: {exc}") from exc
         with self._lock:
             self._telemetry.state = DroneState.AIRBORNE
         logger.info("[Drone] Takeoff command sent alt=%.1f m", altitude_m)
@@ -239,12 +242,15 @@ class DroneController:
                 self._telemetry.armed = False
             return
 
-        self._master.mav.command_long_send(
-            self._master.target_system,
-            self._master.target_component,
-            _mavutil.mavlink.MAV_CMD_NAV_LAND,
-            0, 0, 0, 0, math.nan, 0, 0, 0,
-        )
+        try:
+            self._master.mav.command_long_send(
+                self._master.target_system,
+                self._master.target_component,
+                _mavutil.mavlink.MAV_CMD_NAV_LAND,
+                0, 0, 0, 0, math.nan, 0, 0, 0,
+            )
+        except AttributeError as exc:
+            raise RuntimeError(f"pymavlink MAVLink constant unavailable: {exc}") from exc
         with self._lock:
             self._telemetry.state = DroneState.LANDING
         logger.info("[Drone] Land command sent")
@@ -258,12 +264,15 @@ class DroneController:
                 self._telemetry.state = DroneState.RETURNING
             return
 
-        self._master.mav.command_long_send(
-            self._master.target_system,
-            self._master.target_component,
-            _mavutil.mavlink.MAV_CMD_NAV_RETURN_TO_LAUNCH,
-            0, 0, 0, 0, 0, 0, 0, 0,
-        )
+        try:
+            self._master.mav.command_long_send(
+                self._master.target_system,
+                self._master.target_component,
+                _mavutil.mavlink.MAV_CMD_NAV_RETURN_TO_LAUNCH,
+                0, 0, 0, 0, 0, 0, 0, 0,
+            )
+        except AttributeError as exc:
+            raise RuntimeError(f"pymavlink MAVLink constant unavailable: {exc}") from exc
         with self._lock:
             self._telemetry.state = DroneState.RETURNING
         logger.info("[Drone] RTL command sent")
