@@ -21,6 +21,7 @@ import {
   XCircle,
   Droplets,
   Library,
+  Radio,
 } from "lucide-react";
 
 interface ModuleStatus {
@@ -47,6 +48,14 @@ interface ModulesResponse {
   coreModules: number;
   advancedModules: number;
   interactiveModules?: number;
+}
+
+interface OrchestratorStatus {
+  running?: boolean;
+  loop_running?: boolean;
+  subsystems?: Record<string, string>;
+  uptime_seconds?: number;
+  loop_iterations?: number;
 }
 
 const moduleIcons: Record<string, any> = {
@@ -108,6 +117,17 @@ export function ModulesPage() {
       return res.json();
     },
     refetchInterval: 5000,
+  });
+
+  const orchQuery = useQuery<OrchestratorStatus>({
+    queryKey: ["/api/orchestrator/status"],
+    queryFn: async () => {
+      const res = await fetch("/api/orchestrator/status");
+      if (!res.ok) throw new Error("Orchestrator unavailable");
+      return res.json();
+    },
+    refetchInterval: 8000,
+    retry: 1,
   });
 
   const filteredModules = data?.modules.filter(m => 
@@ -289,6 +309,55 @@ export function ModulesPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── System Orchestrator Status ── */}
+        {orchQuery.data?.subsystems && Object.keys(orchQuery.data.subsystems).length > 0 && (
+          <div className="bg-[#1c1c1e] border border-[rgba(84,84,88,0.65)] rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Radio className="w-5 h-5 text-cyan-400" />
+                System Orchestrator
+              </h2>
+              <div className="flex items-center gap-2">
+                {orchQuery.data.loop_running ? (
+                  <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Brain loop active
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-xs text-red-400 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                    Brain loop stopped
+                  </span>
+                )}
+                {orchQuery.data.uptime_seconds != null && (
+                  <span className="text-xs text-[rgba(235,235,245,0.4)]">
+                    · up {Math.floor(orchQuery.data.uptime_seconds / 60)}m
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {Object.entries(orchQuery.data.subsystems).map(([name, status]) => (
+                <div
+                  key={name}
+                  className="bg-[#2c2c2e] rounded-xl p-3 flex flex-col items-center gap-1.5 text-center"
+                >
+                  <div className={`w-2.5 h-2.5 rounded-full ${
+                    status === "ok" ? "bg-emerald-400 animate-pulse" :
+                    status === "degraded" ? "bg-amber-400" : "bg-red-400"
+                  }`} />
+                  <p className="text-xs font-medium capitalize">{name.replace(/_/g, " ")}</p>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                    status === "ok" ? "bg-emerald-500/20 text-emerald-400" :
+                    status === "degraded" ? "bg-amber-500/20 text-amber-400" :
+                    "bg-red-500/20 text-red-400"
+                  }`}>{status}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

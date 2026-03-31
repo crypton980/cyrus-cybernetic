@@ -24,6 +24,7 @@ import {
   Users,
   Library,
   Settings,
+  Radio,
 } from "lucide-react";
 
 import { AccessGate } from "./components/AccessGate";
@@ -37,6 +38,7 @@ import { CommsPage } from "./pages/CommsPage";
 import { DeviceControlPage } from "./pages/DeviceControlPage";
 import { TradingPage } from "./pages/TradingPage";
 import { DronePage } from "./pages/DronePage";
+import { SwarmPage } from "./pages/SwarmPage";
 import { ModulesPage } from "./pages/ModulesPage";
 import { MedicalPage } from "./pages/MedicalPage";
 import { QuantumPage } from "./pages/QuantumPage";
@@ -49,6 +51,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
   { path: "/modules", label: "Modules", sublabel: "AI Orchestrator", icon: Cpu },
+  { path: "/swarm", label: "Swarm", sublabel: "Multi-drone · NXI", icon: Radio },
   { path: "/scan", label: "Vision", sublabel: "Optical Analysis", icon: Scan },
   { path: "/files", label: "Documents", sublabel: "File Processing", icon: FileText },
   { path: "/nav", label: "Navigation", sublabel: "Geospatial", icon: MapPin },
@@ -424,6 +427,7 @@ function AppContent({
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/modules" component={ModulesPage} />
+            <Route path="/swarm" component={SwarmPage} />
             <Route path="/scan" component={ScanPage} />
             <Route path="/files" component={FileAnalysisPage} />
             <Route path="/knowledge" component={KnowledgeLibraryPage} />
