@@ -19,6 +19,7 @@ formation utilities.
 
 from __future__ import annotations
 
+import math
 import os
 import threading
 import time
@@ -234,13 +235,11 @@ class SwarmPursuitCoordinator:
                                                                 "confidence": confidence})
 
         if formation_type == "line":
-            import math  # noqa: PLC0415
             positions = line_formation(
                 predicted, bearing=0.0, spacing=FORMATION_RADIUS / max(num_drones, 1),
                 num_drones=num_drones, perpendicular=True,
             )
         elif formation_type == "wedge":
-            import math  # noqa: PLC0415
             positions = wedge_formation(
                 predicted, bearing=0.0, spacing=FORMATION_RADIUS / max(num_drones - 1, 1),
                 num_drones=num_drones,
@@ -278,7 +277,6 @@ class SwarmPursuitCoordinator:
 
     def _nearest_drone_pos(self, target_pos: Position) -> Optional[Position]:
         """Return the position of the nearest idle drone to *target_pos*."""
-        import math as _math  # noqa: PLC0415
         best_pos: Optional[Position] = None
         best_dist = float("inf")
         state = self.swarm.get_state()
@@ -286,7 +284,7 @@ class SwarmPursuitCoordinator:
             pos = rec.get("position")
             if not pos or rec.get("status") == "faulted":
                 continue
-            d = _math.sqrt((pos[0] - target_pos[0]) ** 2 + (pos[1] - target_pos[1]) ** 2)
+            d = math.sqrt((pos[0] - target_pos[0]) ** 2 + (pos[1] - target_pos[1]) ** 2)
             if d < best_dist:
                 best_dist = d
                 best_pos = pos

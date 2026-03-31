@@ -42,7 +42,7 @@ logger = get_logger(__name__)
 # ── configuration ─────────────────────────────────────────────────────────────
 
 HISTORY_DEPTH:    int   = int(os.getenv("CYRUS_PURSUIT_HISTORY", "10"))
-SMOOTHING_ALPHA:  float = float(os.getenv("CYRUS_PURSUIT_ALPHA", "0.7"))  # EMA weight for recent
+SMOOTHING_ALPHA:  float = float(os.getenv("CYRUS_PURSUIT_ALPHA", "0.7"))  # Exponential Moving Average weight: higher = more weight on recent observations
 MAX_TARGETS:      int   = int(os.getenv("CYRUS_PURSUIT_MAX_TARGETS", "32"))
 TARGET_TTL:       float = float(os.getenv("CYRUS_PURSUIT_TARGET_TTL", "30"))  # seconds
 
