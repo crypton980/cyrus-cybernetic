@@ -1,9 +1,12 @@
 {
-    "python.defaultInterpreterPath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/.venv/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/server",
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/server/quantum_ai"
+        "${workspaceFolder}",
+        "${workspaceFolder}/server",
+        "${workspaceFolder}/server/quantum_ai",
+        "${workspaceFolder}/server/quantum_ai/core_algorithms",
+        "${workspaceFolder}/shared"
     ],
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
@@ -14,7 +17,11 @@
     "python.analysis.exclude": [
         "**/__pycache__",
         "**/.venv",
-        "**/node_modules"
+        "**/node_modules",
+        "**/dist",
+        "**/*.tar.gz",
+        "quantum_nexus_part_*",
+        "quantum_nexus_smaller_*"
     ],
     "python.languageServer": "Pylance",
     "python.analysis.indexing": true,
@@ -36,10 +43,6 @@
             "depth": 2
         }
     ],
-    "python.analysis.stubPath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/.venv/lib/python3.14/site-packages",
-    "python.analysis.typeshedPaths": [
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/.venv/lib/python3.14/site-packages"
-    ],
     "python.analysis.diagnosticSeverityOverrides": {
         "reportUnknownMemberType": "none",
         "reportUnknownVariableType": "none",
@@ -47,5 +50,37 @@
         "reportUnknownLambdaType": "none",
         "reportMissingTypeStubs": "none"
     },
-    "python-envs.defaultEnvManager": "ms-python.python:system"
+    "python-envs.defaultEnvManager": "ms-python.python:local",
+    "typescript.tsdk": "${workspaceFolder}/node_modules/typescript/lib",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "quantum_nexus_part_*": true,
+        "quantum_nexus_smaller_*": true,
+        "**/*.tar.gz": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.venv": true,
+        "**/dist": true,
+        "quantum_nexus_part_*": true,
+        "quantum_nexus_smaller_*": true,
+        "**/*.tar.gz": true,
+        "uv.lock": true,
+        "package-lock.json": true
+    }
 }

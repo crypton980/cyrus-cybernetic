@@ -1,0 +1,82 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Start CYRUS Server",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "tsx",
+            "runtimeArgs": ["${workspaceFolder}/server/index.ts"],
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PORT": "3105",
+                "NODE_ENV": "development"
+            },
+            "skipFiles": ["<node_internals>/**"],
+            "console": "integratedTerminal",
+            "restart": true
+        },
+        {
+            "name": "Debug CYRUS Server",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "tsx",
+            "runtimeArgs": ["--inspect", "${workspaceFolder}/server/index.ts"],
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PORT": "3105",
+                "NODE_ENV": "development"
+            },
+            "skipFiles": ["<node_internals>/**"],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run Quantum AI (Python)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/server:${workspaceFolder}/server/quantum_ai"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Run Current Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/server:${workspaceFolder}/server/quantum_ai"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug Quantum Bridge",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/quantum_ai/quantum_bridge.py",
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/server:${workspaceFolder}/server/quantum_ai"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Full Stack (Server + Quantum AI)",
+            "configurations": ["Start CYRUS Server", "Run Quantum AI (Python)"],
+            "stopAll": true
+        }
+    ]
+}
