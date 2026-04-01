@@ -1,9 +1,9 @@
 {
-    "python.defaultInterpreterPath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/.venv/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/server",
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip/server/quantum_ai"
+        "${workspaceFolder}/server",
+        "${workspaceFolder}/server/quantum_ai"
     ],
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
@@ -36,10 +36,6 @@
             "depth": 2
         }
     ],
-    "python.analysis.stubPath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/.venv/lib/python3.14/site-packages",
-    "python.analysis.typeshedPaths": [
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/.venv/lib/python3.14/site-packages"
-    ],
     "python.analysis.diagnosticSeverityOverrides": {
         "reportUnknownMemberType": "none",
         "reportUnknownVariableType": "none",
@@ -47,5 +43,16 @@
         "reportUnknownLambdaType": "none",
         "reportMissingTypeStubs": "none"
     },
-    "python-envs.defaultEnvManager": "ms-python.python:system"
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "editor.formatOnSave": true,
+    "tailwindCSS.includeLanguages": {
+        "typescript": "javascript",
+        "typescriptreact": "javascript"
+    },
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/__pycache__": true,
+        "**/.venv": true,
+        "**/dist": true
+    }
 }
