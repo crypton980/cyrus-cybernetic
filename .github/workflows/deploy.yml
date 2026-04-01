@@ -76,7 +76,7 @@ jobs:
           pip install --upgrade pip
           pip install \
             fastapi uvicorn pydantic httpx openai redis tiktoken chromadb \
-            loguru prometheus-client \
+            loguru prometheus-client numpy \
             opentelemetry-sdk opentelemetry-instrumentation-fastapi
 
       - name: Python syntax check (compile all .py files)
@@ -89,11 +89,44 @@ jobs:
         env:
           CYRUS_NODE_ID: "ci-node"
           CYRUS_MODEL_MODE: "openai"
+          CYRUS_DRONE_SIMULATED: "true"
+          CYRUS_VISION_SIMULATED: "true"
         run: |
           python -c "
           import sys, os
           sys.path.insert(0, '.')
-          # Lightweight import checks — avoid heavy ML or DB startup
+
+          # ── v2: Cognitive core ────────────────────────────────────────────────
+          from planner import create_plan, describe_plan
+          from autonomy import start_autonomy_loop, stop_autonomy_loop
+
+          # ── v3: Multi-agent system ────────────────────────────────────────────
+          from agents.base_agent import BaseAgent
+          from agents.commander import Commander
+
+          # ── v4: Evaluation + metrics layer ────────────────────────────────────
+          from evaluation.evaluator import evaluate_response
+          from metrics.tracker import log_metric, get_metrics, get_summary
+          from optimization.improver import improve_system
+
+          # ── v5: Platform layer (ingestion, fusion, actions) ───────────────────
+          from ingestion.stream_ingestor import ingest_event, drain_events, ingestor_stats
+          from fusion.fusion_engine import fuse_intelligence, get_last_fusion
+          from actions.action_executor import execute_action
+
+          # ── v6: Distributed layer ─────────────────────────────────────────────
+          from distributed.message_bus import publish_event, is_redis_available
+          from distributed.node_sync import start_node_keepalive, get_active_nodes
+          from distributed.task_router import route_task
+          from distributed.safe_exec import safe_execute
+
+          # ── v7: Self-improving platform ───────────────────────────────────────
+          from models.local_model import is_local_model_available, local_infer
+          from models.versioning import list_model_versions, save_model_version_manifest
+          from training.dataset_builder import get_dataset_stats, log_training_example
+          from training.training_trigger import maybe_trigger_training
+
+          # ── v8: Safety control layer ──────────────────────────────────────────
           from observability.logger import configure_logging, get_logger
           from observability.tracing import setup_tracing
           from alerts.alerter import send_alert, AlertSeverity, get_alert_history
@@ -102,7 +135,30 @@ jobs:
           from audit.logger import log_audit, load_recent_audit_logs
           from control.approval import request_approval, list_pending_approvals
           from mission_control.controller import start_mission, stop_mission, list_missions
-          print('✅ All CYRUS Python modules import successfully')
+
+          # ── v9: Production platform ───────────────────────────────────────────
+          # (covered by observability/alerts/backup above)
+
+          # ── v10: Embodied intelligence ────────────────────────────────────────
+          from embodiment.drone_controller import DroneController
+          from embodiment.core_loop import CyrusCoreLoop
+          from perception.vision import VisionSystem
+          from mission.engine import MissionEngine
+          from human.interaction import get_interaction
+
+          # ── v11: Swarm intelligence ───────────────────────────────────────────
+          from swarm.swarm_controller import get_swarm_controller
+          from swarm.formation import circle_formation, assign_formation_to_swarm
+          from swarm.swarm_pursuit import get_coordinator
+          from tracking.pursuit import get_pursuit_engine
+          from nxi.map_engine import get_nxi_map
+
+          # ── v12: Integration layer ────────────────────────────────────────────
+          from config.settings import Settings
+          from core.event_router import route_event
+          from core.system_orchestrator import get_orchestrator
+
+          print('✅ All CYRUS Python modules (v2–v12) import successfully')
           "
 
   # ── Job 3: Docker build ───────────────────────────────────────────────────────
