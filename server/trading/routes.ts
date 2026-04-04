@@ -51,7 +51,8 @@ const prices: Record<string, number> = {
 function getPrice(symbol: string): number {
   if (!prices[symbol]) prices[symbol] = 100 + Math.random() * 400;
   prices[symbol] *= 1 + (Math.random() - 0.5) * 0.002; // ±0.1% drift per call
-  return parseFloat(prices[symbol].toFixed(2));
+  const price = prices[symbol];
+  return parseFloat(price.toFixed(2));
 }
 
 function generateId(): string {
@@ -203,13 +204,18 @@ export function registerTradingRoutes(app: Express): void {
       // Update simulated position
       const cost = price * Number(qty);
       if (side === "buy") {
+        if (sim.buyingPower < cost) {
+          return res.status(400).json({ error: "Insufficient buying power", available: sim.buyingPower, required: cost });
+        }
         sim.balance -= cost;
         sim.buyingPower -= cost;
         const existing = sim.positions.find(p => p.symbol === order.symbol && p.side === "long");
         if (existing) {
-          const totalQty = existing.qty + Number(qty);
-          existing.avgEntryPrice = (existing.avgEntryPrice * existing.qty + cost) / totalQty;
-          existing.qty = totalQty;
+          const newQty = existing.qty + Number(qty);
+          if (newQty > 0) {
+            existing.avgEntryPrice = (existing.avgEntryPrice * existing.qty + cost) / newQty;
+            existing.qty = newQty;
+          }
         } else {
           sim.positions.push({ symbol: order.symbol, qty: Number(qty), avgEntryPrice: price, currentPrice: price, unrealizedPl: 0, side: "long" });
         }

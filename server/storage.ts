@@ -62,6 +62,8 @@ class MemoryStorage implements IStorage {
   }
 }
 
+const DB_CONNECTION_TIMEOUT_MS = 3000;
+
 class DatabaseStorage implements IStorage {
   private db: any = null;
   private drizzle: any = null;
@@ -74,7 +76,7 @@ class DatabaseStorage implements IStorage {
       const drizzleModule = await import("drizzle-orm");
       const { drizzle } = await import("drizzle-orm/node-postgres");
       const pg = await import("pg");
-      const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 3000 });
+      const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: DB_CONNECTION_TIMEOUT_MS });
       // Test connection
       const client = await pool.connect();
       client.release();
@@ -157,7 +159,7 @@ class DatabaseStorage implements IStorage {
 }
 
 const memFallback = new MemoryStorage();
-export const storage: IStorage = process.env.DATABASE_URL
-  ? new DatabaseStorage()
-  : (() => { console.warn("[Storage] DATABASE_URL not set — using in-memory storage (data lost on restart)."); return memFallback; })();
-
+if (!process.env.DATABASE_URL) {
+  console.warn("[Storage] DATABASE_URL not set — using in-memory storage (data lost on restart).");
+}
+export const storage: IStorage = process.env.DATABASE_URL ? new DatabaseStorage() : memFallback;
