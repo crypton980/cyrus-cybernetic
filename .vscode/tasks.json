@@ -1,0 +1,109 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install Dependencies",
+            "type": "shell",
+            "command": "bash scripts/bootstrap.sh",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Dev Server (Node)",
+            "type": "npm",
+            "script": "dev",
+            "group": "build",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "group": "cyrus-stack"
+            },
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(error|warning|info)\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*Starting.*",
+                    "endsPattern": "^.*listening.*"
+                }
+            }
+        },
+        {
+            "label": "Python: Quantum AI Bridge",
+            "type": "shell",
+            "command": "python3 server/quantum_ai/quantum_bridge.py",
+            "group": "build",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "group": "cyrus-stack"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Python: Comms ML Service",
+            "type": "shell",
+            "command": "python3 server/comms/ml_service.py",
+            "group": "build",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "group": "cyrus-stack"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Full Stack",
+            "dependsOn": [
+                "Dev Server (Node)",
+                "Python: Quantum AI Bridge",
+                "Python: Comms ML Service"
+            ],
+            "dependsOrder": "parallel",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Frontend",
+            "type": "npm",
+            "script": "build",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$tsc"
+        },
+        {
+            "label": "Type Check",
+            "type": "npm",
+            "script": "typecheck",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$tsc"
+        }
+    ]
+}

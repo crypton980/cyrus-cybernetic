@@ -5,13 +5,14 @@
             "name": "Node: CYRUS Server",
             "type": "node",
             "request": "launch",
-            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
-            "args": ["server/index.ts"],
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"],
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
         },
         {
             "name": "Python: main.py",
