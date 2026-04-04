@@ -24,6 +24,7 @@ import {
   Users,
   Library,
   Settings,
+  Radio,
 } from "lucide-react";
 
 import { AccessGate } from "./components/AccessGate";
@@ -45,6 +46,7 @@ import { BiologyPage } from "./pages/BiologyPage";
 import { BloodSamplingPage } from "./pages/BloodSamplingPage";
 import { KnowledgeLibraryPage } from "./pages/KnowledgeLibraryPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { SwarmPage } from "./pages/SwarmPage";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
@@ -55,6 +57,7 @@ const navItems = [
   { path: "/comms", label: "Communications", sublabel: "Secure Channels", icon: Phone },
   { path: "/device", label: "Systems", sublabel: "Hardware Control", icon: Monitor },
   { path: "/drone", label: "Aerospace", sublabel: "UAV Operations", icon: Plane },
+  { path: "/swarm", label: "Swarm", sublabel: "Fleet Intelligence", icon: Radio },
   { path: "/trading", label: "Markets", sublabel: "Financial Intel", icon: TrendingUp },
 ];
 
@@ -431,6 +434,7 @@ function AppContent({
             <Route path="/comms" component={CommsPage} />
             <Route path="/device" component={DeviceControlPage} />
             <Route path="/drone" component={DronePage} />
+            <Route path="/swarm" component={SwarmPage} />
             <Route path="/trading" component={TradingPage} />
             <Route path="/medical" component={MedicalPage} />
             <Route path="/quantum" component={QuantumPage} />

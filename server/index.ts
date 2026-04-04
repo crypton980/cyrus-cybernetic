@@ -171,6 +171,15 @@ async function initializeSystem() {
   }
   await tick();
 
+  try {
+    const { registerSwarmRoutes } = await import("./swarm/routes");
+    registerSwarmRoutes(app);
+    log("[Swarm] Swarm intelligence routes registered at /api/swarm/*");
+  } catch (e) {
+    console.error("[Init] Swarm routes failed (non-fatal):", e);
+  }
+  await tick();
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
