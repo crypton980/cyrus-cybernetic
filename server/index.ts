@@ -16,21 +16,35 @@ let systemReady = false;
 // ── CORS ──────────────────────────────────────────────────────────────────────
 // In production set CORS_ALLOWED_ORIGINS to a comma-separated list of allowed
 // origins (e.g. "https://yourapp.example.com,https://www.example.com").
-// Leave unset to allow all origins (suitable for development / open APIs).
+// When CORS_ALLOWED_ORIGINS is not set:
+//   - development: reflect request origin with credentials (convenient for local dev)
+//   - production: reflect request origin WITHOUT credentials (safe open-API default)
 const rawOrigins = process.env.CORS_ALLOWED_ORIGINS;
+const isProduction = process.env.NODE_ENV === "production";
 const corsOptions: cors.CorsOptions = rawOrigins
   ? {
+      // Explicit allow-list — credentials are safe because origin is restricted
       origin: rawOrigins.split(",").map((o) => o.trim()),
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
       credentials: true,
     }
   : {
-      origin: true, // reflect request origin — allows credentials from any origin
+      // No allow-list: reflect origin but only allow credentials in development.
+      // In production you must set CORS_ALLOWED_ORIGINS to enable credentialed
+      // cross-origin requests (session cookies, X-CSRF-Token, Authorization).
+      origin: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
-      credentials: true,
+      credentials: !isProduction,
     };
+if (isProduction && !rawOrigins) {
+  console.warn(
+    "[CORS] CORS_ALLOWED_ORIGINS is not set. " +
+    "Cross-origin credentialed requests (cookies / auth) are disabled. " +
+    "Set CORS_ALLOWED_ORIGINS=https://yourdomain.com to enable them.",
+  );
+}
 app.use(cors(corsOptions));
 // ──────────────────────────────────────────────────────────────────────────────
 

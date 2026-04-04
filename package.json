@@ -10,7 +10,7 @@
     "postbuild": "node -e \"require('fs').writeFileSync('dist/package.json', JSON.stringify({type:'commonjs'},null,2))\"",
     "start": "tsx server/index.ts",
     "start:prod": "NODE_ENV=production tsx server/index.ts",
-    "start:python": "python3 server/quantum_ai/quantum_bridge.py & python3 server/comms/ml_service.py",
+    "start:python": "python3 server/quantum_ai/quantum_bridge.py & python3 server/comms/ml_service.py & wait",
     "start:all": "concurrently --names \"node,quantum,ml\" --prefix-colors \"cyan,magenta,yellow\" \"npm run start\" \"python3 server/quantum_ai/quantum_bridge.py\" \"python3 server/comms/ml_service.py\"",
     "start:all:prod": "concurrently --names \"node,quantum,ml\" --prefix-colors \"cyan,magenta,yellow\" \"npm run start:prod\" \"python3 server/quantum_ai/quantum_bridge.py\" \"python3 server/comms/ml_service.py\"",
     "dev": "tsx server/index.ts",

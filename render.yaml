@@ -32,8 +32,11 @@ services:
       - key: ALPACA_ENVIRONMENT
         value: paper
       - key: QUANTUM_BRIDGE_URL
+        # When all processes run in the same Render web service via start:all:prod,
+        # localhost is correct. Override if Python services are separate Render services.
         value: http://localhost:5001
       - key: ML_SERVICE_URL
+        # Same as above — localhost is valid for co-located processes.
         value: http://localhost:5002
       - key: ADMIN_ACCESS_CODE
         generateValue: true
