@@ -3,7 +3,9 @@ services:
     name: cyrus-cybernetic
     runtime: node
     plan: starter
-    buildCommand: npm install && npm run build
+    # Python 3 is available on Render's Node.js runtime; we install Python
+    # packages in the build step so they are present at runtime.
+    buildCommand: npm install && pip3 install -r requirements.txt && npm run build
     startCommand: npm run start:all:prod
     healthCheckPath: /health
     envVars:
@@ -17,8 +19,15 @@ services:
         fromDatabase:
           name: cyrus-db
           property: connectionString
+      # Set to your Render domain once deployed, e.g. https://cyrus-cybernetic.onrender.com
+      # Used for CORS allow-list; leave empty to allow all origins (open-API mode)
       - key: CORS_ALLOWED_ORIGINS
-        sync: false   # set to your domain, e.g. https://cyrus.example.com
+        sync: false
+      # Optional — set to your custom domain if you attach one in Render
+      - key: BASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false   # set to your Redis provider URL (e.g. Redis Cloud or Render Redis)
       - key: OPENAI_API_KEY
         sync: false
       - key: ELEVENLABS_API_KEY
@@ -31,12 +40,13 @@ services:
         sync: false
       - key: ALPACA_ENVIRONMENT
         value: paper
+      # Internal Python service URLs — localhost is correct because quantum_bridge
+      # and ml_service run as co-located processes via start:all:prod (concurrently).
+      # If you split them into separate Render web services in the future, set these
+      # to the Render service public URL (https://<service>.onrender.com).
       - key: QUANTUM_BRIDGE_URL
-        # When all processes run in the same Render web service via start:all:prod,
-        # localhost is correct. Override if Python services are separate Render services.
         value: http://localhost:5001
       - key: ML_SERVICE_URL
-        # Same as above — localhost is valid for co-located processes.
         value: http://localhost:5002
       - key: ADMIN_ACCESS_CODE
         generateValue: true
@@ -48,3 +58,4 @@ databases:
     databaseName: cyrus
     user: cyrus
     plan: starter
+

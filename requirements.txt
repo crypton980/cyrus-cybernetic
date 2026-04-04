@@ -1,4 +1,15 @@
-Flask==3.0.0
-flask-cors==4.0.0
-requests==2.31.0
-gunicorn==21.2.0
+# Python dependencies for CYRUS AI services
+# ─────────────────────────────────────────
+# server/quantum_ai/quantum_bridge.py  — uses numpy
+# server/comms/ml_service.py           — uses numpy, scikit-learn (optional), nltk (optional)
+#
+# All optional packages degrade gracefully when absent; the services use
+# keyword/algorithmic fallbacks.  Install them to enable full ML capability.
+
+# Required
+numpy>=1.24.0
+
+# Optional — ML acceleration for ml_service.py
+# Remove these lines if your deployment target has limited memory/disk
+scikit-learn>=1.3.0
+nltk>=3.8.0
