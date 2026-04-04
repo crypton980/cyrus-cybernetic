@@ -34,6 +34,14 @@ const deviceSchema = z.object({
 });
 
 export function registerDeviceRoutes(app: Express) {
+  app.get("/api/device/status", async (_req, res) => {
+    res.json({
+      enabled: process.env.DEVICE_CONTROL_ENABLED === "true",
+      platform: process.platform,
+      status: "online",
+    });
+  });
+
   app.post("/api/device/execute", async (req, res) => {
     const parsed = deviceSchema.safeParse(req.body);
     if (!parsed.success) {

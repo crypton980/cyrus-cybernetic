@@ -78,6 +78,9 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
 
   app.get("/api/orchestrator/modules", async (req, res) => {
     try {
+      if (typeof moduleOrchestrator.init === 'function') {
+        await moduleOrchestrator.init();
+      }
       const modules = moduleOrchestrator.getAllModuleStatus();
       const health = moduleOrchestrator.getSystemHealth();
       res.json({
@@ -96,6 +99,9 @@ export function registerAdvancedUpgradeRoutes(app: Express): void {
 
   app.get("/api/orchestrator/health", async (req, res) => {
     try {
+      if (typeof moduleOrchestrator.init === 'function') {
+        await moduleOrchestrator.init();
+      }
       const health = moduleOrchestrator.getSystemHealth();
       res.json({ success: true, ...health });
     } catch (error: any) {

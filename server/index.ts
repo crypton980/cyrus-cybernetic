@@ -180,6 +180,15 @@ async function initializeSystem() {
   }
   await tick();
 
+  try {
+    const { registerTradingRoutes } = await import("./trading/routes");
+    registerTradingRoutes(app);
+    log("[Trading] Trading routes registered at /api/trading/*");
+  } catch (e) {
+    console.error("[Init] Trading routes failed (non-fatal):", e);
+  }
+  await tick();
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

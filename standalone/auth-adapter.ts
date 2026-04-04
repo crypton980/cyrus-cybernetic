@@ -31,22 +31,32 @@ function resolveAccessConfig() {
   return { adminCode, userCode, adminUsername };
 }
 
-function createSessionStore() {
-  const PgStore = connectPg(session);
-  return new PgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-    ttl: SESSION_TTL,
-    tableName: "sessions",
-  });
+function createSessionStore(): session.Store | undefined {
+  if (!process.env.DATABASE_URL) {
+    console.warn("[Auth] DATABASE_URL not set — using in-memory session store (sessions lost on restart).");
+    return undefined; // express-session defaults to MemoryStore
+  }
+  try {
+    const PgStore = connectPg(session);
+    return new PgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
+      ttl: SESSION_TTL,
+      tableName: "sessions",
+    });
+  } catch (e) {
+    console.warn("[Auth] PgStore creation failed, falling back to in-memory sessions:", e);
+    return undefined;
+  }
 }
 
 export async function setupAuth(app: Express): Promise<void> {
   const sessionSecret = resolveSessionSecret();
   const { adminCode, userCode, adminUsername } = resolveAccessConfig();
 
+  const store = createSessionStore();
   const sessionMiddleware = session({
-    store: createSessionStore(),
+    ...(store ? { store } : {}),
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
@@ -116,9 +126,10 @@ export const isAuthenticated: RequestHandler = (req: any, res, next) => {
 
 export function getSession() {
   const sessionSecret = resolveSessionSecret();
+  const store = createSessionStore();
 
   return session({
-    store: createSessionStore(),
+    ...(store ? { store } : {}),
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
