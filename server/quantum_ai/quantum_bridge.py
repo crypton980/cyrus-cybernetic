@@ -776,8 +776,9 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
 
 def run_server(port: int = 5001):
     """Run the Quantum AI Bridge server."""
-    server = HTTPServer(('127.0.0.1', port), QuantumBridgeHandler)
-    print(f"[Quantum AI Bridge] Server running on port {port}")
+    host = os.environ.get('QUANTUM_BRIDGE_HOST', '0.0.0.0')
+    server = HTTPServer((host, port), QuantumBridgeHandler)
+    print(f"[Quantum AI Bridge] Server running on {host}:{port}")
     server.serve_forever()
 
 

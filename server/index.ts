@@ -1,4 +1,5 @@
 import "dotenv/config";
+import cors from "cors";
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import path from "path";
@@ -11,6 +12,27 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 let systemReady = false;
+
+// ── CORS ──────────────────────────────────────────────────────────────────────
+// In production set CORS_ALLOWED_ORIGINS to a comma-separated list of allowed
+// origins (e.g. "https://yourapp.example.com,https://www.example.com").
+// Leave unset to allow all origins (suitable for development / open APIs).
+const rawOrigins = process.env.CORS_ALLOWED_ORIGINS;
+const corsOptions: cors.CorsOptions = rawOrigins
+  ? {
+      origin: rawOrigins.split(",").map((o) => o.trim()),
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+      credentials: true,
+    }
+  : {
+      origin: true, // reflect request origin — allows credentials from any origin
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+      credentials: true,
+    };
+app.use(cors(corsOptions));
+// ──────────────────────────────────────────────────────────────────────────────
 
 function findDistPublic(): string | null {
   const candidates = [
@@ -35,6 +57,8 @@ export function log(message: string, source = "express") {
 }
 
 app.get("/__health", (_req, res) => res.status(200).send("ok"));
+// Standard /health endpoint for cloud platform health checks (Render, Railway, etc.)
+app.get("/health", (_req, res) => res.status(200).json({ status: "ok", service: "cyrus", ready: systemReady }));
 app.get("/health/live", (_req, res) => res.status(200).json({ status: "alive" }));
 app.get("/health/ready", (_req, res) => {
   res.status(systemReady ? 200 : 503).json({ status: systemReady ? "ready" : "initializing" });

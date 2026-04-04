@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: cyrus-cybernetic
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:all:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3105
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cyrus-db
+          property: connectionString
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false   # set to your domain, e.g. https://cyrus.example.com
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: NEWS_API_KEY
+        sync: false
+      - key: ALPACA_API_KEY
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: ALPACA_ENVIRONMENT
+        value: paper
+      - key: QUANTUM_BRIDGE_URL
+        value: http://localhost:5001
+      - key: ML_SERVICE_URL
+        value: http://localhost:5002
+      - key: ADMIN_ACCESS_CODE
+        generateValue: true
+      - key: USER_ACCESS_CODE
+        generateValue: true
+
+databases:
+  - name: cyrus-db
+    databaseName: cyrus
+    user: cyrus
+    plan: starter

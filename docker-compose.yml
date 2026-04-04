@@ -1,0 +1,112 @@
+version: "3.9"
+
+services:
+  # ── Node.js / Express backend + React frontend ───────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3105}:3105"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3105
+      DATABASE_URL: ${DATABASE_URL:-postgresql://cyrus:cyrus@postgres:5432/cyrus}
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-in-production}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      NEWS_API_KEY: ${NEWS_API_KEY:-}
+      ALPACA_API_KEY: ${ALPACA_API_KEY:-}
+      ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:-}
+      ALPACA_ENVIRONMENT: ${ALPACA_ENVIRONMENT:-paper}
+      REDIS_URL: redis://redis:6379
+      QUANTUM_BRIDGE_URL: http://quantum-bridge:5001
+      ML_SERVICE_URL: http://ml-service:5002
+      ADMIN_ACCESS_CODE: ${ADMIN_ACCESS_CODE:-}
+      USER_ACCESS_CODE: ${USER_ACCESS_CODE:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3105/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ── Quantum AI Bridge (Python) ────────────────────────────────────────────────
+  quantum-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python3 server/quantum_ai/quantum_bridge.py
+    ports:
+      - "5001:5001"
+    environment:
+      QUANTUM_BRIDGE_HOST: "0.0.0.0"
+      QUANTUM_BRIDGE_PORT: 5001
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Comms ML Service (Python) ─────────────────────────────────────────────────
+  ml-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python3 server/comms/ml_service.py
+    ports:
+      - "5002:5002"
+    environment:
+      ML_SERVICE_HOST: "0.0.0.0"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cyrus
+      POSTGRES_PASSWORD: cyrus
+      POSTGRES_DB: cyrus
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cyrus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ─────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:

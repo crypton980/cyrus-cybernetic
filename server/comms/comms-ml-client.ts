@@ -1,4 +1,4 @@
-const ML_SERVICE_URL = 'http://127.0.0.1:5002';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5002';
 const TIMEOUT_MS = 5000;
 
 interface SentimentResult {
