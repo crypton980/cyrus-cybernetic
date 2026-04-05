@@ -1,9 +1,9 @@
 {
-    "python.defaultInterpreterPath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/.venv/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/server",
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/server/quantum_ai"
+        "${workspaceFolder}/server",
+        "${workspaceFolder}/server/quantum_ai"
     ],
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
@@ -35,10 +35,6 @@
             "name": "pymodbus",
             "depth": 2
         }
-    ],
-    "python.analysis.stubPath": "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/.venv/lib/python3.14/site-packages",
-    "python.analysis.typeshedPaths": [
-        "/Users/cronet/Downloads/cyrus-part2-assets-fullzip-4/.venv/lib/python3.14/site-packages"
     ],
     "python.analysis.diagnosticSeverityOverrides": {
         "reportUnknownMemberType": "none",
