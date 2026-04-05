@@ -147,3 +147,45 @@ MIT License - see LICENSE file for details.
 ---
 
 **🚀 Ready to experience super-intelligence? Deploy CYRUS today!**
+
+---
+
+## 🤖 Use CYRUS as an OpenAI Custom GPT
+
+CYRUS exposes an OpenAI-compatible plugin manifest so you can wire it directly into a **Custom GPT** in ChatGPT and share that workspace link with anyone.
+
+### Step-by-step
+
+1. **Deploy or run CYRUS** so it is reachable at a public HTTPS URL (e.g. via [Railway](https://railway.app) or [Vercel](https://vercel.com)).  
+   When running locally you can use a tunnel such as [ngrok](https://ngrok.com): `ngrok http 3105`.
+
+2. **Open ChatGPT** → click your profile picture → **My GPTs** → **Create a GPT**.
+
+3. Go to the **Configure** tab → scroll to **Actions** → click **Create new action**.
+
+4. Click **Import from URL** and paste:
+   ```
+   https://<your-cyrus-url>/openapi.json
+   ```
+   ChatGPT will fetch the OpenAPI spec and populate all available actions automatically.
+
+5. Give the GPT a name (e.g. *CYRUS AI*), a description, and save it.
+
+6. **Share the link** – click the share icon on the GPT page and copy the public URL.  
+   Anyone with the link can now chat with your CYRUS instance via ChatGPT.
+
+### Available Actions
+
+| Operation | Endpoint |
+|-----------|----------|
+| Chat / ask a question | `POST /api/inference` |
+| Get system status | `GET /api/cyrus/status` |
+| Get CYRUS identity | `GET /api/cyrus/identity` |
+| Query knowledge graph | `GET /api/cyrus/knowledge?concept=…` |
+| List cognitive domains | `GET /api/cyrus/domains` |
+| List memories | `GET /api/memories` |
+| Store a memory | `POST /api/memories` |
+| Health check | `GET /health/ready` |
+
+The plugin manifest is also available at `/.well-known/ai-plugin.json` for tools that use the legacy ChatGPT plugin format.
+

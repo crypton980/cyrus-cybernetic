@@ -62,6 +62,11 @@ declare module "http" {
 app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: false }));
 
+// OpenAI Custom GPT plugin manifest + OpenAPI spec (public, no auth required)
+import("./openai-plugin").then(({ registerOpenAIPluginRoutes }) => {
+  registerOpenAIPluginRoutes(app);
+}).catch((e) => console.error("[OpenAI Plugin] Failed to register plugin routes:", e));
+
 app.use("/api", (req, res, next) => {
   if (systemReady) return next();
   res.status(503).json({ message: "System initializing" });
