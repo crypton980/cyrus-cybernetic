@@ -1,0 +1,10 @@
+{
+    "servers": {
+        "cyrus-ai-server": {
+            "type": "http",
+            "url": "http://localhost:3105/mcp",
+            "description": "CYRUS AI application server (start via 'Dev Server' task or npm run dev)"
+        }
+    },
+    "inputs": []
+}

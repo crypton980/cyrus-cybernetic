@@ -7,6 +7,9 @@
             "command": "npm run dev",
             "group": "build",
             "isBackground": true,
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
             "presentation": {
                 "reveal": "always",
                 "panel": "new",
