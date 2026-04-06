@@ -12,7 +12,12 @@
             "console": "integratedTerminal",
             "sourceMaps": true,
             "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-            "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+            "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+            "serverReadyAction": {
+                "pattern": "serving on port (\\d+)",
+                "uriFormat": "http://localhost:%s",
+                "action": "openExternally"
+            }
         },
         {
             "name": "Python: main.py",
