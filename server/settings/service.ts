@@ -3,15 +3,23 @@
  * from the system_settings database table.  Values stored here take priority
  * over environment variables so that keys can be updated without restarting
  * the server.
+ *
+ * When DATABASE_URL is not set the service falls back to an in-process Map so
+ * that keys set via the Settings UI survive for the lifetime of the process
+ * (but are lost on restart).
  */
 
-import { db } from "../db";
+import { db, hasDatabase } from "../db";
 import { systemSettings } from "../../shared/schema";
 import { eq } from "drizzle-orm";
+
+// In-memory fallback store — used when no database is configured
+const memSettings = new Map<string, string>();
 
 // ─── Generic helpers ──────────────────────────────────────────────────────────
 
 export async function getSetting(key: string): Promise<string | null> {
+  if (!hasDatabase) return memSettings.get(key) ?? null;
   try {
     const rows = await db
       .select({ value: systemSettings.value })
@@ -20,19 +28,31 @@ export async function getSetting(key: string): Promise<string | null> {
       .limit(1);
     return rows[0]?.value ?? null;
   } catch {
-    return null;
+    return memSettings.get(key) ?? null;
   }
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
-  await db
-    .insert(systemSettings)
-    .values({ key, value })
-    .onConflictDoUpdate({ target: systemSettings.key, set: { value, updatedAt: new Date() } });
+  memSettings.set(key, value);
+  if (!hasDatabase) return;
+  try {
+    await db
+      .insert(systemSettings)
+      .values({ key, value })
+      .onConflictDoUpdate({ target: systemSettings.key, set: { value, updatedAt: new Date() } });
+  } catch {
+    // db unavailable — in-memory map already updated above
+  }
 }
 
 export async function deleteSetting(key: string): Promise<void> {
-  await db.delete(systemSettings).where(eq(systemSettings.key, key));
+  memSettings.delete(key);
+  if (!hasDatabase) return;
+  try {
+    await db.delete(systemSettings).where(eq(systemSettings.key, key));
+  } catch {
+    // db unavailable — in-memory map already updated above
+  }
 }
 
 // ─── Typed helpers for each known API key ────────────────────────────────────

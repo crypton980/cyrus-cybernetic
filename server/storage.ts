@@ -9,8 +9,9 @@ import {
   type UploadedFile,
   type InsertUploadedFile 
 } from "../shared/schema";
-import { db } from "./db";
+import { db, hasDatabase } from "./db";
 import { eq, desc } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export interface IStorage {
   // Conversations
@@ -101,4 +102,84 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// ---------------------------------------------------------------------------
+// In-memory fallback — used when DATABASE_URL is not configured.
+// Data is kept for the lifetime of the process only.
+// ---------------------------------------------------------------------------
+export class MemoryStorage implements IStorage {
+  private _conversations: Conversation[] = [];
+  private _memories: Memory[] = [];
+  private _uploadedFiles: UploadedFile[] = [];
+
+  async getConversations(userId?: string, limit = 50): Promise<Conversation[]> {
+    let results = [...this._conversations].reverse();
+    if (userId) results = results.filter((c) => c.userId === userId);
+    return results.slice(0, limit);
+  }
+
+  async createConversation(insert: InsertConversation): Promise<Conversation> {
+    const conversation: Conversation = {
+      id: randomUUID(),
+      userId: insert.userId ?? null,
+      role: insert.role,
+      content: insert.content,
+      hasImage: insert.hasImage ?? 0,
+      imageData: insert.imageData ?? null,
+      detectedObjects: insert.detectedObjects ?? null,
+      createdAt: new Date(),
+    };
+    this._conversations.push(conversation);
+    return conversation;
+  }
+
+  async clearConversations(userId?: string): Promise<void> {
+    if (userId) {
+      this._conversations = this._conversations.filter((c) => c.userId !== userId);
+    } else {
+      this._conversations = [];
+    }
+  }
+
+  async getMemories(userId?: string): Promise<Memory[]> {
+    let results = [...this._memories].reverse();
+    if (userId) results = results.filter((m) => m.userId === userId);
+    return results;
+  }
+
+  async createMemory(insert: InsertMemory): Promise<Memory> {
+    const memory: Memory = {
+      id: randomUUID(),
+      userId: insert.userId ?? null,
+      type: insert.type,
+      description: insert.description,
+      createdAt: new Date(),
+    };
+    this._memories.push(memory);
+    return memory;
+  }
+
+  async getUploadedFiles(userId?: string): Promise<UploadedFile[]> {
+    let results = [...this._uploadedFiles].reverse();
+    if (userId) results = results.filter((f) => f.userId === userId);
+    return results;
+  }
+
+  async createUploadedFile(insert: InsertUploadedFile): Promise<UploadedFile> {
+    const file: UploadedFile = {
+      id: randomUUID(),
+      userId: insert.userId ?? null,
+      originalName: insert.originalName,
+      filename: insert.filename,
+      mimetype: insert.mimetype,
+      size: insert.size,
+      url: insert.url,
+      uploadedAt: new Date(),
+    };
+    this._uploadedFiles.push(file);
+    return file;
+  }
+}
+
+export const storage: IStorage = hasDatabase
+  ? new DatabaseStorage()
+  : new MemoryStorage();
