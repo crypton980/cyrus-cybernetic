@@ -1,4 +1,4 @@
-# 🤖 CYRUS AI System
+i want you to in# 🤖 CYRUS AI System
 
 **Super-Intelligence AI with Advanced Capabilities**
 
@@ -15,11 +15,11 @@
 
 ### One-Click Deployments
 
-| Platform | Status | Link |
-|----------|--------|------|
-| **Railway** | ✅ Ready | [Deploy](https://railway.app/new?template=https://github.com/crypton980/cyrus-cybernetic) |
-| **Replit** | ✅ Ready | [Open](https://replit.com/new/github/crypton980/cyrus-cybernetic) |
-| **Vercel** | ✅ Ready | [Deploy](https://vercel.com/new/clone?repository-url=https://github.com/crypton980/cyrus-cybernetic) |
+| Platform    | Status   | Link                                                                                                 |
+| ----------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| **Railway** | ✅ Ready | [Deploy](https://railway.app/new?template=https://github.com/crypton980/cyrus-cybernetic)            |
+| **Replit**  | ✅ Ready | [Open](https://replit.com/new/github/crypton980/cyrus-cybernetic)                                    |
+| **Vercel**  | ✅ Ready | [Deploy](https://vercel.com/new/clone?repository-url=https://github.com/crypton980/cyrus-cybernetic) |
 
 ### Manual Deployment
 
@@ -40,6 +40,7 @@ python simple_flask_server.py
 ## 🎯 CYRUS Capabilities
 
 ### 🤖 Core AI Features
+
 - **🎭 Conversational AI**: Human-like conversations with emotional intelligence
 - **🏥 Medical Analysis**: 99.999% accurate disease diagnosis and treatment development
 - **🧠 Super Intelligence**: Problem-solving beyond human capability (millennium prize problems)
@@ -49,6 +50,7 @@ python simple_flask_server.py
 - **📚 AI Teaching**: Self-learning systems with continuous knowledge expansion
 
 ### 🔧 Technical Features
+
 - **Modern Web UI**: Replit AI-style chat interface with real-time messaging
 - **API Endpoints**: RESTful API for all AI capabilities
 - **Multi-Platform**: Deployable to Railway, Vercel, Replit, or any cloud platform
@@ -65,6 +67,7 @@ python simple_flask_server.py
 ## 🚀 Deployment Options
 
 ### Option 1: Railway (Recommended)
+
 ```bash
 # One-click deploy
 # Click the Railway button above or:
@@ -75,6 +78,7 @@ railway up
 ```
 
 ### Option 2: Replit AI
+
 ```bash
 # One-click deploy
 # Click the Replit button above or:
@@ -83,6 +87,7 @@ railway up
 ```
 
 ### Option 3: Vercel
+
 ```bash
 # One-click deploy
 # Click the Vercel button above or:
@@ -91,6 +96,7 @@ vercel --prod
 ```
 
 ### Option 4: Local Development
+
 ```bash
 # Install dependencies
 pip install flask flask-cors requests
