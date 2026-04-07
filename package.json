@@ -11,7 +11,8 @@
     "start": "tsx server/index.ts",
     "dev": "tsx server/index.ts",
     "deploy": "npm run build",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "start:all": "concurrently --names \"node,python\" --prefix-colors \"cyan,magenta\" \"npm run start\" \"python3 cyrus-ai/api.py\""
   },
   "keywords": [
     "ai",
@@ -40,7 +41,9 @@
     "cheerio": "^1.0.0",
     "chromadb": "^1.9.4",
     "clsx": "^2.1.1",
+    "concurrently": "^9.2.1",
     "connect-pg-simple": "^10.0.0",
+    "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
@@ -70,14 +73,15 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.172.0",
+    "tsx": "^4.0.0",
     "uuid": "^13.0.0",
     "wouter": "^3.3.5",
     "ws": "^8.20.0",
-    "zod": "^4.3.6",
-    "tsx": "^4.0.0"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/connect-pg-simple": "^7.0.3",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.18.0",
     "@types/memoizee": "^0.4.11",

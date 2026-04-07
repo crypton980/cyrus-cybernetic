@@ -1,4 +1,5 @@
 import "dotenv/config";
+import cors from "cors";
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import path from "path";
@@ -11,6 +12,27 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 let systemReady = false;
+
+// CORS — allow origins from CORS_ALLOWED_ORIGINS env (comma-separated) in production,
+// or all origins in development.
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+  ? process.env.CORS_ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : null;
+
+app.use(
+  cors({
+    origin: allowedOrigins
+      ? (origin, cb) => {
+          if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+          cb(new Error(`CORS: origin ${origin} not allowed`));
+        }
+      : process.env.NODE_ENV === "production"
+        ? false
+        : true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    credentials: !!allowedOrigins,
+  })
+);
 
 function findDistPublic(): string | null {
   const candidates = [
@@ -35,6 +57,7 @@ export function log(message: string, source = "express") {
 }
 
 app.get("/__health", (_req, res) => res.status(200).send("ok"));
+app.get("/health", (_req, res) => res.status(200).json({ status: "ok", service: "CYRUS", ready: systemReady }));
 app.get("/health/live", (_req, res) => res.status(200).json({ status: "alive" }));
 app.get("/health/ready", (_req, res) => {
   res.status(systemReady ? 200 : 503).json({ status: systemReady ? "ready" : "initializing" });
