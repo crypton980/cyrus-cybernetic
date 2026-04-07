@@ -1,0 +1,51 @@
+{
+    "folders": [
+        {
+            "name": "CYRUS Cybernetic",
+            "path": "."
+        }
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "typescript.tsdk": "${workspaceFolder}/node_modules/typescript/lib",
+        "editor.formatOnSave": true,
+        "files.exclude": {
+            "**/__pycache__": true,
+            "**/*.pyc": true,
+            "quantum_nexus_part_*": true,
+            "quantum_nexus_smaller_*": true,
+            "**/*.tar.gz": true,
+            "combined.zip": true,
+            "zipFile.zip": true
+        },
+        "search.exclude": {
+            "**/node_modules": true,
+            "**/.venv": true,
+            "**/dist": true,
+            "quantum_nexus_part_*": true,
+            "quantum_nexus_smaller_*": true,
+            "**/*.tar.gz": true,
+            "uv.lock": true,
+            "package-lock.json": true
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-python.pylance",
+            "ms-python.black-formatter",
+            "ms-python.debugpy",
+            "dbaeumer.vscode-eslint",
+            "esbenp.prettier-vscode",
+            "bradlc.vscode-tailwindcss",
+            "ms-vscode.vscode-typescript-next",
+            "eamodio.gitlens",
+            "PKief.material-icon-theme",
+            "humao.rest-client",
+            "ms-azuretools.vscode-docker",
+            "GitHub.copilot",
+            "GitHub.copilot-chat"
+        ]
+    }
+}
