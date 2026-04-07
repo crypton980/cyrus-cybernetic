@@ -112,9 +112,10 @@ export class MemoryStorage implements IStorage {
   private _uploadedFiles: UploadedFile[] = [];
 
   async getConversations(userId?: string, limit = 50): Promise<Conversation[]> {
-    let results = [...this._conversations].reverse();
-    if (userId) results = results.filter((c) => c.userId === userId);
-    return results.slice(0, limit);
+    let results = userId
+      ? this._conversations.filter((c) => c.userId === userId)
+      : [...this._conversations];
+    return results.reverse().slice(0, limit);
   }
 
   async createConversation(insert: InsertConversation): Promise<Conversation> {
@@ -141,9 +142,10 @@ export class MemoryStorage implements IStorage {
   }
 
   async getMemories(userId?: string): Promise<Memory[]> {
-    let results = [...this._memories].reverse();
-    if (userId) results = results.filter((m) => m.userId === userId);
-    return results;
+    const results = userId
+      ? this._memories.filter((m) => m.userId === userId)
+      : [...this._memories];
+    return results.reverse();
   }
 
   async createMemory(insert: InsertMemory): Promise<Memory> {
@@ -159,9 +161,10 @@ export class MemoryStorage implements IStorage {
   }
 
   async getUploadedFiles(userId?: string): Promise<UploadedFile[]> {
-    let results = [...this._uploadedFiles].reverse();
-    if (userId) results = results.filter((f) => f.userId === userId);
-    return results;
+    const results = userId
+      ? this._uploadedFiles.filter((f) => f.userId === userId)
+      : [...this._uploadedFiles];
+    return results.reverse();
   }
 
   async createUploadedFile(insert: InsertUploadedFile): Promise<UploadedFile> {

@@ -33,25 +33,31 @@ export async function getSetting(key: string): Promise<string | null> {
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
-  memSettings.set(key, value);
-  if (!hasDatabase) return;
+  if (!hasDatabase) {
+    memSettings.set(key, value);
+    return;
+  }
   try {
     await db
       .insert(systemSettings)
       .values({ key, value })
       .onConflictDoUpdate({ target: systemSettings.key, set: { value, updatedAt: new Date() } });
   } catch {
-    // db unavailable — in-memory map already updated above
+    // db unavailable — fall back to in-memory
+    memSettings.set(key, value);
   }
 }
 
 export async function deleteSetting(key: string): Promise<void> {
-  memSettings.delete(key);
-  if (!hasDatabase) return;
+  if (!hasDatabase) {
+    memSettings.delete(key);
+    return;
+  }
   try {
     await db.delete(systemSettings).where(eq(systemSettings.key, key));
   } catch {
-    // db unavailable — in-memory map already updated above
+    // db unavailable — fall back to in-memory
+    memSettings.delete(key);
   }
 }
 
