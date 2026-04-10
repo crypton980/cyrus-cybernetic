@@ -9,8 +9,9 @@ import {
   type UploadedFile,
   type InsertUploadedFile 
 } from "../shared/schema";
-import { db } from "./db";
+import { hasDatabase, db } from "./db";
 import { eq, desc } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export interface IStorage {
   // Conversations
@@ -101,4 +102,66 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export class MemoryStorage implements IStorage {
+  private convStore: Conversation[] = [];
+  private memStore: Memory[] = [];
+  private fileStore: UploadedFile[] = [];
+
+  async getConversations(userId?: string, limit = 50): Promise<Conversation[]> {
+    let rows = this.convStore;
+    if (userId) rows = rows.filter(c => c.userId === userId);
+    return rows.slice(-limit).reverse();
+  }
+
+  async createConversation(data: InsertConversation): Promise<Conversation> {
+    const record = {
+      id: randomUUID(),
+      createdAt: new Date(),
+      ...data,
+    } as Conversation;
+    this.convStore.push(record);
+    return record;
+  }
+
+  async clearConversations(userId?: string): Promise<void> {
+    if (userId) {
+      this.convStore = this.convStore.filter(c => c.userId !== userId);
+    } else {
+      this.convStore = [];
+    }
+  }
+
+  async getMemories(userId?: string): Promise<Memory[]> {
+    let rows = this.memStore;
+    if (userId) rows = rows.filter(m => m.userId === userId);
+    return [...rows].reverse();
+  }
+
+  async createMemory(data: InsertMemory): Promise<Memory> {
+    const record = {
+      id: randomUUID(),
+      createdAt: new Date(),
+      ...data,
+    } as Memory;
+    this.memStore.push(record);
+    return record;
+  }
+
+  async getUploadedFiles(userId?: string): Promise<UploadedFile[]> {
+    let rows = this.fileStore;
+    if (userId) rows = rows.filter(f => f.userId === userId);
+    return [...rows].reverse();
+  }
+
+  async createUploadedFile(data: InsertUploadedFile): Promise<UploadedFile> {
+    const record = {
+      id: randomUUID(),
+      uploadedAt: new Date(),
+      ...data,
+    } as UploadedFile;
+    this.fileStore.push(record);
+    return record;
+  }
+}
+
+export const storage: IStorage = hasDatabase ? new DatabaseStorage() : new MemoryStorage();
