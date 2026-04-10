@@ -110,7 +110,7 @@ export class MemoryStorage implements IStorage {
   async getConversations(userId?: string, limit = 50): Promise<Conversation[]> {
     let rows = this.convStore;
     if (userId) rows = rows.filter(c => c.userId === userId);
-    return rows.slice(-limit).reverse();
+    return [...rows].reverse().slice(0, limit);
   }
 
   async createConversation(data: InsertConversation): Promise<Conversation> {

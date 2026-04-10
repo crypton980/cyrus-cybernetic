@@ -39,7 +39,7 @@ function makeNoOpChain(): any {
       return makeNoOpChain();
     },
   };
-  const fn = function noOpDb() {};
+  const fn = function () {};
   return new Proxy(fn, handler);
 }
 
