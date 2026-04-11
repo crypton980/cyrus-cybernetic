@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { db } from "../db";
+import { db } from "../db.js";
 import { onlineUsers, directMessages, callHistory, meetingRooms, reminders, newsItems, contacts, incomingCalls, groupChats, callSessions, liveStreams, sharedMedia, callMessages } from "../../shared/schema";
 import { commsInteractionEvents } from "../../shared/models/comms";
 import { eq, or, and, desc, asc, ilike, inArray, sql } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
-import { getConnectedUsers } from "./signaling";
-import { communicationEngine } from "./communication-engine";
-import { commsIntelligence } from "./comms-intelligence";
+import { getConnectedUsers } from "./signaling.js";
+import { communicationEngine } from "./communication-engine.js";
+import { commsIntelligence } from "./comms-intelligence.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";

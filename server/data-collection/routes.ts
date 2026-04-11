@@ -1,5 +1,5 @@
 import express from "express";
-import { DataAggregator, DataSource } from "./aggregator";
+import { DataAggregator, DataSource } from "./aggregator.js";
 
 const router = express.Router();
 const aggregator = new DataAggregator();

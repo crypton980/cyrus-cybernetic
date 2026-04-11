@@ -3,8 +3,8 @@
  * Advanced knowledge processing for human-like intelligence
  */
 
-import { dataIngestionPipeline } from './data-ingestion-pipeline';
-import { quantumCore, type QuantumProcessingResult } from './quantum-core';
+import { dataIngestionPipeline } from './data-ingestion-pipeline.js';
+import { quantumCore, type QuantumProcessingResult } from './quantum-core.js';
 import { localLLM } from './local-llm-client.js';
 
 export interface KnowledgeNode {

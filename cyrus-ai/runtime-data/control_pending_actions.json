@@ -1,0 +1,18 @@
+[
+  {
+    "action_id": "approval-test-2",
+    "action": "external_call",
+    "requested_by": "test-admin",
+    "metadata": {
+      "payload": {
+        "target": "https://example.org",
+        "operator_role": "admin",
+        "operator_id": "test-admin",
+        "action_id": "approval-test-2"
+      },
+      "risk_level": "high"
+    },
+    "status": "pending",
+    "requested_at": 1775785439.448558
+  }
+]

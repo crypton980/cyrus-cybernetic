@@ -7,10 +7,9 @@ Enhances CYRUS's intelligence, writing style, and response quality.
 import sys
 import os
 import json
-import numpy as np
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 
 # Add parent directories to sys.path for script execution
 _this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,12 +22,12 @@ sys.path.insert(0, _workspace_root)
 # Import handling for both module and script execution
 if __name__ == "__main__" or __name__.startswith("server.quantum_ai"):
     # When run as script or module, use absolute imports
-    from quantum_ai.quantum_ai_core import QuantumAICore, format_response_for_display
+    from quantum_ai.quantum_ai_core import QuantumAICore
     from quantum_ai.core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
     from quantum_ai.core_algorithms.mathematical_formatter import MathematicalFormatter
 else:
     # When imported as module from elsewhere, use relative imports
-    from .quantum_ai_core import QuantumAICore, format_response_for_display
+    from .quantum_ai_core import QuantumAICore
     from .core_algorithms.writing_style_analyzer import WritingStyleAnalyzer
     from .core_algorithms.mathematical_formatter import MathematicalFormatter
 
@@ -57,11 +56,17 @@ except ImportError:
     TRAINING_AVAILABLE = False
 
 try:
-    from scientific_visualization import visualization_engine
-    SCIVIS_AVAILABLE = visualization_engine is not None and visualization_engine.is_available
+    from documents_module import DocumentProcessor, LegalCaseAnalyzer
+    DOCUMENTS_MODULE_AVAILABLE = True
+except ImportError:
+    DOCUMENTS_MODULE_AVAILABLE = False
+
+try:
+    from scientific_visualization import ScientificVisualizationEngine
+    visualization_engine = ScientificVisualizationEngine()
+    SCIVIS_AVAILABLE = True
 except ImportError:
     SCIVIS_AVAILABLE = False
-    visualization_engine = None
 
 
 class QuantumIntelligenceEngine:
@@ -385,6 +390,42 @@ class QuantumIntelligenceEngine:
         """Adapt a response to a target writing style."""
         return self.style_analyzer.adapt_text_to_style(text, target_style)
     
+    def analyze_legal_document(self, content: str, filename: str = "", jurisdiction: str = "Botswana") -> Dict:
+        """Analyze legal documents using the advanced legal analysis module."""
+        if not DOCUMENTS_MODULE_AVAILABLE:
+            return {
+                'error': 'Legal analysis module not available',
+                'summary': 'Basic text analysis only',
+                'confidence': 'Low'
+            }
+        
+        try:
+            # Initialize the document processor
+            processor = DocumentProcessor()
+            
+            # Process the document
+            doc_result = processor.process_document(content, filename)
+            
+            # Perform legal case analysis
+            analyzer = LegalCaseAnalyzer()
+            case_analysis = analyzer.analyze_case_file(content, jurisdiction)
+            
+            # Combine results
+            return {
+                'document_info': doc_result,
+                'legal_analysis': case_analysis,
+                'jurisdiction': jurisdiction,
+                'analyzed_at': datetime.now().isoformat(),
+                'confidence': 'High' if case_analysis.get('success_probability', 0) > 70 else 'Medium'
+            }
+            
+        except Exception as e:
+            return {
+                'error': f'Legal analysis failed: {str(e)}',
+                'summary': 'Analysis could not be completed',
+                'confidence': 'Low'
+            }
+    
     def get_processing_stats(self) -> Dict:
         """Get processing statistics."""
         if not self.processing_history:
@@ -432,6 +473,8 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 'status': 'healthy',
                 'service': 'quantum-ai-bridge',
                 'version': '4.0.0',
+                'documents_module_available': DOCUMENTS_MODULE_AVAILABLE,
+                'legal_analysis_endpoint': '/legal/analyze',
                 'nexus_available': NEXUS_AVAILABLE,
                 'nexus_active': engine.nexus is not None,
                 'visual_engine_available': VISUAL_ENGINE_AVAILABLE,
@@ -441,6 +484,23 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 'scivis_available': SCIVIS_AVAILABLE,
                 'timestamp': datetime.now().isoformat()
             })
+        elif self.path == '/documents/status':
+            if not DOCUMENTS_MODULE_AVAILABLE:
+                self._send_response(503, {
+                    'status': 'unavailable',
+                    'documents_module_available': False,
+                    'timestamp': datetime.now().isoformat()
+                })
+            else:
+                processor = DocumentProcessor()
+                stats = processor.get_processing_statistics()
+                self._send_response(200, {
+                    'status': 'available',
+                    'documents_module_available': True,
+                    'statistics': stats,
+                    'templates': sorted(list(processor.generator.templates.keys())),
+                    'timestamp': datetime.now().isoformat()
+                })
         elif self.path == '/stats':
             self._send_response(200, engine.get_processing_stats())
         elif self.path == '/nexus/status':
@@ -563,6 +623,13 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
                 self._send_response(200, result)
             else:
                 self._send_response(503, {'error': 'Quantum Intelligence Nexus not available'})
+        
+        elif self.path == '/legal/analyze':
+            content = data.get('content', '')
+            filename = data.get('filename', '')
+            jurisdiction = data.get('jurisdiction', 'Botswana')
+            result = engine.analyze_legal_document(content, filename, jurisdiction)
+            self._send_response(200, result)
         
         elif self.path == '/nexus/introspect':
             if engine.nexus:
@@ -774,13 +841,14 @@ class QuantumBridgeHandler(BaseHTTPRequestHandler):
             self._send_response(404, {'error': 'Endpoint not found'})
 
 
-def run_server(port: int = 5001):
+def run_server(port: int = 5001, host: str = "0.0.0.0"):
     """Run the Quantum AI Bridge server."""
-    server = HTTPServer(('127.0.0.1', port), QuantumBridgeHandler)
-    print(f"[Quantum AI Bridge] Server running on port {port}")
+    server = HTTPServer((host, port), QuantumBridgeHandler)
+    print(f"[Quantum AI Bridge] Server running on {host}:{port}")
     server.serve_forever()
 
 
 if __name__ == '__main__':
     port = int(os.environ.get('QUANTUM_BRIDGE_PORT', 5001))
-    run_server(port)
+    host = os.environ.get('QUANTUM_BRIDGE_HOST', '0.0.0.0')
+    run_server(port, host)

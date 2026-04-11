@@ -1,4 +1,4 @@
-import { ExecutionResult, VerificationResult } from "./types";
+import { ExecutionResult, VerificationResult } from "./types.js";
 
 export function verifyExecution(execResults: ExecutionResult[]): VerificationResult[] {
   return execResults.map((res) => {

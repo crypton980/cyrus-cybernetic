@@ -1,5 +1,5 @@
-import { ScrapedData, AggregatedData } from "./aggregator";
-import { KnowledgeEntry } from "./knowledge-base";
+import { ScrapedData, AggregatedData } from "./aggregator.js";
+import { KnowledgeEntry } from "./knowledge-base.js";
 
 export interface ProcessedData {
   original: ScrapedData;

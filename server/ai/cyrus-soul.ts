@@ -1,4 +1,4 @@
-import { quantumCore, type QuantumProcessingResult } from './quantum-core';
+import { quantumCore, type QuantumProcessingResult } from './quantum-core.js';
 import { 
   allBranches, 
   domainSummary, 
@@ -6,8 +6,8 @@ import {
   getBranchesByDomain, 
   getBranchesByType,
   type CognitiveBranch as BranchDef 
-} from './branches/index';
-import { CYRUS_SYSTEM_PROMPT, CYRUS_IDENTITY, getContextualPrompt } from './prompts/system-prompt';
+} from './branches/index.js';
+import { CYRUS_SYSTEM_PROMPT, CYRUS_IDENTITY, getContextualPrompt } from './prompts/system-prompt.js';
 import { 
   quantumFailSafe, 
   analyzeMultimodalInput, 
@@ -16,7 +16,7 @@ import {
   type FailSafeReport,
   type MultimodalInput,
   type ProfessionalDocument
-} from './quantum-failsafe';
+} from './quantum-failsafe.js';
 
 export type OperationalMode = 'standard' | 'tactical' | 'analytical' | 'perceptual' | 'emergency';
 export type UrgencyLevel = 'low' | 'medium' | 'high' | 'critical';

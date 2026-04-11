@@ -1,7 +1,12 @@
-import { db } from "../db";
+import { db } from "../db.js";
 import { healthDeviceConnections, healthVitals, healthActivity, healthSleep, healthBodyMetrics } from "../../shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import crypto from "crypto";
+
+function toDbNumeric(value: number | null | undefined): string | null | undefined {
+  if (value == null) return value;
+  return value.toString();
+}
 
 export type HealthProvider = "fitbit" | "oura" | "whoop" | "dexcom" | "withings" | "apple_health" | "google_fit" | "samsung_health";
 
@@ -347,7 +352,7 @@ export class HealthIntegrationsService {
           accessToken,
           refreshToken: refreshToken || existing[0].refreshToken,
           tokenExpiry,
-          isActive: 1,
+          isActive: true,
           updatedAt: new Date(),
         })
         .where(eq(healthDeviceConnections.id, existing[0].id));
@@ -359,7 +364,7 @@ export class HealthIntegrationsService {
         refreshToken,
         tokenExpiry,
         scopes: PROVIDER_CONFIGS[provider].scopes,
-        isActive: 1,
+        isActive: true,
       });
     }
   }
@@ -370,7 +375,7 @@ export class HealthIntegrationsService {
       .where(and(
         eq(healthDeviceConnections.userId, userId),
         eq(healthDeviceConnections.provider, provider),
-        eq(healthDeviceConnections.isActive, 1)
+        eq(healthDeviceConnections.isActive, true)
       ))
       .limit(1);
 
@@ -382,13 +387,13 @@ export class HealthIntegrationsService {
       .from(healthDeviceConnections)
       .where(and(
         eq(healthDeviceConnections.userId, userId),
-        eq(healthDeviceConnections.isActive, 1)
+        eq(healthDeviceConnections.isActive, true)
       ));
   }
 
   async disconnectProvider(userId: string, provider: HealthProvider): Promise<void> {
     await db.update(healthDeviceConnections)
-      .set({ isActive: 0, updatedAt: new Date() })
+      .set({ isActive: false, updatedAt: new Date() })
       .where(and(
         eq(healthDeviceConnections.userId, userId),
         eq(healthDeviceConnections.provider, provider)
@@ -498,7 +503,7 @@ export class HealthIntegrationsService {
           steps: activity.steps,
           activeMinutes: (activity.fairlyActiveMinutes || 0) + (activity.veryActiveMinutes || 0),
           caloriesBurned: activity.caloriesOut,
-          distance: Math.round((activity.distances?.find((d: any) => d.activity === "total")?.distance || 0) * 1000),
+          distance: toDbNumeric(Math.round((activity.distances?.find((d: any) => d.activity === "total")?.distance || 0) * 1000)),
           floors: activity.floors,
           recordedAt: now,
         });
@@ -597,8 +602,8 @@ export class HealthIntegrationsService {
           await db.insert(healthBodyMetrics).values({
             userId,
             provider,
-            weight: weightMeasure ? Math.round(weightMeasure.value * Math.pow(10, weightMeasure.unit) * 10) : null,
-            bodyFat: fatMeasure ? Math.round(fatMeasure.value * Math.pow(10, fatMeasure.unit) * 10) : null,
+            weight: toDbNumeric(weightMeasure ? Math.round(weightMeasure.value * Math.pow(10, weightMeasure.unit) * 10) : null),
+            bodyFat: toDbNumeric(fatMeasure ? Math.round(fatMeasure.value * Math.pow(10, fatMeasure.unit) * 10) : null),
             recordedAt: now,
           });
         }
@@ -657,7 +662,7 @@ export class HealthIntegrationsService {
           steps: steps.count || activity.steps || null,
           activeMinutes: activity.active_minutes || null,
           caloriesBurned: activity.calories || null,
-          distance: activity.distance || null,
+          distance: toDbNumeric(activity.distance || null),
           recordedAt: now,
         });
       }
@@ -682,9 +687,9 @@ export class HealthIntegrationsService {
         await db.insert(healthBodyMetrics).values({
           userId,
           provider,
-          weight: body.weight ? Math.round(body.weight * 10) : null,
-          bodyFat: body.body_fat_percentage ? Math.round(body.body_fat_percentage * 10) : null,
-          muscleMass: body.muscle_mass ? Math.round(body.muscle_mass * 10) : null,
+          weight: toDbNumeric(body.weight ? Math.round(body.weight * 10) : null),
+          bodyFat: toDbNumeric(body.body_fat_percentage ? Math.round(body.body_fat_percentage * 10) : null),
+          muscleMass: toDbNumeric(body.muscle_mass ? Math.round(body.muscle_mass * 10) : null),
           recordedAt: now,
         });
       }

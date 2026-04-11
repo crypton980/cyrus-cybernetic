@@ -90,7 +90,7 @@ interface AdaptedStyle {
   target_style: string;
 }
 
-const QUANTUM_BRIDGE_URL = 'http://127.0.0.1:5001';
+const QUANTUM_BRIDGE_URL = process.env.QUANTUM_BRIDGE_URL || "http://quantum-bridge:5001";
 
 class QuantumBridgeClient {
   private baseUrl: string;

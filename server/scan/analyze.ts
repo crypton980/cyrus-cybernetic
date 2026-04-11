@@ -1,10 +1,10 @@
-import { decodeQr } from "./qr";
-import { visionOcr } from "./vision";
-import { detectLanguage } from "./language";
-import { translateText } from "./translate";
-import { interpretText } from "./interpret";
-import { ScanReport } from "./report";
-import { detectFile } from "../ingestion/detect";
+import { decodeQr } from "./qr.js";
+import { visionOcr } from "./vision.js";
+import { detectLanguage } from "./language.js";
+import { translateText } from "./translate.js";
+import { interpretText } from "./interpret.js";
+import { ScanReport } from "./report.js";
+import { detectFile } from "../ingestion/detect.js";
 
 export interface ScanOptions {
   targetLanguage?: string;

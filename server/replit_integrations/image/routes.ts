@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
-import { generateImage, generateImageVariation, editImages, getImageCapabilities } from "./client";
-import type { ImageModel, ImageSize, ImageQuality, ImageStyle } from "./client";
+import { generateImage, generateImageVariation, editImages, getImageCapabilities } from "./client.js";
+import type { ImageModel, ImageSize, ImageQuality, ImageStyle } from "./client.js";
 import path from "node:path";
 import fs from "node:fs";
 

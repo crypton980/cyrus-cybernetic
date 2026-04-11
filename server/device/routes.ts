@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { z } from "zod";
-import { executeDeviceCommand } from "./controller";
+import { executeDeviceCommand } from "./controller.js";
 import { execFile } from "child_process";
 import { promisify } from "util";
 

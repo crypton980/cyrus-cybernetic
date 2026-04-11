@@ -1,0 +1,17 @@
+{
+  "path": "/Users/cronet/.vscode/tmp/tmp_vscode_1/tmpx_xagwy6/model_output/model-old",
+  "metadata": {
+    "rollback_from": "/Users/cronet/.vscode/tmp/tmp_vscode_1/tmpx_xagwy6/model_output/model-new",
+    "reason": "post_promotion_degradation",
+    "summary": {
+      "avg_score": 0.1,
+      "avg_latency": 4566.6667,
+      "failure_rate": 1.0,
+      "samples": 3.0,
+      "score_ratio": 0.121,
+      "latency_ratio": 23.0039,
+      "failure_delta": 1.0
+    }
+  },
+  "timestamp": 1775785439.465868
+}

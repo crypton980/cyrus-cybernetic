@@ -1,25 +1,13 @@
-FROM python:3.12-slim
+FROM node:20-alpine
 
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
 COPY . .
 
-# Expose port
-EXPOSE 3000
+RUN apk add --no-cache python3 py3-pip
+RUN npm install --legacy-peer-deps
+RUN npm run build
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+EXPOSE 3105 8001
 
-# Start the application
-CMD ["python", "simple_flask_server.py"]
+CMD ["sh", "-c", "python3 cyrus-ai/api.py & npm start"]

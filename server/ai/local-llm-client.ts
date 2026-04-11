@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import { OllamaConfig } from './ollama-config.json';
 
 export interface LocalLLMMessage {
   role: 'system' | 'user' | 'assistant';
@@ -10,6 +9,10 @@ export interface LocalLLMResponse {
   response: string;
   done: boolean;
   context?: number[];
+}
+
+interface OllamaChatResponse {
+  response?: string;
 }
 
 export class LocalLLMClient {
@@ -38,7 +41,7 @@ export class LocalLLMClient {
         throw new Error(`Ollama API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as OllamaChatResponse;
       return data.response || '';
     } catch (error) {
       console.warn('[LocalLLM] Chat failed, using fallback:', error);
@@ -63,7 +66,7 @@ export class LocalLLMClient {
         throw new Error(`Ollama API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as OllamaChatResponse;
       return data.response || '';
     } catch (error) {
       console.warn('[LocalLLM] Generate failed, using fallback:', error);

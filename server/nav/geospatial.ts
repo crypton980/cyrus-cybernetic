@@ -1,4 +1,4 @@
-import { CoordinateFormat, ElevationResult, GeocodingResult, Geofence, GeofenceEvent, PlaceResult } from "./types";
+import { CoordinateFormat, ElevationResult, GeocodingResult, Geofence, GeofenceEvent, PlaceResult } from "./types.js";
 
 const EARTH_RADIUS_M = 6371008.8;
 const EARTH_RADIUS_KM = 6371.0088;

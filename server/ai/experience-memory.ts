@@ -1,7 +1,25 @@
-import { db } from '../db';
+import { db } from '../db.js';
 import { experienceLearning, knowledgeGraph, performanceMetrics, evolutionLog } from '../../shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import crypto from 'crypto';
+
+function asNumber(value: string | number | null | undefined, fallback = 0): number {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
+
+function toDbNumeric(value: number | null | undefined): string | null | undefined {
+  if (value == null) return value;
+  return value.toString();
+}
+
+function toDbRequiredNumeric(value: number): string {
+  return value.toString();
+}
 
 export interface TaskExperience {
   taskType: string;
@@ -58,9 +76,11 @@ export class ExperienceMemoryEngine {
     try {
       const metrics = await db.select().from(performanceMetrics).limit(100);
       for (const metric of metrics) {
+        const averageTimeMs = asNumber(metric.averageTimeMs);
+        const bestTimeMs = asNumber(metric.bestTimeMs, averageTimeMs);
         this.performanceCache.set(`${metric.metricType}:${metric.taskCategory}`, {
-          avgTime: metric.averageTimeMs,
-          bestTime: metric.bestTimeMs || metric.averageTimeMs,
+          avgTime: averageTimeMs,
+          bestTime: bestTimeMs,
           executions: metric.totalExecutions || 1
         });
       }
@@ -184,11 +204,11 @@ export class ExperienceMemoryEngine {
       try {
         await db.update(performanceMetrics)
           .set({
-            averageTimeMs: newAvg,
-            bestTimeMs: newBest,
-            improvementRate,
+            averageTimeMs: toDbRequiredNumeric(newAvg),
+            bestTimeMs: toDbNumeric(newBest),
+            improvementRate: toDbNumeric(improvementRate),
             totalExecutions: existing.executions + 1,
-            successRate: Math.round((experience.successScore + (existing.executions * 80)) / (existing.executions + 1)),
+            successRate: toDbNumeric(Math.round((experience.successScore + (existing.executions * 80)) / (existing.executions + 1))),
             lastUpdated: new Date()
           })
           .where(and(
@@ -209,11 +229,11 @@ export class ExperienceMemoryEngine {
         await db.insert(performanceMetrics).values({
           metricType: experience.taskType,
           taskCategory: experience.taskDescription.substring(0, 50),
-          averageTimeMs: experience.executionTimeMs,
-          bestTimeMs: experience.executionTimeMs,
-          improvementRate: 0,
+          averageTimeMs: toDbNumeric(experience.executionTimeMs)!,
+          bestTimeMs: toDbNumeric(experience.executionTimeMs),
+          improvementRate: toDbNumeric(0),
           totalExecutions: 1,
-          successRate: experience.successScore
+          successRate: toDbNumeric(experience.successScore)
         });
       } catch (error) {
         console.error('[Experience Memory] Failed to insert metrics:', error);
@@ -257,13 +277,14 @@ export class ExperienceMemoryEngine {
         const currentRelations = (existing[0].relationships as any[]) || [];
         const mergedRelations = this.mergeRelationships(currentRelations, concept.relationships);
         const mergedProps = { ...(existing[0].properties as object), ...concept.properties };
-        const newConfidence = Math.min(100, (existing[0].confidence || 50) + 5);
+        const previousConfidence = asNumber(existing[0].confidence, 50);
+        const newConfidence = Math.min(100, previousConfidence + 5);
         
         await db.update(knowledgeGraph)
           .set({
             relationships: mergedRelations,
             properties: mergedProps,
-            confidence: newConfidence,
+            confidence: toDbNumeric(newConfidence),
             lastAccessed: new Date(),
             accessCount: (existing[0].accessCount || 0) + 1
           })
@@ -272,9 +293,9 @@ export class ExperienceMemoryEngine {
         await this.logEvolution({
           type: 'knowledge_integrated',
           description: `Enhanced knowledge of "${concept.concept}" in ${concept.domain} domain`,
-          beforeState: { confidence: existing[0].confidence, relations: currentRelations.length },
+          beforeState: { confidence: previousConfidence, relations: currentRelations.length },
           afterState: { confidence: newConfidence, relations: mergedRelations.length },
-          improvements: { confidenceGain: newConfidence - (existing[0].confidence || 50) },
+          improvements: { confidenceGain: newConfidence - previousConfidence },
           trigger: 'knowledge_reinforcement'
         });
       } else {
@@ -283,7 +304,7 @@ export class ExperienceMemoryEngine {
           domain: concept.domain,
           relationships: concept.relationships,
           properties: concept.properties,
-          confidence: concept.confidence,
+          confidence: toDbNumeric(concept.confidence),
           source: concept.source,
           accessCount: 1
         });
@@ -430,7 +451,7 @@ export class ExperienceMemoryEngine {
         domain: results[0].domain,
         relationships: results[0].relationships as any[],
         properties: results[0].properties as Record<string, any>,
-        confidence: results[0].confidence || 50
+        confidence: asNumber(results[0].confidence, 50)
       };
     } catch (error) {
       console.error('[Experience Memory] Failed to query knowledge:', error);
@@ -494,7 +515,7 @@ export class ExperienceMemoryEngine {
       ]);
 
       const avgSuccess = metrics.length > 0
-        ? Math.round(metrics.reduce((sum, m) => sum + (m.successRate || 0), 0) / metrics.length)
+        ? Math.round(metrics.reduce((sum, m) => sum + asNumber(m.successRate), 0) / metrics.length)
         : 0;
 
       return {
@@ -504,7 +525,7 @@ export class ExperienceMemoryEngine {
         averageSuccessRate: avgSuccess,
         topPerformingTasks: metrics.map(m => ({
           task: `${m.metricType}: ${m.taskCategory}`,
-          successRate: m.successRate || 0
+          successRate: asNumber(m.successRate)
         }))
       };
     } catch (error) {

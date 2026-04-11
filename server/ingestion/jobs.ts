@@ -1,8 +1,8 @@
 import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
-import { performFullAnalysis, type FullAnalysisResponse } from "./full-analysis";
-import type { AnalysisOptions } from "./analyze";
+import { performFullAnalysis, type FullAnalysisResponse } from "./full-analysis.js";
+import type { AnalysisOptions } from "./analyze.js";
 
 export type FileAnalysisJobStatus =
   | "queued"

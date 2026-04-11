@@ -4,7 +4,7 @@
  * based on query classification and quantum analysis
  */
 
-import { quantumBridge, type EnhancementResult } from './quantum-bridge-client';
+import { quantumBridge, type EnhancementResult } from './quantum-bridge-client.js';
 
 interface FormattedResponse {
   content: string;

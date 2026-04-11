@@ -1,5 +1,5 @@
-import { templates, DocType, defaultDocType, Audience } from "./templates";
-import { analyzeDocument, DocGenInput, AnalysisOutput } from "./analyze";
+import { templates, DocType, defaultDocType, Audience } from "./templates.js";
+import { analyzeDocument, DocGenInput, AnalysisOutput } from "./analyze.js";
 
 export interface GeneratedDoc {
   docType: DocType;

@@ -4,7 +4,7 @@
  * across different networks with international calling capabilities
  */
 
-import { db } from "../db";
+import { db } from "../db.js";
 import {
   directMessages, callHistory, meetingRooms, onlineUsers,
   contacts, groupChats, callSessions, callMessages

@@ -1,6 +1,6 @@
-import { detectFile } from "./detect";
-import { extractFile } from "./extract";
-import { analyzeExtraction, type AnalysisCitation, type AnalysisOptions } from "./analyze";
+import { detectFile } from "./detect.js";
+import { extractFile } from "./extract.js";
+import { analyzeExtraction, type AnalysisCitation, type AnalysisOptions } from "./analyze.js";
 
 export interface FullAnalysisResponse {
   detection: Awaited<ReturnType<typeof detectFile>>;
@@ -66,8 +66,8 @@ export async function performFullAnalysis(
       metadata: {
         attempted: ext.attempted,
         warnings: ext.warnings,
-        pageCount: ext.pageCount,
-        textLength: ext.textLength,
+        pageCount: undefined,
+        textLength: ext.text ? ext.text.length : ext.ocrText ? ext.ocrText.length : ext.transcript ? ext.transcript.length : 0,
         transcript: ext.transcript,
         ocrText: ext.ocrText,
         frames: ext.frames,
@@ -81,15 +81,15 @@ export async function performFullAnalysis(
       issues: analysis.issues,
       interpretation: analysis.interpretation,
       confidence: analysis.confidence,
-      documentType: analysis.documentType,
-      documentTypeConfidence: analysis.documentTypeConfidence,
-      decisionActions: analysis.decisionActions,
-      executiveBrief: analysis.executiveBrief,
-      knowledgeApplied: analysis.knowledgeApplied,
-      capabilitySummary: analysis.capabilitySummary,
-      jurisdictionApplied: analysis.jurisdictionApplied,
-      strictLegalReview: analysis.strictLegalReview,
-      citationAnchors: analysis.citationAnchors,
+      documentType: analysis.documentType || "unknown",
+      documentTypeConfidence: analysis.documentTypeConfidence || "Low",
+      decisionActions: analysis.decisionActions || [],
+      executiveBrief: analysis.executiveBrief || analysis.summary,
+      knowledgeApplied: analysis.knowledgeApplied || [],
+      capabilitySummary: analysis.capabilitySummary || "Standard extraction and analysis completed",
+      jurisdictionApplied: analysis.jurisdictionApplied || options.jurisdiction || "unspecified",
+      strictLegalReview: analysis.strictLegalReview || false,
+      citationAnchors: analysis.citationAnchors || [],
       chunksAnalyzed: analysis.chunksAnalyzed,
       entities: [],
       riskLevel,

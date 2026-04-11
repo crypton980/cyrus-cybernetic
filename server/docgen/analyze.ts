@@ -1,7 +1,6 @@
 import OpenAI, { AzureOpenAI } from 'openai';
 import { DocumentAnalysisClient, AzureKeyCredential } from '@azure/ai-form-recognizer';
-import { DefaultAzureCredential } from '@azure/identity';
-import { Audience, DocType, templates, toneByAudience, defaultDocType } from "./templates";
+import { Audience, DocType, templates, toneByAudience, defaultDocType } from "./templates.js";
 
 const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
@@ -9,9 +8,7 @@ const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 const llmClient =
   openaiApiKey && openaiBaseUrl
     ? new AzureOpenAI({ endpoint: openaiBaseUrl, apiKey: openaiApiKey })
-    : openaiBaseUrl
-      ? new AzureOpenAI({ endpoint: openaiBaseUrl, credential: new DefaultAzureCredential() })
-      : null;
+    : null;
 
 const documentIntelligenceKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY;
 const documentIntelligenceEndpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT;
@@ -21,7 +18,7 @@ const documentClient =
   documentIntelligenceEndpoint
     ? documentIntelligenceKey
       ? new DocumentAnalysisClient(documentIntelligenceEndpoint, new AzureKeyCredential(documentIntelligenceKey))
-      : new DocumentAnalysisClient(documentIntelligenceEndpoint, new DefaultAzureCredential())
+      : null
     : null;
 
 export interface SectionContent {

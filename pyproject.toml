@@ -47,11 +47,31 @@ dependencies = [
 [project.optional-dependencies]
 deep-learning = [
     "torch>=1.9.0",
+    "torchvision>=0.16.0",
     "tensorflow>=2.6.0",
 ]
 explainability = [
     "shap>=0.40.0",
     "lime>=0.2.0",
+]
+web = [
+    "flask>=3.0.0",
+    "flask-cors>=4.0.0",
+    "requests>=2.31.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.6.0",
+]
+media-docs = [
+    "pillow>=10.2.0",
+    "opencv-python>=4.9.0",
+    "python-docx>=1.1.0",
+    "pypdf2>=3.0.0",
+    "qrcode>=7.4.0",
+    "psutil>=5.9.0",
+]
+quantum = [
+    "qiskit-ibm-runtime>=0.22.0",
 ]
 visualization = [
     "plotly>=5.0.0",
@@ -59,9 +79,23 @@ visualization = [
 ]
 all = [
     "torch>=1.9.0",
+    "torchvision>=0.16.0",
     "tensorflow>=2.6.0",
     "shap>=0.40.0",
     "lime>=0.2.0",
+    "flask>=3.0.0",
+    "flask-cors>=4.0.0",
+    "requests>=2.31.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.6.0",
+    "pillow>=10.2.0",
+    "opencv-python>=4.9.0",
+    "python-docx>=1.1.0",
+    "pypdf2>=3.0.0",
+    "qrcode>=7.4.0",
+    "psutil>=5.9.0",
+    "qiskit-ibm-runtime>=0.22.0",
     "plotly>=5.0.0",
     "seaborn>=0.11.0",
 ]

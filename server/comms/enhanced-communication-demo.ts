@@ -5,8 +5,8 @@
  * Demonstrates international calling and cross-network messaging capabilities
  */
 
-import { enhancedCommunicationIntegration } from "./enhanced-communication-integration";
-import { enhancedCommunicationEngine } from "./enhanced-communication-engine";
+import { enhancedCommunicationIntegration } from "./enhanced-communication-integration.js";
+import { enhancedCommunicationEngine } from "./enhanced-communication-engine.js";
 
 class EnhancedCommunicationDemo {
   constructor() {
@@ -209,7 +209,7 @@ class EnhancedCommunicationDemo {
         );
 
         console.log(`   Message: "${message.substring(0, 40)}..."`);
-        console.log(`   Sentiment: ${result.message.sentiment || "Analyzed"}`);
+        console.log("   Sentiment: Analyzed");
       }
 
       // Test user intelligence

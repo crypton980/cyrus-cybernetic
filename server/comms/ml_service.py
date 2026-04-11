@@ -808,9 +808,10 @@ class CommsMLHandler(BaseHTTPRequestHandler):
 start_time = time.time()
 
 if __name__ == '__main__':
-    port = 5002
-    server = HTTPServer(('127.0.0.1', port), CommsMLHandler)
-    logger.info(f"[Comms ML] Intelligence Service v1.0 starting on port {port}")
+    port = int(os.environ.get('COMMS_ML_PORT', 5002))
+    host = os.environ.get('COMMS_ML_HOST', '0.0.0.0')
+    server = HTTPServer((host, port), CommsMLHandler)
+    logger.info(f"[Comms ML] Intelligence Service v1.0 starting on {host}:{port}")
     logger.info(f"[Comms ML] VADER sentiment: {'active' if HAS_NLTK else 'fallback (keyword)'}")
     logger.info(f"[Comms ML] scikit-learn models: {'active' if HAS_SKLEARN else 'fallback (algorithmic)'}")
     logger.info(f"[Comms ML] numpy compute: {'active' if HAS_NUMPY else 'fallback (math)'}")

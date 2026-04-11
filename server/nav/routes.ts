@@ -1,31 +1,31 @@
 import type { Express, Request } from "express";
 import { z } from "zod";
 import fetch from "node-fetch";
-import { getBestFix, updateFix } from "./position";
-import { PositionFix, RouteRequest, RouteSummary, RouteStep } from "./types";
-import { startShare, stopShare, getSharedFix } from "./share";
-import { ingestFix, getFusedPosition, getFixHistory, resetFusion } from "./fusion-engine";
-import { getGNSSStatus, getSatellitesByConstellation, getSignalQuality } from "./satellite-tracker";
+import { getBestFix, updateFix } from "./position.js";
+import { PositionFix, RouteRequest, RouteSummary, RouteStep } from "./types.js";
+import { startShare, stopShare, getSharedFix } from "./share.js";
+import { ingestFix, getFusedPosition, getFixHistory, resetFusion } from "./fusion-engine.js";
+import { getGNSSStatus, getSatellitesByConstellation, getSignalQuality } from "./satellite-tracker.js";
 import {
   haversineDistance, vincentyDistance, bearing, destinationPoint, midpoint,
   convertCoordinates, toUTM, toMGRS, toDMS,
   addGeofence, removeGeofence, getGeofences, getGeofence, checkGeofences,
   areaOfPolygon, boundingBox
-} from "./geospatial";
+} from "./geospatial.js";
 import {
   geocodeForward, geocodeReverse, getElevation, getElevationAlongPath,
   searchNearbyPlaces, searchPlacesByText, getPlaceDetails, geolocate
-} from "./google-geospatial";
+} from "./google-geospatial.js";
 import {
   updateUserLocation, getUserLocation, getAllUserLocations,
   getLocationHistory, calculateEta, shareLocationWithUser,
   revokeLocationShare, getSharedWithMe, getTrackedUsersFromDb,
   setUserOffline
-} from "./tracking";
+} from "./tracking.js";
 import {
   triggerEmergencyAlert, resolveEmergency, getActiveAlerts,
   getAllAlerts, getActiveAlertCount
-} from "./emergency";
+} from "./emergency.js";
 
 const manualFixSchema = z.object({
   lat: z.number().min(-90).max(90),

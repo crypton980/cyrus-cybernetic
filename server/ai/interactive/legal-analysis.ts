@@ -1,5 +1,4 @@
 import OpenAI, { AzureOpenAI } from 'openai';
-import { DefaultAzureCredential } from "@azure/identity";
 import { z } from "zod";
 
 const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
@@ -11,12 +10,7 @@ const openaiClient =
       endpoint: openaiBaseUrl,
       apiKey: openaiApiKey,
     })
-    : openaiBaseUrl
-      ? new AzureOpenAI({
-        endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
-      })
-      : null;
+    : null;
 
 export interface LegalAnalysisRequest {
   fileContent: string;

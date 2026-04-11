@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import { presenterMode } from "./presenter-mode";
-import { conversationEngine } from "./conversation-engine";
+import { presenterMode } from "./presenter-mode.js";
+import { conversationEngine } from "./conversation-engine.js";
 
 const router = Router();
 

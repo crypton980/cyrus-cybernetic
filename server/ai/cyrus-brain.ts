@@ -1,7 +1,7 @@
-import { dataIngestionPipeline } from './data-ingestion-pipeline';
+import { dataIngestionPipeline } from './data-ingestion-pipeline.js';
 import { localLLM } from './local-llm-client.js';
-import { advancedIntelligenceIntegration, type IntegratedIntelligenceRequest } from './advanced-intelligence-integration';
-import { AdvancedVisionProcessor } from './advanced-vision-module';
+import { advancedIntelligenceIntegration, type IntegratedIntelligenceRequest } from './advanced-intelligence-integration.js';
+import { AdvancedVisionProcessor } from './advanced-vision-module.js';
 
 export class CyrusBrain {
   private brain: any;
@@ -17,10 +17,14 @@ export class CyrusBrain {
     try {
       console.log('🧠 Initializing CYRUS Brain with Advanced Intelligence and Vision...');
 
-      // Start knowledge ingestion in background
-      dataIngestionPipeline.startIngestion().catch(error => {
-        console.error('Failed to start knowledge ingestion:', error);
-      });
+      // Optional startup ingestion: disabled by default to keep boot stable/noise-free.
+      if (process.env.CYRUS_AUTO_INGEST_ON_START === 'true') {
+        dataIngestionPipeline.startIngestion().catch(error => {
+          console.error('Failed to start knowledge ingestion:', error);
+        });
+      } else {
+        console.log('ℹ️ Startup knowledge ingestion is disabled (set CYRUS_AUTO_INGEST_ON_START=true to enable).');
+      }
 
       // Initialize advanced intelligence components
       console.log('🔬 Initializing Advanced Intelligence Integration...');
@@ -201,7 +205,7 @@ Response:`;
   }
 
   getStatus(): any {
-    const basicStatus = {
+    const basicStatus: any = {
       initialized: this.isInitialized,
       advancedIntelligence: this.useAdvancedIntelligence,
       visionProcessor: this.visionProcessor !== null,
@@ -272,8 +276,9 @@ Response:`;
       const result = await this.visionProcessor.processImage(image, analysisType);
 
       // Integrate vision results with intelligence system
-      if (this.useAdvancedIntelligence && result.object_detection?.objects?.length > 0) {
-        const visionContext = `Visual analysis detected: ${result.object_detection.objects.map((obj: any) => obj.label).join(', ')}`;
+      const detectedObjects = result.object_detection?.objects || [];
+      if (this.useAdvancedIntelligence && detectedObjects.length > 0) {
+        const visionContext = `Visual analysis detected: ${detectedObjects.map((obj: any) => obj.label).join(', ')}`;
         await this.addKnowledge(visionContext, {
           type: 'vision_analysis',
           timestamp: new Date(),
@@ -288,14 +293,14 @@ Response:`;
     }
   }
 
-  async processLiveFeed(videoSource: any, duration?: number, callback?: Function): Promise<any> {
+  async processLiveFeed(videoSource: any, duration?: number, callback?: (result: any, frame: any) => void): Promise<any> {
     if (!this.visionProcessor) {
       throw new Error('Vision processor not available');
     }
 
     try {
       console.log('🎥 Starting live feed processing...');
-      const result = await this.visionProcessor.processLiveFeed(videoSource, duration, callback);
+      const result = await this.visionProcessor.processLiveFeed(videoSource, duration, callback as any);
 
       // Record live feed session in knowledge base
       const sessionSummary = `Live feed session: ${result.total_frames} frames processed, ${result.objects_detected} objects detected, ${result.processing_fps.toFixed(1)} FPS`;
@@ -343,7 +348,7 @@ Response:`;
     return {
       available: true,
       processing_stats: this.visionProcessor.getProcessingStats(),
-      config: this.visionProcessor.config
+      config: "available"
     };
   }
 

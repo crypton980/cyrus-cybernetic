@@ -1,9 +1,9 @@
 import { Server as HttpServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
-import { db } from "../db";
+import { db } from "../db.js";
 import { onlineUsers, directMessages, groupChats, callSessions, callMessages, liveStreams, sharedMedia } from "../../shared/models/comms";
 import { eq, ilike } from "drizzle-orm";
-import { commsIntelligence } from "./comms-intelligence";
+import { commsIntelligence } from "./comms-intelligence.js";
 
 interface User {
   id: string;

@@ -13,11 +13,9 @@ Key concepts:
 """
 
 import numpy as np
-from typing import Dict, List, Tuple, Optional, Callable
+from typing import Dict, List
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.linear_model import Perceptron
-import math
 
 
 class MLProcessor:
@@ -117,6 +115,146 @@ class MLProcessor:
         
         self._log_step(f"Kernel matrix computed: shape {K.shape}")
         return K
+    
+    def quantum_kernel_matrix(self, X1: np.ndarray, X2: np.ndarray,
+                             encoding_method: str = 'amplitude') -> np.ndarray:
+        """
+        Compute quantum kernel matrix using quantum feature encoding.
+        Based on quantum machine learning principles.
+        
+        Args:
+            X1: First set of points (n1, n_features)
+            X2: Second set of points (n2, n_features)
+            encoding_method: 'amplitude' or 'angle'
+            
+        Returns:
+            Quantum kernel matrix (n1, n2)
+        """
+        self._log_step(f"Computing quantum kernel matrix: {encoding_method} encoding")
+        
+        n1, n_features = X1.shape
+        n2 = X2.shape[0]
+        K = np.zeros((n1, n2), dtype=complex)
+        
+        for i in range(n1):
+            for j in range(n2):
+                # Encode classical vectors to quantum states
+                state1 = self._encode_to_quantum_state(X1[i], encoding_method)
+                state2 = self._encode_to_quantum_state(X2[j], encoding_method)
+                
+                # Quantum kernel as overlap in Hilbert space
+                K[i, j] = np.vdot(state1, state2)
+        
+        self._log_step(f"Quantum kernel matrix computed: shape {K.shape}")
+        return K.real  # Return real part for compatibility
+    
+    def _encode_to_quantum_state(self, x: np.ndarray, method: str) -> np.ndarray:
+        """
+        Encode classical vector to quantum state.
+        
+        Args:
+            x: Classical feature vector
+            method: Encoding method ('amplitude' or 'angle')
+            
+        Returns:
+            Normalized quantum state vector
+        """
+        # Normalize input
+        x_norm = x / np.linalg.norm(x) if np.linalg.norm(x) > 0 else x
+        
+        # Determine number of qubits needed
+        n_qubits = int(np.ceil(np.log2(len(x_norm))))
+        state_size = 2**n_qubits
+        
+        # Pad or truncate to power of 2
+        if len(x_norm) < state_size:
+            padded = np.zeros(state_size)
+            padded[:len(x_norm)] = x_norm
+            x_norm = padded
+        else:
+            x_norm = x_norm[:state_size]
+        
+        # Re-normalize
+        x_norm = x_norm / np.linalg.norm(x_norm)
+        
+        if method == 'amplitude':
+            # Direct amplitude encoding
+            return x_norm.astype(complex)
+        elif method == 'angle':
+            # Angle encoding using rotations
+            state = np.zeros(state_size, dtype=complex)
+            state[0] = 1.0  # Start with |0...0⟩
+            
+            # Apply rotations for each feature
+            for i, angle in enumerate(x_norm):
+                if i < n_qubits:
+                    # Simplified: apply Z-rotation based on feature value
+                    rotation = np.array([[np.exp(-1j * angle / 2), 0],
+                                       [0, np.exp(1j * angle / 2)]], dtype=complex)
+                    state = self._apply_single_gate(state, rotation, i)
+            
+            return state
+        else:
+            raise ValueError(f"Unknown encoding method: {method}")
+    
+    def _apply_single_gate(self, state: np.ndarray, gate: np.ndarray, qubit: int) -> np.ndarray:
+        """Apply single-qubit gate to quantum state."""
+        n_qubits = int(np.log2(len(state)))
+        
+        # Tensor product construction
+        full_gate = np.array([[1.0]], dtype=complex)
+        
+        for i in range(n_qubits):
+            if i == qubit:
+                full_gate = np.kron(full_gate, gate)
+            else:
+                identity = np.eye(2, dtype=complex)
+                full_gate = np.kron(full_gate, identity)
+        
+        return full_gate @ state
+    
+    def quantum_support_vector_machine(self, X: np.ndarray, y: np.ndarray,
+                                      encoding_method: str = 'amplitude',
+                                      C: float = 1.0) -> Dict:
+        """
+        Quantum-enhanced Support Vector Machine using quantum kernels.
+        Combines quantum feature encoding with classical SVM optimization.
+        
+        Args:
+            X: Training features (n_samples, n_features)
+            y: Training labels (-1, +1)
+            encoding_method: Quantum encoding method
+            C: Regularization parameter
+            
+        Returns:
+            Quantum SVM results
+        """
+        self._log_step(f"Quantum SVM training: {X.shape[0]} samples, encoding={encoding_method}")
+        
+        # Compute quantum kernel matrix
+        K = self.quantum_kernel_matrix(X, X, encoding_method)
+        
+        # Use classical SVM with quantum kernel
+        from sklearn.svm import SVC
+        svm = SVC(kernel='precomputed', C=C, random_state=42)
+        svm.fit(K, y)
+        
+        # Get predictions on training data
+        predictions = svm.predict(K)
+        accuracy = np.mean(predictions == y)
+        
+        results = {
+            'support_vector_indices': svm.support_,
+            'n_support_vectors': len(svm.support_),
+            'dual_coef': svm.dual_coef_,
+            'intercept': svm.intercept_,
+            'training_accuracy': accuracy,
+            'quantum_kernel_matrix': K,
+            'encoding_method': encoding_method
+        }
+        
+        self._log_step(f"Quantum SVM trained: {len(svm.support_)} support vectors, accuracy={accuracy:.3f}")
+        return results
     
     def support_vector_machine(self, X: np.ndarray, y: np.ndarray,
                               kernel: str = 'rbf', C: float = 1.0,

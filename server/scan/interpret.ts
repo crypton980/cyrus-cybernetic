@@ -50,8 +50,9 @@ export async function interpretText(text: string): Promise<Interpretation> {
       else keyFindings.push(l.replace(/^-+\s*/, ""));
     }
     return { interpretation, keyFindings, risks, ambiguities, warnings };
-  } catch (err: any) {
-    warnings.push(`Interpretation failed: ${err?.message || err}`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    warnings.push(`Interpretation failed: ${message}`);
     return { interpretation: "Interpretation failed", keyFindings: [], risks: [], ambiguities: [], warnings };
   }
 }

@@ -1,7 +1,7 @@
-import { db } from '../db';
+import { db } from '../db.js';
 import { commsUserProfiles, commsInteractionEvents, commsMlModels, directMessages, callHistory, contacts } from '../../shared/models/comms';
 import { eq, desc, sql, and, count, gte } from 'drizzle-orm';
-import { commsMLClient } from './comms-ml-client';
+import { commsMLClient } from './comms-ml-client.js';
 
 const POSITIVE_WORDS = [
   'good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'awesome', 'love', 'happy',

@@ -1,7 +1,7 @@
-export { ScanPage } from "./ScanPage";
-export { FileAnalysisPage } from "./FileAnalysisPage";
-export { NavigationPage } from "./NavigationPage";
-export { CommsPage } from "./CommsPage";
-export { DeviceControlPage } from "./DeviceControlPage";
-export { TradingPage } from "./TradingPage";
-export { DronePage } from "./DronePage";
+export { ScanPage } from "./ScanPage.js";
+export { FileAnalysisPage } from "./FileAnalysisPage.js";
+export { NavigationPage } from "./NavigationPage.js";
+export { CommsPage } from "./CommsPage.js";
+export { DeviceControlPage } from "./DeviceControlPage.js";
+export { TradingPage } from "./TradingPage.js";
+export { DronePage } from "./DronePage.js";

@@ -5,14 +5,14 @@
 
 import * as express from "express";
 import multer from "multer";
-import { db } from "../db";
+import { db } from "../db.js";
 import {
   directMessages, callHistory, meetingRooms, onlineUsers,
   contacts, groupChats, callSessions, callMessages
 } from "../../shared/models/comms";
 import { eq, desc, asc, or, and } from "drizzle-orm";
-import { enhancedCommunicationEngine } from "./enhanced-communication-engine";
-import { commsIntelligence } from "./comms-intelligence";
+import { enhancedCommunicationEngine } from "./enhanced-communication-engine.js";
+import { commsIntelligence } from "./comms-intelligence.js";
 
 // Extend Express Request interface
 declare module "express-serve-static-core" {
@@ -451,7 +451,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 // Update user status with network awareness
 router.put("/users/:userId/status", assessNetworkQuality, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = String(req.params.userId || "");
     const { status, customMessage } = req.body;
 
     const validStatuses = ["online", "away", "do_not_disturb", "offline", "in_call", "international_call"];

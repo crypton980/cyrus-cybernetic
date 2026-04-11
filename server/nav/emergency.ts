@@ -1,8 +1,8 @@
-import { db } from "../db";
+import { db } from "../db.js";
 import { emergencyAlerts } from "../../shared/schema";
 import { eq, desc } from "drizzle-orm";
-import { getAllUserLocations } from "./tracking";
-import { haversineDistance } from "./geospatial";
+import { getAllUserLocations } from "./tracking.js";
+import { haversineDistance } from "./geospatial.js";
 
 type EmergencyLevel = "low" | "medium" | "high" | "critical";
 

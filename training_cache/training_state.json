@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-03-03T13:34:31.432236",
-  "duration_seconds": 41.02189517021179,
+  "timestamp": "2026-04-10T11:27:33.131078",
+  "duration_seconds": 221.62251377105713,
   "phases_completed": 7,
   "models_trained": [
     "tfidf_vectorizer",
@@ -16,67 +16,67 @@
   "model_metrics": {
     "tfidf_vectorizer": {
       "type": "TfidfVectorizer",
-      "n_features": 2464,
-      "n_samples": 202,
-      "vocabulary_size": 2464
+      "n_features": 4282,
+      "n_samples": 362,
+      "vocabulary_size": 4282
     },
     "domain_kmeans": {
       "type": "KMeans",
-      "n_clusters": 10,
-      "silhouette_score": 0.004192170839255077,
-      "inertia": 189.3617104788347
+      "n_clusters": 13,
+      "silhouette_score": 0.005327476477568392,
+      "inertia": 343.1397925792483
     },
     "domain_dbscan": {
       "type": "DBSCAN",
-      "clusters_found": 1,
-      "noise_points": 200
+      "clusters_found": 20,
+      "noise_points": 320
     },
     "nmf_topic_model": {
       "type": "NMF",
       "n_topics": 15,
-      "reconstruction_error": 42.133224213103205,
+      "reconstruction_error": 58.74555066553478,
       "top_topics": {
         "topic_0": [
-          "analysis",
-          "numerical",
-          "risk",
-          "design",
-          "pricing"
+          "robotics",
+          "assembly",
+          "standards",
+          "drones",
+          "autonomous"
         ],
         "topic_1": [
           "systems",
           "optimization",
           "autonomous",
-          "programming",
-          "energy"
+          "multi agent",
+          "agent"
         ],
         "topic_2": [
-          "and",
-          "disorders",
-          "pathways",
-          "treatment",
-          "anatomy and"
+          "learning",
+          "shot",
+          "reinforcement learning",
+          "reinforcement",
+          "machine"
         ],
         "topic_3": [
-          "engineering",
-          "design",
-          "processing",
-          "mechanics",
-          "foundation design"
+          "time",
+          "real",
+          "real time",
+          "analytics",
+          "streaming"
         ],
         "topic_4": [
-          "security",
-          "chain",
-          "supply chain",
-          "supply",
-          "vulnerabilities"
+          "analysis",
+          "theory",
+          "graph",
+          "graph theory",
+          "functions"
         ]
       }
     },
     "lda_topic_model": {
       "type": "LDA",
       "n_topics": 15,
-      "perplexity": 4195.926623578258
+      "perplexity": 5445.8080206143295
     },
     "intent_classifier": {
       "type": "svm",
@@ -96,18 +96,21 @@
     },
     "domain_classifier": {
       "type": "gradient_boosting",
-      "accuracy": 0.5,
-      "svm_accuracy": 0.2078048780487805,
-      "gb_accuracy": 0.5,
-      "lr_accuracy": 0.2623170731707317,
-      "n_domains": 10,
+      "accuracy": 0.4670852359208523,
+      "svm_accuracy": 0.23481735159817352,
+      "gb_accuracy": 0.4670852359208523,
+      "lr_accuracy": 0.29273211567732116,
+      "n_domains": 13,
       "domains": [
         "engineering",
+        "general_ai",
         "law",
         "mathematics",
         "medicine",
         "military_defense",
         "psychology",
+        "real_time_capabilities",
+        "robotics_mechatronics",
         "science",
         "security",
         "technology",
@@ -116,65 +119,80 @@
     },
     "cross_domain_map": {
       "type": "CrossDomainRelationship",
-      "n_domains": 10,
+      "n_domains": 13,
       "n_connections": 0,
       "top_connections": [],
       "domain_positions": {
         "medicine": {
-          "x": -0.013400959801970338,
-          "y": -0.025039691079607535,
-          "z": 0.0038249540975765035
+          "x": -0.013096720540688825,
+          "y": -0.020026708481977313,
+          "z": -0.0043839690645753465
         },
         "technology": {
-          "x": -0.012047517629588375,
-          "y": -0.04236286484555884,
-          "z": 0.006439760518899094
+          "x": -0.014108823550891951,
+          "y": -0.03189347268627135,
+          "z": -0.011617248454997502
+        },
+        "general_ai": {
+          "x": -0.01793996608364199,
+          "y": -0.015586290376570978,
+          "z": -0.0077869680024744755
+        },
+        "real_time_capabilities": {
+          "x": -0.013482957119598396,
+          "y": -0.03698225695543268,
+          "z": -0.014651853785514504
         },
         "science": {
-          "x": -0.012562762329185321,
-          "y": -0.03785541491084814,
-          "z": 0.008236914284290232
+          "x": -0.012745985690255021,
+          "y": -0.03244139626149592,
+          "z": -0.009509396247497026
         },
         "engineering": {
-          "x": -0.014672293006451663,
-          "y": -0.059008180897487064,
-          "z": -0.002412229522274413
+          "x": -0.014860487725919991,
+          "y": -0.049279510012290945,
+          "z": 0.0025160596111606834
         },
         "security": {
-          "x": -0.014128478910982225,
-          "y": -0.04873970692089408,
-          "z": -0.020276637273854342
+          "x": -0.013994457865222881,
+          "y": -0.04091388956544896,
+          "z": 0.019029317055945155
         },
         "trading": {
-          "x": -0.015167079905290204,
-          "y": -0.03852017466327736,
-          "z": 0.025606266709346435
+          "x": -0.014221809492650806,
+          "y": -0.031107758635172834,
+          "z": -0.02505063535785751
         },
         "mathematics": {
-          "x": -0.02028203360834994,
-          "y": -0.07147899151270125,
-          "z": 0.18564144954045325
+          "x": -0.020271746828412235,
+          "y": -0.05859020287343219,
+          "z": -0.16868550322607143
         },
         "military_defense": {
-          "x": -0.01586854251665203,
-          "y": -0.08059190646673203,
-          "z": -0.19816409822330647
+          "x": -0.016129538387799024,
+          "y": -0.06608212043301998,
+          "z": 0.21167151641759344
         },
         "psychology": {
-          "x": -0.18321858649951867,
-          "y": 0.2637654270963114,
-          "z": -0.007430017725824589
+          "x": -0.15728402803575317,
+          "y": 0.2863374826907603,
+          "z": 0.008749230773439738
         },
         "law": {
-          "x": 0.30134825420798894,
-          "y": 0.1398315042007947,
-          "z": -0.0014663624053057962
+          "x": 0.3184366871807158,
+          "y": 0.12206132893452049,
+          "z": 0.0019331323835615243
+        },
+        "robotics_mechatronics": {
+          "x": -0.010300165859881706,
+          "y": -0.02549520534416795,
+          "z": -0.002213682102712773
         }
       },
       "pca_explained_variance": [
-        0.20482937717476263,
-        0.18170330171088916,
-        0.12173430281880473
+        0.17993112568283892,
+        0.1602216180372247,
+        0.10476362042863058
       ]
     }
   }

@@ -59,7 +59,7 @@ export class DataIngestionPipeline {
         // Rate limiting
         await this.delay(1000 / this.config.dataSources.web.rateLimit);
       } catch (error) {
-        console.warn(`Failed to ingest from ${url}:`, error.message);
+        console.warn(`Failed to ingest from ${url}:`, error instanceof Error ? error.message : String(error));
       }
     }
   }
@@ -84,7 +84,7 @@ export class DataIngestionPipeline {
         await knowledgeAcquisition.acquireFromYouTube(videoId);
         await this.delay(2000); // Rate limiting
       } catch (error) {
-        console.warn(`Failed to ingest YouTube video ${videoId}:`, error.message);
+        console.warn(`Failed to ingest YouTube video ${videoId}:`, error instanceof Error ? error.message : String(error));
       }
     }
   }
@@ -114,7 +114,7 @@ export class DataIngestionPipeline {
         await knowledgeAcquisition.acquireFromWikipedia(topic);
         await this.delay(1000);
       } catch (error) {
-        console.warn(`Failed to ingest Wikipedia topic ${topic}:`, error.message);
+        console.warn(`Failed to ingest Wikipedia topic ${topic}:`, error instanceof Error ? error.message : String(error));
       }
     }
   }
@@ -138,7 +138,7 @@ export class DataIngestionPipeline {
         await knowledgeAcquisition.acquireFromWeb(url, 1);
         await this.delay(2000);
       } catch (error) {
-        console.warn(`Failed to ingest academic paper ${url}:`, error.message);
+        console.warn(`Failed to ingest academic paper ${url}:`, error instanceof Error ? error.message : String(error));
       }
     }
   }
@@ -161,7 +161,7 @@ export class DataIngestionPipeline {
         await knowledgeAcquisition.acquireFromWeb(url, 2);
         await this.delay(3000);
       } catch (error) {
-        console.warn(`Failed to ingest news from ${url}:`, error.message);
+        console.warn(`Failed to ingest news from ${url}:`, error instanceof Error ? error.message : String(error));
       }
     }
   }
@@ -173,6 +173,15 @@ export class DataIngestionPipeline {
 
   async searchKnowledge(query: string): Promise<any[]> {
     return await knowledgeAcquisition.searchKnowledge(query);
+  }
+
+  async ingestContent(content: string, metadata: Record<string, any> = {}): Promise<void> {
+    await knowledgeAcquisition.storeKnowledge({
+      source: "direct_input",
+      content,
+      metadata,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   async getLearnedResponse(query: string): Promise<string | null> {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
-import { useNavigation } from "../hooks/useNavigation";
-import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { useNavigation } from "../hooks/useNavigation.js";
+import { CyrusHumanoid } from "../components/CyrusHumanoid.js";
 import {
   MapPin,
   Navigation,

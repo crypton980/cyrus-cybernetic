@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { experienceMemory } from '../experience-memory';
+import { experienceMemory } from '../experience-memory.js';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,

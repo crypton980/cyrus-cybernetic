@@ -1,14 +1,18 @@
-import { localVision } from "./local-vision-client";
+import { localVision } from "./local-vision-client.js";
 
 const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 
 // Use local vision as primary, OpenAI as fallback
 const useLocalVision = process.env.USE_LOCAL_VISION !== 'false';
-const visionClient =
-  (!useLocalVision && openaiApiKey)
-    ? new (await import("openai")).default({ apiKey: openaiApiKey, baseURL: openaiBaseUrl })
-    : null;
+let visionClient: any = null;
+
+async function initVisionClient() {
+  if (!visionClient && !useLocalVision && openaiApiKey) {
+    const OpenAI = (await import("openai")).default;
+    visionClient = new OpenAI({ apiKey: openaiApiKey, baseURL: openaiBaseUrl });
+  }
+}
 
 export interface VisionResult {
   ocrText: string;
@@ -17,6 +21,9 @@ export interface VisionResult {
 }
 
 export async function visionOcr(buffer: Buffer): Promise<VisionResult> {
+  // Initialize vision client if needed
+  await initVisionClient();
+
   const warnings: string[] = [];
 
   // Try local vision first

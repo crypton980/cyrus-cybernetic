@@ -66,8 +66,10 @@ async function createJsonCompletionWithFallback(params: {
   }
 
   if (lastError) {
+    console.error('[Refinement Engine] All model candidates failed. Throwing last error.');
     throw lastError;
   }
+  console.warn('[Refinement Engine] No successful response received, returning empty object.');
   return {};
 }
 

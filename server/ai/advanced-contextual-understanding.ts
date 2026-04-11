@@ -3,8 +3,8 @@
  * Deep contextual analysis and understanding for human-like intelligence
  */
 
-import { knowledgeSynthesisEngine, type KnowledgeNode } from './knowledge-synthesis-engine';
-import { quantumCore, type QuantumProcessingResult } from './quantum-core';
+import { knowledgeSynthesisEngine, type KnowledgeNode } from './knowledge-synthesis-engine.js';
+import { quantumCore, type QuantumProcessingResult } from './quantum-core.js';
 import { localLLM } from './local-llm-client.js';
 
 export interface ContextLayer {

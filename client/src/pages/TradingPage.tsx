@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useTrading } from "../hooks/useTrading";
-import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { useTrading } from "../hooks/useTrading.js";
+import { CyrusHumanoid } from "../components/CyrusHumanoid.js";
 import {
   TrendingUp,
   Globe,

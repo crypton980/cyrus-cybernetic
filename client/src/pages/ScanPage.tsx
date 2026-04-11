@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { useScan } from "../hooks/useScan";
-import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { useScan } from "../hooks/useScan.js";
+import { CyrusHumanoid } from "../components/CyrusHumanoid.js";
 import {
   Camera,
   QrCode,

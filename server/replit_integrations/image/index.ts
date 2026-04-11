@@ -1,4 +1,4 @@
-export { registerImageRoutes } from "./routes";
+export { registerImageRoutes } from "./routes.js";
 export {
   openai,
   generateImage,
@@ -6,7 +6,7 @@ export {
   editImages,
   generateImageVariation,
   getImageCapabilities,
-} from "./client";
+} from "./client.js";
 export type {
   ImageSize,
   ImageQuality,
@@ -15,4 +15,4 @@ export type {
   ImageGenerationOptions,
   ImageGenerationResult,
   ImageVariationOptions,
-} from "./client";
+} from "./client.js";

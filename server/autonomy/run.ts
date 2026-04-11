@@ -1,11 +1,11 @@
-import { interpretIntent } from "./intent";
-import { decomposeIntent } from "./decompose";
-import { validatePlan } from "./validate";
-import { selectTools } from "./select-tools";
-import { executePlan } from "./execute";
-import { verifyExecution } from "./verify";
-import { buildReport } from "./report";
-import { AutonomyReport, IntentInput, DeviceAutonomyOptions } from "./types";
+import { interpretIntent } from "./intent.js";
+import { decomposeIntent } from "./decompose.js";
+import { validatePlan } from "./validate.js";
+import { selectTools } from "./select-tools.js";
+import { executePlan } from "./execute.js";
+import { verifyExecution } from "./verify.js";
+import { buildReport } from "./report.js";
+import { AutonomyReport, IntentInput, DeviceAutonomyOptions } from "./types.js";
 
 interface RunOptions {
   allowLiveTrading?: boolean;

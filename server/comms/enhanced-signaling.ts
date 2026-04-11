@@ -6,7 +6,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { IncomingMessage } from "http";
 import { v4 as uuid } from "uuid";
-import { enhancedCommunicationEngine } from "./enhanced-communication-engine";
+import { enhancedCommunicationEngine } from "./enhanced-communication-engine.js";
 
 interface ConnectedUser {
   id: string;
@@ -31,10 +31,10 @@ interface ConnectedUser {
 
 interface SignalingMessage {
   type: string;
-  from: string;
+  from?: string;
   to?: string;
   room?: string;
-  data: any;
+  data?: any;
   timestamp: number;
   international?: boolean;
   networkInfo?: any;

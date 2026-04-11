@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { droneController } from "../modules/drone-control";
+import { droneController } from "../modules/drone-control.js";
 
 export function registerDroneRoutes(app: Express) {
   // Get drone state/telemetry

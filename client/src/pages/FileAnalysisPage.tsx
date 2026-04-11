@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useFileAnalysis } from "../hooks/useFileAnalysis";
-import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { useFileAnalysis } from "../hooks/useFileAnalysis.js";
+import { CyrusHumanoid } from "../components/CyrusHumanoid.js";
 import {
   FileUp,
   FileText,
@@ -19,6 +19,21 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 
+interface ModuleStatus {
+  bridgeReachable: boolean;
+  documentsModuleAvailable: boolean;
+  legalEndpoint: string;
+  templates: string[];
+  statistics: {
+    total_processed?: number;
+    cache_size?: number;
+    knowledge_base_size?: number;
+    templates_available?: number;
+    interface_syncs?: number;
+  } | null;
+  error?: string;
+}
+
 export function FileAnalysisPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const visualRefInputRef = useRef<HTMLInputElement>(null);
@@ -34,8 +49,10 @@ export function FileAnalysisPage() {
   const [visualPrompt, setVisualPrompt] = useState("");
   const [visualReferenceFile, setVisualReferenceFile] = useState<File | null>(null);
   const [docPreviewMode, setDocPreviewMode] = useState<"layout" | "source">("layout");
-  const [jurisdiction, setJurisdiction] = useState("Global");
+  const [jurisdiction, setJurisdiction] = useState("Botswana");
   const [strictLegalReview, setStrictLegalReview] = useState(true);
+  const [moduleStatus, setModuleStatus] = useState<ModuleStatus | null>(null);
+  const [moduleStatusLoading, setModuleStatusLoading] = useState(false);
   const [leftPanePercent, setLeftPanePercent] = useState(42);
   const [draggingDivider, setDraggingDivider] = useState(false);
   const [copySummaryState, setCopySummaryState] = useState<"idle" | "copied" | "failed">("idle");
@@ -111,6 +128,40 @@ export function FileAnalysisPage() {
     onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    const loadModuleStatus = async () => {
+      setModuleStatusLoading(true);
+      try {
+        const res = await fetch("/api/files/module-status");
+        const data = await res.json();
+        if (!ignore) {
+          setModuleStatus(data as ModuleStatus);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setModuleStatus({
+            bridgeReachable: false,
+            documentsModuleAvailable: false,
+            legalEndpoint: "/legal/analyze",
+            templates: [],
+            statistics: null,
+            error: error instanceof Error ? error.message : "Failed to load module status",
+          });
+        }
+      } finally {
+        if (!ignore) {
+          setModuleStatusLoading(false);
+        }
+      }
+    };
+
+    void loadModuleStatus();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const copySummaryToClipboard = async () => {
@@ -248,7 +299,7 @@ export function FileAnalysisPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-      
+
       <div className="relative h-full p-4 md:p-6">
         <div className="h-full w-full max-w-[1600px] mx-auto flex flex-col min-h-0">
           <header className="flex items-center justify-between mb-6">
@@ -382,6 +433,7 @@ export function FileAnalysisPage() {
                       onChange={(e) => setJurisdiction(e.target.value)}
                       className="w-full bg-gray-800/50 text-white px-3 py-2 rounded-lg border border-gray-700/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
                     >
+                      <option value="Botswana">Botswana</option>
                       <option value="Global">Global</option>
                       <option value="South Africa">South Africa</option>
                       <option value="United States">United States</option>
@@ -416,6 +468,71 @@ export function FileAnalysisPage() {
                     <CheckCircle className="w-5 h-5 text-emerald-400" />
                   </div>
                 )}
+
+                <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-cyan-200 uppercase tracking-wider">Documents Module Integration</p>
+                      <p className="text-sm text-cyan-100">
+                        Existing documents UI refined to use the new legal analysis and bridge developments.
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setModuleStatusLoading(true);
+                        try {
+                          const res = await fetch("/api/files/module-status");
+                          const data = await res.json();
+                          setModuleStatus(data as ModuleStatus);
+                        } finally {
+                          setModuleStatusLoading(false);
+                        }
+                      }}
+                      className="px-3 py-1.5 text-xs rounded-lg bg-cyan-600/80 hover:bg-cyan-500 text-white"
+                    >
+                      {moduleStatusLoading ? "Refreshing..." : "Refresh Status"}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-cyan-700/30 bg-cyan-950/20 p-3">
+                      <p className="text-xs text-cyan-200/80">Bridge</p>
+                      <p className="text-sm font-medium text-white mt-1">
+                        {moduleStatus?.bridgeReachable ? "Reachable" : "Unavailable"}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-cyan-700/30 bg-cyan-950/20 p-3">
+                      <p className="text-xs text-cyan-200/80">Documents Module</p>
+                      <p className="text-sm font-medium text-white mt-1">
+                        {moduleStatus?.documentsModuleAvailable ? "Integrated" : "Not detected"}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-cyan-700/30 bg-cyan-950/20 p-3">
+                      <p className="text-xs text-cyan-200/80">Legal Endpoint</p>
+                      <p className="text-sm font-medium text-white mt-1">{moduleStatus?.legalEndpoint || "/legal/analyze"}</p>
+                    </div>
+                    <div className="rounded-lg border border-cyan-700/30 bg-cyan-950/20 p-3">
+                      <p className="text-xs text-cyan-200/80">Templates Available</p>
+                      <p className="text-sm font-medium text-white mt-1">
+                        {moduleStatus?.statistics?.templates_available ?? moduleStatus?.templates?.length ?? 0}
+                      </p>
+                    </div>
+                  </div>
+                  {moduleStatus?.templates && moduleStatus.templates.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {moduleStatus.templates.map((template) => (
+                        <span
+                          key={template}
+                          className="px-2.5 py-1 text-xs rounded-full bg-cyan-900/50 border border-cyan-700/40 text-cyan-100"
+                        >
+                          {template}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {moduleStatus?.error && (
+                    <p className="text-xs text-amber-300">Status note: {moduleStatus.error}</p>
+                  )}
+                </div>
 
                 {analysisError && (
                   <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
@@ -826,6 +943,7 @@ export function FileAnalysisPage() {
                       {[
                         ["summary", "Summary"],
                         ["knowledge", "Knowledge Lens"],
+                        ["entities", "Entities"],
                         ["citations", "Citations"],
                         ["interpretation", "Interpretation"],
                         ["findings", "Findings"],
@@ -954,6 +1072,23 @@ export function FileAnalysisPage() {
                                 <p className="text-sm text-violet-100 mt-1">"{citation.excerpt}"</p>
                                 <p className="text-xs text-violet-200 mt-2">{citation.rationale}</p>
                               </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {lastReport.analysis.entities && lastReport.analysis.entities.length > 0 && (
+                        <div id="entities" className="p-4 rounded-xl border border-sky-500/30 bg-sky-500/10 space-y-3 scroll-mt-20">
+                          <p className="text-xs text-sky-200 uppercase tracking-wider">Extracted Entities</p>
+                          <div className="flex flex-wrap gap-2">
+                            {lastReport.analysis.entities.map((entity, index) => (
+                              <span
+                                key={`${entity.type}-${entity.value}-${index}`}
+                                className="px-2.5 py-1.5 text-xs rounded-full bg-sky-950/40 border border-sky-700/40 text-sky-100"
+                              >
+                                <span className="font-semibold uppercase mr-1">{entity.type}:</span>
+                                {entity.value}
+                              </span>
                             ))}
                           </div>
                         </div>
@@ -1262,8 +1397,8 @@ export function FileAnalysisPage() {
                   <p className="text-xs text-gray-400 mb-4">
                     Ask CYRUS to help analyze documents, summarize content, or generate reports.
                   </p>
-                  <CyrusHumanoid 
-                    module="documents" 
+                  <CyrusHumanoid
+                    module="documents"
                     context={`User is analyzing documents. ${currentFile ? `Current file: ${currentFile.name}` : "No file uploaded"}`}
                   />
                 </div>

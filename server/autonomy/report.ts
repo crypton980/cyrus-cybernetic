@@ -1,4 +1,4 @@
-import { AutonomyReport, ExecutionResult, IntentResult, PlanStep, ToolSelection, ValidationResult, VerificationResult } from "./types";
+import { AutonomyReport, ExecutionResult, IntentResult, PlanStep, ToolSelection, ValidationResult, VerificationResult } from "./types.js";
 
 export function buildReport(
   intent: IntentResult,

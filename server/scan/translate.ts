@@ -52,8 +52,9 @@ export async function translateText(text: string, opts: TranslateOptions): Promi
     });
     const translated = resp.choices[0].message.content || "";
     return { translated, warnings };
-  } catch (err: any) {
-    warnings.push(`Translation failed: ${err?.message || err}`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    warnings.push(`Translation failed: ${message}`);
     return { translated: "", warnings };
   }
 }

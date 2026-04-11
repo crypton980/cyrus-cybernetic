@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { ElevationResult, GeocodingResult, PlaceResult } from "./types";
+import { ElevationResult, GeocodingResult, PlaceResult } from "./types.js";
 
 function getApiKey(): string {
   const key = process.env.GOOGLE_MAPS_API_KEY;

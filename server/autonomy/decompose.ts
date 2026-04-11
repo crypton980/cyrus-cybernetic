@@ -1,4 +1,4 @@
-import { IntentResult, PlanStep, RiskLevel } from "./types";
+import { IntentResult, PlanStep, RiskLevel } from "./types.js";
 
 function riskForAction(action: string): RiskLevel {
   if (action.includes("trade") || action.includes("device")) return "high";

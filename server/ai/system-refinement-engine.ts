@@ -1,7 +1,11 @@
 import OpenAI from "openai";
-import { db } from "../db";
+import { db } from "../db.js";
 import { knowledgeGraph, performanceMetrics, evolutionLog } from "../../shared/schema";
 import { desc, sql } from "drizzle-orm";
+
+function toDbNumeric(value: number): string {
+  return value.toString();
+}
 
 const FALLBACK_REFINEMENT_MODELS = ["gpt-4o", "gpt-4.1-mini", "gpt-4o-mini"];
 
@@ -267,7 +271,7 @@ Respond with JSON:
           relationships: { connections: concept.connections || [], description: concept.description },
           properties: { importance: concept.importance || 5, depth: "advanced" },
           source: "refinement_engine",
-          confidence: 90,
+          confidence: toDbNumeric(90),
         });
         conceptsAdded++;
         connectionsFormed += (concept.connections || []).length;

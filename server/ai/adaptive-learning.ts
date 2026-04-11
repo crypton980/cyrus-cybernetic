@@ -1,4 +1,4 @@
-import { experienceMemory, TaskExperience, KnowledgeConcept, EvolutionEvent } from './experience-memory';
+import { experienceMemory, TaskExperience, KnowledgeConcept, EvolutionEvent } from './experience-memory.js';
 
 export interface LearningContext {
   taskType: string;

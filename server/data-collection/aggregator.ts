@@ -1,7 +1,8 @@
-import { WebScraper, ScrapedData } from "./web-scraper";
-import { RSSAggregator, RSSItem } from "./rss-parser";
-import { KnowledgeBase } from "./knowledge-base";
-import { DataProcessor } from "./data-processor";
+import { WebScraper, ScrapedData } from "./web-scraper.js";
+export type { ScrapedData } from "./web-scraper.js";
+import { RSSAggregator, RSSItem } from "./rss-parser.js";
+import { KnowledgeBase } from "./knowledge-base.js";
+import { DataProcessor } from "./data-processor.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as crypto from "crypto";

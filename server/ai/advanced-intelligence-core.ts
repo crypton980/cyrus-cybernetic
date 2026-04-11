@@ -4,10 +4,10 @@
  * Makes CYRUS indistinguishable from human conversation
  */
 
-import { quantumCore, type QuantumProcessingResult } from './quantum-core';
+import { quantumCore, type QuantumProcessingResult } from './quantum-core.js';
 import { localLLM } from './local-llm-client.js';
-import { dataIngestionPipeline } from './data-ingestion-pipeline';
-import { quantumResponseFormatter } from './quantum-response-formatter';
+import { dataIngestionPipeline } from './data-ingestion-pipeline.js';
+import { quantumResponseFormatter } from './quantum-response-formatter.js';
 
 export interface HumanLikeContext {
   userPersonality: 'analytical' | 'creative' | 'practical' | 'emotional' | 'technical' | 'casual';

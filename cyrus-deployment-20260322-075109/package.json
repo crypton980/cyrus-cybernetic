@@ -1,0 +1,41 @@
+{
+  "name": "cyrus-ai-replit",
+  "version": "3.0.0",
+  "description": "CYRUS AI System with Replit AI Integrations",
+  "main": "simple_flask_server.py",
+  "scripts": {
+    "start": "python simple_flask_server.py",
+    "dev": "python simple_flask_server.py",
+    "deploy": "./deploy_replit.sh"
+  },
+  "keywords": [
+    "ai",
+    "super-intelligence",
+    "replit",
+    "replit-ai",
+    "chatbot",
+    "medical-ai",
+    "robotics"
+  ],
+  "author": "CYRUS Development Team",
+  "license": "MIT",
+  "engines": {
+    "python": "3.12.x"
+  },
+  "dependencies": {
+    "@azure/ai-form-recognizer": "^5.1.0",
+    "@azure/openai": "^2.0.0",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node-fetch": "^2.6.13",
+    "axios": "^1.13.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.1.1",
+    "node-fetch": "^3.3.2",
+    "openai": "^6.32.0",
+    "vite": "^8.0.1",
+    "zod": "^4.3.6"
+  }
+}

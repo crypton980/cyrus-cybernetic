@@ -1,0 +1,138 @@
+[
+  {
+    "input": "contract probe",
+    "latency": 123.4,
+    "confidence": 0.8,
+    "score": 0.8,
+    "status": "ok",
+    "timestamp": 1775785438.990925
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785438.7878861, 'detections': [{'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'timestamp': 1775785438.7878861}], 'tracks': [{'track_id': 1, 'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'last_seen': 1775785438.7879}], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785438.7879622}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.03, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785437.5851939}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785438.788059}}",
+    "latency": 267.407,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785439.056108
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785438.794442, 'detections': [], 'tracks': [{'track_id': 1, 'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'last_seen': 1775785438.7879}], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785438.794493}}}",
+    "latency": 270.799,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785439.0653172
+  },
+  {
+    "input": "audit me",
+    "latency": 148.636,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785439.173939
+  },
+  {
+    "input": "validate explanation",
+    "latency": 182.343,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785439.3717089
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785500.391726, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785500.391741}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.04, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785500.3862379}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785500.3918421}}",
+    "latency": 356.736,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785500.777292
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785500.408695, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785500.4138649}}}",
+    "latency": 363.842,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785500.777739
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785500.892003, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785500.892024}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.02, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785500.3862379}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785500.892119}}",
+    "latency": 138.991,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785501.0319202
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785501.395382, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785501.3955278}}}",
+    "latency": 293.34,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785501.6888819
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785501.395417, 'detections': [{'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'timestamp': 1775785501.395417}], 'tracks': [{'track_id': 1, 'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'last_seen': 1775785501.3954198}], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785501.3954382}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785500.3862379}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785501.395477}}",
+    "latency": 293.667,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785501.689609
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:swarm_target_detected]\n{'target_id': 'smoke-target-1', 'position': (37.77, -122.42), 'predicted': (37.77, -122.42), 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785500.3862379}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}}",
+    "latency": 282.54,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785501.69089
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785822.126627, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785822.132929}}}",
+    "latency": 388.813,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785822.521763
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785822.125052, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785822.125064}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785822.1181471}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785822.1251168}}",
+    "latency": 365.457,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785822.522399
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785822.6264331, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785822.626448}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785822.1181471}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785822.626508}}",
+    "latency": 133.648,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785822.760742
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785823.132811, 'detections': [{'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'timestamp': 1775785823.132811}], 'tracks': [{'track_id': 1, 'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'last_seen': 1775785823.1328151}], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785823.1328719}}}",
+    "latency": 296.528,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785823.4294221
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785823.1326468, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785823.1326542}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785822.1181471}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785823.13269}}",
+    "latency": 296.773,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785823.4299798
+  },
+  {
+    "input": "[EMBODIED_SIGNAL:swarm_target_detected]\n{'target_id': 'smoke-target-1', 'position': (37.77, -122.42), 'predicted': (37.77, -122.42), 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785822.1181471}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}}",
+    "latency": 282.92,
+    "confidence": 0.833,
+    "score": 0.833,
+    "status": "ok",
+    "timestamp": 1775785823.430568
+  }
+]

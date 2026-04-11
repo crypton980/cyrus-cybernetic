@@ -1,4 +1,4 @@
-import { getBestFix } from "./position";
+import { getBestFix } from "./position.js";
 
 interface ShareSession {
   token: string;

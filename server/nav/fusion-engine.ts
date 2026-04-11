@@ -1,5 +1,5 @@
-import { FusedPosition, PositionFix, ScoredFix } from "./types";
-import { updateGNSSStatus, getGNSSStatus } from "./satellite-tracker";
+import { FusedPosition, PositionFix, ScoredFix } from "./types.js";
+import { updateGNSSStatus, getGNSSStatus } from "./satellite-tracker.js";
 
 interface KalmanState {
   lat: number;

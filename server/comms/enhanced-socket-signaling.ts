@@ -6,7 +6,7 @@
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { Server as HTTPServer } from "http";
 import { v4 as uuid } from "uuid";
-import { enhancedCommunicationEngine } from "./enhanced-communication-engine";
+import { enhancedCommunicationEngine } from "./enhanced-communication-engine.js";
 
 interface EnhancedUser {
   id: string;

@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
-import { generateDocument, type GeneratedDoc } from "./generate";
-import type { DocGenInput } from "./analyze";
+import { generateDocument, type GeneratedDoc } from "./generate.js";
+import type { DocGenInput } from "./analyze.js";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 
@@ -121,17 +121,7 @@ async function runDocgenJob(id: string): Promise<void> {
   updateJob(id, { status: "running", progress: 8, stage: "Preparing generation" });
 
   try {
-    const result = await generateDocument(job.input, {
-      onProgress: (progress, stage) => {
-        const current = jobs.get(id);
-        if (!current || current.status !== "running") return;
-        updateJob(id, { progress, stage });
-      },
-      shouldCancel: () => {
-        const current = jobs.get(id);
-        return Boolean(current?.cancelRequested);
-      },
-    });
+    const result = await generateDocument(job.input);
 
     const current = jobs.get(id);
     if (current?.cancelRequested) {

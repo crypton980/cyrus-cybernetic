@@ -9,7 +9,7 @@ router.get('/status', (req, res) => {
     const status = cyrusBrain.getStatus();
     res.json(status);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -28,7 +28,7 @@ router.post('/ingest', async (req, res) => {
       res.status(400).json({ error: 'Invalid ingestion request' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -41,10 +41,10 @@ router.post('/search', async (req, res) => {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    const results = await dataIngestionPipeline.searchKnowledge(query, limit);
+    const results = await dataIngestionPipeline.searchKnowledge(query);
     res.json({ results });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -56,7 +56,7 @@ router.post('/learn', async (req, res) => {
     await cyrusBrain.learnFromInteraction(userInput, cyrusResponse, feedback);
     res.json({ message: 'Learning recorded successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -74,7 +74,7 @@ router.get('/stats', (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -90,7 +90,7 @@ router.post('/vision/analyze', async (req, res) => {
     const result = await cyrusBrain.processImage(image, analysisType);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -105,7 +105,7 @@ router.post('/vision/threats', async (req, res) => {
     const result = await cyrusBrain.detectThreats(image);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -120,7 +120,7 @@ router.post('/vision/situation', async (req, res) => {
     const result = await cyrusBrain.assessSituationalAwareness(image);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -136,7 +136,7 @@ router.post('/vision/live-feed', async (req, res) => {
     const result = await cyrusBrain.processLiveFeed(videoSource, duration);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -145,7 +145,7 @@ router.get('/vision/status', (req, res) => {
     const status = cyrusBrain.getVisionStatus();
     res.json(status);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -154,7 +154,7 @@ router.post('/vision/stop', (req, res) => {
     cyrusBrain.stopVisionProcessing();
     res.json({ message: 'Vision processing stopped' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 

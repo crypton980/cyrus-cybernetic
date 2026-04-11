@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { IntentInput, IntentResult } from "./types";
+import { IntentInput, IntentResult } from "./types.js";
 
 const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;

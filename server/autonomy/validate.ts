@@ -1,4 +1,4 @@
-import { PlanStep, ValidationResult } from "./types";
+import { PlanStep, ValidationResult } from "./types.js";
 
 interface ValidationContext {
   allowLiveTrading: boolean;

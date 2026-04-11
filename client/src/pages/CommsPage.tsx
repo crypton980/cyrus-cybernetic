@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useComms } from "../hooks/useComms";
-import { usePresence } from "../contexts/PresenceContext";
-import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { useComms } from "../hooks/useComms.js";
+import { usePresence } from "../contexts/PresenceContext.js";
+import { CyrusHumanoid } from "../components/CyrusHumanoid.js";
 import { Link } from "wouter";
 import {
   MessageSquare,

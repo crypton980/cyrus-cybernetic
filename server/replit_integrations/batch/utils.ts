@@ -1,5 +1,60 @@
-import pLimit from "p-limit";
-import pRetry, { AbortError } from "p-retry";
+class AbortError extends Error {
+  constructor(messageOrError: string | Error) {
+    super(messageOrError instanceof Error ? messageOrError.message : messageOrError);
+    this.name = "AbortError";
+  }
+}
+
+function pLimit(concurrency: number) {
+  let activeCount = 0;
+  const queue: Array<() => void> = [];
+
+  const next = () => {
+    activeCount--;
+    const run = queue.shift();
+    if (run) run();
+  };
+
+  return <T>(fn: () => Promise<T>) =>
+    new Promise<T>((resolve, reject) => {
+      const run = () => {
+        activeCount++;
+        fn().then(resolve, reject).finally(next);
+      };
+
+      if (activeCount < concurrency) run();
+      else queue.push(run);
+    });
+}
+
+async function pRetry<T>(
+  fn: () => Promise<T>,
+  options: {
+    retries: number;
+    minTimeout: number;
+    maxTimeout: number;
+    factor?: number;
+    onFailedAttempt?: (error: unknown) => void;
+  }
+): Promise<T> {
+  const factor = options.factor ?? 2;
+  let attempt = 0;
+  let delay = options.minTimeout;
+
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      options.onFailedAttempt?.(error);
+      if (error instanceof AbortError || attempt >= options.retries) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      delay = Math.min(options.maxTimeout, delay * factor);
+      attempt++;
+    }
+  }
+}
 
 /**
  * Batch Processing Utilities
@@ -10,7 +65,7 @@ import pRetry, { AbortError } from "p-retry";
  *
  * USAGE:
  * ```typescript
- * import { batchProcess, isRateLimitError } from "./replit_integrations/batch";
+ * import { batchProcess, isRateLimitError } from "./replit_integrations/batch.js";
  *
  * const results = await batchProcess(
  *   artworks,
@@ -154,7 +209,7 @@ export async function batchProcessWithSSE<T, R>(
           minTimeout,
           maxTimeout,
           factor: 2,
-          onFailedAttempt: (error) => {
+          onFailedAttempt: (error: unknown) => {
             if (!isRateLimitError(error)) {
               throw new AbortError(
                 error instanceof Error ? error : new Error(String(error))

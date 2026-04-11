@@ -1,11 +1,19 @@
 import OpenAI, { AzureOpenAI } from 'openai';
-import { DefaultAzureCredential } from '@azure/identity';
-import { experienceMemory, TaskExperience, KnowledgeConcept, EvolutionEvent } from '../experience-memory';
-import { vectorKnowledgeBase } from './vector-knowledge-base';
-import { quantumBridge } from '../quantum-bridge-client';
+import { experienceMemory, TaskExperience, KnowledgeConcept, EvolutionEvent } from '../experience-memory.js';
+import { vectorKnowledgeBase } from './vector-knowledge-base.js';
+import { quantumBridge } from '../quantum-bridge-client.js';
 import { db } from '../../db';
 import { knowledgeGraph, performanceMetrics, evolutionLog } from '../../../shared/schema';
 import { desc, sql } from 'drizzle-orm';
+
+function asNumber(value: string | number | null | undefined, fallback = 0): number {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
 
 const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
@@ -19,12 +27,7 @@ const openai = openaiApiKey && openaiBaseUrl
     ? new OpenAI({
       apiKey: openaiApiKey,
     })
-    : openaiBaseUrl
-      ? new AzureOpenAI({
-        endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
-      })
-      : null;
+    : null;
 
 export interface EvolutionMetrics {
   knowledgeGrowth: number;
@@ -222,8 +225,9 @@ export class SelfEvolutionEngine {
       const improvements: Record<string, number> = {};
 
       for (const metric of recentMetrics) {
-        if (metric.improvementRate && metric.improvementRate > 5) {
-          improvements[metric.taskCategory] = metric.improvementRate;
+        const improvementRate = asNumber(metric.improvementRate);
+        if (improvementRate > 5) {
+          improvements[metric.taskCategory] = improvementRate;
         }
       }
 

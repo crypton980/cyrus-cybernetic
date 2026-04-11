@@ -1,4 +1,4 @@
-import { PlanStep, ToolSelection } from "./types";
+import { PlanStep, ToolSelection } from "./types.js";
 
 export function selectTools(steps: PlanStep[]): ToolSelection[] {
   return steps.map((step) => {

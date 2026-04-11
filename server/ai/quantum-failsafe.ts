@@ -109,7 +109,7 @@ export class QuantumFailSafeArchitecture {
 
   private generateRecommendations(whatFailed: string[], failureReasons: string[]): string[] {
     const recommendations: string[] = [];
-    
+
     if (whatFailed.length === 0) {
       recommendations.push('All systems operational - no corrective action required');
       return recommendations;
@@ -165,7 +165,7 @@ export class QuantumFailSafeArchitecture {
         try {
           result = await secondaryOperation();
           whatWorked.push('Secondary classical processing fallback');
-          confidenceScore = 0.85;
+          confidenceScore = 0.85; // Reset confidence for successful secondary
         } catch (secondaryError: any) {
           whatFailed.push('Secondary classical processing fallback');
           failureReasons.push(secondaryError.message || 'Unknown secondary failure');
@@ -176,7 +176,7 @@ export class QuantumFailSafeArchitecture {
             try {
               result = await tertiaryOperation();
               whatWorked.push('Tertiary minimal processing fallback');
-              confidenceScore = 0.65;
+              confidenceScore = 0.65; // Reset confidence for successful tertiary
             } catch (tertiaryError: any) {
               whatFailed.push('Tertiary minimal processing fallback');
               failureReasons.push(tertiaryError.message || 'Unknown tertiary failure');
@@ -314,11 +314,11 @@ export interface MultimodalAnalysisResult {
 export async function analyzeMultimodalInput(input: MultimodalInput): Promise<MultimodalAnalysisResult> {
   const startTime = Date.now();
   const processingNotes: string[] = [];
-  
+
   processingNotes.push(`[${new Date().toISOString()}] Quantum signature analysis initiated`);
   processingNotes.push(`[QCFP] Input type detected: ${input.type}`);
   processingNotes.push(`[RSMNS] Engaging recursive self-modifying neural substrate`);
-  
+
   const result: MultimodalAnalysisResult = {
     inputType: input.type,
     detectedLanguages: ['en'],

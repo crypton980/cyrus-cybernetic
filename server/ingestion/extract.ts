@@ -1,7 +1,6 @@
-import { detectFile } from "./detect";
-import { ensureCompatibleFormat, speechToText } from "../replit_integrations/audio/client";
+import { detectFile } from "./detect.js";
+import { ensureCompatibleFormat, speechToText } from "../replit_integrations/audio/client.js";
 import { Buffer } from "node:buffer";
-import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 import fs from "fs/promises";
 import os from "os";
@@ -31,7 +30,9 @@ export interface ExtractionResult {
 
 async function extractTextDocument(buffer: Buffer, detectedMime?: string): Promise<string> {
   if (detectedMime === "application/pdf") {
-    const data = await pdfParse(buffer);
+    const pdfModule = await import("pdf-parse");
+    const parsePdf = (pdfModule as any).default ?? pdfModule;
+    const data = await parsePdf(buffer);
     return data.text || "";
   }
   if (detectedMime && detectedMime.includes("word")) {
@@ -105,8 +106,8 @@ async function extractVideoFrame(buffer: Buffer, seconds: number): Promise<Buffe
   } catch (err) {
     return null;
   } finally {
-    await fs.unlink(inputPath).catch(() => {});
-    await fs.unlink(outputPath).catch(() => {});
+    await fs.unlink(inputPath).catch(() => { });
+    await fs.unlink(outputPath).catch(() => { });
   }
 }
 

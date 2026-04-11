@@ -1,4 +1,4 @@
-import { PositionFix, ScoredFix } from "./types";
+import { PositionFix, ScoredFix } from "./types.js";
 
 let currentFix: PositionFix | null = null;
 

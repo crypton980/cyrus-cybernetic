@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useDrone } from '../hooks/useDrone';
-import { CyrusHumanoid } from '../components/CyrusHumanoid';
+import { useDrone } from '../hooks/useDrone.js';
+import { CyrusHumanoid } from '../components/CyrusHumanoid.js';
 import {
   Plane,
   Wifi,

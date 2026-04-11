@@ -13,9 +13,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import enhanced components
-import { enhancedCommunicationEngine } from "./enhanced-communication-engine";
-import { enhancedSignalingServer } from "./enhanced-signaling";
-import { EnhancedSocketSignalingServer } from "./enhanced-socket-signaling";
+import { enhancedCommunicationEngine } from "./enhanced-communication-engine.js";
+import { enhancedSignalingServer } from "./enhanced-signaling.js";
+import { EnhancedSocketSignalingServer } from "./enhanced-socket-signaling.js";
 
 class EnhancedCommunicationIntegration {
   private app: express.Application;
@@ -129,11 +129,11 @@ class EnhancedCommunicationIntegration {
         };
 
         res.json(health);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("[Integration] Health check error:", error);
         res.status(500).json({
           status: "unhealthy",
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         });
       }
     });
@@ -174,11 +174,11 @@ class EnhancedCommunicationIntegration {
           message: "Network optimization recommendations generated"
         });
 
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("[Integration] Network optimization error:", error);
         res.status(500).json({
           error: "Failed to optimize network",
-          details: error.message
+          details: error instanceof Error ? error.message : String(error)
         });
       }
     });
@@ -216,7 +216,7 @@ class EnhancedCommunicationIntegration {
         reject(new Error("ML Service startup timeout"));
       }, 30000);
 
-      this.mlServiceProcess.stdout.on("data", (data) => {
+      this.mlServiceProcess.stdout.on("data", (data: Buffer) => {
         const output = data.toString();
         console.log("[ML Service]", output.trim());
 
@@ -227,18 +227,18 @@ class EnhancedCommunicationIntegration {
         }
       });
 
-      this.mlServiceProcess.stderr.on("data", (data) => {
+      this.mlServiceProcess.stderr.on("data", (data: Buffer) => {
         console.error("[ML Service Error]", data.toString().trim());
       });
 
-      this.mlServiceProcess.on("close", (code) => {
+      this.mlServiceProcess.on("close", (code: number | null) => {
         if (code !== 0) {
           console.error(`[Integration] ML Service exited with code ${code}`);
           reject(new Error(`ML Service failed with code ${code}`));
         }
       });
 
-      this.mlServiceProcess.on("error", (error) => {
+      this.mlServiceProcess.on("error", (error: Error) => {
         console.error("[Integration] Failed to start ML Service:", error);
         reject(error);
       });

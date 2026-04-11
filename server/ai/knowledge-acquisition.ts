@@ -20,8 +20,9 @@ export class KnowledgeAcquisition {
         this.vectorDb = new ChromaClient();
         await this.vectorDb.heartbeat(); // Test connection
         console.log('[Knowledge Acquisition] ChromaDB connected successfully');
-      } catch (error) {
-        console.warn('[Knowledge Acquisition] ChromaDB connection failed, falling back to file-based storage:', error.message);
+      } catch (error: unknown) {
+        const detail = error instanceof Error ? error.message : String(error);
+        console.warn('[Knowledge Acquisition] ChromaDB connection failed, falling back to file-based storage:', detail);
         this.vectorDb = null; // Fallback to file-based
       }
     }
@@ -60,8 +61,9 @@ export class KnowledgeAcquisition {
             try {
               const subKnowledge = await this.acquireFromWeb(link, depth - 1);
               newKnowledge.push(...subKnowledge);
-            } catch (error) {
-              console.warn(`Failed to crawl ${link}:`, error.message);
+            } catch (error: unknown) {
+              const detail = error instanceof Error ? error.message : String(error);
+              console.warn(`Failed to crawl ${link}:`, detail);
             }
           }
         }
@@ -194,7 +196,7 @@ except Exception as e:
     return allowedDomains.some((domain: string) => url.includes(domain));
   }
 
-  private async storeKnowledge(knowledge: any): Promise<void> {
+  async storeKnowledge(knowledge: any): Promise<void> {
     if (knowledge.relevance < this.config.relevanceFilter.minRelevanceScore) {
       return; // Skip irrelevant knowledge
     }

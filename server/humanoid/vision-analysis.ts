@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { localVision } from "../scan/local-vision-client";
+import { localVision } from "../scan/local-vision-client.js";
 
 const router = Router();
 

@@ -1,0 +1,812 @@
+[
+  {
+    "mission_id": "e572df77-b188-468f-b839-7611cd06a437",
+    "objective": "audit me",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775733409.2054431
+  },
+  {
+    "mission_id": "8531fb5f-ff9b-4445-8d57-77881ea106a7",
+    "objective": "validate explanation",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775733409.35312
+  },
+  {
+    "mission_id": "20820c02-7e14-411b-8de9-abda495b55a9",
+    "objective": "Assess live signals",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "platform",
+    "updated_at": 1775733409.563066
+  },
+  {
+    "mission_id": "ef9f17e3-decd-4318-9520-590843e82225",
+    "objective": "Analyze system performance",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775733409.726656
+  },
+  {
+    "mission_id": "3fe0f90f-8209-4032-b850-f21c003f9cc2",
+    "objective": "audit me",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775733496.724235
+  },
+  {
+    "mission_id": "1b406d10-a09b-4bee-9558-4d79025d1e01",
+    "objective": "validate explanation",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775733496.8687239
+  },
+  {
+    "mission_id": "828d1b9a-752f-4677-bcd3-7c03d75ac91e",
+    "objective": "Assess live signals",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "platform",
+    "updated_at": 1775733497.1613078
+  },
+  {
+    "mission_id": "0ca3d91d-0122-439b-89f7-1ab46b5c37aa",
+    "objective": "Analyze system performance",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775733497.342133
+  },
+  {
+    "mission_id": "88c567b6-14e3-4ffc-811b-dc0c2c4b0d1d",
+    "objective": "Plan mission for delivery drone",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775733497.477907
+  },
+  {
+    "mission_id": "9bfa2098-70bb-41e6-bf6c-a6a4b7cdf9f5",
+    "objective": "Retrieve stored memory",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775733497.613378
+  },
+  {
+    "mission_id": "ee060311-2059-4b82-8219-b89c87760a96",
+    "objective": "audit me",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775757191.892202
+  },
+  {
+    "mission_id": "3f4b32a3-b234-4892-8a20-9361859e48fb",
+    "objective": "validate explanation",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775757192.0646012
+  },
+  {
+    "mission_id": "8adf9043-fec9-430f-b479-017bb2b41548",
+    "objective": "Assess live signals",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "platform",
+    "updated_at": 1775757192.2730749
+  },
+  {
+    "mission_id": "2e7b7c9c-8d6a-4f3c-8dc4-6490059878bb",
+    "objective": "Analyze system performance",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775757192.421911
+  },
+  {
+    "mission_id": "40dc5da5-0888-472c-a31f-7964cfb3e16b",
+    "objective": "Plan mission for delivery drone",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775757192.5692
+  },
+  {
+    "mission_id": "12a972be-30eb-4eca-87f1-84eaab7d6e00",
+    "objective": "Retrieve stored memory",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775757192.711974
+  },
+  {
+    "mission_id": "5a1acb10-a14e-4697-901d-f8f62a078eaf",
+    "objective": "audit me",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775759261.929746
+  },
+  {
+    "mission_id": "3ddfa54f-5081-4476-9edd-0bb28c124b20",
+    "objective": "validate explanation",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775759262.080849
+  },
+  {
+    "mission_id": "02078310-312d-4d7a-ba2e-21673a04baf0",
+    "objective": "audit me",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775759364.951833
+  },
+  {
+    "mission_id": "bf2cd93e-29fc-4286-9201-dcd78fcf7038",
+    "objective": "validate explanation",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775759365.145432
+  },
+  {
+    "mission_id": "6163c659-2fbe-460c-a050-7d287fb001e1",
+    "objective": "Assess live signals",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "platform",
+    "updated_at": 1775759365.352149
+  },
+  {
+    "mission_id": "52193026-6634-44ee-9772-5729f5668fc9",
+    "objective": "Analyze system performance",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775759365.4922051
+  },
+  {
+    "mission_id": "52684e47-3741-4f4d-a0be-bf031e62da32",
+    "objective": "Plan mission for delivery drone",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775759365.627103
+  },
+  {
+    "mission_id": "f8fffd27-61b3-4621-8d37-32590ac625d6",
+    "objective": "Retrieve stored memory",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775759365.7631629
+  },
+  {
+    "mission_id": "40d5659b-7549-43e3-ba33-e1d85f514e6b",
+    "objective": "audit me",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775763941.859571
+  },
+  {
+    "mission_id": "76851a1a-fe13-4e2f-bdc5-4b004f702b5a",
+    "objective": "validate explanation",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775763942.016449
+  },
+  {
+    "mission_id": "5220bcab-6baf-4406-8dba-de109092ec46",
+    "objective": "Assess live signals",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "platform",
+    "updated_at": 1775763942.2331688
+  },
+  {
+    "mission_id": "e36b85b7-a209-47e0-820e-17ed28d8e754",
+    "objective": "Analyze system performance",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775763942.375697
+  },
+  {
+    "mission_id": "a671b2d5-b058-4ca2-9a52-24374d1723ff",
+    "objective": "Plan mission for delivery drone",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775763942.512488
+  },
+  {
+    "mission_id": "0699f42e-e555-4006-85c8-ca8c3f71897f",
+    "objective": "Retrieve stored memory",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775763942.6496692
+  },
+  {
+    "mission_id": "d05e568d-007d-451f-871d-ba6c993e41d5",
+    "objective": "Assess live signals",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "platform",
+    "updated_at": 1775785438.274276
+  },
+  {
+    "mission_id": "9d0892d9-644b-4e95-9816-934a573f2a76",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785437.6004229, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785437.600438}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785437.5851939}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785437.600497}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785438.2796001
+  },
+  {
+    "mission_id": "90140c73-eeba-4e68-809e-e6862694380a",
+    "objective": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785437.605799, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785437.611182}}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785438.2797298
+  },
+  {
+    "mission_id": "98ab2dd3-07f7-44f9-a3ee-21a6cc74420e",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785438.287495, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785438.287504}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785437.5851939}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785438.287572}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785438.554013
+  },
+  {
+    "mission_id": "496a375c-7b6f-4580-9e63-21076ff9ddf4",
+    "objective": "Analyze system performance",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775785438.554682
+  },
+  {
+    "mission_id": "330aeca0-9d1b-4086-a439-78e848909bd8",
+    "objective": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785438.397503, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785438.397589}}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785438.660508
+  },
+  {
+    "mission_id": "d246f42e-5144-4034-a642-e544187d5ca7",
+    "objective": "Plan mission for delivery drone",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775785438.736598
+  },
+  {
+    "mission_id": "afcba77f-3845-436a-b3f8-f668cc267573",
+    "objective": "Retrieve stored memory",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775785438.9724128
+  },
+  {
+    "mission_id": "18b6792a-4965-4bcd-b162-dc938200e781",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785438.7878861, 'detections': [{'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'timestamp': 1775785438.7878861}], 'tracks': [{'track_id': 1, 'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'last_seen': 1775785438.7879}], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785438.7879622}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.03, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785437.5851939}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785438.788059}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785439.053987
+  },
+  {
+    "mission_id": "237948b6-4ac7-45b4-b114-86ca490ba4b6",
+    "objective": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785438.794442, 'detections': [], 'tracks': [{'track_id': 1, 'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'last_seen': 1775785438.7879}], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785438.794493}}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785439.054789
+  },
+  {
+    "mission_id": "8c4d4d39-bcab-44c4-94a8-d1b47c11c542",
+    "objective": "audit me",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775785439.17259
+  },
+  {
+    "mission_id": "75602be0-7c60-44cf-9d34-e78123fb4df8",
+    "objective": "validate explanation",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "system",
+    "updated_at": 1775785439.3619452
+  },
+  {
+    "mission_id": "193c7b66-06c4-4698-a07c-7efa01f56bf2",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785500.391726, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785500.391741}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.04, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785500.3862379}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785500.3918421}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785500.774606
+  },
+  {
+    "mission_id": "1bf62c03-e1d8-4276-adae-ba5fd9e0e843",
+    "objective": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785500.408695, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785500.4138649}}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785500.775481
+  },
+  {
+    "mission_id": "77bd13b7-5464-43c2-bffb-db580d68e080",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785500.892003, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785500.892024}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.02, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785500.3862379}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785500.892119}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785501.0300171
+  },
+  {
+    "mission_id": "60bdbd74-2de1-464b-b4df-7015982b69ba",
+    "objective": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785501.395382, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785501.3955278}}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785501.680379
+  },
+  {
+    "mission_id": "5e4607f5-b262-44ce-80d9-d589f3768861",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785501.395417, 'detections': [{'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'timestamp': 1775785501.395417}], 'tracks': [{'track_id': 1, 'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'last_seen': 1775785501.3954198}], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785501.3954382}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785500.3862379}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785501.395477}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785501.6812491
+  },
+  {
+    "mission_id": "e7f4c69c-310b-4a14-96fb-ab03dfbaad05",
+    "objective": "[EMBODIED_SIGNAL:swarm_target_detected]\n{'target_id': 'smoke-target-1', 'position': (37.77, -122.42), 'predicted': (37.77, -122.42), 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785500.3862379}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785501.6877198
+  },
+  {
+    "mission_id": "d88151cc-5870-448b-b817-f655b53b4af0",
+    "objective": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785822.126627, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785822.132929}}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785822.519265
+  },
+  {
+    "mission_id": "4232e4b8-8fdb-484a-bd5d-df60132c13a6",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785822.125052, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785822.125064}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785822.1181471}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785822.1251168}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785822.5201259
+  },
+  {
+    "mission_id": "709165bb-fb04-4ae9-af88-cafa13d18062",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785822.6264331, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785822.626448}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785822.1181471}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785822.626508}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785822.7588239
+  },
+  {
+    "mission_id": "123e9914-eda6-44b8-a5c4-ab4d5e669f88",
+    "objective": "[EMBODIED_SIGNAL:global_perception]\n{'world_state': {'perception': {'timestamp': 1775785823.132811, 'detections': [{'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'timestamp': 1775785823.132811}], 'tracks': [{'track_id': 1, 'label': 'person', 'confidence': 0.88, 'bbox': (100, 100, 80, 180), 'last_seen': 1775785823.1328151}], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785823.1328719}}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785823.420497
+  },
+  {
+    "mission_id": "c44cb4df-794d-47bf-8afc-2b66ef9ba198",
+    "objective": "[EMBODIED_SIGNAL:embodied_control]\n{'world_state': {'perception': {'timestamp': 1775785823.1326468, 'detections': [], 'tracks': [], 'simulation_mode': True}, 'telemetry': {'connected': True, 'armed': False, 'mode': 'simulation', 'lat': None, 'lon': None, 'alt': 0.0, 'battery_percent': None, 'simulation_mode': True, 'last_update': 1775785823.1326542}}, 'mission': {'active': False, 'goal': None, 'step_index': 0, 'total_steps': 0, 'last_result': None}, 'mission_result': {'status': 'idle', 'reason': 'no_active_goal'}, 'swarm_result': {'status': 'ok', 'duration_ms': 0.01, 'stale_drones': [], 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785822.1181471}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}, 'tracking': {'active_targets': 0}, 'pursuit': {'actions': [], 'count': 0}, 'nxi_map_version': 0, 'updated_at': 1775785823.13269}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785823.4216251
+  },
+  {
+    "mission_id": "dfda153e-6518-4fc2-9710-e1c9f4061bf1",
+    "objective": "[EMBODIED_SIGNAL:swarm_target_detected]\n{'target_id': 'smoke-target-1', 'position': (37.77, -122.42), 'predicted': (37.77, -122.42), 'swarm': {'registered': 1, 'online': 1, 'busy': 0, 'queued_tasks': 0, 'drones': {'drone-1': {'status': 'idle', 'position': None, 'task': None, 'battery': 100.0, 'health': 'online', 'last_seen': 1775785822.1181471}}, 'formation': {'pattern': 'none', 'anchor': None, 'members': {}}, 'last_assignment': None}}",
+    "metadata": {
+      "plan": [
+        "analyze objective",
+        "retrieve intelligence",
+        "execute action",
+        "evaluate outcome"
+      ]
+    },
+    "status": "running",
+    "initiated_by": "embodied-core",
+    "updated_at": 1775785823.4283159
+  }
+]

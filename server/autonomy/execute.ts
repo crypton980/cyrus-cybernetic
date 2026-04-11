@@ -1,5 +1,5 @@
-import { ExecutionResult, PlanStep, ToolSelection, DeviceAutonomyOptions } from "./types";
-import { executeDeviceCommand } from "../device/controller";
+import { ExecutionResult, PlanStep, ToolSelection, DeviceAutonomyOptions } from "./types.js";
+import { executeDeviceCommand } from "../device/controller.js";
 
 interface ExecuteOptions {
   simulateTrading?: boolean;

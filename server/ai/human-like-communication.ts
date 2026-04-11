@@ -3,7 +3,7 @@
  * Makes CYRUS responses indistinguishable from human conversation
  */
 
-import { HumanLikeContext } from './advanced-intelligence-core';
+import { HumanLikeContext } from './advanced-intelligence-core.js';
 
 export interface CommunicationPattern {
   pattern: string;
@@ -368,7 +368,13 @@ class NaturalLanguagePatterns {
     const flow = this.conversationalFlows.get(context.conversationStyle);
     if (!flow) return '';
 
-    const elements = flow[type];
+    const mappedType: keyof ConversationalFlow =
+      type === 'transition' ? 'transitions' :
+      type === 'closing' ? 'closings' :
+      type === 'filler' ? 'fillers' :
+      type;
+
+    const elements = flow[mappedType];
     if (!elements || elements.length === 0) return '';
 
     // Add some randomness - sometimes don't use elements
@@ -443,7 +449,7 @@ class NaturalLanguagePatterns {
       }
     }
 
-    if (context.emotionalState === 'happy') {
+    if (context.emotionalState === 'excited') {
       const enthusiasmPattern = this.getRandomPattern('enthusiasm', context);
       if (enthusiasmPattern && Math.random() > 0.8) {
         humanized = `${enthusiasmPattern} ${humanized}`;
@@ -641,7 +647,7 @@ class ContextualResponseGenerator {
 
   addConversationalContinuity(
     response: string,
-    conversationHistory: Array<{input: string, response: string}>,
+    conversationHistory: Array<{ input: string, response: string }>,
     context: HumanLikeContext
   ): string {
     if (conversationHistory.length === 0) return response;
@@ -727,7 +733,7 @@ export class HumanLikeCommunicationSystem {
     baseResponse: string,
     intent: string,
     context: HumanLikeContext,
-    conversationHistory: Array<{input: string, response: string}>,
+    conversationHistory: Array<{ input: string, response: string }>,
     userId: string = 'default'
   ): Promise<string> {
 
@@ -863,6 +869,7 @@ export class HumanLikeCommunicationSystem {
 
     return recommendations;
   }
+}
 
 // Export singleton instance
 export const humanLikeCommunicationSystem = new HumanLikeCommunicationSystem();

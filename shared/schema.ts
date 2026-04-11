@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, jsonb, integer, boolean as pgBoolean, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,7 +8,7 @@ export const conversations = pgTable("conversations", {
   userId: varchar("user_id"),
   role: text("role").notNull(), // "user" | "cyrus"
   content: text("content").notNull(),
-  hasImage: integer("has_image").default(0), // 0 or 1 as boolean
+  hasImage: pgBoolean("has_image").default(false),
   imageData: text("image_data"),
   detectedObjects: jsonb("detected_objects"), // Array of detected objects
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -53,7 +53,7 @@ export const knowledgeGraph = pgTable("knowledge_graph", {
   domain: text("domain").notNull(),
   relationships: jsonb("relationships"),
   properties: jsonb("properties"),
-  confidence: integer("confidence").default(100),
+  confidence: numeric("confidence", { precision: 5, scale: 2 }).default("100"),
   source: text("source"),
   learnedAt: timestamp("learned_at").defaultNow().notNull(),
   lastAccessed: timestamp("last_accessed").defaultNow().notNull(),
@@ -64,11 +64,11 @@ export const performanceMetrics = pgTable("performance_metrics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   metricType: text("metric_type").notNull(),
   taskCategory: text("task_category").notNull(),
-  averageTimeMs: integer("average_time_ms").notNull(),
-  bestTimeMs: integer("best_time_ms"),
-  improvementRate: integer("improvement_rate").default(0),
+  averageTimeMs: numeric("average_time_ms", { precision: 12, scale: 2 }).notNull(),
+  bestTimeMs: numeric("best_time_ms", { precision: 12, scale: 2 }),
+  improvementRate: numeric("improvement_rate", { precision: 8, scale: 4 }).default("0"),
   totalExecutions: integer("total_executions").default(1),
-  successRate: integer("success_rate").default(100),
+  successRate: numeric("success_rate", { precision: 5, scale: 2 }).default("100"),
   lastUpdated: timestamp("last_updated").defaultNow().notNull(),
 });
 
@@ -94,7 +94,7 @@ export const healthDeviceConnections = pgTable("health_device_connections", {
   deviceId: text("device_id"),
   deviceName: text("device_name"),
   lastSync: timestamp("last_sync"),
-  isActive: integer("is_active").default(1),
+  isActive: pgBoolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -123,7 +123,7 @@ export const healthActivity = pgTable("health_activity", {
   steps: integer("steps"),
   activeMinutes: integer("active_minutes"),
   caloriesBurned: integer("calories_burned"),
-  distance: integer("distance"),
+  distance: numeric("distance", { precision: 12, scale: 3 }),
   floors: integer("floors"),
   workoutType: text("workout_type"),
   workoutDuration: integer("workout_duration"),
@@ -152,12 +152,12 @@ export const healthBodyMetrics = pgTable("health_body_metrics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
   provider: text("provider").notNull(),
-  weight: integer("weight"),
-  bodyFat: integer("body_fat"),
-  muscleMass: integer("muscle_mass"),
-  boneMass: integer("bone_mass"),
-  bmi: integer("bmi"),
-  hydration: integer("hydration"),
+  weight: numeric("weight", { precision: 8, scale: 2 }),
+  bodyFat: numeric("body_fat", { precision: 5, scale: 2 }),
+  muscleMass: numeric("muscle_mass", { precision: 8, scale: 2 }),
+  boneMass: numeric("bone_mass", { precision: 8, scale: 2 }),
+  bmi: numeric("bmi", { precision: 5, scale: 2 }),
+  hydration: numeric("hydration", { precision: 5, scale: 2 }),
   recordedAt: timestamp("recorded_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -264,12 +264,12 @@ export type HealthBodyMetrics = typeof healthBodyMetrics.$inferSelect;
 export const locationRecords = pgTable("location_records", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
-  latitude: text("latitude").notNull(),
-  longitude: text("longitude").notNull(),
-  accuracy: text("accuracy").default("10"),
-  altitude: text("altitude"),
-  speed: text("speed"),
-  heading: text("heading"),
+  latitude: numeric("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: numeric("longitude", { precision: 10, scale: 7 }).notNull(),
+  accuracy: numeric("accuracy", { precision: 10, scale: 3 }).default("10"),
+  altitude: numeric("altitude", { precision: 10, scale: 3 }),
+  speed: numeric("speed", { precision: 10, scale: 3 }),
+  heading: numeric("heading", { precision: 10, scale: 3 }),
   address: text("address"),
   locationName: text("location_name"),
   source: text("source").default("manual"),
@@ -283,8 +283,8 @@ export const emergencyAlerts = pgTable("emergency_alerts", {
   userName: text("user_name").default("Unknown"),
   level: text("level").notNull(),
   message: text("message").notNull(),
-  latitude: text("latitude").notNull(),
-  longitude: text("longitude").notNull(),
+  latitude: numeric("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: numeric("longitude", { precision: 10, scale: 7 }).notNull(),
   status: text("status").default("active"),
   respondersAssigned: jsonb("responders_assigned"),
   contactInfo: jsonb("contact_info"),
@@ -299,7 +299,7 @@ export const locationShares = pgTable("location_shares_v2", {
   sharedWithId: text("shared_with_id"),
   sharedWithEmail: text("shared_with_email"),
   permissionLevel: text("permission_level").default("view_only"),
-  isActive: integer("is_active").default(1),
+  isActive: pgBoolean("is_active").default(true),
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -309,14 +309,60 @@ export const trackedUsers = pgTable("tracked_users", {
   userId: varchar("user_id").notNull(),
   userName: text("user_name").notNull(),
   role: text("role").default("user"),
-  lastLat: text("last_lat"),
-  lastLon: text("last_lon"),
-  lastAccuracy: text("last_accuracy"),
-  lastSpeed: text("last_speed"),
-  lastHeading: text("last_heading"),
+  lastLat: numeric("last_lat", { precision: 10, scale: 7 }),
+  lastLon: numeric("last_lon", { precision: 10, scale: 7 }),
+  lastAccuracy: numeric("last_accuracy", { precision: 10, scale: 3 }),
+  lastSpeed: numeric("last_speed", { precision: 10, scale: 3 }),
+  lastHeading: numeric("last_heading", { precision: 10, scale: 3 }),
   lastAddress: text("last_address"),
   status: text("status").default("active"),
   lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const apiKeys = pgTable("api_keys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  provider: text("provider").notNull(),
+  keyName: text("key_name").notNull(),
+  ciphertext: text("ciphertext").notNull(),
+  iv: text("iv").notNull(),
+  authTag: text("auth_tag").notNull(),
+  metadata: jsonb("metadata"),
+  createdBy: varchar("created_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const decisionLogs = pgTable("decision_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  source: text("source").notNull(),
+  decisionType: text("decision_type").notNull(),
+  input: text("input").notNull(),
+  output: text("output").notNull(),
+  confidence: numeric("confidence", { precision: 5, scale: 2 }).default("0"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const missionLogs = pgTable("mission_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  missionId: varchar("mission_id").notNull(),
+  userId: varchar("user_id"),
+  status: text("status").notNull(),
+  summary: text("summary").notNull(),
+  details: jsonb("details"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const trainingRuns = pgTable("training_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  initiatedBy: varchar("initiated_by"),
+  sourceType: text("source_type").notNull(),
+  itemCount: integer("item_count").default(0).notNull(),
+  status: text("status").notNull(),
+  summary: text("summary"),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -324,6 +370,10 @@ export const insertLocationRecordSchema = createInsertSchema(locationRecords).om
 export const insertEmergencyAlertSchema = createInsertSchema(emergencyAlerts).omit({ id: true, createdAt: true });
 export const insertLocationShareSchema = createInsertSchema(locationShares).omit({ id: true, createdAt: true });
 export const insertTrackedUserSchema = createInsertSchema(trackedUsers).omit({ id: true, createdAt: true, lastUpdated: true });
+export const insertApiKeySchema = createInsertSchema(apiKeys).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDecisionLogSchema = createInsertSchema(decisionLogs).omit({ id: true, createdAt: true });
+export const insertMissionLogSchema = createInsertSchema(missionLogs).omit({ id: true, createdAt: true });
+export const insertTrainingRunSchema = createInsertSchema(trainingRuns).omit({ id: true, createdAt: true });
 
 export type InsertLocationRecord = z.infer<typeof insertLocationRecordSchema>;
 export type LocationRecord = typeof locationRecords.$inferSelect;
@@ -333,6 +383,14 @@ export type InsertLocationShare = z.infer<typeof insertLocationShareSchema>;
 export type LocationShareRecord = typeof locationShares.$inferSelect;
 export type InsertTrackedUser = z.infer<typeof insertTrackedUserSchema>;
 export type TrackedUser = typeof trackedUsers.$inferSelect;
+export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+export type ApiKeyRecord = typeof apiKeys.$inferSelect;
+export type InsertDecisionLog = z.infer<typeof insertDecisionLogSchema>;
+export type DecisionLog = typeof decisionLogs.$inferSelect;
+export type InsertMissionLog = z.infer<typeof insertMissionLogSchema>;
+export type MissionLog = typeof missionLogs.$inferSelect;
+export type InsertTrainingRun = z.infer<typeof insertTrainingRunSchema>;
+export type TrainingRun = typeof trainingRuns.$inferSelect;
 
-export * from "./models/auth";
-export * from "./models/comms";
+export * from "./models/auth.js";
+export * from "./models/comms.js";

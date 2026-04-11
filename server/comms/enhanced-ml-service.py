@@ -5,12 +5,11 @@ Advanced machine learning service for communication intelligence
 with international calling and cross-network analysis capabilities
 """
 
-import json
 import time
 import threading
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Tuple, TypedDict
+from typing import Dict, List, Any, Optional, TypedDict
 from collections import defaultdict, deque
 import numpy as np
 import sys
@@ -26,6 +25,7 @@ class UserPattern(TypedDict):
     international_communication: List[Dict[str, Any]]
     communication_times: List[datetime]
     network_performance: List[float]
+    communication_style: Dict[str, Any]
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -39,18 +39,14 @@ try:
     from sklearn.cluster import KMeans
     from sklearn.preprocessing import StandardScaler
     import joblib
-    import pandas as pd
     from textblob import TextBlob
-    import spacy
-    import requests
 except ImportError as e:
     print(f"Missing required packages: {e}")
     print("Installing required packages...")
     import subprocess
     subprocess.check_call([sys.executable, "-m", "pip", "install",
                           "flask", "flask-cors", "nltk", "scikit-learn",
-                          "joblib", "pandas", "textblob", "spacy",
-                          "requests"])
+                          "joblib", "textblob"])
     # Retry imports
     from flask import Flask, request, jsonify
     from flask_cors import CORS
@@ -60,10 +56,7 @@ except ImportError as e:
     from sklearn.cluster import KMeans
     from sklearn.preprocessing import StandardScaler
     import joblib
-    import pandas as pd
     from textblob import TextBlob
-    import spacy
-    import requests
 
 # Configure logging
 logging.basicConfig(
@@ -106,7 +99,8 @@ class EnhancedMLService:
             network_patterns={},
             international_communication=[],
             communication_times=[],
-            network_performance=[]
+            network_performance=[],
+            communication_style={}
         ))
 
         self.network_analysis = defaultdict(lambda: {
@@ -487,10 +481,9 @@ class EnhancedMLService:
             avg_bandwidth = np.mean(network_analysis['bandwidth_usage'])
 
             quality_stability = np.std(network_analysis['quality_metrics'])
-            latency_stability = np.std(network_analysis['latency_patterns'])
 
             # Network health assessment
-            health_score = self.calculate_network_health(avg_quality, avg_latency, quality_stability)
+            health_score = self.calculate_network_health(float(avg_quality), float(avg_latency), float(quality_stability))
 
             # Optimization recommendations
             recommendations = []
@@ -563,7 +556,7 @@ class EnhancedMLService:
                     'avg_sentiment': round(sentiment_avg, 3),
                     'common_topics': common_topics,
                     'peak_communication_hours': peak_hours,
-                    'network_performance_avg': round(np.mean(country_data['network_performance']), 1) if country_data['network_performance'] else 0
+                    'network_performance_avg': round(float(np.mean(country_data['network_performance'])), 1) if country_data['network_performance'] else 0
                 }
 
             # Cross-country analysis
@@ -830,25 +823,25 @@ class EnhancedMLService:
 
         return insights
 
-    def analyze_active_hours(self, user_pattern: Dict) -> List[int]:
+    def analyze_active_hours(self, user_pattern: UserPattern) -> List[int]:
         """Analyze user's active communication hours"""
         # Simplified implementation
         return [9, 14, 19]  # Default active hours
 
-    def calculate_consistency_score(self, user_pattern: Dict) -> float:
+    def calculate_consistency_score(self, user_pattern: UserPattern) -> float:
         """Calculate communication consistency score"""
         if not user_pattern['sentiment_history']:
             return 0.0
 
         sentiment_std = np.std(user_pattern['sentiment_history'])
-        return max(0, 1.0 - sentiment_std)  # Lower variance = higher consistency
+        return float(max(0, 1.0 - sentiment_std))  # Lower variance = higher consistency
 
-    def calculate_adaptability_score(self, user_pattern: Dict) -> float:
+    def calculate_adaptability_score(self, user_pattern: UserPattern) -> float:
         """Calculate communication adaptability score"""
         network_types = len(user_pattern['network_patterns'])
         return min(1.0, network_types / 5.0)  # More networks = higher adaptability
 
-    def calculate_engagement_level(self, user_pattern: Dict) -> str:
+    def calculate_engagement_level(self, user_pattern: UserPattern) -> str:
         """Calculate user engagement level"""
         message_count = user_pattern['message_count']
 
@@ -861,7 +854,7 @@ class EnhancedMLService:
         else:
             return 'low'
 
-    def analyze_network_preferences(self, user_pattern: Dict) -> List[str]:
+    def analyze_network_preferences(self, user_pattern: UserPattern) -> List[str]:
         """Analyze user's network preferences"""
         network_usage = {}
         for network_type, data in user_pattern['network_patterns'].items():
@@ -869,7 +862,7 @@ class EnhancedMLService:
 
         return sorted(network_usage.keys(), key=lambda n: network_usage[n], reverse=True)
 
-    def calculate_quality_tolerance(self, user_pattern: Dict) -> str:
+    def calculate_quality_tolerance(self, user_pattern: UserPattern) -> str:
         """Calculate user's quality tolerance"""
         # Simplified implementation
         return 'medium'

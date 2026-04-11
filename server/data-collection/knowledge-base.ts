@@ -1,4 +1,4 @@
-import { ScrapedData, AggregatedData } from "./aggregator";
+import { ScrapedData, AggregatedData } from "./aggregator.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as crypto from "crypto";

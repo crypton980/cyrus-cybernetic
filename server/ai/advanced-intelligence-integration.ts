@@ -3,12 +3,12 @@
  * Unified integration of all advanced AI capabilities for human-like intelligence
  */
 
-import { advancedIntelligenceCore, type IntelligenceAnalysis } from './advanced-intelligence-core';
-import { humanLikeCommunicationSystem, type CommunicationAnalysis } from './human-like-communication';
-import { knowledgeSynthesisEngine, type SynthesisResult } from './knowledge-synthesis-engine';
-import { advancedContextualUnderstanding, type ConversationContext } from './advanced-contextual-understanding';
-import { quantumCore, type QuantumProcessingResult } from './quantum-core';
-import { quantumResponseFormatter } from './quantum-response-formatter';
+import { advancedIntelligenceCore, type IntelligenceAnalysis } from './advanced-intelligence-core.js';
+import { humanLikeCommunicationSystem, type CommunicationAnalysis } from './human-like-communication.js';
+import { knowledgeSynthesisEngine, type SynthesisResult } from './knowledge-synthesis-engine.js';
+import { advancedContextualUnderstanding, type ConversationContext } from './advanced-contextual-understanding.js';
+import { quantumCore, type QuantumProcessingResult } from './quantum-core.js';
+import { quantumResponseFormatter } from './quantum-response-formatter.js';
 import { localLLM } from './local-llm-client.js';
 
 export interface IntegratedIntelligenceRequest {
@@ -137,7 +137,7 @@ class IntelligenceOrchestrator {
   }
 
   private async processCommunicationAnalysis(request: IntegratedIntelligenceRequest): Promise<CommunicationAnalysis> {
-    return await humanLikeCommunication.analyzeCommunication(request.message, {
+    return await humanLikeCommunicationSystem.analyzeCommunication(request.message, {
       userId: request.userId,
       context: request.context?.previousMessages
     });

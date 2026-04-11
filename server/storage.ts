@@ -8,9 +8,10 @@ import {
   type InsertMemory,
   type UploadedFile,
   type InsertUploadedFile 
-} from "../shared/schema";
-import { db } from "./db";
+} from "../shared/schema.js";
+import { db } from "./db.js";
 import { eq, desc } from "drizzle-orm";
+import { memoryService } from "./intelligence/memory-service.js";
 
 export interface IStorage {
   // Conversations
@@ -47,6 +48,19 @@ export class DatabaseStorage implements IStorage {
       .insert(conversations)
       .values(insertConversation)
       .returning();
+
+    void memoryService.recordConversation({
+      userId: conversation.userId ?? null,
+      role: conversation.role,
+      content: conversation.content,
+      metadata: {
+        conversationId: conversation.id,
+        hasImage: conversation.hasImage,
+      },
+    }).catch((error) => {
+      console.warn("[Memory] Failed to mirror conversation into intelligence memory:", error);
+    });
+
     return conversation;
   }
 

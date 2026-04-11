@@ -1,17 +1,17 @@
-export { vectorKnowledgeBase, type VectorDocument, type SemanticSearchResult, type RAGContext } from './vector-knowledge-base';
-export { emotionalCognition, type EmotionState, type SentimentAnalysis, type EmotionalContext, type CrisisIndicators } from './emotional-cognition';
-export { universalLanguage, type LanguageDetection, type TranslationResult, type MultilingualContext } from './universal-language';
-export { decentralizedIntelligence, type DistributedTask, type TaskResult, type WorkerNode, type ClusterStats } from './decentralized-intelligence';
-export { ethicalGovernance, type EthicalAssessment, type ContentModerationResult, type EthicalConcern } from './ethical-governance';
-export { selfEvolution, type EvolutionMetrics, type KnowledgeSynthesis, type MetaLearningInsight } from './self-evolution-enhanced';
+export { vectorKnowledgeBase, type VectorDocument, type SemanticSearchResult, type RAGContext } from './vector-knowledge-base.js';
+export { emotionalCognition, type EmotionState, type SentimentAnalysis, type EmotionalContext, type CrisisIndicators } from './emotional-cognition.js';
+export { universalLanguage, type LanguageDetection, type TranslationResult, type MultilingualContext } from './universal-language.js';
+export { decentralizedIntelligence, type DistributedTask, type TaskResult, type WorkerNode, type ClusterStats } from './decentralized-intelligence.js';
+export { ethicalGovernance, type EthicalAssessment, type ContentModerationResult, type EthicalConcern } from './ethical-governance.js';
+export { selfEvolution, type EvolutionMetrics, type KnowledgeSynthesis, type MetaLearningInsight } from './self-evolution-enhanced.js';
 
-export { quantumNeuralNetworks } from './quantum-neural-networks';
-export { aiSimulationsEngine } from './ai-simulations-engine';
-export { crossDimensionalAI } from './cross-dimensional-ai';
-export { nanotechnologySimulation } from './nanotechnology-simulation';
-export { hyperlinkedReality } from './hyperlinked-reality';
-export { bioNeuralInterface } from './bio-neural-interface';
-export { adaptiveHardwareController } from './adaptive-hardware-controller';
+export { quantumNeuralNetworks } from './quantum-neural-networks.js';
+export { aiSimulationsEngine } from './ai-simulations-engine.js';
+export { crossDimensionalAI } from './cross-dimensional-ai.js';
+export { nanotechnologySimulation } from './nanotechnology-simulation.js';
+export { hyperlinkedReality } from './hyperlinked-reality.js';
+export { bioNeuralInterface } from './bio-neural-interface.js';
+export { adaptiveHardwareController } from './adaptive-hardware-controller.js';
 
 export interface AdvancedUpgradesStatus {
   vectorKnowledgeBase: {
@@ -90,19 +90,19 @@ export interface AdvancedUpgradesStatus {
   };
 }
 
-import { vectorKnowledgeBase } from './vector-knowledge-base';
-import { emotionalCognition } from './emotional-cognition';
-import { universalLanguage } from './universal-language';
-import { decentralizedIntelligence } from './decentralized-intelligence';
-import { ethicalGovernance } from './ethical-governance';
-import { selfEvolution } from './self-evolution-enhanced';
-import { quantumNeuralNetworks } from './quantum-neural-networks';
-import { aiSimulationsEngine } from './ai-simulations-engine';
-import { crossDimensionalAI } from './cross-dimensional-ai';
-import { nanotechnologySimulation } from './nanotechnology-simulation';
-import { hyperlinkedReality } from './hyperlinked-reality';
-import { bioNeuralInterface } from './bio-neural-interface';
-import { adaptiveHardwareController } from './adaptive-hardware-controller';
+import { vectorKnowledgeBase } from './vector-knowledge-base.js';
+import { emotionalCognition } from './emotional-cognition.js';
+import { universalLanguage } from './universal-language.js';
+import { decentralizedIntelligence } from './decentralized-intelligence.js';
+import { ethicalGovernance } from './ethical-governance.js';
+import { selfEvolution } from './self-evolution-enhanced.js';
+import { quantumNeuralNetworks } from './quantum-neural-networks.js';
+import { aiSimulationsEngine } from './ai-simulations-engine.js';
+import { crossDimensionalAI } from './cross-dimensional-ai.js';
+import { nanotechnologySimulation } from './nanotechnology-simulation.js';
+import { hyperlinkedReality } from './hyperlinked-reality.js';
+import { bioNeuralInterface } from './bio-neural-interface.js';
+import { adaptiveHardwareController } from './adaptive-hardware-controller.js';
 
 export function getAdvancedUpgradesStatus(): AdvancedUpgradesStatus {
   const vkbStats = vectorKnowledgeBase.getStats();

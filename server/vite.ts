@@ -9,6 +9,10 @@ import { nanoid } from "nanoid";
 const viteLogger = createLogger();
 
 export async function setupVite(server: Server, app: Express) {
+  const viteRoot = viteConfig.root
+    ? path.resolve(String(viteConfig.root))
+    : path.resolve(import.meta.dirname, "..", "client");
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server, path: "/vite-hmr" },
@@ -31,20 +35,20 @@ export async function setupVite(server: Server, app: Express) {
 
   app.use(vite.middlewares);
 
-  app.use("*", async (req, res, next) => {
+  app.use(async (req, res, next) => {
     const url = req.originalUrl;
 
     if (url.startsWith("/api/") || url.startsWith("/ws") || url.startsWith("/socket.io") || url.startsWith("/cyrus-io")) {
       return next();
     }
 
+    // Let asset requests continue through normal middleware/404 handling.
+    if (path.extname(url)) {
+      return next();
+    }
+
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      const clientTemplate = path.resolve(viteRoot, "index.html");
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");

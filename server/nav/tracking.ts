@@ -1,8 +1,13 @@
-import { db } from "../db";
+import { db } from "../db.js";
 import { locationRecords, trackedUsers, locationShares } from "../../shared/schema";
 import { eq, desc, gte, and } from "drizzle-orm";
-import { geocodeReverse } from "./google-geospatial";
-import { haversineDistance, bearing } from "./geospatial";
+import { geocodeReverse } from "./google-geospatial.js";
+import { haversineDistance, bearing } from "./geospatial.js";
+
+function toDbNumeric(value: number | null | undefined): string | null | undefined {
+  if (value == null) return value;
+  return value.toString();
+}
 
 interface TrackedUserLocation {
   userId: string;
@@ -61,12 +66,12 @@ export async function updateUserLocation(
   try {
     await db.insert(locationRecords).values({
       userId,
-      latitude: String(lat),
-      longitude: String(lon),
-      accuracy: String(accuracy),
-      altitude: altitude != null ? String(altitude) : undefined,
-      speed: speed != null ? String(speed) : undefined,
-      heading: heading != null ? String(heading) : undefined,
+      latitude: toDbNumeric(lat)!,
+      longitude: toDbNumeric(lon)!,
+      accuracy: toDbNumeric(accuracy),
+      altitude: toDbNumeric(altitude),
+      speed: toDbNumeric(speed),
+      heading: toDbNumeric(heading),
       address,
       source,
       status: "active",
@@ -76,11 +81,11 @@ export async function updateUserLocation(
     if (existing.length > 0) {
       await db.update(trackedUsers).set({
         userName,
-        lastLat: String(lat),
-        lastLon: String(lon),
-        lastAccuracy: String(accuracy),
-        lastSpeed: speed != null ? String(speed) : null,
-        lastHeading: heading != null ? String(heading) : null,
+        lastLat: toDbNumeric(lat),
+        lastLon: toDbNumeric(lon),
+        lastAccuracy: toDbNumeric(accuracy),
+        lastSpeed: toDbNumeric(speed ?? null),
+        lastHeading: toDbNumeric(heading ?? null),
         lastAddress: address || null,
         status: "active",
         lastUpdated: new Date(),
@@ -89,11 +94,11 @@ export async function updateUserLocation(
       await db.insert(trackedUsers).values({
         userId,
         userName,
-        lastLat: String(lat),
-        lastLon: String(lon),
-        lastAccuracy: String(accuracy),
-        lastSpeed: speed != null ? String(speed) : undefined,
-        lastHeading: heading != null ? String(heading) : undefined,
+        lastLat: toDbNumeric(lat),
+        lastLon: toDbNumeric(lon),
+        lastAccuracy: toDbNumeric(accuracy),
+        lastSpeed: toDbNumeric(speed),
+        lastHeading: toDbNumeric(heading),
         lastAddress: address,
         status: "active",
       });
@@ -167,7 +172,7 @@ export async function shareLocationWithUser(
     userId,
     sharedWithEmail,
     permissionLevel,
-    isActive: 1,
+    isActive: true,
     expiresAt,
   }).returning();
 
@@ -181,18 +186,18 @@ export async function shareLocationWithUser(
 }
 
 export async function revokeLocationShare(shareId: string) {
-  await db.update(locationShares).set({ isActive: 0 }).where(eq(locationShares.id, shareId));
+  await db.update(locationShares).set({ isActive: false }).where(eq(locationShares.id, shareId));
   return true;
 }
 
 export async function getSharedWithMe(userEmail: string) {
   const shares = await db.select().from(locationShares)
-    .where(and(eq(locationShares.sharedWithEmail, userEmail), eq(locationShares.isActive, 1)));
+    .where(and(eq(locationShares.sharedWithEmail, userEmail), eq(locationShares.isActive, true)));
 
   const results: any[] = [];
   for (const share of shares) {
     if (share.expiresAt && new Date(share.expiresAt) < new Date()) {
-      await db.update(locationShares).set({ isActive: 0 }).where(eq(locationShares.id, share.id));
+      await db.update(locationShares).set({ isActive: false }).where(eq(locationShares.id, share.id));
       continue;
     }
     const location = activeUsers.get(share.userId);

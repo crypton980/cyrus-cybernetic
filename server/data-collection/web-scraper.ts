@@ -133,7 +133,8 @@ export class WebScraper {
   async saveToFile(data: ScrapedData, outputDir: string = './data'): Promise<string> {
     await fs.mkdir(outputDir, { recursive: true });
 
-    const filename = `${data.hash.substring(0, 8)}_${Date.now()}.json`;
+    const hash = data.hash || crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
+    const filename = `${hash.substring(0, 8)}_${Date.now()}.json`;
     const filepath = path.join(outputDir, filename);
 
     await fs.writeFile(filepath, JSON.stringify(data, null, 2), 'utf-8');

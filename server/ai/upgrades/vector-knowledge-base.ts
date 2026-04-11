@@ -1,9 +1,21 @@
 import OpenAI, { AzureOpenAI } from 'openai';
-import { DefaultAzureCredential } from '@azure/identity';
 import { db } from '../../db';
 import { knowledgeGraph } from '../../../shared/schema';
 import { eq, sql, desc, and } from 'drizzle-orm';
 import crypto from 'crypto';
+
+function asNumber(value: string | number | null | undefined, fallback = 0): number {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
+
+function toDbNumeric(value: number): string {
+  return value.toString();
+}
 
 const openaiApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
@@ -17,12 +29,7 @@ const openai = openaiApiKey && openaiBaseUrl
     ? new OpenAI({
       apiKey: openaiApiKey,
     })
-    : openaiBaseUrl
-      ? new AzureOpenAI({
-        endpoint: openaiBaseUrl,
-        credential: new DefaultAzureCredential(),
-      })
-      : null;
+    : null;
 
 export interface VectorDocument {
   id: string;
@@ -94,7 +101,7 @@ export class VectorKnowledgeBase {
             source: item.source || 'knowledge_graph',
             domain: item.domain,
             timestamp: item.learnedAt,
-            importance: (item.confidence || 50) / 100,
+            importance: asNumber(item.confidence, 50) / 100,
             tags: [item.domain, 'knowledge']
           }
         });
@@ -203,7 +210,7 @@ export class VectorKnowledgeBase {
         concept: content.slice(0, 100),
         domain: doc.metadata.domain,
         properties: { fullContent: content, embedding: id },
-        confidence: Math.round(doc.metadata.importance * 100),
+        confidence: toDbNumeric(Math.round(doc.metadata.importance * 100)),
         source: doc.metadata.source,
       });
     } catch (error) {

@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Buffer } from "node:buffer";
-import { localImageGen } from "./local-image-client";
+import { toFile } from "openai";
+import { localImageGen } from "./local-image-client.js";
 
 const getApiKey = () => process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 
@@ -177,6 +178,7 @@ export async function generateImageBuffer(
   size: ImageSize = "1024x1024"
 ): Promise<Buffer> {
   const client = await getClient();
+  if (!client) throw new Error("No image generation client available");
   const response = await client.images.generate({
     model: "dall-e-3",
     prompt,
@@ -195,6 +197,7 @@ export async function editImages(
   outputPath?: string
 ): Promise<Buffer> {
   const client = await getClient();
+  if (!client) throw new Error("No image editing client available");
   const images = await Promise.all(
     imageFiles.map((file) =>
       toFile(fs.createReadStream(file), file, {
@@ -227,6 +230,7 @@ export async function editImages(
 
 export async function generateImageVariation(options: ImageVariationOptions): Promise<ImageGenerationResult> {
   const client = await getClient();
+  if (!client) throw new Error("No image variation client available");
   const size = options.size || "1024x1024";
   const n = options.n || 1;
 

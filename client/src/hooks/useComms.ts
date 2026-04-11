@@ -11,7 +11,7 @@ import {
   ConnectionManager,
   detectNetworkType,
   CallQualityMetrics,
-} from "../lib/webrtc-config";
+} from "../lib/webrtc-config.js";
 
 function getDeviceId(): string {
   const key = "cyrus-device-id";

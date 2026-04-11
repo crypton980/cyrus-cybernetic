@@ -1,5 +1,5 @@
-import { ExtractionResult } from "./extract";
-import { DetectionResult } from "./detect";
+import { ExtractionResult } from "./extract.js";
+import { DetectionResult } from "./detect.js";
 
 export interface AnalysisReport {
   success: boolean;

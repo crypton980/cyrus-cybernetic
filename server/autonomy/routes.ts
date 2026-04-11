@@ -1,12 +1,14 @@
 import { Router } from "express";
-import { runAutonomy } from "./run";
-import { AutonomyReport, IntentInput } from "./types";
+import { runAutonomy } from "./run.js";
+import { AutonomyReport, IntentInput } from "./types.js";
+import { memoryService } from "../intelligence/memory-service.js";
 
 const router = Router();
 
 // Autonomy execution endpoint
 router.post("/execute", async (req, res) => {
   try {
+    const reqAny = req as any;
     const { goal, context, modality }: IntentInput = req.body;
 
     if (!goal) {
@@ -26,6 +28,28 @@ router.post("/execute", async (req, res) => {
       hasBrokerKeys: req.body.hasBrokerKeys || false,
       hasVectorStore: req.body.hasVectorStore || false,
       device: req.body.device
+    });
+
+    await memoryService.recordDecision({
+      userId: reqAny.user?.claims?.sub ?? reqAny.session?.user?.id ?? null,
+      source: "autonomy",
+      decisionType: "execution_plan",
+      input: JSON.stringify(input),
+      output: JSON.stringify(report),
+      confidence: 95,
+      metadata: {
+        allowLiveTrading: req.body.allowLiveTrading || false,
+        hasBrokerKeys: req.body.hasBrokerKeys || false,
+        hasVectorStore: req.body.hasVectorStore || false,
+      },
+    });
+
+    await memoryService.recordMissionLog({
+      missionId: `autonomy_${Date.now()}`,
+      userId: reqAny.user?.claims?.sub ?? reqAny.session?.user?.id ?? null,
+      status: "completed",
+      summary: input.goal,
+      details: report as unknown as Record<string, unknown>,
     });
 
     res.json({

@@ -1,8 +1,7 @@
-import { localLLM } from "../ai/local-llm-client";
-import { cyrusBrain } from "../ai/cyrus-brain";
-import { cyrusBrain } from "../ai/cyrus-brain";
-import { voiceProsody } from "./voice-prosody";
-import { emotionFusion } from "./emotion-fusion";
+import { localLLM } from "../ai/local-llm-client.js";
+import { cyrusBrain } from "../ai/cyrus-brain.js";
+import { voiceProsody } from "./voice-prosody.js";
+import { emotionFusion } from "./emotion-fusion.js";
 
 const useLocalLLM = process.env.USE_LOCAL_LLM !== 'false';
 
@@ -188,7 +187,7 @@ HUMANOID DEPTH:
   }
 
   private async analyzeSentiment(text: string): Promise<string> {
-    const completion = await getClient().chat.completions.create({
+    const completion = await (await getClient()).chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
@@ -269,7 +268,7 @@ VOICE QUALITIES FOR THIS RESPONSE:
 - Keep responses conversational — not too long, not too short
 - Sound like a real woman speaking, not a text generator`;
 
-    const completion = await getClient().chat.completions.create({
+    const completion = await (await getClient()).chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: enhancedSystemPrompt },
@@ -361,7 +360,7 @@ Format your response as JSON:
   }
 
   async generateNaturalTransition(fromTopic: string, toTopic: string): Promise<string> {
-    const completion = await getClient().chat.completions.create({
+    const completion = await (await getClient()).chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: this.humanoidPersonality },

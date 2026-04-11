@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTrading } from "../hooks/useTrading";
+import { useTrading } from "../hooks/useTrading.js";
 import {
   TrendingUp,
   TrendingDown,

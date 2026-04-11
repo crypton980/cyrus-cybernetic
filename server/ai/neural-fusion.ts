@@ -1,18 +1,18 @@
-import { cyrusSoul, type CognitiveBranch, type ThoughtProcess } from './cyrus-soul';
-import { quantumCore } from './quantum-core';
-import { allBranches, getBranchById } from './branches/index';
+import { cyrusSoul, type CognitiveBranch, type ThoughtProcess } from './cyrus-soul.js';
+import { quantumCore } from './quantum-core.js';
+import { allBranches, getBranchById } from './branches/index.js';
 import OpenAI from 'openai';
-import { droneController } from '../modules/drone-control';
-import { adaptiveLearning } from './adaptive-learning';
-import { experienceMemory } from './experience-memory';
-import { quantumBridge } from './quantum-bridge-client';
+import { droneController } from '../modules/drone-control.js';
+import { adaptiveLearning } from './adaptive-learning.js';
+import { experienceMemory } from './experience-memory.js';
+import { quantumBridge } from './quantum-bridge-client.js';
 import { 
   vectorKnowledgeBase, 
   emotionalCognition, 
   universalLanguage, 
   ethicalGovernance,
   getAdvancedUpgradesStatus 
-} from './upgrades/index';
+} from './upgrades/index.js';
 
 const FALLBACK_RESPONSE_MODELS = ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useDeviceControl } from "../hooks/useDeviceControl";
-import { CyrusHumanoid } from "../components/CyrusHumanoid";
+import { useDeviceControl } from "../hooks/useDeviceControl.js";
+import { CyrusHumanoid } from "../components/CyrusHumanoid.js";
 import {
   Monitor,
   Mouse,

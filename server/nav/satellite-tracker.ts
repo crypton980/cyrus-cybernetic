@@ -1,4 +1,4 @@
-import { Constellation, GNSSStatus, SatelliteInfo } from "./types";
+import { Constellation, GNSSStatus, SatelliteInfo } from "./types.js";
 
 const CONSTELLATION_CONFIG: Record<Constellation, { prnRange: [number, number]; count: number; orbitalPlanes: number }> = {
   GPS: { prnRange: [1, 32], count: 31, orbitalPlanes: 6 },
