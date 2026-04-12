@@ -19,3 +19,7 @@ nexus_env/
 *.zip
 *.tar.gz
 .venv/
+training_cache/
+server/quantum_ai/training_cache/
+server/quantum_ai/artifacts/
+*.pkl
