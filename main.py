@@ -336,3 +336,46 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ── CYRUS Training Pipeline Routes ──────────────────────────────────────────
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "server", "quantum_ai"))
+
+try:
+    from training_pipeline import training_pipeline as _tp
+
+    @app.route("/api/training/start", methods=["POST"])
+    def training_start():
+        from flask import request, jsonify
+        config = request.get_json(silent=True) or {}
+        return jsonify(_tp.start_training(config))
+
+    @app.route("/api/training/status", methods=["GET"])
+    def training_status():
+        from flask import jsonify
+        return jsonify(_tp.get_status())
+
+    @app.route("/api/training/models", methods=["GET"])
+    def training_models():
+        from flask import jsonify
+        return jsonify(_tp.get_model_info())
+
+    @app.route("/api/training/classify", methods=["POST"])
+    def training_classify():
+        from flask import request, jsonify
+        body = request.get_json(silent=True) or {}
+        query = body.get("query", "")
+        if not query:
+            return jsonify({"error": "query required"}), 400
+        return jsonify(_tp.classify_query(query))
+
+    @app.route("/api/training/stop", methods=["POST"])
+    def training_stop():
+        from flask import jsonify
+        return jsonify(_tp.stop_training())
+
+except Exception as _e:
+    import logging
+    logging.getLogger(__name__).warning(f"Training pipeline routes unavailable: {_e}")
+# ────────────────────────────────────────────────────────────────────────────

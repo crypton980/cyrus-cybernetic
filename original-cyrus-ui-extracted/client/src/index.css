@@ -38,7 +38,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   html {
@@ -46,7 +46,10 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
     font-feature-settings: 'ss01' on, 'ss02' on, 'cv01' on;
     background: linear-gradient(135deg, #0a0a0f 0%, #0d0d14 50%, #0a0a0f 100%);
@@ -56,11 +59,17 @@
 
 @layer utilities {
   .text-gradient-premium {
-    @apply bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent;
+    background: linear-gradient(90deg, #22d3ee 0%, #60a5fa 50%, #a855f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   .text-gradient-gold {
-    @apply bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent;
+    background: linear-gradient(90deg, #fbbf24 0%, #fde047 50%, #fb923c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   .glow-cyan {
@@ -72,11 +81,18 @@
   }
 
   .glass-ultra {
-    @apply bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08];
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .glass-panel-premium {
-    @apply bg-[#12121a]/85 backdrop-blur-xl border border-white/[0.08] shadow-2xl;
+    background: rgba(18, 18, 26, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   }
 
   /* Custom Scrollbar Styles */

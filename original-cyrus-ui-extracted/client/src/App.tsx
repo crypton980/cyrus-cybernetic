@@ -84,7 +84,7 @@ export default function App() {
       .then(user => {
         if (user) setReplitUser(user);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleLogin = () => {
@@ -117,7 +117,7 @@ export default function App() {
 
   const localUsername = localStorage.getItem("cyrus-display-name") || "OPERATOR";
   const userRole = localStorage.getItem("cyrus-user-role") || "user";
-  
+
   if (!isAuthenticated) {
     return <AccessGate onAuthenticated={handleAuthenticated} />;
   }
@@ -161,20 +161,27 @@ function AppContent({
 }) {
   const { isConnected, onlineUsers, connectPresence, disconnectPresence } = usePresence();
   const hasConnectedRef = useRef(false);
+  const connectTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const savedName = localStorage.getItem("cyrus-display-name") || localUsername;
     if (savedName && savedName !== "OPERATOR" && !hasConnectedRef.current) {
       hasConnectedRef.current = true;
       localStorage.setItem("cyrus-display-name", savedName);
-      setTimeout(() => connectPresence(savedName), 500);
+      connectTimerRef.current = window.setTimeout(() => {
+        connectPresence(savedName);
+      }, 500);
     }
-    
+
     return () => {
+      if (connectTimerRef.current !== null) {
+        window.clearTimeout(connectTimerRef.current);
+        connectTimerRef.current = null;
+      }
       hasConnectedRef.current = false;
       disconnectPresence();
     };
-  }, []);
+  }, [connectPresence, disconnectPresence, localUsername]);
 
   const handleReconnect = () => {
     hasConnectedRef.current = false;
@@ -186,9 +193,8 @@ function AppContent({
     <div className="h-screen bg-black text-white flex overflow-hidden">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1c1c1e] border-r border-[rgba(84,84,88,0.65)] transform transition-transform duration-200 lg:relative lg:translate-x-0 ${
-          menuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1c1c1e] border-r border-[rgba(84,84,88,0.65)] transform transition-transform duration-200 lg:relative lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
@@ -210,7 +216,7 @@ function AppContent({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             {/* Status */}
             <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-[rgba(48,209,88,0.1)] rounded-lg">
               <div className="w-2 h-2 rounded-full bg-[#30d158]" />
@@ -231,15 +237,13 @@ function AppContent({
                       key={item.path}
                       href={item.path}
                       onClick={() => setMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                        isActive
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive
                           ? "bg-[#0a84ff] text-white"
                           : "text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)]"
-                      }`}
+                        }`}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
-                      }`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
+                        }`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -266,15 +270,13 @@ function AppContent({
                       key={item.path}
                       href={item.path}
                       onClick={() => setMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                        isActive
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive
                           ? "bg-[#0a84ff] text-white"
                           : "text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)]"
-                      }`}
+                        }`}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
-                      }`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
+                        }`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -295,11 +297,10 @@ function AppContent({
           <div className="p-4 border-t border-[rgba(84,84,88,0.65)] space-y-3">
             <div className="bg-gradient-to-br from-[#2c2c2e] to-[#1c1c1e] rounded-xl p-3 border border-cyan-500/20">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  userRole === "admin" 
-                    ? "bg-gradient-to-br from-orange-500 to-red-600 ring-2 ring-orange-500/50" 
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${userRole === "admin"
+                    ? "bg-gradient-to-br from-orange-500 to-red-600 ring-2 ring-orange-500/50"
                     : "bg-gradient-to-br from-cyan-500 to-purple-600"
-                }`}>
+                  }`}>
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -346,7 +347,7 @@ function AppContent({
                 </div>
               )}
               {!isConnected && (
-                <button 
+                <button
                   onClick={handleReconnect}
                   className="mt-1 text-[10px] text-yellow-400 hover:text-yellow-300 underline"
                 >
@@ -354,7 +355,7 @@ function AppContent({
                 </button>
               )}
             </div>
-            
+
             <div className="bg-[#2c2c2e] rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-[rgba(235,235,245,0.5)]">Core Status</span>

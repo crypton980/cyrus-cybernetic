@@ -170,20 +170,27 @@ function AppContent({
 }) {
   const { isConnected, onlineUsers, connectPresence, disconnectPresence } = usePresence();
   const hasConnectedRef = useRef(false);
+  const connectTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const savedName = localStorage.getItem("cyrus-display-name") || localUsername;
     if (savedName && savedName !== "OPERATOR" && !hasConnectedRef.current) {
       hasConnectedRef.current = true;
       localStorage.setItem("cyrus-display-name", savedName);
-      setTimeout(() => connectPresence(savedName), 500);
+      connectTimerRef.current = window.setTimeout(() => {
+        connectPresence(savedName);
+      }, 500);
     }
 
     return () => {
+      if (connectTimerRef.current !== null) {
+        window.clearTimeout(connectTimerRef.current);
+        connectTimerRef.current = null;
+      }
       hasConnectedRef.current = false;
       disconnectPresence();
     };
-  }, []);
+  }, [connectPresence, disconnectPresence, localUsername]);
 
   const handleReconnect = () => {
     hasConnectedRef.current = false;

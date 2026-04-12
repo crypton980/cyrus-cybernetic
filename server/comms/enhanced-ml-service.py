@@ -125,7 +125,64 @@ class EnhancedMLService:
         self.monitoring_thread = None
 
         self.setup_routes()
+        self.setup_training_routes()
         logger.info("Enhanced ML Service v2.0 initialized")
+    def _get_training_pipeline(self):
+        try:
+            from server.quantum_ai.training_pipeline import training_pipeline as tp
+            return tp, None
+        except Exception as e1:
+            try:
+                import os, sys
+                base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+                if base not in sys.path:
+                    sys.path.insert(0, base)
+                from quantum_ai.training_pipeline import training_pipeline as tp
+                return tp, None
+            except Exception as e2:
+                return None, f"{e1}; {e2}"
+
+    def setup_training_routes(self):
+        @self.app.route('/api/training/start', methods=['POST'])
+        def training_start():
+            tp, err = self._get_training_pipeline()
+            if tp is None:
+                return jsonify({'error': 'training pipeline unavailable', 'details': err}), 503
+            config = request.get_json(silent=True) or {}
+            return jsonify(tp.start_training(config))
+
+        @self.app.route('/api/training/status', methods=['GET'])
+        def training_status():
+            tp, err = self._get_training_pipeline()
+            if tp is None:
+                return jsonify({'error': 'training pipeline unavailable', 'details': err}), 503
+            return jsonify(tp.get_status())
+
+        @self.app.route('/api/training/models', methods=['GET'])
+        def training_models():
+            tp, err = self._get_training_pipeline()
+            if tp is None:
+                return jsonify({'error': 'training pipeline unavailable', 'details': err}), 503
+            return jsonify(tp.get_model_info())
+
+        @self.app.route('/api/training/classify', methods=['POST'])
+        def training_classify():
+            tp, err = self._get_training_pipeline()
+            if tp is None:
+                return jsonify({'error': 'training pipeline unavailable', 'details': err}), 503
+            body = request.get_json(silent=True) or {}
+            query = body.get('query', '')
+            if not query:
+                return jsonify({'error': 'query required'}), 400
+            return jsonify(tp.classify_query(query))
+
+        @self.app.route('/api/training/stop', methods=['POST'])
+        def training_stop():
+            tp, err = self._get_training_pipeline()
+            if tp is None:
+                return jsonify({'error': 'training pipeline unavailable', 'details': err}), 503
+            return jsonify(tp.stop_training())
+
 
     def load_or_initialize_models(self):
         """Load pre-trained models or initialize new ones"""
@@ -140,6 +197,8 @@ class EnhancedMLService:
             logger.info("Initializing new ML models...")
             self.kmeans_model = KMeans(n_clusters=5, random_state=42, n_init=10)
             self.models_loaded = False
+
+
 
     def setup_routes(self):
         """Setup Flask routes for the ML service"""
@@ -298,6 +357,7 @@ class EnhancedMLService:
             except Exception as e:
                 logger.error(f"Global intelligence error: {e}")
                 return jsonify({'error': str(e)}), 500
+
 
     def analyze_sentiment_enhanced(self, text: str, context: Optional[Dict] = None, international: bool = False) -> Dict[str, Any]:
         """Enhanced sentiment analysis with context and international support"""
@@ -920,7 +980,6 @@ class EnhancedMLService:
         """Run the ML service"""
         logger.info(f"Starting Enhanced ML Service v2.0 on {host}:{port}")
 
-        # Start monitoring
         self.start_monitoring()
 
         try:
@@ -929,6 +988,7 @@ class EnhancedMLService:
             logger.info("Shutting down Enhanced ML Service...")
         finally:
             self.stop_monitoring()
+
 
 if __name__ == '__main__':
     service = EnhancedMLService()

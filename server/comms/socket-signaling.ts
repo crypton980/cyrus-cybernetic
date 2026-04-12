@@ -2,7 +2,7 @@ import { Server as HttpServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { db } from "../db.js";
 import { onlineUsers, directMessages, groupChats, callSessions, callMessages, liveStreams, sharedMedia } from "../../shared/models/comms";
-import { eq, ilike } from "drizzle-orm";
+import { eq, ilike, sql } from "drizzle-orm";
 import { commsIntelligence } from "./comms-intelligence.js";
 
 interface User {
@@ -98,7 +98,22 @@ export function initSocketSignaling(server: HttpServer) {
 
   console.log("[Socket.IO] Signaling server initialized");
 
+  const ensurePresenceSchema = async () => {
+    try {
+      // Some deployments created online_users without status; self-heal before presence updates.
+      await db.execute(sql`ALTER TABLE online_users ADD COLUMN IF NOT EXISTS status varchar(32) DEFAULT 'online'`);
+      await db.execute(sql`
+        UPDATE online_users
+        SET status = CASE WHEN is_online THEN 'online' ELSE 'offline' END
+        WHERE status IS NULL
+      `);
+    } catch (err) {
+      console.error("[Socket.IO] Failed to ensure presence schema:", err);
+    }
+  };
+
   (async () => {
+    await ensurePresenceSchema();
     try {
       await db.update(onlineUsers)
         .set({ isOnline: false, status: "offline" })
@@ -120,7 +135,7 @@ export function initSocketSignaling(server: HttpServer) {
             .where(eq(onlineUsers.id, record.id));
         }
       }
-    } catch {}
+    } catch { }
   }, 60000);
 
   io.on("connection", (socket: Socket) => {
@@ -128,7 +143,7 @@ export function initSocketSignaling(server: HttpServer) {
 
     socket.on("register", async (data: { userId: string; displayName: string; deviceId: string }) => {
       const { userId, displayName, deviceId } = data;
-      
+
       const user: User = {
         id: userId,
         socketId: socket.id,
@@ -137,12 +152,12 @@ export function initSocketSignaling(server: HttpServer) {
         inCall: false,
         status: "online",
       };
-      
+
       users.set(userId, user);
       (socket as any).userId = userId;
-      
+
       console.log(`[Socket.IO] User registered: ${displayName} (${userId}) - Total: ${users.size}`);
-      
+
       try {
         await db.insert(onlineUsers).values({
           id: userId,
@@ -166,30 +181,30 @@ export function initSocketSignaling(server: HttpServer) {
       } catch (err) {
         console.error("[Socket.IO] Failed to persist user:", err);
       }
-      
+
       socket.emit("registered", { userId, totalOnline: users.size });
-      
+
       broadcastPresence(io);
     });
 
     socket.on("call-user", (data: { targetUserId: string; callType: "audio" | "video" }) => {
       const callerId = (socket as any).userId;
       const caller = users.get(callerId);
-      
+
       if (!caller) {
         socket.emit("call-failed", { reason: "not-registered" });
         return;
       }
 
       const target = users.get(data.targetUserId);
-      
+
       if (!target) {
         socket.emit("call-failed", { reason: "user-offline" });
         return;
       }
 
       const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const pendingCall: PendingCall = {
         callerId,
         callerName: caller.displayName,
@@ -198,7 +213,7 @@ export function initSocketSignaling(server: HttpServer) {
         callType: data.callType,
         timestamp: new Date(),
       };
-      
+
       pendingCalls.set(roomId, pendingCall);
       caller.inCall = true;
       caller.currentRoomId = roomId;
@@ -213,7 +228,7 @@ export function initSocketSignaling(server: HttpServer) {
       });
 
       socket.emit("call-ringing", { roomId, targetName: target.displayName, callType: data.callType });
-      
+
       broadcastPresence(io);
     });
 
@@ -228,7 +243,7 @@ export function initSocketSignaling(server: HttpServer) {
       }
 
       const caller = users.get(pendingCall.callerId);
-      
+
       if (!caller) {
         socket.emit("call-failed", { reason: "caller-disconnected" });
         pendingCalls.delete(data.roomId);
@@ -268,7 +283,7 @@ export function initSocketSignaling(server: HttpServer) {
       console.log(`[Socket.IO] Call accepted: ${caller.displayName} <-> ${user.displayName}`);
 
       const callType = pendingCall.callType;
-      
+
       io.to(caller.socketId).emit("call-accepted", {
         roomId: data.roomId,
         peerName: user.displayName,
@@ -287,7 +302,7 @@ export function initSocketSignaling(server: HttpServer) {
       try {
         commsIntelligence.trackInteraction(userId, 'call_started', pendingCall.callerId, { callType, roomId: data.roomId });
         commsIntelligence.trackInteraction(pendingCall.callerId, 'call_started', userId, { callType, roomId: data.roomId });
-      } catch (_) {}
+      } catch (_) { }
 
       pendingCalls.delete(data.roomId);
       broadcastPresence(io);
@@ -298,7 +313,7 @@ export function initSocketSignaling(server: HttpServer) {
 
       if (pendingCall) {
         const caller = users.get(pendingCall.callerId);
-        
+
         if (caller) {
           caller.inCall = false;
           caller.currentRoomId = undefined;
@@ -391,8 +406,8 @@ export function initSocketSignaling(server: HttpServer) {
       try {
         const duration = activeCall ? Math.floor((Date.now() - activeCall.startedAt.getTime()) / 1000) : 0;
         commsIntelligence.trackInteraction(userId, 'call_ended', undefined, { duration, roomId: data.roomId });
-      } catch (_) {}
-      
+      } catch (_) { }
+
       broadcastPresence(io);
     });
 
@@ -463,7 +478,7 @@ export function initSocketSignaling(server: HttpServer) {
           channelType: data.groupId ? 'group' : 'direct',
           messageType,
         });
-      } catch (_) {}
+      } catch (_) { }
     });
 
     socket.on("create-group", async (data: { name: string; members: string[] }) => {
@@ -873,7 +888,7 @@ export function initSocketSignaling(server: HttpServer) {
         timestamp: new Date().toISOString(),
       });
 
-      try { commsIntelligence.trackInteraction(userId, 'reaction_sent', undefined, { emoji: data.emoji }); } catch (_) {}
+      try { commsIntelligence.trackInteraction(userId, 'reaction_sent', undefined, { emoji: data.emoji }); } catch (_) { }
     });
 
     socket.on("share-location", (data: { roomId: string; latitude: number; longitude: number }) => {
@@ -1153,7 +1168,7 @@ export function initSocketSignaling(server: HttpServer) {
       try {
         const results = await db.select().from(onlineUsers)
           .where(ilike(onlineUsers.displayName, `%${data.query}%`));
-        
+
         const enriched = results.map(u => ({
           id: u.id,
           displayName: u.displayName,
@@ -1183,10 +1198,10 @@ export function initSocketSignaling(server: HttpServer) {
 
     socket.on("disconnect", async () => {
       const userId = (socket as any).userId;
-      
+
       if (userId) {
         const user = users.get(userId);
-        
+
         if (user?.currentRoomId) {
           socket.to(user.currentRoomId).emit("call-ended", { roomId: user.currentRoomId, reason: "peer-disconnected", userId });
 
@@ -1215,10 +1230,10 @@ export function initSocketSignaling(server: HttpServer) {
             });
           }
         }
-        
+
         users.delete(userId);
         console.log(`[Socket.IO] Disconnected: ${user?.displayName || userId} - Remaining: ${users.size}`);
-        
+
         try {
           await db.update(onlineUsers)
             .set({ isOnline: false, lastSeen: new Date(), status: "offline" })
@@ -1226,7 +1241,7 @@ export function initSocketSignaling(server: HttpServer) {
         } catch (err) {
           console.error("[Socket.IO] Failed to update offline status:", err);
         }
-        
+
         broadcastPresence(io);
       }
     });

@@ -58,8 +58,12 @@ let frontendReady = false;
 const managedChildProcesses: ChildProcess[] = [];
 let shuttingDown = false;
 
-app.use((req, _res, next) => {
+app.use((req, res, next) => {
   logger.info("incoming_request", { method: req.method, url: req.url });
+  console.log("REQ:", req.method, req.url);
+  res.on("finish", () => {
+    console.log("RES:", req.method, req.url, res.statusCode);
+  });
   next();
 });
 
@@ -164,12 +168,13 @@ app.use((req, res, next) => {
       .dot { width:10px; height:10px; border-radius:50%; background:#22d3ee; margin:0 auto 12px; animation:pulse 1.2s infinite; }
       @keyframes pulse { 0% { opacity:.35; } 50% { opacity:1; } 100% { opacity:.35; } }
     </style>
-    <script>setTimeout(() => location.reload(), 1200);</script>
   </head>
   <body>
     <div class="panel">
       <div class="dot"></div>
       <div>CYRUS is initializing the interface...</div>
+      <div style="margin-top:12px;font-size:12px;opacity:.8;">This page no longer auto-reloads to prevent UI blink loops.</div>
+      <button onclick="location.reload()" style="margin-top:10px;padding:6px 12px;border-radius:8px;border:1px solid #22d3ee;background:#0f172a;color:#d1d5db;cursor:pointer;">Retry</button>
     </div>
   </body>
 </html>`);
@@ -416,9 +421,15 @@ async function gracefulShutdown(signal: string) {
 process.on("SIGTERM", () => { void gracefulShutdown("SIGTERM"); });
 process.on("SIGINT", () => { void gracefulShutdown("SIGINT"); });
 process.on("unhandledRejection", (reason) => {
+  console.error("UNHANDLED REJECTION:", reason);
   logger.error("unhandled_rejection", { reason });
 });
 process.on("uncaughtException", (e) => {
+  console.error("UNCAUGHT EXCEPTION:", e);
   logger.error("uncaught_exception", { error: e });
   if (e.message?.includes("EADDRINUSE")) process.exit(1);
 });
+
+setInterval(() => {
+  console.log("SYSTEM HEARTBEAT OK");
+}, 5000).unref();
