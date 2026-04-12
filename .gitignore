@@ -17,3 +17,9 @@ __pycache__/
 nexus_env/
 *.zip
 .venv/
+
+training_cache/
+server/quantum_ai/training_cache/
+server/quantum_ai/artifacts/
+cyrus-deployment-*/
+*.tar.gz
