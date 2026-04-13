@@ -3,15 +3,22 @@
  * from the system_settings database table.  Values stored here take priority
  * over environment variables so that keys can be updated without restarting
  * the server.
+ *
+ * When DATABASE_URL is not set the service falls back to an in-memory Map so
+ * the server can run without a database (values are lost on restart).
  */
 
-import { db } from "../db";
+import { hasDatabase, db } from "../db";
 import { systemSettings } from "../../shared/schema";
 import { eq } from "drizzle-orm";
+
+// In-memory fallback store used when no database is available.
+const memStore = new Map<string, string>();
 
 // ─── Generic helpers ──────────────────────────────────────────────────────────
 
 export async function getSetting(key: string): Promise<string | null> {
+  if (!hasDatabase) return memStore.get(key) ?? null;
   try {
     const rows = await db
       .select({ value: systemSettings.value })
@@ -25,6 +32,7 @@ export async function getSetting(key: string): Promise<string | null> {
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
+  if (!hasDatabase) { memStore.set(key, value); return; }
   await db
     .insert(systemSettings)
     .values({ key, value })
@@ -32,6 +40,7 @@ export async function setSetting(key: string, value: string): Promise<void> {
 }
 
 export async function deleteSetting(key: string): Promise<void> {
+  if (!hasDatabase) { memStore.delete(key); return; }
   await db.delete(systemSettings).where(eq(systemSettings.key, key));
 }
 
