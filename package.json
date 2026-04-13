@@ -10,6 +10,7 @@
     "postbuild": "node -e \"require('fs').writeFileSync('dist/package.json', JSON.stringify({type:'commonjs'},null,2))\"",
     "start": "tsx server/index.ts",
     "dev": "tsx server/index.ts",
+    "dev:setup": "npm install && npm run dev",
     "deploy": "npm run build",
     "db:push": "drizzle-kit push"
   },

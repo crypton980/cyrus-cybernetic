@@ -2,6 +2,27 @@
 
 **Super-Intelligence AI with Advanced Capabilities**
 
+## 💻 Running Locally in VSCode
+
+> **First time setup — run this once:**
+> ```bash
+> npm install
+> cp .env.example .env   # then edit .env with your API keys if needed
+> ```
+
+**Option A – VSCode debugger (recommended):**
+1. Open the **Run & Debug** panel (`Ctrl+Shift+D` / `⇧⌘D`)
+2. Select **"Start CYRUS Server"** from the dropdown
+3. Press **F5** — VSCode will start the server and automatically open `http://localhost:3105` in your browser
+
+**Option B – Terminal:**
+```bash
+npm run dev
+# then open http://localhost:3105 in your browser
+```
+
+The full React UI (the dark cyberpunk interface) is served at `http://localhost:3105`. No separate Vite command is needed — the server bundles Vite as middleware in development mode.
+
 [![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/new?template=https://github.com/crypton980/cyrus-cybernetic)
 [![Open in Replit](https://replit.com/badge/github/crypton980/cyrus-cybernetic)](https://replit.com/new/github/crypton980/cyrus-cybernetic)
 [![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-blue)](https://crypton980.github.io/cyrus-cybernetic)
