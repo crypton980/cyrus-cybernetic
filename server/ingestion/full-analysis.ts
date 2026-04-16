@@ -1,6 +1,6 @@
 import { detectFile } from "./detect.js";
 import { extractFile } from "./extract.js";
-import { analyzeExtraction, type AnalysisCitation, type AnalysisOptions } from "./analyze.js";
+import { analyzeExtraction, extractEntities, type AnalysisCitation, type AnalysisOptions } from "./analyze.js";
 
 export interface FullAnalysisResponse {
   detection: Awaited<ReturnType<typeof detectFile>>;
@@ -55,9 +55,10 @@ export async function performFullAnalysis(
   const ext = await extractFile(buffer, mimetype);
   const analysis = await analyzeExtraction(ext, options);
   const hasContent = !!(ext.text || ext.ocrText || ext.transcript || (ext.frames && ext.frames.some((f) => f.ocrText)));
+  const entities = analysis.entities || extractEntities((ext.text || ext.ocrText || ext.transcript || "").slice(0, 80_000));
 
   const riskLevel: "low" | "medium" | "high" =
-    analysis.confidence === "Low" ? "high" : analysis.confidence === "Medium" ? "medium" : "low";
+    analysis.riskLevel || (analysis.confidence === "Low" ? "high" : analysis.confidence === "Medium" ? "medium" : "low");
 
   return {
     detection: det,
@@ -66,7 +67,7 @@ export async function performFullAnalysis(
       metadata: {
         attempted: ext.attempted,
         warnings: ext.warnings,
-        pageCount: undefined,
+        pageCount: ext.pageCount,
         textLength: ext.text ? ext.text.length : ext.ocrText ? ext.ocrText.length : ext.transcript ? ext.transcript.length : 0,
         transcript: ext.transcript,
         ocrText: ext.ocrText,
@@ -91,7 +92,7 @@ export async function performFullAnalysis(
       strictLegalReview: analysis.strictLegalReview || false,
       citationAnchors: analysis.citationAnchors || [],
       chunksAnalyzed: analysis.chunksAnalyzed,
-      entities: [],
+      entities,
       riskLevel,
       recommendations: analysis.recommendations,
     },

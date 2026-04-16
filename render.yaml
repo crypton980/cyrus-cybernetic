@@ -8,6 +8,6 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 3105
+        value: 3200
       - key: CYRUS_AI_PORT
         value: 8001

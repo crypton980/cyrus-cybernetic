@@ -1,3 +1,5 @@
+
+
 """
 CYRUS Quantum Intelligence Training Pipeline v2.0
 Comprehensive training system for enhancing all core AI capabilities.
@@ -1655,4 +1657,25 @@ class CYRUSTrainingPipeline:
         }
 
 
-training_pipeline = CYRUSTrainingPipeline()
+_training_pipeline_instance: Optional[CYRUSTrainingPipeline] = None
+_training_pipeline_lock = threading.Lock()
+
+
+def get_training_pipeline() -> CYRUSTrainingPipeline:
+    """Return a shared training pipeline instance with lazy initialization."""
+    global _training_pipeline_instance
+    if _training_pipeline_instance is None:
+        with _training_pipeline_lock:
+            if _training_pipeline_instance is None:
+                _training_pipeline_instance = CYRUSTrainingPipeline()
+    return _training_pipeline_instance
+
+
+class _LazyTrainingPipelineProxy:
+    """Proxy that defers expensive pipeline initialization until first use."""
+
+    def __getattr__(self, name: str):
+        return getattr(get_training_pipeline(), name)
+
+
+training_pipeline = _LazyTrainingPipelineProxy()

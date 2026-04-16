@@ -11,7 +11,7 @@ import {
   ConnectionManager,
   detectNetworkType,
   CallQualityMetrics,
-} from "../lib/webrtc-config.js";
+} from "../lib/webrtc-config";
 
 function getDeviceId(): string {
   const key = "cyrus-device-id";
@@ -129,11 +129,21 @@ export function useComms() {
   const messagesQuery = useQuery<Message[]>({
     queryKey: ["/api/comms/messages"],
     queryFn: async () => {
-      const res = await fetch("/api/comms/messages");
+      const res = await fetch("/api/comms/messages", { headers: commsHeaders() });
       if (!res.ok) throw new Error("Failed to fetch messages");
       return res.json();
     },
-    refetchInterval: 5000,
+    refetchInterval: 15000,
+  });
+
+  const allUsersQuery = useQuery<{ id: string; displayName: string; isOnline: boolean; lastSeen: string | null; status: string }[]>({
+    queryKey: ["/api/comms/users/all"],
+    queryFn: async () => {
+      const res = await fetch("/api/comms/users/all", { headers: commsHeaders() });
+      if (!res.ok) throw new Error("Failed to fetch users");
+      return res.json();
+    },
+    refetchInterval: 30000,
   });
 
   const remindersQuery = useQuery<Reminder[]>({
@@ -948,6 +958,7 @@ export function useComms() {
     reminders: remindersQuery.data || [],
     news: newsQuery.data || [],
     contacts: contactsQuery.data || [],
+    allUsers: allUsersQuery.data || [],
     onlineUsers,
     incomingCall,
     myUserId,
@@ -975,6 +986,7 @@ export function useComms() {
     setVolume,
     switchCamera,
     getAudioLevel,
+    myDeviceId: getDeviceId(),
     isLoading: messagesQuery.isLoading || remindersQuery.isLoading,
   };
 }

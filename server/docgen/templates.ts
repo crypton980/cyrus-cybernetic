@@ -11,7 +11,10 @@ export type DocType =
   | "research_report"
   | "application_evaluation"
   | "executive_summary"
-  | "correspondence";
+  | "correspondence"
+  | "audit_report"
+  | "legal_brief"
+  | "compliance_report";
 
 export interface TemplateSection {
   id: string;
@@ -129,6 +132,41 @@ export const templates: Record<DocType, TemplateSection[]> = {
     { id: "body", title: "Body", required: true },
     { id: "action", title: "Requested Action", required: true },
     { id: "closing", title: "Closing / Signature", required: true },
+  ],
+  audit_report: [
+    { id: "executive_summary", title: "Executive Summary", required: true },
+    { id: "scope", title: "Audit Scope & Objectives", required: true },
+    { id: "methodology", title: "Audit Methodology", required: true },
+    { id: "findings", title: "Audit Findings", required: true },
+    { id: "controls", title: "Internal Controls", required: true },
+    { id: "risk", title: "Risk Assessment", required: true },
+    { id: "recommendations", title: "Recommendations", required: true },
+    { id: "management_response", title: "Management Response", required: false },
+    { id: "action_plan", title: "Action Plan", required: true },
+    { id: "annexes", title: "Annexes", required: false },
+  ],
+  legal_brief: [
+    { id: "cover", title: "Caption / Citation", required: true },
+    { id: "facts", title: "Statement of Facts", required: true },
+    { id: "issues", title: "Issues Presented", required: true },
+    { id: "standard", title: "Standard of Review", required: true },
+    { id: "argument", title: "Argument", required: true },
+    { id: "authorities", title: "Authorities & Precedents", required: true },
+    { id: "counterarguments", title: "Counterarguments", required: false },
+    { id: "conclusion", title: "Conclusion & Relief Sought", required: true },
+    { id: "appendices", title: "Appendices / Exhibits", required: false },
+  ],
+  compliance_report: [
+    { id: "executive_summary", title: "Executive Summary", required: true },
+    { id: "framework", title: "Compliance Framework", required: true },
+    { id: "obligations", title: "Regulatory Obligations", required: true },
+    { id: "methodology", title: "Assessment Methodology", required: true },
+    { id: "status", title: "Compliance Status", required: true },
+    { id: "gaps", title: "Gaps & Non-Conformities", required: true },
+    { id: "risk", title: "Risk Rating", required: true },
+    { id: "recommendations", title: "Corrective Actions", required: true },
+    { id: "monitoring", title: "Monitoring & Review", required: true },
+    { id: "annexes", title: "Annexes", required: false },
   ],
 };
 

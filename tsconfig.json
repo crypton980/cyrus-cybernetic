@@ -22,14 +22,12 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "client/src/*"
+        "./client/src/*"
       ],
       "@shared/*": [
-        "shared/*"
+        "./shared/*"
       ]
     }
   },

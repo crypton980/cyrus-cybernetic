@@ -24,23 +24,25 @@ export interface ExtractionResult {
   visionNotes?: string;
   transcript?: string;
   frames?: Array<{ index: number; ocrText?: string; visionNotes?: string }>;
+  pageCount?: number;
+  wordCount?: number;
   warnings: string[];
   attempted: string[];
 }
 
-async function extractTextDocument(buffer: Buffer, detectedMime?: string): Promise<string> {
+async function extractTextDocument(buffer: Buffer, detectedMime?: string): Promise<{ text: string; pageCount?: number }> {
   if (detectedMime === "application/pdf") {
     const pdfModule = await import("pdf-parse");
     const parsePdf = (pdfModule as any).default ?? pdfModule;
-    const data = await parsePdf(buffer);
-    return data.text || "";
+    const data = await parsePdf(buffer, { max: 0 });
+    return { text: data.text || "", pageCount: data.numpages };
   }
   if (detectedMime && detectedMime.includes("word")) {
     const { value } = await mammoth.extractRawText({ buffer });
-    return value || "";
+    return { text: value || "" };
   }
   // Fallback: attempt UTF-8 decode
-  return buffer.toString("utf-8");
+  return { text: buffer.toString("utf-8") };
 }
 
 async function extractImageWithVision(buffer: Buffer): Promise<{ ocrText?: string; visionNotes?: string; warnings?: string[] }> {
@@ -122,9 +124,10 @@ export async function extractFile(buffer: Buffer, declaredMime?: string): Promis
   if (detected.startsWith("text/") || detected === "application/pdf" || detected.includes("word")) {
     attempted.push("text-extract");
     try {
-      const text = await extractTextDocument(buffer, detected);
+      const { text, pageCount } = await extractTextDocument(buffer, detected);
       if (text && text.trim().length > 0) {
-        return { text, warnings, attempted };
+        const wordCount = text.split(/\s+/).filter(Boolean).length;
+        return { text, pageCount, wordCount, warnings, attempted };
       }
       warnings.push("Primary text extraction returned empty; attempting OCR if applicable.");
     } catch (err: any) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, type KeyboardEvent } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, User } from "lucide-react";
 
 interface AccessGateProps {
@@ -17,7 +17,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
     const now = new Date();
     const formatted = now.toISOString().split("T")[0];
     setCurrentDate(formatted);
-
+    
     const savedUsername = localStorage.getItem("cyrus-display-name");
     if (savedUsername) {
       setUsername(savedUsername);
@@ -37,46 +37,41 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
     setIsInitializing(true);
     setError("");
 
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), code: accessCode.trim() }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const message = typeof payload?.message === "string" ? payload.message : "Invalid authorization code";
-        setError(`ACCESS DENIED - ${message}`);
-        setIsInitializing(false);
-        return;
-      }
-
-      const resolvedRole = payload?.user?.role === "admin" ? "admin" : "user";
+    const isAdmin = username.trim() === "DELTA UNIFORM 00";
+    const validAdminCode = accessCode === "71580019";
+    const validUserCode = accessCode === "170392";
+    
+    if ((isAdmin && validAdminCode) || (!isAdmin && validUserCode)) {
       localStorage.setItem("cyrus_authenticated", "true");
-      localStorage.setItem("cyrus-display-name", payload?.user?.username || username.trim());
-      localStorage.setItem("cyrus-user-role", resolvedRole);
+      localStorage.setItem("cyrus-display-name", username.trim());
+      localStorage.setItem("cyrus-user-role", isAdmin ? "admin" : "user");
       onAuthenticated();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Unable to establish secure session");
+    } else if (isAdmin && !validAdminCode) {
+      setError("ACCESS DENIED - Invalid ADMIN authorization code");
+      setIsInitializing(false);
+    } else if (!isAdmin && !validUserCode) {
+      setError("ACCESS DENIED - Invalid OPERATOR authorization code");
+      setIsInitializing(false);
+    } else {
+      setError("ACCESS DENIED - Invalid authorization code");
       setIsInitializing(false);
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleInitialize();
     }
   };
 
   return (
-    <div className="min-h-screen min-h-dvh w-full relative overflow-hidden flex flex-col">
+    <div className="min-h-screen w-full relative overflow-hidden flex flex-col">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: "url('/images/login-background.png')",
+          backgroundImage: `url('/images/login-background.png?v=${Date.now()}')`,
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/50" />
@@ -95,9 +90,9 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
         <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
           <div className="relative mb-8">
             <div className="w-52 h-52 relative">
-              <img
-                src="/images/cyrus-logo.png"
-                alt="CYRUS"
+              <img 
+                src="/images/cyrus-logo.png" 
+                alt="CYRUS" 
                 className="w-full h-full object-cover drop-shadow-[0_0_30px_rgba(34,211,238,0.7)] scale-125"
                 style={{ clipPath: 'circle(42% at center)' }}
               />
@@ -145,7 +140,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
                 />
               </div>
             </div>
-
+            
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-lg blur-sm" />
               <div className="relative bg-slate-900/80 border border-cyan-500/30 rounded-lg overflow-hidden">

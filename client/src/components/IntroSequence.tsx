@@ -9,20 +9,16 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
   const [phase, setPhase] = useState<"video" | "dissolve" | "complete">("video");
   const [smokeOpacity, setSmokeOpacity] = useState(0);
 
-  const beginDissolve = () => {
-    setPhase((current) => (current === "video" ? "dissolve" : current));
-  };
-
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     video.play().catch(() => {
-      setTimeout(beginDissolve, 500);
+      setTimeout(() => setPhase("dissolve"), 500);
     });
 
     const handleEnded = () => {
-      beginDissolve();
+      setPhase("dissolve");
     };
 
     const handleTimeUpdate = () => {
@@ -34,14 +30,9 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
     video.addEventListener("ended", handleEnded);
     video.addEventListener("timeupdate", handleTimeUpdate);
 
-    const maxDurationTimeout = window.setTimeout(() => {
-      beginDissolve();
-    }, 7000);
-
     return () => {
       video.removeEventListener("ended", handleEnded);
       video.removeEventListener("timeupdate", handleTimeUpdate);
-      window.clearTimeout(maxDurationTimeout);
     };
   }, []);
 
@@ -77,20 +68,10 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
           phase === "dissolve" || phase === "complete" ? "opacity-0" : "opacity-100"
         }`}
         src="/videos/intro.mp4"
-        onError={beginDissolve}
+        onError={() => setPhase("dissolve")}
         playsInline
         autoPlay
       />
-
-      {phase === "video" && (
-        <button
-          type="button"
-          onClick={beginDissolve}
-          className="absolute right-5 top-5 z-20 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-black/60"
-        >
-          Skip Intro
-        </button>
-      )}
 
       <div
         className="absolute inset-0 pointer-events-none transition-opacity duration-1000"

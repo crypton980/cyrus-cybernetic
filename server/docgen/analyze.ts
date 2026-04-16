@@ -1,151 +1,243 @@
-import OpenAI, { AzureOpenAI } from 'openai';
-import { DocumentAnalysisClient, AzureKeyCredential } from '@azure/ai-form-recognizer';
+import OpenAI from "openai";
 import { Audience, DocType, templates, toneByAudience, defaultDocType } from "./templates.js";
 
 const openaiApiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 const openaiBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+const llmClient = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey, baseURL: openaiBaseUrl }) : null;
 
-const llmClient =
-  openaiApiKey && openaiBaseUrl
-    ? new AzureOpenAI({ endpoint: openaiBaseUrl, apiKey: openaiApiKey })
-    : null;
-
-const documentIntelligenceKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY;
-const documentIntelligenceEndpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT;
-
-// Use managed identity if no API key provided
-const documentClient =
-  documentIntelligenceEndpoint
-    ? documentIntelligenceKey
-      ? new DocumentAnalysisClient(documentIntelligenceEndpoint, new AzureKeyCredential(documentIntelligenceKey))
-      : null
-    : null;
+const DOC_CONTEXT_LIMIT = 24_000;
 
 export interface SectionContent {
-  title: string;
-  content: string;
+    title: string;
+    content: string;
 }
 
 export interface AnalysisOutput {
-  sections: SectionContent[];
-  confidence: "High" | "Medium" | "Low";
-  assumptions: string[];
-  missing: string[];
+    title: string;
+    sections: SectionContent[];
+    confidence: "High" | "Medium" | "Low";
+    assumptions: string[];
+    missing: string[];
+    outline: Array<{ level: string; title: string; purpose: string }>;
+    pullQuotes: Array<{ quote: string; sectionTitle: string; placement: string }>;
+    layoutPlan: Array<{ kind: string; title: string; placement: string; notes: string }>;
+    graphicsPlan: Array<{ sectionTitle: string; assetType: string; placement: string; brief: string }>;
+    dataVisuals: Array<{
+        id: string;
+        kind: "table" | "bar_chart" | "line_chart" | "pie_chart" | "pictograph";
+        title: string;
+        sectionTitle: string;
+        placement: string;
+        rationale: string;
+        sourceReference: string;
+        unit?: string;
+        labels?: string[];
+        values?: number[];
+        columns?: string[];
+        rows?: string[][];
+    }>;
 }
 
 export interface DocGenInput {
-  mode: "full" | "convert" | "assist";
-  docType?: DocType;
-  audience?: Audience;
-  purpose?: string;
-  topic?: string;
-  rawText?: string;
-  data?: string;
+    mode: "full" | "convert" | "assist";
+    docType?: DocType | string;
+    audience?: Audience | string;
+    purpose?: string;
+    topic?: string;
+    rawText?: string;
+    data?: string;
+    targetPages?: number;
+    wordsPerPage?: number;
+    includeImages?: boolean;
+    imageStyle?: "realistic_3d" | "graphical" | "schematic";
 }
 
-async function extractDocumentText(data: string): Promise<string> {
-  if (!documentClient) return data; // fallback to raw data
-
-  try {
-    // Assume data is base64 encoded file
-    const buffer = Buffer.from(data, 'base64');
-    const poller = await documentClient.beginAnalyzeDocument("prebuilt-read", buffer);
-    const result = await poller.pollUntilDone();
-
-    let extractedText = '';
-    if (result.content) {
-      extractedText = result.content;
-    } else {
-      // Fallback to pages
-      for (const page of result.pages || []) {
-        for (const line of page.lines || []) {
-          extractedText += line.content + '\n';
-        }
-      }
+function normalizeDocType(docType?: string): DocType {
+    switch ((docType || "").toLowerCase()) {
+        case "report":
+        case "document":
+            return "executive_summary";
+        case "brief":
+            return "legal_brief";
+        case "memo":
+            return "correspondence";
+        case "letter":
+            return "correspondence";
+        case "summary":
+            return "executive_summary";
+        case "legal":
+            return "legal_brief";
+        case "technical":
+            return "technical_report";
+        default:
+            return (docType as DocType) || defaultDocType;
     }
-    return extractedText || data;
-  } catch (error) {
-    console.error('Document Intelligence error:', error);
-    return data; // fallback
-  }
+}
+
+function normalizeAudience(audience?: string): Audience {
+    switch ((audience || "").toLowerCase()) {
+        case "executive":
+            return "executive";
+        case "technical":
+            return "technical";
+        case "military":
+            return "military";
+        default:
+            return "official";
+    }
+}
+
+function titleFromInput(docType: DocType, payload: DocGenInput): string {
+    const root = payload.topic || payload.purpose || payload.rawText?.slice(0, 80) || "Untitled";
+    return `${docType.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase())}: ${root.slice(0, 72)}`;
 }
 
 function fallbackContent(template: DocType, payload: DocGenInput): AnalysisOutput {
-  const secs = templates[template] || templates[defaultDocType];
-  const baseContent =
-    payload.rawText ||
-    payload.topic ||
-    payload.purpose ||
-    "Content not provided. Populate this section with mission-relevant details.";
-  const sections = secs.map((s) => ({
-    title: s.title,
-    content: `${baseContent} [Placeholder; additional details required]`,
-  }));
-  return {
-    sections,
-    confidence: "Low",
-    assumptions: ["LLM analysis unavailable; placeholder text inserted."],
-    missing: [],
-  };
+    const secs = templates[template] || templates[defaultDocType];
+    const baseContent = payload.rawText || payload.topic || payload.purpose || "Content not provided.";
+    const sections = secs.map((section) => ({
+        title: section.title,
+        content: `${baseContent.slice(0, 500)}\n\nFurther detail is required to complete this section for production use.`,
+    }));
+    return buildDeterministicOutput(template, normalizeAudience(payload.audience), payload, sections, ["LLM generation unavailable; heuristic content was used."]);
+}
+
+function buildDeterministicOutput(
+    docType: DocType,
+    audience: Audience,
+    payload: DocGenInput,
+    sections: SectionContent[],
+    assumptions: string[],
+): AnalysisOutput {
+    const rawText = payload.rawText || payload.topic || payload.purpose || "";
+    const outline = sections.map((section, index) => ({
+        level: index === 0 ? "H1" : "H2",
+        title: section.title,
+        purpose: `${section.title} for ${docType.replace(/_/g, " ")}`,
+    }));
+    const pullQuotes = sections.slice(0, 4).map((section, index) => ({
+        quote: section.content.split(/(?<=[.!?])\s+/)[0]?.slice(0, 180) || section.content.slice(0, 180),
+        sectionTitle: section.title,
+        placement: index % 2 === 0 ? "sidebar" : "body",
+    }));
+    const layoutPlan = sections.map((section, index) => ({
+        kind: index === 0 ? "hero" : index % 3 === 0 ? "two-column" : "single-column",
+        title: section.title,
+        placement: `Page ${Math.floor(index / 2) + 1}`,
+        notes: `Present ${section.title.toLowerCase()} in a ${audience}-appropriate layout with strong hierarchy.`,
+    }));
+    const graphicsPlan = sections.slice(0, 3).map((section, index) => ({
+        sectionTitle: section.title,
+        assetType: index === 0 ? "cover graphic" : "supporting illustration",
+        placement: index === 0 ? "cover" : "inline-right",
+        brief: `Visual supporting ${section.title.toLowerCase()} for a ${docType.replace(/_/g, " ")} output.`,
+    }));
+    const dataVisuals = rawText.match(/\d/) ? [
+        {
+            id: "dv-1",
+            kind: "table" as const,
+            title: "Key Quantitative References",
+            sectionTitle: sections[Math.min(1, sections.length - 1)]?.title || "Overview",
+            placement: "inline",
+            rationale: "Summarizes explicit numeric details referenced in the source material.",
+            sourceReference: "Source text extraction",
+            columns: ["Item", "Value"],
+            rows: rawText.match(/(?:\d+[\d,.%]*)/g)?.slice(0, 5).map((value, index) => [`Metric ${index + 1}`, value]) || [],
+        },
+    ] : [];
+
+    return {
+        title: titleFromInput(docType, payload),
+        sections,
+        confidence: rawText.length > 4000 ? "High" : rawText.length > 1200 ? "Medium" : "Low",
+        assumptions,
+        missing: sections.filter((section) => section.content.trim().length < 40).map((section) => section.title),
+        outline,
+        pullQuotes,
+        layoutPlan,
+        graphicsPlan,
+        dataVisuals,
+    };
+}
+
+async function generateSectionContent(
+    docType: DocType,
+    audience: Audience,
+    payload: DocGenInput,
+    sectionTitles: string[],
+    context: string,
+): Promise<Record<string, string>> {
+    if (!llmClient) return {};
+
+    try {
+        const response = await llmClient.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: [
+                        `You are a professional ${audience} writer producing a ${docType.replace(/_/g, " ")}.`,
+                        `Write in a ${toneByAudience[audience]} tone.`,
+                        "Return JSON whose keys exactly match the requested section titles and whose values are complete section drafts.",
+                        "Use only the supplied context and state assumptions inside the prose when information is sparse.",
+                    ].join(" "),
+                },
+                {
+                    role: "user",
+                    content: JSON.stringify({
+                        purpose: payload.purpose,
+                        topic: payload.topic,
+                        sections: sectionTitles,
+                        context,
+                    }),
+                },
+            ],
+            response_format: { type: "json_object" },
+            max_tokens: 2600,
+        });
+        const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+        return typeof parsed === "object" && parsed ? parsed : {};
+    } catch {
+        return {};
+    }
 }
 
 export async function analyzeDocument(payload: DocGenInput): Promise<AnalysisOutput> {
-  const docType = payload.docType || defaultDocType;
-  const template = templates[docType] || templates[defaultDocType];
-  if (!llmClient) return fallbackContent(docType, payload);
+    const docType = normalizeDocType(payload.docType);
+    const audience = normalizeAudience(payload.audience);
+    const template = templates[docType] || templates[defaultDocType];
+    const rawText = payload.rawText || payload.topic || payload.purpose || "";
 
-  // Extract text from document if data is provided
-  let rawText = payload.rawText;
-  if (payload.data && !rawText) {
-    rawText = await extractDocumentText(payload.data);
-  }
+    if (!rawText && !payload.data) {
+        return fallbackContent(docType, payload);
+    }
 
-  const tone = toneByAudience[payload.audience || "official"] || toneByAudience.official;
-  const sectionTitles = template.map((s) => s.title);
+    const context = rawText.slice(0, DOC_CONTEXT_LIMIT);
+    const batches: string[][] = [];
+    for (let index = 0; index < template.length; index += 4) {
+        batches.push(template.slice(index, index + 4).map((item) => item.title));
+    }
 
-  const systemPrompt = `
-You are a professional ${payload.audience || "official"} writer. Produce a submission-ready document.
-Rules:
-- Use the provided section titles exactly.
-- Write in formal, ${tone} tone.
-- Avoid casual language.
-- Keep each section concise but complete.
-- If information is missing, state assumptions explicitly in-line.
-- Do NOT invent data; keep confidence lower if information is sparse.
-Return JSON with: sections (array of {title, content}), confidence (High/Medium/Low), assumptions (array), missing (array of section titles lacking info).
-`;
+    const contentMap: Record<string, string> = {};
+    for (const batch of batches) {
+        const generated = await generateSectionContent(docType, audience, payload, batch, context);
+        Object.assign(contentMap, generated);
+    }
 
-  const userContent = {
-    mode: payload.mode,
-    docType,
-    purpose: payload.purpose,
-    topic: payload.topic,
-    rawText,
-    data: payload.data,
-    sections: sectionTitles,
-  };
+    const sections = template.map((section) => ({
+        title: section.title,
+        content:
+            contentMap[section.title] ||
+            `${(rawText || payload.topic || payload.purpose || "Supporting detail required.").slice(0, 700)}\n\nThis section should be expanded with source-specific detail before publication.`,
+    }));
 
-  try {
-    const resp = await llmClient.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: JSON.stringify(userContent) },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 900,
-    });
-    const parsed = JSON.parse(resp.choices[0].message.content || "{}");
-    const sections: SectionContent[] = Array.isArray(parsed.sections)
-      ? parsed.sections
-      : template.map((t) => ({ title: t.title, content: "" }));
-    const confidence: "High" | "Medium" | "Low" =
-      parsed.confidence === "High" || parsed.confidence === "Low" ? parsed.confidence : "Medium";
-    const assumptions: string[] = Array.isArray(parsed.assumptions) ? parsed.assumptions : [];
-    const missing: string[] = Array.isArray(parsed.missing) ? parsed.missing : [];
-    return { sections, confidence, assumptions, missing };
-  } catch (err) {
-    return fallbackContent(docType, payload);
-  }
+    const assumptions: string[] = [];
+    if (rawText.length > DOC_CONTEXT_LIMIT) {
+        assumptions.push(`Generation used the first ${DOC_CONTEXT_LIMIT.toLocaleString()} characters of source context for drafting.`);
+    }
+    if (!llmClient) {
+        assumptions.push("LLM service unavailable; heuristic section drafting applied.");
+    }
+
+    return buildDeterministicOutput(docType, audience, payload, sections, assumptions);
 }
-

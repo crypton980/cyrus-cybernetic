@@ -55,8 +55,9 @@ export function useSocketComms(options: UseSocketCommsOptions) {
     console.log('[SocketComms] Connecting to Socket.IO server...');
     
     const socket = io(window.location.origin, {
-      path: '/socket.io',
-      transports: ['websocket', 'polling'],
+      path: '/cyrus-io',
+      transports: ['polling'],
+      upgrade: false,
     });
     
     socketRef.current = socket;

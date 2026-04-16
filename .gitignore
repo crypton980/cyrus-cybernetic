@@ -23,3 +23,5 @@ training_cache/
 server/quantum_ai/training_cache/
 server/quantum_ai/artifacts/
 *.pkl
+cyrus-ai/chroma-data/
+cyrus-ai/runtime-data/

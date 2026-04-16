@@ -161,7 +161,10 @@ export class SelfEvolutionEngine {
         await this.nexusEvolutionSync();
       }
 
-      console.log(`[Self-Evolution] Cycle ${this.evolutionCycle} completed`);
+      const verboseEvolution = process.env.CYRUS_VERBOSE_EVOLUTION === 'true';
+      if (verboseEvolution || this.evolutionCycle % 25 === 0) {
+        console.log(`[Self-Evolution] Cycle ${this.evolutionCycle} completed`);
+      }
     } catch (error) {
       console.error('[Self-Evolution] Cycle error:', error);
     }
@@ -489,7 +492,10 @@ Return only valid JSON.`
 
       this.metaInsights = [...insights, ...this.metaInsights].slice(0, 50);
 
-      console.log(`[Self-Evolution] Generated ${insights.length} new meta-insights`);
+      const verboseEvolution = process.env.CYRUS_VERBOSE_EVOLUTION === 'true';
+      if (verboseEvolution || insights.length > 0) {
+        console.log(`[Self-Evolution] Generated ${insights.length} new meta-insights`);
+      }
     } catch (error) {
       console.error('[Self-Evolution] Meta-insight generation error:', error);
     }

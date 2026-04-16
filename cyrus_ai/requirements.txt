@@ -1,0 +1,16 @@
+openai
+whisper
+sounddevice
+numpy
+pyttsx3
+pydantic
+fastapi
+uvicorn
+langchain
+faiss-cpu
+python-dotenv
+tiktoken
+scipy
+speechrecognition
+elevenlabs
+transformers

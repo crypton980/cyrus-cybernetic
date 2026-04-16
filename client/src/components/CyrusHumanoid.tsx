@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Cpu, Send, Mic, MicOff, Volume2, X, Minimize2, Maximize2, Loader2 } from "lucide-react";
+import { Cpu, Send, Mic, MicOff, Volume2, X, Minimize2, Maximize2, Loader2, Eye } from "lucide-react";
 
 interface CyrusHumanoidProps {
-  module: "vision" | "documents" | "navigation" | "communications" | "systems" | "aerospace" | "trading";
+  module: "vision" | "documents" | "navigation" | "communications" | "systems" | "aerospace";
   context?: string;
   onAnalysis?: (response: string) => void;
   compact?: boolean;
@@ -16,12 +16,11 @@ const modulePrompts: Record<string, string> = {
   communications: "You are CYRUS, a humanoid intelligence engaged in secure communications. Manage calls, compose messages, and execute communication protocols.",
   systems: "You are CYRUS, a humanoid intelligence engaged in hardware and device control. Manage devices, monitor systems, troubleshoot issues, and execute security operations.",
   aerospace: "You are CYRUS, a humanoid intelligence engaged in UAV/drone operations. Execute flight planning, mission parameters, telemetry analysis, and autonomous operations.",
-  trading: "You are CYRUS, a humanoid intelligence engaged in financial markets analysis. Provide technical analysis, trading strategies, risk assessment, and market intelligence.",
 };
 
 export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: CyrusHumanoidProps) {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<{ role: "user" | "cyrus"; content: string }[]>([]);
+  const [messages, setMessages] = useState<{ role: "user" | "cyrus"; content: string; visual?: { topic: string; category: string; image: string } }[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isExpanded, setIsExpanded] = useState(!compact);
@@ -31,14 +30,12 @@ export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: 
   const sendMessage = useMutation({
     mutationFn: async (message: string) => {
       const systemContext = `${modulePrompts[module]}\n\nCurrent context: ${context || "No specific context provided."}`;
-      const userId = localStorage.getItem("cyrus-display-name") || "DELTA UNIFORM 00";
       
       const response = await fetch("/api/infer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           message,
-          userId,
           systemContext,
           module 
         }),
@@ -49,7 +46,8 @@ export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: 
     },
     onSuccess: (data) => {
       const cyrusResponse = data.response || "I apologize, I couldn't process that request.";
-      setMessages(prev => [...prev, { role: "cyrus", content: cyrusResponse }]);
+      const visual = data.visual?.image ? { topic: data.visual.topic, category: data.visual.category, image: data.visual.image } : undefined;
+      setMessages(prev => [...prev, { role: "cyrus", content: cyrusResponse, visual }]);
       onAnalysis?.(cyrusResponse);
       
       if (!compact) {
@@ -64,12 +62,7 @@ export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: 
       const response = await fetch("/api/cyrus/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text,
-          voice: "rachel",
-          voiceProfile: "warm_precise",
-          elevenLabsApiKey: localStorage.getItem("cyrus-elevenlabs-api-key") || undefined,
-        }),
+        body: JSON.stringify({ text, voice: "nova" }),
       });
       
       if (response.ok) {
@@ -177,6 +170,15 @@ export function CyrusHumanoid({ module, context, onAnalysis, compact = false }: 
                   : "bg-[#3a3a3c] text-white"
               }`}>
                 {msg.content}
+                {msg.visual?.image && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-cyan-500/20">
+                    <img src={msg.visual.image} alt={`Visual: ${msg.visual.topic}`} className="w-full h-auto" loading="lazy" />
+                    <div className="px-2 py-1 bg-[#1a1a2e] text-[10px] text-cyan-400 flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      <span>{msg.visual.topic} ({msg.visual.category})</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))

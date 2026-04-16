@@ -39,6 +39,11 @@ let createAnalysisJob: any;
 let getAnalysisJob: any;
 let listAnalysisReports: any;
 let generateDocument: any;
+let createDocgenJob: any;
+let getDocgenJob: any;
+let listDocgenJobs: any;
+let cancelDocgenJob: any;
+let resumeDocgenJob: any;
 let initSignalingServer: any;
 let initSocketSignaling: any;
 let enqueueMessage: any;
@@ -55,6 +60,7 @@ let registerAdvancedUpgradeRoutes: any;
 let moduleOrchestrator: any;
 let autonomyRoutes: any;
 let dataCollectionRoutes: any;
+let humanoidRoutes: any;
 let registerInteractiveRoutes: any;
 let quantumBridge: any;
 let quantumResponseFormatter: any;
@@ -132,6 +138,12 @@ async function loadDependencies() {
   listAnalysisReports = jobsM.listAnalysisReports;
   const dgM = await import("./docgen/generate");
   generateDocument = dgM.generateDocument;
+  const dgJobsM = await import("./docgen/jobs");
+  createDocgenJob = dgJobsM.createDocgenJob;
+  getDocgenJob = dgJobsM.getDocgenJob;
+  listDocgenJobs = dgJobsM.listDocgenJobs;
+  cancelDocgenJob = dgJobsM.cancelDocgenJob;
+  resumeDocgenJob = dgJobsM.resumeDocgenJob;
   await tick();
 
   const sgM = await import("./comms/signaling");
@@ -211,6 +223,8 @@ async function loadDependencies() {
   emotionFusion = efM.emotionFusion;
   const vpM = await import("./humanoid/voice-prosody");
   voiceProsody = vpM.voiceProsody;
+  const humanoidM = await import("./humanoid/routes");
+  humanoidRoutes = humanoidM.default;
   await tick();
 
   const brainModule = await import("./ai/brain-routes");
@@ -764,6 +778,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "No file uploaded" });
       }
       const jurisdiction = req.body.jurisdiction as string || "Botswana";
+      const mode = req.body.mode as string | undefined;
       const strictLegalReview = req.body.strictLegalReview === "true";
       const buffer = req.file.buffer || (req.file.path ? await (await import("fs/promises")).readFile(req.file.path) : null);
       if (!buffer) {
@@ -837,6 +852,7 @@ export async function registerRoutes(
       }
 
       const jurisdiction = req.body.jurisdiction as string || "Botswana";
+      const mode = req.body.mode as string | undefined;
       const strictLegalReview = req.body.strictLegalReview === "true";
 
       const job = await createAnalysisJob({
@@ -848,6 +864,7 @@ export async function registerRoutes(
         filePath: req.file.path,
         options: {
           jurisdiction,
+          mode,
           strictLegalReview
         }
       });
@@ -974,6 +991,141 @@ export async function registerRoutes(
     } catch (err: any) {
       console.error("Doc generation failed:", err);
       res.status(500).json({ error: "Document generation failed", detail: err?.message || String(err) });
+    }
+  });
+
+  app.post("/api/docgen/generate", async (req, res) => {
+    try {
+      const {
+        docType,
+        content,
+        audience,
+        purpose,
+        topic,
+        rawText,
+        data,
+        targetPages,
+        wordsPerPage,
+        includeImages,
+        imageStyle,
+      } = req.body || {};
+
+      const doc = await generateDocument({
+        mode: "full",
+        docType,
+        audience,
+        purpose,
+        topic,
+        rawText: rawText || content,
+        data,
+        targetPages,
+        wordsPerPage,
+        includeImages,
+        imageStyle,
+      });
+      res.json(doc);
+    } catch (err: any) {
+      console.error("Docgen generate failed:", err);
+      res.status(500).json({ error: "Document generation failed", detail: err?.message || String(err) });
+    }
+  });
+
+  app.post("/api/docgen/generate-async", async (req, res) => {
+    try {
+      const {
+        docType,
+        content,
+        audience,
+        purpose,
+        topic,
+        rawText,
+        data,
+        targetPages,
+        wordsPerPage,
+        includeImages,
+        imageStyle,
+      } = req.body || {};
+
+      const job = createDocgenJob({
+        mode: "full",
+        docType,
+        audience,
+        purpose,
+        topic,
+        rawText: rawText || content,
+        data,
+        targetPages,
+        wordsPerPage,
+        includeImages,
+        imageStyle,
+      });
+      res.json({ job });
+    } catch (err: any) {
+      console.error("Docgen async start failed:", err);
+      res.status(500).json({ error: "Failed to start generation job", detail: err?.message || String(err) });
+    }
+  });
+
+  app.get("/api/docgen/jobs", (_req, res) => {
+    res.json({ jobs: listDocgenJobs(20) });
+  });
+
+  app.get("/api/docgen/jobs/:jobId", (req, res) => {
+    const job = getDocgenJob(req.params.jobId);
+    if (!job) {
+      return res.status(404).json({ error: "Generation job not found" });
+    }
+    res.json(job);
+  });
+
+  app.post("/api/docgen/jobs/:jobId/cancel", (req, res) => {
+    const job = cancelDocgenJob(req.params.jobId);
+    if (!job) {
+      return res.status(404).json({ error: "Generation job not found" });
+    }
+    res.json({ job });
+  });
+
+  app.post("/api/docgen/jobs/:jobId/resume", (req, res) => {
+    const job = resumeDocgenJob(req.params.jobId);
+    if (!job) {
+      return res.status(404).json({ error: "Generation job not found" });
+    }
+    res.json({ job });
+  });
+
+  app.post("/api/docgen/visualize", upload.single("reference"), async (req: Request & { file?: MulterFile }, res) => {
+    try {
+      const prompt = String(req.body?.prompt || "").trim();
+      if (!prompt) {
+        return res.status(400).json({ error: "prompt is required" });
+      }
+
+      const styleMap: Record<string, "natural" | "vivid"> = {
+        realistic_3d: "vivid",
+        graphical: "vivid",
+        schematic: "natural",
+      };
+
+      const result = await generateImage({
+        prompt,
+        model: "dall-e-3",
+        size: "1024x1024",
+        quality: "standard",
+        style: styleMap[String(req.body?.style || "graphical")] || "vivid",
+        savePath: "auto",
+      });
+
+      const firstImage = result?.images?.[0] || {};
+      res.json({
+        url: firstImage.savedPath || firstImage.url,
+        b64_json: firstImage.b64_json,
+        revised_prompt: firstImage.revised_prompt,
+        usedReference: Boolean(req.file),
+      });
+    } catch (err: any) {
+      console.error("Docgen visualize failed:", err);
+      res.status(500).json({ error: "Visual generation failed", detail: err?.message || String(err) });
     }
   });
 
@@ -3388,6 +3540,9 @@ Return ONLY valid JSON.`
 
   // Use data collection routes
   app.use("/api/data-collection", dataCollectionRoutes);
+
+  // Use humanoid routes
+  app.use("/api/humanoid", humanoidRoutes);
 
   return httpServer;
 }

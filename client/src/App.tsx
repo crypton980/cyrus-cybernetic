@@ -9,7 +9,6 @@ import {
   MapPin,
   Phone,
   Monitor,
-  TrendingUp,
   Plane,
   ChevronRight,
   Cpu,
@@ -18,28 +17,28 @@ import {
   Shield,
   Microscope,
   Droplets,
+  LogIn,
   LogOut,
   User,
   Users,
 } from "lucide-react";
 
-import { AccessGate } from "./components/AccessGate.js";
-import { PresenceProvider, usePresence } from "./contexts/PresenceContext.js";
-import { IntroSequence } from "./components/IntroSequence.js";
-import { Dashboard } from "./components/Dashboard.js";
-import { ScanPage } from "./pages/ScanPage.js";
-import { FileAnalysisPage } from "./pages/FileAnalysisPage.js";
-import { NavigationPage } from "./pages/NavigationPage.js";
-import { CommsPage } from "./pages/CommsPage.js";
-import { DeviceControlPage } from "./pages/DeviceControlPage.js";
-import { TradingPage } from "./pages/TradingPage.js";
-import { DronePage } from "./pages/DronePage.js";
-import { ModulesPage } from "./pages/ModulesPage.js";
-import { MedicalPage } from "./pages/MedicalPage.js";
-import { QuantumPage } from "./pages/QuantumPage.js";
-import { SecurityPage } from "./pages/SecurityPage.js";
-import { BiologyPage } from "./pages/BiologyPage.js";
-import { BloodSamplingPage } from "./pages/BloodSamplingPage.js";
+import { AccessGate } from "./components/AccessGate";
+import { PresenceProvider, usePresence } from "./contexts/PresenceContext";
+import { IntroSequence } from "./components/IntroSequence";
+import { Dashboard } from "./components/Dashboard";
+import { ScanPage } from "./pages/ScanPage";
+import { FileAnalysisPage } from "./pages/FileAnalysisPage";
+import { NavigationPage } from "./pages/NavigationPage";
+import { CommsPage } from "./pages/CommsPage";
+import { DeviceControlPage } from "./pages/DeviceControlPage";
+import { DronePage } from "./pages/DronePage";
+import { ModulesPage } from "./pages/ModulesPage";
+import { MedicalPage } from "./pages/MedicalPage";
+import { QuantumPage } from "./pages/QuantumPage";
+import { SecurityPage } from "./pages/SecurityPage";
+import { BiologyPage } from "./pages/BiologyPage";
+import { BloodSamplingPage } from "./pages/BloodSamplingPage";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
@@ -50,7 +49,6 @@ const navItems = [
   { path: "/comms", label: "Communications", sublabel: "Secure Channels", icon: Phone },
   { path: "/device", label: "Systems", sublabel: "Hardware Control", icon: Monitor },
   { path: "/drone", label: "Aerospace", sublabel: "UAV Operations", icon: Plane },
-  { path: "/trading", label: "Markets", sublabel: "Financial Intel", icon: TrendingUp },
 ];
 
 const moduleItems = [
@@ -63,42 +61,41 @@ const moduleItems = [
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [authBootstrapped, setAuthBootstrapped] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
-  const [introComplete, setIntroComplete] = useState(true);
+  const [introComplete, setIntroComplete] = useState(false);
+  const [replitUser, setReplitUser] = useState<{ id: string; username: string; profileImage?: string } | null>(null);
   const [location] = useLocation();
 
   useEffect(() => {
-    const introWatched = localStorage.getItem("cyrus_intro_watched") || sessionStorage.getItem("cyrus_intro_watched");
-
-    fetch("/api/auth/user")
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("not_authenticated");
-        }
-        return response.json();
-      })
-      .then((user) => {
-        localStorage.setItem("cyrus_authenticated", "true");
-        localStorage.setItem("cyrus-display-name", user?.username || "OPERATOR");
-        localStorage.setItem("cyrus-user-role", user?.role === "admin" ? "admin" : "user");
-        setIsAuthenticated(true);
-        if (introWatched === "true") {
-          setIntroComplete(true);
-        }
-      })
-      .catch(() => {
-        localStorage.removeItem("cyrus_authenticated");
-        setIsAuthenticated(false);
-      })
-      .finally(() => {
-        setAuthBootstrapped(true);
-      });
+    const authenticated = localStorage.getItem("cyrus_authenticated");
+    const introWatched = sessionStorage.getItem("cyrus_intro_watched");
+    if (authenticated === "true") {
+      setIsAuthenticated(true);
+      if (introWatched === "true") {
+        setIntroComplete(true);
+      }
+    }
   }, []);
 
+  useEffect(() => {
+    fetch("/api/auth/user")
+      .then(res => res.ok ? res.json() : null)
+      .then(user => {
+        if (user) setReplitUser(user);
+      })
+      .catch(() => { });
+  }, []);
+
+  const handleLogin = () => {
+    window.location.href = "/api/login";
+  };
+
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
+
   const handleLocalLogout = () => {
-    fetch("/api/logout", { method: "POST" }).catch(() => undefined);
     localStorage.removeItem("cyrus_authenticated");
     localStorage.removeItem("cyrus-display-name");
     localStorage.removeItem("cyrus-user-role");
@@ -109,23 +106,17 @@ export default function App() {
 
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
-    setShowIntro(false);
-    setIntroComplete(true);
+    setShowIntro(true);
   };
 
   const handleIntroComplete = () => {
     sessionStorage.setItem("cyrus_intro_watched", "true");
-    localStorage.setItem("cyrus_intro_watched", "true");
     setShowIntro(false);
     setIntroComplete(true);
   };
 
   const localUsername = localStorage.getItem("cyrus-display-name") || "OPERATOR";
   const userRole = localStorage.getItem("cyrus-user-role") || "user";
-
-  if (!authBootstrapped) {
-    return <div className="h-screen w-full bg-black" />;
-  }
 
   if (!isAuthenticated) {
     return <AccessGate onAuthenticated={handleAuthenticated} />;
@@ -199,10 +190,10 @@ function AppContent({
   };
 
   return (
-    <div className="h-dvh min-h-screen bg-black text-white flex overflow-hidden">
+    <div className="h-screen bg-black text-white flex overflow-hidden">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1c1c1e] border-r border-cyan-500/30 transform transition-transform duration-200 lg:relative lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1c1c1e] border-r border-[rgba(84,84,88,0.65)] transform transition-transform duration-200 lg:relative lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         <div className="h-full flex flex-col">
@@ -236,7 +227,7 @@ function AppContent({
           {/* Navigation */}
           <nav className="flex-1 px-3 overflow-y-auto space-y-6 py-4">
             <div>
-              <p className="px-3 text-[10px] font-bold text-cyan-200/60 uppercase tracking-widest mb-2">Main</p>
+              <p className="px-3 text-[10px] font-bold text-[rgba(235,235,245,0.3)] uppercase tracking-widest mb-2">Main</p>
               <div className="space-y-1">
                 {navItems.map((item) => {
                   const Icon = item.icon;
@@ -247,21 +238,21 @@ function AppContent({
                       href={item.path}
                       onClick={() => setMenuOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive
-                        ? "bg-cyan-500/22 border border-cyan-400/45 text-cyan-100"
-                        : "text-cyan-100/85 border border-transparent hover:border-cyan-500/25 hover:bg-cyan-500/12"
+                          ? "bg-[#0a84ff] text-white"
+                          : "text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)]"
                         }`}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? "bg-cyan-200/20 text-cyan-100" : "bg-cyan-500/12 text-cyan-200/85"
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
                         }`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{item.label}</p>
-                        <p className={`text-[10px] ${isActive ? "text-cyan-100/70" : "text-cyan-200/45"}`}>
+                        <p className={`text-[10px] ${isActive ? "text-white/60" : "text-[rgba(235,235,245,0.4)]"}`}>
                           {item.sublabel}
                         </p>
                       </div>
-                      {isActive && <ChevronRight className="w-4 h-4 text-cyan-100/70" />}
+                      {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}
                     </Link>
                   );
                 })}
@@ -269,7 +260,7 @@ function AppContent({
             </div>
 
             <div>
-              <p className="px-3 text-[10px] font-bold text-cyan-200/60 uppercase tracking-widest mb-2">Advanced Modules</p>
+              <p className="px-3 text-[10px] font-bold text-[rgba(235,235,245,0.3)] uppercase tracking-widest mb-2">Advanced Modules</p>
               <div className="space-y-1">
                 {moduleItems.map((item) => {
                   const Icon = item.icon;
@@ -280,21 +271,21 @@ function AppContent({
                       href={item.path}
                       onClick={() => setMenuOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive
-                        ? "bg-cyan-500/22 border border-cyan-400/45 text-cyan-100"
-                        : "text-cyan-100/85 border border-transparent hover:border-cyan-500/25 hover:bg-cyan-500/12"
+                          ? "bg-[#0a84ff] text-white"
+                          : "text-[rgba(235,235,245,0.8)] hover:bg-[rgba(120,120,128,0.2)]"
                         }`}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? "bg-cyan-200/20 text-cyan-100" : "bg-cyan-500/12 text-cyan-200/85"
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? "bg-white/20" : "bg-[rgba(120,120,128,0.2)]"
                         }`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{item.label}</p>
-                        <p className={`text-[10px] ${isActive ? "text-cyan-100/70" : "text-cyan-200/45"}`}>
+                        <p className={`text-[10px] ${isActive ? "text-white/60" : "text-[rgba(235,235,245,0.4)]"}`}>
                           {item.sublabel}
                         </p>
                       </div>
-                      {isActive && <ChevronRight className="w-4 h-4 text-cyan-100/70" />}
+                      {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}
                     </Link>
                   );
                 })}
@@ -303,12 +294,12 @@ function AppContent({
           </nav>
 
           {/* User Account & Footer */}
-          <div className="p-4 border-t border-cyan-500/30 space-y-3">
+          <div className="p-4 border-t border-[rgba(84,84,88,0.65)] space-y-3">
             <div className="bg-gradient-to-br from-[#2c2c2e] to-[#1c1c1e] rounded-xl p-3 border border-cyan-500/20">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${userRole === "admin"
-                  ? "bg-gradient-to-br from-orange-500 to-red-600 ring-2 ring-orange-500/50"
-                  : "bg-gradient-to-br from-cyan-500 to-purple-600"
+                    ? "bg-gradient-to-br from-orange-500 to-red-600 ring-2 ring-orange-500/50"
+                    : "bg-gradient-to-br from-cyan-500 to-purple-600"
                   }`}>
                   <User className="w-5 h-5 text-white" />
                 </div>
@@ -419,7 +410,7 @@ function AppContent({
           </div>
         </header>
 
-        <main className="flex-1 bg-black overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 overflow-hidden bg-black">
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/modules" component={ModulesPage} />
@@ -429,15 +420,11 @@ function AppContent({
             <Route path="/comms" component={CommsPage} />
             <Route path="/device" component={DeviceControlPage} />
             <Route path="/drone" component={DronePage} />
-            <Route path="/trading" component={TradingPage} />
             <Route path="/medical" component={MedicalPage} />
             <Route path="/quantum" component={QuantumPage} />
             <Route path="/security" component={SecurityPage} />
             <Route path="/biology" component={BiologyPage} />
             <Route path="/blood" component={BloodSamplingPage} />
-            <Route>
-              <Dashboard />
-            </Route>
           </Switch>
         </main>
       </div>
