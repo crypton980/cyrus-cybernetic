@@ -19,10 +19,22 @@
                 },
                 "background": {
                     "activeOnStart": true,
-                    "beginsPattern": "^.*starting.*$",
-                    "endsPattern": "^.*listening.*$"
+                    "beginsPattern": ".",
+                    "endsPattern": "serving on port"
                 }
             }
+        },
+        {
+            "label": "Open CYRUS in Browser",
+            "type": "shell",
+            "command": "echo 'Open http://localhost:3105 in your browser'",
+            "group": "build",
+            "dependsOn": "Dev Server",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": []
         },
         {
             "label": "Build",

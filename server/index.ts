@@ -14,9 +14,8 @@ let systemReady = false;
 
 function findDistPublic(): string | null {
   const candidates = [
-    path.resolve(__dirname, "..", "public"),
     path.resolve(process.cwd(), "dist", "public"),
-    path.resolve(process.cwd(), "public"),
+    path.resolve(__dirname, "..", "dist", "public"),
   ];
   for (const dir of candidates) {
     if (fs.existsSync(path.join(dir, "index.html"))) return dir;
