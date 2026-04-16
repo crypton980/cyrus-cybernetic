@@ -45,6 +45,7 @@ import { BiologyPage } from "./pages/BiologyPage";
 import { BloodSamplingPage } from "./pages/BloodSamplingPage";
 import { KnowledgeLibraryPage } from "./pages/KnowledgeLibraryPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const navItems = [
   { path: "/", label: "Command", sublabel: "Primary Interface", icon: MessageSquare },
@@ -422,22 +423,22 @@ function AppContent({
 
         <main className="flex-1 bg-black overflow-hidden">
           <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/modules" component={ModulesPage} />
-            <Route path="/scan" component={ScanPage} />
-            <Route path="/files" component={FileAnalysisPage} />
-            <Route path="/knowledge" component={KnowledgeLibraryPage} />
-            <Route path="/nav" component={NavigationPage} />
-            <Route path="/comms" component={CommsPage} />
-            <Route path="/device" component={DeviceControlPage} />
-            <Route path="/drone" component={DronePage} />
-            <Route path="/trading" component={TradingPage} />
-            <Route path="/medical" component={MedicalPage} />
-            <Route path="/quantum" component={QuantumPage} />
-            <Route path="/security" component={SecurityPage} />
-            <Route path="/biology" component={BiologyPage} />
-            <Route path="/blood" component={BloodSamplingPage} />
-            <Route path="/settings" component={SettingsPage} />
+            <Route path="/" component={() => <ErrorBoundary pageName="Command"><Dashboard /></ErrorBoundary>} />
+            <Route path="/modules" component={() => <ErrorBoundary pageName="Modules"><ModulesPage /></ErrorBoundary>} />
+            <Route path="/scan" component={() => <ErrorBoundary pageName="Vision"><ScanPage /></ErrorBoundary>} />
+            <Route path="/files" component={() => <ErrorBoundary pageName="Documents"><FileAnalysisPage /></ErrorBoundary>} />
+            <Route path="/knowledge" component={() => <ErrorBoundary pageName="Knowledge Library"><KnowledgeLibraryPage /></ErrorBoundary>} />
+            <Route path="/nav" component={() => <ErrorBoundary pageName="Navigation"><NavigationPage /></ErrorBoundary>} />
+            <Route path="/comms" component={() => <ErrorBoundary pageName="Communications"><CommsPage /></ErrorBoundary>} />
+            <Route path="/device" component={() => <ErrorBoundary pageName="Systems"><DeviceControlPage /></ErrorBoundary>} />
+            <Route path="/drone" component={() => <ErrorBoundary pageName="Aerospace"><DronePage /></ErrorBoundary>} />
+            <Route path="/trading" component={() => <ErrorBoundary pageName="Markets"><TradingPage /></ErrorBoundary>} />
+            <Route path="/medical" component={() => <ErrorBoundary pageName="Medical"><MedicalPage /></ErrorBoundary>} />
+            <Route path="/quantum" component={() => <ErrorBoundary pageName="Quantum"><QuantumPage /></ErrorBoundary>} />
+            <Route path="/security" component={() => <ErrorBoundary pageName="Security"><SecurityPage /></ErrorBoundary>} />
+            <Route path="/biology" component={() => <ErrorBoundary pageName="Biology"><BiologyPage /></ErrorBoundary>} />
+            <Route path="/blood" component={() => <ErrorBoundary pageName="Blood Sampling"><BloodSamplingPage /></ErrorBoundary>} />
+            <Route path="/settings" component={() => <ErrorBoundary pageName="Settings"><SettingsPage /></ErrorBoundary>} />
           </Switch>
         </main>
       </div>

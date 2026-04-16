@@ -359,38 +359,42 @@ export function useComms() {
         };
 
         ws.onmessage = async (event) => {
-          const msg = JSON.parse(event.data);
-          console.log("[WebRTC] Received message:", msg.type);
+          try {
+            const msg = JSON.parse(event.data);
+            console.log("[WebRTC] Received message:", msg.type);
 
-          if (msg.type === "offer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
-            
-            for (const candidate of pendingCandidatesRef.current) {
-              await pc.addIceCandidate(candidate);
-            }
-            pendingCandidatesRef.current = [];
+            if (msg.type === "offer") {
+              await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+              
+              for (const candidate of pendingCandidatesRef.current) {
+                await pc.addIceCandidate(candidate);
+              }
+              pendingCandidatesRef.current = [];
 
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            ws.send(JSON.stringify({ type: "answer", roomId, payload: answer }));
-          } else if (msg.type === "answer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
-            
-            for (const candidate of pendingCandidatesRef.current) {
-              await pc.addIceCandidate(candidate);
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              ws.send(JSON.stringify({ type: "answer", roomId, payload: answer }));
+            } else if (msg.type === "answer") {
+              await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+              
+              for (const candidate of pendingCandidatesRef.current) {
+                await pc.addIceCandidate(candidate);
+              }
+              pendingCandidatesRef.current = [];
+            } else if (msg.type === "ice-candidate") {
+              if (pc.remoteDescription) {
+                await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+              } else {
+                pendingCandidatesRef.current.push(new RTCIceCandidate(msg.payload));
+              }
+            } else if (msg.type === "peer-joined") {
+              console.log("[WebRTC] Peer joined the call");
+            } else if (msg.type === "peer-left") {
+              console.log("[WebRTC] Peer left the call");
+              setRemoteStream(null);
             }
-            pendingCandidatesRef.current = [];
-          } else if (msg.type === "ice-candidate") {
-            if (pc.remoteDescription) {
-              await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
-            } else {
-              pendingCandidatesRef.current.push(new RTCIceCandidate(msg.payload));
-            }
-          } else if (msg.type === "peer-joined") {
-            console.log("[WebRTC] Peer joined the call");
-          } else if (msg.type === "peer-left") {
-            console.log("[WebRTC] Peer left the call");
-            setRemoteStream(null);
+          } catch (err) {
+            console.warn("[WebRTC] Failed to handle message:", err);
           }
         };
 
@@ -507,23 +511,27 @@ export function useComms() {
         };
 
         ws.onmessage = async (event) => {
-          const msg = JSON.parse(event.data);
-          console.log("[WebRTC] Initiator received:", msg.type);
+          try {
+            const msg = JSON.parse(event.data);
+            console.log("[WebRTC] Initiator received:", msg.type);
 
-          if (msg.type === "answer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
-            for (const candidate of pendingCandidatesRef.current) {
-              await pc.addIceCandidate(candidate);
+            if (msg.type === "answer") {
+              await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+              for (const candidate of pendingCandidatesRef.current) {
+                await pc.addIceCandidate(candidate);
+              }
+              pendingCandidatesRef.current = [];
+            } else if (msg.type === "ice-candidate") {
+              if (pc.remoteDescription) {
+                await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+              } else {
+                pendingCandidatesRef.current.push(new RTCIceCandidate(msg.payload));
+              }
+            } else if (msg.type === "peer-joined") {
+              console.log("[WebRTC] Peer joined the call");
             }
-            pendingCandidatesRef.current = [];
-          } else if (msg.type === "ice-candidate") {
-            if (pc.remoteDescription) {
-              await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
-            } else {
-              pendingCandidatesRef.current.push(new RTCIceCandidate(msg.payload));
-            }
-          } else if (msg.type === "peer-joined") {
-            console.log("[WebRTC] Peer joined the call");
+          } catch (err) {
+            console.warn("[WebRTC] Failed to handle message:", err);
           }
         };
 
@@ -617,21 +625,25 @@ export function useComms() {
         };
 
         ws.onmessage = async (event) => {
-          const msg = JSON.parse(event.data);
+          try {
+            const msg = JSON.parse(event.data);
 
-          if (msg.type === "offer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            ws.send(JSON.stringify({ type: "answer", roomId, payload: answer }));
-          } else if (msg.type === "answer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
-          } else if (msg.type === "ice-candidate") {
-            if (pc.remoteDescription) {
-              await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
-            } else {
-              pendingCandidatesRef.current.push(new RTCIceCandidate(msg.payload));
+            if (msg.type === "offer") {
+              await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              ws.send(JSON.stringify({ type: "answer", roomId, payload: answer }));
+            } else if (msg.type === "answer") {
+              await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+            } else if (msg.type === "ice-candidate") {
+              if (pc.remoteDescription) {
+                await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+              } else {
+                pendingCandidatesRef.current.push(new RTCIceCandidate(msg.payload));
+              }
             }
+          } catch (err) {
+            console.warn("[WebRTC] Failed to handle message:", err);
           }
         };
 
