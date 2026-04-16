@@ -2026,6 +2026,29 @@ Format your response in a clear, structured manner.`
     }
   };
 
+  // CYRUS AI simple chat endpoint - used by the standalone HTML UI
+  // Delegates to /api/cyrus/infer with a normalised request shape
+  app.post("/api/cyrus", async (req, res) => {
+    const { message, type } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+    try {
+      const addr = httpServer.address();
+      const port = typeof addr === "object" && addr ? addr.port : (process.env.PORT ?? 3000);
+      const internalUrl = `http://127.0.0.1:${port}/api/cyrus/infer`;
+      const upstream = await fetch(internalUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message, context: type }),
+      });
+      const data = await upstream.json() as { response?: string; error?: string };
+      res.status(upstream.status).json({ response: data.response ?? data.error ?? "No response" });
+    } catch {
+      res.status(500).json({ error: "Internal error" });
+    }
+  });
+
   // CYRUS AI Inference endpoint - generates intelligent responses using OpenAI
   // Now with integrated autonomous agent capabilities
   app.post("/api/cyrus/infer", async (req, res) => {
